@@ -1,0 +1,38 @@
+body {
+    margin: 0;
+    background: #000;
+    color: white;
+    font-family: Arial;
+}
+
+.main {
+    padding: 20px;
+    text-align: center;
+}
+
+.title {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #00f5ff;
+}
+
+.card {
+    background: #111;
+    padding: 20px;
+    border-radius: 14px;
+    margin-bottom: 25px;
+    box-shadow: 0 0 12px rgba(0,255,255,0.3);
+}
+
+.btn {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 12px;
+    background: #01c7ff;
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
