@@ -165,3 +165,36 @@ function openLangModal() {
 function closeLangModal() {
   document.getElementById("lang-modal").classList.add("hidden");
 }
+
+// SETTINGS PAGE LOGIC
+const homePage = document.querySelector(".app-main");
+const settingsPage = document.getElementById("settings-page");
+const langRow = document.getElementById("lang-row");
+const langDropdown = document.getElementById("lang-dropdown");
+const currentLangText = document.getElementById("current-lang");
+
+document.querySelector('[data-tab="settings"]').addEventListener("click", () => {
+    homePage.classList.add("hidden");
+    settingsPage.classList.remove("hidden");
+});
+
+document.querySelector('[data-tab="home"]').addEventListener("click", () => {
+    settingsPage.classList.add("hidden");
+    homePage.classList.remove("hidden");
+});
+
+langRow.addEventListener("click", () => {
+    langDropdown.classList.toggle("hidden");
+});
+
+function setLanguage(lang) {
+    localStorage.setItem("lang", lang);
+    currentLangText.textContent = lang === "en" ? "English" : "Русский";
+    langDropdown.classList.add("hidden");
+}
+
+// LOAD SAVED LANGUAGE
+const saved = localStorage.getItem("lang");
+if (saved) {
+    currentLangText.textContent = saved === "en" ? "English" : "Русский";
+}

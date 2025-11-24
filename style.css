@@ -427,3 +427,59 @@ body {
   color: white;
   cursor: pointer;
 }
+
+.settings-page {
+  padding: 18px;
+}
+
+.settings-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  cursor: pointer;
+}
+
+.settings-label {
+  font-size: 16px;
+}
+
+.settings-value {
+  font-size: 16px;
+  color: #9aa6c5;
+}
+
+.settings-divider {
+  height: 1px;
+  width: 100%;
+  background: rgba(255,255,255,0.08);
+  margin: 14px 0;
+}
+
+.lang-dropdown {
+  background: #0d1930;
+  padding: 12px;
+  border-radius: 12px;
+  margin-top: -4px;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.45);
+}
+
+.lang-choice {
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.lang-choice:hover {
+  background: #122a49;
+}
+
+.hidden {
+  display: none;
+}
