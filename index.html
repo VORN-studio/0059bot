@@ -18,9 +18,6 @@
       <div class="header-title">0059Bot</div>
       <div class="header-right">
         <div class="balance-pill">
-            <div class="language-switch" onclick="toggleLang()">
-                🌐
-            </div>
           <span class="balance-dot"></span>
           <span id="header-balance">12 530</span>
         </div>
@@ -113,5 +110,23 @@
       </button>
     </nav>
   </div>
+
+<div id="lang-modal" class="lang-modal hidden">
+  <div class="lang-box">
+    <h3 class="lang-title">Select Language</h3>
+
+    <button class="lang-option" onclick="setLanguage('en'); closeLangModal();">
+      🇬🇧 English
+    </button>
+
+    <button class="lang-option" onclick="setLanguage('ru'); closeLangModal();">
+      🇷🇺 Русский
+    </button>
+
+    <button class="lang-close" onclick="closeLangModal()">Close</button>
+  </div>
+</div>
+
+
 </body>
 </html>

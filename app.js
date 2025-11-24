@@ -90,7 +90,6 @@ function handleInviteClick() {
   }
 }
 
-// Նավիգացիայի տաբերի ակտիվացում
 function setupBottomNav() {
   const items = document.querySelectorAll(".nav-item");
   items.forEach((btn) => {
@@ -99,10 +98,15 @@ function setupBottomNav() {
       btn.classList.add("nav-item-active");
       const tab = btn.getAttribute("data-tab");
       console.log("Switch tab:", tab);
-      // Այստեղ հետո կարող ենք փոխել բովանդակությունը ըստ տաբի
+
+      // SETTINGS: բացել լեզվի մոդալը
+      if (tab === "settings") {
+        openLangModal();
+      }
     });
   });
 }
+
 
 // Telegram WebApp init
 function initTelegram() {
@@ -161,3 +165,12 @@ function toggleLang() {
 
 // Լեզվի ֆունկցիաները գցում ենք global, որ հետո կարանք կանչենք console–ից կամ settings–ից
 window.setLanguage = setLanguage;
+
+
+function openLangModal() {
+  document.getElementById("lang-modal").classList.remove("hidden");
+}
+
+function closeLangModal() {
+  document.getElementById("lang-modal").classList.add("hidden");
+}
