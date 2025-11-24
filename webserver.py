@@ -68,6 +68,100 @@ def init_db():
     conn.commit()
     conn.close()
 
+def init_wallets():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS wallets (
+            user_id INTEGER PRIMARY KEY,
+            network TEXT,
+            address TEXT,
+            updated_at INTEGER
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS withdraws (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            amount REAL,
+            created_at INTEGER
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+@app.route("/api/set_wallet", methods=["POST"])
+def api_set_wallet():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id"))
+    network = data.get("network")
+    address = data.get("address")
+
+    if not user_id or not network or not address:
+        return jsonify({"ok": False, "error": "missing_fields"})
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO wallets (user_id, network, address, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET
+        network=?, address=?, updated_at=?
+    """, (user_id, network, address, int(time.time()), network, address, int(time.time())))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+@app.route("/api/get_wallet", methods=["GET"])
+def api_get_wallet():
+    user_id = request.args.get("user_id", type=int)
+    if not user_id:
+        return jsonify({"ok": False, "error": "no_user"})
+
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT network, address FROM wallets WHERE user_id=?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({"ok": True, "address": None})
+
+    return jsonify({"ok": True, "network": row[0], "address": row[1]})
+
+@app.route("/api/request_withdraw", methods=["POST"])
+def api_request_withdraw():
+    data = request.get_json(force=True, silent=True) or {}
+
+    user_id = int(data.get("user_id"))
+    amount = float(data.get("amount"))
+
+    # check wallet
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT address FROM wallets WHERE user_id=?", (user_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "error": "wallet_not_set"})
+
+    # check balance
+    c.execute("SELECT balance_usdt FROM users WHERE user_id=?", (user_id,))
+    bal = c.fetchone()[0]
+    if bal < amount:
+        conn.close()
+        return jsonify({"ok": False, "error": "not_enough_balance"})
+
+    # insert withdraw
+    c.execute("INSERT INTO withdraws (user_id, amount, created_at) VALUES (?, ?, ?)",
+              (user_id, amount, int(time.time())))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
 def get_balance(user_id: int) -> float:
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -294,4 +388,5 @@ def static_files(path):
 
 if __name__ == "__main__":
     init_db()
+    init_wallets()   # ← Ահա սա է կարևոր
     app.run(host="0.0.0.0", port=10000, debug=True)
