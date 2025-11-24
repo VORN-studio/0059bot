@@ -152,15 +152,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-function toggleLang() {
-  if (currentLang === "en") {
-    setLanguage("ru");
-    Telegram.WebApp.showAlert("Язык изменён на Русский");
-  } else {
-    setLanguage("en");
-    Telegram.WebApp.showAlert("Language switched to English");
-  }
-}
 
 
 // Լեզվի ֆունկցիաները գցում ենք global, որ հետո կարանք կանչենք console–ից կամ settings–ից
