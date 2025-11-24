@@ -13,12 +13,11 @@
 
     <!-- Top bar -->
     <header class="top-bar">
-        <button class="icon-btn" aria-label="Back">
-            ←
-        </button>
         <div class="top-title">0059Bot</div>
-        <button class="icon-btn" aria-label="Bot">
-            🤖
+
+        <!-- Language toggle button -->
+        <button class="icon-btn" id="langToggle" aria-label="Language">
+            <span id="langFlag">🇺🇸</span>
         </button>
     </header>
 
@@ -26,16 +25,16 @@
 
         <!-- Balance card -->
         <section class="card balance-card">
-            <div class="balance-label">Balance</div>
+            <div class="balance-label" data-i18n="balance_label">BALANCE</div>
             <div class="balance-amount" id="balanceAmount">$0.00</div>
 
             <div class="balance-extra">
                 <div class="balance-line">
-                    <span class="balance-line-label">Earnings:</span>
-                    <span id="earnRate">+$0.00 / hour</span>
+                    <span class="balance-line-label" data-i18n="earnings_label">Earnings:</span>
+                    <span id="earnRate" data-i18n="earnings_value">+$0.00 / hour</span>
                 </div>
                 <div class="balance-line">
-                    <span class="balance-line-label">Today:</span>
+                    <span class="balance-line-label" data-i18n="today_label">Today:</span>
                     <span id="todayAmount">$0.00</span>
                 </div>
             </div>
@@ -45,39 +44,39 @@
         <section class="grid grid-2 actions-grid">
             <button class="btn action-btn" onclick="onEarn()">
                 <span class="btn-icon">⚡</span>
-                <span>Earn</span>
+                <span data-i18n="btn_earn">Earn</span>
             </button>
 
             <button class="btn action-btn" onclick="onInvite()">
                 <span class="btn-icon">👤</span>
-                <span>Invite</span>
+                <span data-i18n="btn_invite">Invite</span>
             </button>
 
             <button class="btn action-btn" onclick="onWithdraw()">
                 <span class="btn-icon">💳</span>
-                <span>Withdraw</span>
+                <span data-i18n="btn_withdraw">Withdraw</span>
             </button>
 
             <button class="btn action-btn" onclick="onUpgrades()">
                 <span class="btn-icon">📈</span>
-                <span>Upgrades</span>
+                <span data-i18n="btn_upgrades">Upgrades</span>
             </button>
         </section>
 
         <!-- Tasks block -->
         <section class="card tasks-card">
-            <div class="tasks-title">Tasks</div>
+            <div class="tasks-title" data-i18n="tasks_title">Tasks</div>
 
             <button class="list-btn" onclick="onClickToEarn()">
-                <span>Click to Earn</span>
+                <span data-i18n="task_click">Click to Earn</span>
             </button>
 
             <button class="list-btn" onclick="onAutoEarn()">
-                <span>Auto-Earn</span>
+                <span data-i18n="task_auto">Auto-Earn</span>
             </button>
 
             <button class="list-btn" onclick="onOpenTasks()">
-                <span>Tasks</span>
+                <span data-i18n="task_tasks">Tasks</span>
             </button>
         </section>
 
