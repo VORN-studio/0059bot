@@ -307,25 +307,6 @@ def api_get_balance():
 
 
 
-@app.route("/api/set_wallet", methods=["POST"])
-def api_set_wallet():
-    data = request.get_json(force=True, silent=True) or {}
-    user_id = data.get("user_id")
-    network = (data.get("network") or "").strip()
-    address = (data.get("address") or "").strip()
-
-    try:
-        user_id = int(user_id)
-    except (TypeError, ValueError):
-        return jsonify({"ok": False, "error": "bad_user_id"})
-
-    if not network or not address:
-        return jsonify({"ok": False, "error": "network_and_address_required"})
-
-    ensure_user(user_id)
-    set_wallet(user_id, network, address)
-    return jsonify({"ok": True})
-
 
 @app.route("/api/add_earn", methods=["POST"])
 def api_add_earn():
