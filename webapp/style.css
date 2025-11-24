@@ -1,0 +1,325 @@
+:root {
+  --bg-main: #020917;
+  --bg-card: #071a2b;
+  --bg-tile: #071a2b;
+  --bg-pill: #04121f;
+  --accent: #1677ff;
+  --accent-soft: #0f4fd6;
+  --text-main: #ffffff;
+  --text-muted: #9aa6c5;
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.45);
+  --radius-large: 24px;
+  --radius-medium: 18px;
+  --radius-pill: 999px;
+}
+
+/* RESET */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Roboto", sans-serif;
+  background: radial-gradient(circle at top, #041629 0, #00040a 55%, #000000 100%);
+  color: var(--text-main);
+}
+
+body {
+  display: flex;
+  justify-content: center;
+}
+
+/* APP SHELL */
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #030b18 0%, #020716 50%, #020512 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px 10px;
+  overflow: hidden;
+}
+
+/* HEADER */
+
+.app-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  padding: 6px 4px 10px;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.favorite-star {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #4fb1ff, #1751ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(23, 81, 255, 0.55);
+}
+
+.header-title {
+  text-align: center;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+
+.balance-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-pill);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+}
+
+.balance-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 20%, #71e5ff, #17b1ff);
+  box-shadow: 0 0 0 3px rgba(23, 177, 255, 0.25);
+}
+
+/* MAIN */
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 10px;
+}
+
+/* GRID OF TILES */
+
+.grid-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.tile {
+  border: none;
+  outline: none;
+  cursor: pointer;
+  background: radial-gradient(circle at top, #0b2943 0%, #061629 55%, #040f1f 100%);
+  border-radius: var(--radius-large);
+  padding: 18px 8px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out,
+    background 0.12s ease-out;
+}
+
+.tile:active {
+  transform: translateY(2px) scale(0.98);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.tile-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+}
+
+.tile-label {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* INVITE FRIENDS */
+
+.invite-section {
+  margin-top: 24px;
+}
+
+.invite-btn {
+  width: 100%;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: 22px;
+  padding: 16px 18px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #1c6dff 0%, #0f4fd6 45%, #0b35a6 100%);
+  color: #ffffff;
+  box-shadow: 0 16px 34px rgba(12, 84, 255, 0.7);
+}
+
+/* VIP CARD */
+
+.vip-section {
+  margin-top: 18px;
+}
+
+.vip-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: radial-gradient(circle at top left, #102c4b 0%, #050c18 55%);
+  box-shadow: var(--shadow-soft);
+}
+
+.vip-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 20% 10%, #ffdd72, #ff9f2a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 28px rgba(255, 158, 42, 0.6);
+}
+
+.vip-icon {
+  font-size: 24px;
+}
+
+.vip-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.vip-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.vip-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.vip-arrow {
+  font-size: 26px;
+  color: var(--text-muted);
+}
+
+/* BOTTOM NAV */
+
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  padding-top: 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+  display: flex;
+  justify-content: space-around;
+  gap: 4px;
+}
+
+.nav-item {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.nav-icon {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.nav-item-active {
+  color: #ffffff;
+}
+
+/* SCROLLBAR */
+
+.app-main::-webkit-scrollbar {
+  width: 3px;
+}
+
+.app-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-main::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+/* SMALL SCREENS */
+
+@media (max-width: 360px) {
+  .tile {
+    padding: 14px 4px 12px;
+  }
+
+  .tile-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tile-label {
+    font-size: 14px;
+  }
+
+  .invite-btn {
+    font-size: 16px;
+  }
+}
+
+.language-switch {
+  margin-left: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: 0.2s;
+}
+
+.language-switch:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
