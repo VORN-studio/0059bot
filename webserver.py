@@ -323,29 +323,6 @@ def api_add_earn():
     new_bal = add_earn(user_id, amount)
     return jsonify({"ok": True, "balance": new_bal})
 
-@app.route("/api/request_withdraw", methods=["POST"])
-def api_request_withdraw():
-    data = request.get_json(force=True, silent=True) or {}
-    user_id = data.get("user_id")
-    amount = data.get("amount")
-
-    try:
-        user_id = int(user_id)
-        amount = float(amount)
-    except (TypeError, ValueError):
-        return jsonify({"ok": False, "error": "bad_user_id_or_amount"})
-
-    ensure_user(user_id)
-    ok, payload, err = create_withdraw_request(user_id, amount)
-    if not ok:
-        return jsonify({"ok": False, "error": payload})  # payload-ը εδώ սխալի կոդն է
-
-    return jsonify({
-        "ok": True,
-        "balance": payload["balance"],
-        "request_id": payload["request_id"],
-        "commission_percent": COMMISSION_PERCENT
-    })
 
 
 @app.route("/")
