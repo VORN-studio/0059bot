@@ -117,7 +117,7 @@ def api_set_wallet():
 def api_get_wallet():
     user_id = request.args.get("user_id", type=int)
     if not user_id:
-        return jsonify({"ok": False, "error": "no_user"})
+        return jsonify({"ok": False, "error": "missing user_id"})
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -126,9 +126,10 @@ def api_get_wallet():
     conn.close()
 
     if not row:
-        return jsonify({"ok": True, "address": None})
+        return jsonify({"ok": True, "address": None, "network": None})
 
-    return jsonify({"ok": True, "network": row[0], "address": row[1]})
+    return jsonify({"ok": True, "address": row[1], "network": row[0]})
+
 
 @app.route("/api/request_withdraw", methods=["POST"])
 def api_request_withdraw():
@@ -304,19 +305,7 @@ def api_get_balance():
     bal = get_balance(user_id)
     return jsonify({"ok": True, "balance": bal})
 
-@app.route("/api/get_wallet", methods=["GET"])
-def api_get_wallet():
-    user_id = request.args.get("user_id", type=int)
-    if not user_id:
-        return jsonify({"ok": False, "error": "missing user_id"})
 
-    ensure_user(user_id)
-    network, address = get_wallet(user_id)
-    return jsonify({
-        "ok": True,
-        "network": network,
-        "address": address
-    })
 
 @app.route("/api/set_wallet", methods=["POST"])
 def api_set_wallet():
