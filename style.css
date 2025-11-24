@@ -485,3 +485,136 @@ body {
 .hidden {
   display: none;
 }
+
+
+.wallet-page {
+  padding: 18px;
+}
+
+.wallet-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.wallet-balance-box {
+  background: #071a2b;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+}
+
+.wallet-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 14px 0;
+}
+
+.wallet-section {
+  margin-bottom: 18px;
+}
+
+.wallet-subtitle {
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.wallet-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1677ff;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.wallet-btn:hover {
+  background: #0f4fd6;
+}
+
+#wallet-address {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 6px;
+}
+
+#wallet-network {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 6px;
+}
+
+#withdraw-amount {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  margin-bottom: 10px;
+}
+
+
+.wallet-page {
+  padding: 18px;
+}
+
+.wallet-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.wallet-card {
+  background: #071a2b;
+  border-radius: 18px;
+  padding: 16px 14px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+.wallet-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.wallet-label {
+  font-size: 14px;
+  color: #9aa6c5;
+}
+
+.wallet-value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.wallet-connect-btn {
+  width: 100%;
+  margin-top: 14px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  border-radius: 16px;
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1c6dff 0%, #0f4fd6 45%, #0b35a6 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(12, 84, 255, 0.7);
+}
+
+.wallet-hint {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #9aa6c5;
+}

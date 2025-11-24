@@ -48,6 +48,50 @@ const translations = {
 
 let currentLang = "en";
 
+// TON CONNECT – wallet integration
+let tonConnectUI = null;
+let tonWallet = null; // այստեղ կպահենք միացված քաշելյոկի տվյալները
+
+function initTonConnect() {
+  if (!window.TON_CONNECT_UI) {
+    console.log("TON_CONNECT_UI not found");
+    return;
+  }
+
+  tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: "https://vorn-studio.github.io/0059bot/tonconnect-manifest.json"
+  });
+
+  // եթե արդեն միացված է, վերականգնենք վիճակը
+  tonConnectUI.onStatusChange((wallet) => {
+    tonWallet = wallet;
+    updateWalletUI();
+  });
+}
+
+function updateWalletUI() {
+  const statusEl = document.getElementById("wallet-status");
+  const addrEl = document.getElementById("wallet-address");
+
+  if (!statusEl || !addrEl) return;
+
+  if (!tonWallet) {
+    statusEl.textContent = "Not connected";
+    addrEl.textContent = "—";
+  } else {
+    statusEl.textContent = "Connected";
+    const shortAddr = tonWallet.account.address.slice(0, 4) + "..." +
+      tonWallet.account.address.slice(-4);
+    addrEl.textContent = shortAddr;
+  }
+}
+
+function openWalletConnect() {
+  if (!tonConnectUI) return;
+  tonConnectUI.openModal(); // բացում է wallet–ների ընտրության պատուհանը
+}
+
+
 // Պարզ թարգմանիչ
 function applyTranslations() {
   const dict = translations[currentLang] || translations.en;
@@ -69,17 +113,22 @@ function setLanguage(lang) {
 
 // Կոճակների սեղմումներ
 function handleTileClick(section) {
-  if (section === "earn") {
-    addEarn(0.25); // օրինակ անիմացիոն վաստակ
+  // եթե wallet է, բացենք wallet էջը
+  if (section === "wallet") {
+    if (homePage) homePage.classList.add("hidden");
+    if (settingsPage) settingsPage.classList.add("hidden");
+    if (walletPage) walletPage.classList.remove("hidden");
     return;
   }
 
+  // մնացածները – մինչև իսկական էջեր չունենք, թող մնա debug
   if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.showAlert(`Section: ${section}`);
   } else {
     console.log("Open section:", section);
   }
 }
+
 
 function handleInviteClick() {
   if (window.Telegram && Telegram.WebApp) {
@@ -134,6 +183,9 @@ document.addEventListener("DOMContentLoaded", () => {
   setupBottomNav();
   initTelegram();
 
+  initTonConnect();
+
+
   // Tile click handlers
   document.querySelectorAll(".tile").forEach((tile) => {
     tile.addEventListener("click", () => {
@@ -153,7 +205,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (headerBalance) {
     headerBalance.textContent = "12 530";
   }
+
+  // ԱՅՍ ՄԱՍԸ ԱՎԵԼԱՑՐՈՒ ԱՅՍՏԵՂ
+  const walletConnectBtn = document.getElementById("wallet-connect-btn");
+  if (walletConnectBtn) {
+    walletConnectBtn.addEventListener("click", () => {
+      openWalletConnect();
+    });
+  }
 });
+
 
 
 
@@ -161,8 +222,11 @@ document.addEventListener("DOMContentLoaded", () => {
 window.setLanguage = setLanguage;
 
 // SETTINGS PAGE LOGIC
+// SETTINGS & WALLET PAGE LOGIC
 const homePage = document.querySelector(".app-main");
 const settingsPage = document.getElementById("settings-page");
+const walletPage = document.getElementById("wallet-page");
+
 const langRow = document.getElementById("lang-row");
 const langDropdown = document.getElementById("lang-dropdown");
 const currentLangText = document.getElementById("current-lang");
@@ -178,18 +242,22 @@ function setupBottomNav() {
 
       const tab = btn.getAttribute("data-tab");
 
+      // default՝ ցույց տանք գլխավոր էջը
+      if (homePage) homePage.classList.add("hidden");
+      if (settingsPage) settingsPage.classList.add("hidden");
+      if (walletPage) walletPage.classList.add("hidden");
+
       if (tab === "settings") {
-        // բացում ենք Settings էջը
-        if (homePage) homePage.classList.add("hidden");
         if (settingsPage) settingsPage.classList.remove("hidden");
+      } else if (tab === "wallet") {
+        if (walletPage) walletPage.classList.remove("hidden");
       } else {
-        // մնացած բոլոր տաբեր – վերադարձ գլխավոր էջ
-        if (settingsPage) settingsPage.classList.add("hidden");
         if (homePage) homePage.classList.remove("hidden");
       }
     });
   });
 }
+
 
 // բացել/փակել լեզվի dropdown-ը Settings էջում
 if (langRow) {
@@ -282,3 +350,117 @@ async function addEarn(amount) {
 document.addEventListener("DOMContentLoaded", () => {
     loadUserBalance();
 });
+
+// ------------------- WALLET LOGIC ----------------------
+
+// const walletPage = document.getElementById("wallet-page");
+const depositAddressBox = document.getElementById("deposit-address");
+
+function openWallet() {
+  homePage.classList.add("hidden");
+  settingsPage.classList.add("hidden");
+  walletPage.classList.remove("hidden");
+  loadWalletBalance();
+  loadWalletInfo();
+}
+
+window.openWallet = openWallet;
+
+// Load balance
+function loadWalletBalance() {
+  const tg = Telegram.WebApp;
+  const userId = tg.initDataUnsafe?.user?.id;
+
+  fetch(`https://vorn-studio.github.io/your_server/api/get_balance?user_id=${userId}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        document.getElementById("wallet-balance").textContent =
+          data.balance.toFixed(2) + " USDT";
+        document.getElementById("header-balance").textContent =
+          data.balance.toFixed(2) + " USDT";
+      }
+    });
+}
+
+// Load wallet info
+function loadWalletInfo() {
+  const tg = Telegram.WebApp;
+  const userId = tg.initDataUnsafe?.user?.id;
+
+  fetch(`https://your_server/api/get_wallet?user_id=${userId}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) return;
+
+      if (data.address) {
+        document.getElementById("wallet-attached").classList.remove("hidden");
+        document.getElementById("wallet-form").classList.add("hidden");
+
+        document.getElementById("wallet-network-text").textContent = data.network;
+        document.getElementById("wallet-address-text").textContent = data.address;
+      } else {
+        document.getElementById("wallet-attached").classList.add("hidden");
+        document.getElementById("wallet-form").classList.remove("hidden");
+      }
+    });
+}
+
+// Save wallet
+function saveWallet() {
+  const tg = Telegram.WebApp;
+  const userId = tg.initDataUnsafe?.user?.id;
+  const net = document.getElementById("wallet-network").value;
+  const addr = document.getElementById("wallet-address").value;
+
+  fetch(`https://your_server/api/set_wallet`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({user_id: userId, network: net, address: addr})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) loadWalletInfo();
+      else tg.showAlert("Error saving wallet");
+    });
+}
+
+window.saveWallet = saveWallet;
+
+function openEditWallet() {
+  document.getElementById("wallet-attached").classList.add("hidden");
+  document.getElementById("wallet-form").classList.remove("hidden");
+}
+
+window.openEditWallet = openEditWallet;
+
+// Withdraw request
+function sendWithdraw() {
+  const tg = Telegram.WebApp;
+  const userId = tg.initDataUnsafe?.user?.id;
+  const amt = parseFloat(document.getElementById("withdraw-amount").value);
+
+  fetch(`https://your_server/api/request_withdraw`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({user_id: userId, amount: amt})
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) tg.showAlert("Withdraw request sent!");
+      else {
+        if (data.error === "wallet_not_set") tg.showAlert("Attach your wallet first");
+        else if (data.error === "not_enough_balance") tg.showAlert("Not enough balance");
+        else tg.showAlert("Error: " + data.error);
+      }
+    });
+}
+
+window.sendWithdraw = sendWithdraw;
+
+// Deposit info
+function depositInfo() {
+  Telegram.WebApp.showAlert("We will verify your deposit in 3–10 minutes");
+}
+
+window.depositInfo = depositInfo;

@@ -6,8 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <link rel="stylesheet" href="style.css?v=2" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- TON Connect UI (CDN) -->
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
   <script defer src="app.js?v=2"></script>
 </head>
+
 <body>
   <div class="app-shell">
     <!-- ՎԵՐՎԱԳԻՐ -->
@@ -68,6 +73,32 @@
         </button>
       </section>
 
+      <!-- WALLET PAGE -->
+<section id="wallet-page" class="hidden wallet-page">
+  <h2 class="wallet-title">Wallet</h2>
+
+  <div class="wallet-card">
+    <div class="wallet-row">
+      <span class="wallet-label">Status</span>
+      <span class="wallet-value" id="wallet-status">Not connected</span>
+    </div>
+
+    <div class="wallet-row">
+      <span class="wallet-label">Address</span>
+      <span class="wallet-value" id="wallet-address">—</span>
+    </div>
+
+    <button class="wallet-connect-btn" id="wallet-connect-btn">
+      Connect TON wallet
+    </button>
+  </div>
+
+  <p class="wallet-hint">
+    Your balance and payouts will be linked to this TON wallet.
+  </p>
+</section>
+
+
       <!-- INVITE FRIENDS -->
       <section class="invite-section">
         <button class="invite-btn" id="invite-btn" data-i18n="btn_invite_friends">
@@ -89,6 +120,66 @@
         </div>
       </section>
     </main>
+
+<!-- WALLET PAGE -->
+<section id="wallet-page" class="hidden wallet-page">
+  <h2 class="wallet-title">Wallet</h2>
+
+  <div class="wallet-balance-box">
+    <span class="wallet-balance-label">Balance:</span>
+    <span class="wallet-balance-value" id="wallet-balance">0.00 USDT</span>
+  </div>
+
+  <div class="wallet-divider"></div>
+
+  <!-- ATTACH WALLET -->
+  <div class="wallet-section">
+    <h3 class="wallet-subtitle">Wallet Address</h3>
+
+    <div id="wallet-attached" class="hidden">
+      <p><b>Network:</b> <span id="wallet-network-text"></span></p>
+      <p><b>Address:</b> <span id="wallet-address-text"></span></p>
+      <button class="wallet-btn" onclick="openEditWallet()">Edit Wallet</button>
+    </div>
+
+    <div id="wallet-form">
+      <label>Network</label>
+      <select id="wallet-network">
+        <option value="TON">TON</option>
+        <option value="TRC20">USDT TRC20</option>
+        <option value="ERC20">USDT ERC20</option>
+        <option value="BEP20">USDT BEP20</option>
+      </select>
+
+      <label>Address</label>
+      <input id="wallet-address" type="text" placeholder="Enter your crypto address" />
+
+      <button class="wallet-btn" onclick="saveWallet()">Save Wallet</button>
+    </div>
+  </div>
+
+  <div class="wallet-divider"></div>
+
+  <!-- WITHDRAW -->
+  <div class="wallet-section">
+    <h3 class="wallet-subtitle">Withdraw</h3>
+    <input id="withdraw-amount" type="number" placeholder="Amount (USDT)" />
+    <button class="wallet-btn" onclick="sendWithdraw()">Request Withdraw</button>
+  </div>
+
+  <div class="wallet-divider"></div>
+
+  <!-- DEPOSIT -->
+  <div class="wallet-section">
+    <h3 class="wallet-subtitle">Deposit</h3>
+    <p>Your personal deposit address:</p>
+    <pre id="deposit-address">TON / USDT deposit address will be here</pre>
+
+    <button class="wallet-btn" onclick="depositInfo()">I Sent the Money</button>
+  </div>
+
+</section>
+
 
 <!-- SETTINGS PAGE -->
 <section id="settings-page" class="hidden settings-page">
