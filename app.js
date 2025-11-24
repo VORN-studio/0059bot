@@ -157,15 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // Լեզվի ֆունկցիաները գցում ենք global, որ հետո կարանք կանչենք console–ից կամ settings–ից
 window.setLanguage = setLanguage;
 
-
-function openLangModal() {
-  document.getElementById("lang-modal").classList.remove("hidden");
-}
-
-function closeLangModal() {
-  document.getElementById("lang-modal").classList.add("hidden");
-}
-
 // SETTINGS PAGE LOGIC
 const homePage = document.querySelector(".app-main");
 const settingsPage = document.getElementById("settings-page");
@@ -173,28 +164,58 @@ const langRow = document.getElementById("lang-row");
 const langDropdown = document.getElementById("lang-dropdown");
 const currentLangText = document.getElementById("current-lang");
 
-document.querySelector('[data-tab="settings"]').addEventListener("click", () => {
-    homePage.classList.add("hidden");
-    settingsPage.classList.remove("hidden");
-});
+// ստորին մենյուի կոճակներ՝ Home / Activity / Messages / Settings
+function setupBottomNav() {
+  const items = document.querySelectorAll(".nav-item");
 
-document.querySelector('[data-tab="home"]').addEventListener("click", () => {
-    settingsPage.classList.add("hidden");
-    homePage.classList.remove("hidden");
-});
+  items.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      items.forEach((b) => b.classList.remove("nav-item-active"));
+      btn.classList.add("nav-item-active");
 
-langRow.addEventListener("click", () => {
-    langDropdown.classList.toggle("hidden");
-});
+      const tab = btn.getAttribute("data-tab");
 
-function setLanguage(lang) {
-    localStorage.setItem("lang", lang);
-    currentLangText.textContent = lang === "en" ? "English" : "Русский";
+      if (tab === "settings") {
+        // բացում ենք Settings էջը
+        if (homePage) homePage.classList.add("hidden");
+        if (settingsPage) settingsPage.classList.remove("hidden");
+      } else {
+        // մնացած բոլոր տաբեր – վերադարձ գլխավոր էջ
+        if (settingsPage) settingsPage.classList.add("hidden");
+        if (homePage) homePage.classList.remove("hidden");
+      }
+    });
+  });
+}
+
+// բացել/փակել լեզվի dropdown-ը Settings էջում
+if (langRow) {
+  langRow.addEventListener("click", () => {
+    if (langDropdown) {
+      langDropdown.classList.toggle("hidden");
+    }
+  });
+}
+
+// Լեզվի label-ը Settings էջում
+function updateCurrentLangLabel() {
+  if (!currentLangText) return;
+  currentLangText.textContent = currentLang === "ru" ? "Русский" : "English";
+}
+
+// dropdown-ից լեզու փոխելու helper
+function changeLanguage(lang) {
+  setLanguage(lang);           // օգտագործում ենք վերևի հիմնական ֆունկցիան
+  updateCurrentLangLabel();    // թարմացնում ենք Settings-ի տեքստը
+
+  if (langDropdown) {
     langDropdown.classList.add("hidden");
+  }
 }
 
-// LOAD SAVED LANGUAGE
-const saved = localStorage.getItem("lang");
-if (saved) {
-    currentLangText.textContent = saved === "en" ? "English" : "Русский";
-}
+// որ changeLanguage-ը աշխատի inline onclick-ից
+window.changeLanguage = changeLanguage;
+
+// էջը բեռնվելիս միանգամից ճիշտ տեքստը դնենք
+updateCurrentLangLabel();
+

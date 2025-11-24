@@ -103,9 +103,10 @@
   <div class="settings-divider"></div>
 
   <div id="lang-dropdown" class="lang-dropdown hidden">
-      <div class="lang-choice" onclick="setLanguage('en')">🇬🇧 English</div>
-      <div class="lang-choice" onclick="setLanguage('ru')">🇷🇺 Русский</div>
+    <div class="lang-choice" onclick="changeLanguage('en')">🇬🇧 English</div>
+    <div class="lang-choice" onclick="changeLanguage('ru')">🇷🇺 Русский</div>
   </div>
+
 
 </section>
 
@@ -130,23 +131,6 @@
       </button>
     </nav>
   </div>
-
-<div id="lang-modal" class="lang-modal hidden">
-  <div class="lang-box">
-    <h3 class="lang-title">Select Language</h3>
-
-    <button class="lang-option" onclick="setLanguage('en'); closeLangModal();">
-      🇬🇧 English
-    </button>
-
-    <button class="lang-option" onclick="setLanguage('ru'); closeLangModal();">
-      🇷🇺 Русский
-    </button>
-
-    <button class="lang-close" onclick="closeLangModal()">Close</button>
-  </div>
-</div>
-
 
 </body>
 </html>
