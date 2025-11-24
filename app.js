@@ -69,8 +69,11 @@ function setLanguage(lang) {
 
 // Կոճակների սեղմումներ
 function handleTileClick(section) {
-  // Այստեղ հետո կկապենք իրական էջերի / մոդալների հետ.
-  // Մինչև backend ունենալը ուղարկում ենք telegram alert
+  if (section === "earn") {
+    addEarn(0.25); // օրինակ անիմացիոն վաստակ
+    return;
+  }
+
   if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.showAlert(`Section: ${section}`);
   } else {
@@ -219,3 +222,63 @@ window.changeLanguage = changeLanguage;
 // էջը բեռնվելիս միանգամից ճիշտ տեքստը դնենք
 updateCurrentLangLabel();
 
+/* ================================
+   REAL USDT BALANCE SYSTEM
+   ================================ */
+
+// Բալանս տանել էկրանին
+function renderBalance(amount) {
+    const el = document.getElementById("balanceAmount");
+    if (el) {
+        el.textContent = amount.toFixed(2) + " USDT";
+    }
+}
+
+// Բերել բալանսը backend-ից
+async function loadUserBalance() {
+    try {
+        const tg = window.Telegram?.WebApp;
+        const userId = tg?.initDataUnsafe?.user?.id;
+
+        if (!userId) return;
+
+        const res = await fetch(`/api/get_balance?user_id=${userId}`);
+        const data = await res.json();
+
+        if (data.ok) {
+            renderBalance(data.balance);
+        }
+    } catch (e) {
+        console.error("Balance load failed:", e);
+    }
+}
+
+// Ավելացնել եկամուտ (earn)
+async function addEarn(amount) {
+    try {
+        const tg = window.Telegram?.WebApp;
+        const userId = tg?.initDataUnsafe?.user?.id;
+        if (!userId) return;
+
+        const res = await fetch("/api/add_earn", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, amount })
+        });
+
+        const data = await res.json();
+        if (data.ok) {
+            renderBalance(data.balance);
+            Telegram.WebApp.showAlert(
+                `+${amount.toFixed(2)} USDT\nNew balance: ${data.balance.toFixed(2)}`
+            );
+        }
+    } catch (e) {
+        console.error("addEarn failed:", e);
+    }
+}
+
+// Էջի բացումից հետո բեռնում ենք բալանսը
+document.addEventListener("DOMContentLoaded", () => {
+    loadUserBalance();
+});
