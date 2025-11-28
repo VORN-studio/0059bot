@@ -110,7 +110,7 @@ def init_db():
 
 def ensure_user(tg_user) -> int:
     """
-    Վերադարձնում է users.id
+    Returns է users.id
     """
     conn = get_db()
     c = conn.cursor()
@@ -181,8 +181,8 @@ def get_today_str() -> str:
 
 def get_or_create_today_vip_tasks(user_id: int):
     """
-    Եթե այսօր VIP tasks չկան՝ ստեղծում ենք 3 հատ, որոնց ընդհանուր գումարը 5% ա ակտիվ դեպոզիտի.
-    Վերադարձնում է tasks list.
+    If there are no VIP tasks today, we create 3, the total amount of which is 5% of the active deposit.
+    Returns a list of tasks.
     """
     conn = get_db()
     c = conn.cursor()
@@ -319,10 +319,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = ensure_user(user)
 
     text = (
-        f"👋 Բարի գալուստ <b>Main Money</b> բոտ, {user.first_name}!\n\n"
-        "Այստեղ դու կարող ես գումար աշխատել՝ կատարելով առաջադրանքներ,\n"
-        "իսկ VIP ներդրումներով՝ ամեն օր ստանալ մինչև 5% քեշբեք առաջադրանքներով։\n\n"
-        "Ընտրիր մենյուից՝"
+        f"👋 Welcome! <b>Main Money</b> bot, {user.first_name}!\n\n"
+        "Here you can earn money by completing tasks.,\n"
+        "and with VIP investments, get up to 5% cashback every day with tasks.\n\n"
+        "Select from the menu՝"
     )
     await update.message.reply_text(text, reply_markup=main_menu_kb(), parse_mode="HTML")
 
@@ -350,7 +350,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_admin(update, context)
     else:
         await update.message.reply_text(
-            "Ընտրիր համապատասխան կոճակը մենյուից։", reply_markup=main_menu_kb()
+            "Select the appropriate button from the menu.", reply_markup=main_menu_kb()
         )
 
 
@@ -359,8 +359,8 @@ async def handle_earn_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     total_dep = get_total_active_deposit(user_id)
     if total_dep <= 0:
         await update.message.reply_text(
-            "Այս պահին չունես ակտիվ VIP ներդրում։\n"
-            "⭐ VIP Zone բաժնում կարող ես տեսնել ներդրման պայմանները։",
+            "You currently have no active VIP investments.\n"
+            "⭐ You can see the investment conditions in the VIP Zone section.",
             reply_markup=main_menu_kb(),
         )
         return
@@ -369,15 +369,15 @@ async def handle_earn_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     tasks = get_or_create_today_vip_tasks(user_id)
     if not tasks:
         await update.message.reply_text(
-            "Այս պահին առաջադրանքներ չկան։ Փորձիր քիչ անց։",
+            "There are no tasks at this time. Please try again later.",
             reply_markup=main_menu_kb(),
         )
         return
 
-    lines = ["📋 Քո આજօրվա VIP առաջադրանքները:\n"]
+    lines = ["📋 Your VIP tasks for today?\n"]
     buttons = []
     for row in tasks:
-        status = "✅ Կատարված" if row["status"] == "completed" else "⏳ Սպասում"
+        status = "✅ Done" if row["status"] == "completed" else "⏳ Waiting"
         lines.append(
             f"{row['slot']}) {row['reward']:.4f} USDT – {status}"
         )
@@ -385,7 +385,7 @@ async def handle_earn_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE, 
             buttons.append(
                 [
                     InlineKeyboardButton(
-                        f"✅ Նշել {row['slot']} կատարված",
+                        f"✅ Mark {row['slot']} Done",
                         callback_data=f"vip_done:{row['id']}",
                     )
                 ]
@@ -404,11 +404,11 @@ async def handle_vip_zone(update: Update, context: ContextTypes.DEFAULT_TYPE, us
 
     text = (
         "⭐ <b>VIP Zone</b>\n\n"
-        "VIP-ում դու դնում ես գումար (օրինակ՝ 1000 USDT), և ամեն օր ստանում ես\n"
-        "3 առաջադրանք, որոնց ամեն մեկը տալիս է 5%-ի 1/3 մասը։\n\n"
-        f"Քո ընդհանուր ակտիվ դեպոզիտը՝ <b>{total_dep:.2f} USDT</b>\n\n"
-        "Ներդրումները technical առումով ավելացնում է ադմինը։\n"
-        "Քո ներդրման չափից կախված բոտը ավտոմատ ստեղծում է օրական առաջադրանքներ։"
+        "In VIP, you deposit money (for example, 1000 USDT), and every day you receive\n"
+        "3 tasks, each worth 1/3 of 5%.\n\n"
+        f"Your total active deposit: <b>{total_dep:.2f} USDT</b>\n\n"
+        "The admin adds technical inputs.\n"
+        "Depending on the size of your investment, the bot automatically creates daily tasks."
     )
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
 
@@ -416,21 +416,21 @@ async def handle_vip_zone(update: Update, context: ContextTypes.DEFAULT_TYPE, us
 async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
     user_id = user_row["id"]
     bal = float(user_row["balance"] or 0)
-    ton_wallet = user_row["ton_wallet"] or "չի կցված"
+    ton_wallet = user_row["ton_wallet"] or "not attached"
     total_dep = get_total_active_deposit(user_id)
 
     text = (
-        "💼 <b>Քո ֆինանսական պանել</b>\n\n"
-        f"Բալանս՝ <b>{bal:.4f} USDT</b>\n"
-        f"Ակտիվ VIP դեպոզիտ՝ <b>{total_dep:.2f} USDT</b>\n"
-        f"TON քաշիլոք՝ <b>{ton_wallet}</b>\n\n"
-        "Կանխիկացման համար անհրաժեշտ մինիմումը՝ <b>10 USDT</b>։"
+        "💼 <b>Your financial dashboard</b>\n\n"
+        f"Balance՝ <b>{bal:.4f} USDT</b>\n"
+        f"Active VIP deposit՝ <b>{total_dep:.2f} USDT</b>\n"
+        f"TON wallet՝ <b>{ton_wallet}</b>\n\n"
+        "Minimum required for cashout՝ <b>10 USDT</b>։"
     )
 
     buttons = []
     if bal >= 10 and user_row["ton_wallet"]:
         buttons.append(
-            [InlineKeyboardButton("💸 Ուղարկել կանխիկացման հայտ", callback_data="withdraw_req")]
+            [InlineKeyboardButton("💸 Send a cash withdrawal request", callback_data="withdraw_req")]
         )
 
     kb = InlineKeyboardMarkup(buttons) if buttons else None
@@ -440,18 +440,18 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE, use
 async def handle_connect_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
     text = (
         "🔗 <b>Connect TON wallet</b>\n\n"
-        "1) Սեղմիր ստորև գտնվող կոճակը՝ բացելու համար Telegram Wallet-ը (TON)\n"
-        "2) Քշիլոքում տես՝ քո TON հասցեն\n"
-        "3) Պատճենիր հասցեն ու ուղարկիր ինձ այստեղ որպես մեկ տող\n\n"
-        "Օրինակ՝ <code>UQDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>\n\n"
-        "Քո վերջին պահված հասցեն՝ "
-        f"<b>{user_row['ton_wallet'] or 'չկա'}</b>"
+        "1) Click the button below to open Telegram Wallet. (TON)\n"
+        "2) See your TON address in your wallet.\n"
+        "3) Copy the address and send it to me here as a single line.\n\n"
+        "For example:՝ <code>UQDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>\n\n"
+        "Your last saved address՝ "
+        f"<b>{user_row['ton_wallet'] or 'there is none'}</b>"
     )
     kb = InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "💼 Բացել Telegram Wallet", url="https://t.me/wallet"
+                    "💼 Open Telegram Wallet", url="https://t.me/wallet"
                 )
             ]
         ]
@@ -465,13 +465,13 @@ async def handle_connect_wallet(update: Update, context: ContextTypes.DEFAULT_TY
 async def handle_profile(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
     total_dep = get_total_active_deposit(user_row["id"])
     text = (
-        "👤 <b>Քո պրոֆիլը</b>\n\n"
+        "👤 <b>Your profile</b>\n\n"
         f"ID՝ <code>{user_row['tg_id']}</code>\n"
         f"Username՝ @{user_row['username'] or '—'}\n"
-        f"Անուն՝ {user_row['first_name']}\n"
-        f"Բալանս՝ <b>{float(user_row['balance'] or 0):.4f} USDT</b>\n"
-        f"Ակտիվ դեպոզիտ՝ <b>{total_dep:.2f} USDT</b>\n"
-        f"TON քաշիլոք՝ <code>{user_row['ton_wallet'] or 'չկա'}</code>\n"
+        f"Name:՝ {user_row['first_name']}\n"
+        f"Balance՝ <b>{float(user_row['balance'] or 0):.4f} USDT</b>\n"
+        f"Active deposit՝ <b>{total_dep:.2f} USDT</b>\n"
+        f"TON Wallet՝ <code>{user_row['ton_wallet'] or 'there is none'}</code>\n"
     )
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
 
@@ -508,12 +508,12 @@ async def complete_vip_task(query, context, user_row, task_id: int):
     row = c.fetchone()
     if not row:
         conn.close()
-        await query.edit_message_text("Առաջադրանքը չի գտնվել։")
+        await query.edit_message_text("The task was not found.")
         return
 
     if row["status"] == "completed":
         conn.close()
-        await query.edit_message_text("Այս առաջադրանքը արդեն կատարված է։")
+        await query.edit_message_text("This task has already been completed.")
         return
 
     # Mark completed
@@ -528,7 +528,7 @@ async def complete_vip_task(query, context, user_row, task_id: int):
     update_balance(user_id, float(row["reward"]))
 
     await query.edit_message_text(
-        f"✅ Առաջադրանքը նշվեց կատարված։ Քեզ ավելացվել է {row['reward']:.4f} USDT։"
+        f"✅ The task has been marked as completed. You have been added. {row['reward']:.4f} USDT։"
     )
 
 
@@ -536,35 +536,35 @@ async def process_withdraw_request(query, context, user_row):
     user_id = user_row["id"]
     bal = float(user_row["balance"] or 0)
     if not user_row["ton_wallet"]:
-        await query.edit_message_text("Դեռ TON քաշիլոք չես կցել։ Նախ կցիր քաշիլոքը։")
+        await query.edit_message_text("You haven't attached a TON wallet yet. Attach a wallet first.")
         return
     if bal < 10:
         await query.edit_message_text(
-            f"Կանխիկացման համար պետք է առնվազն 10 USDT։ Քո բալանսը՝ {bal:.4f} USDT։"
+            f"You need at least 10 USDT to cash out. Your balance՝ {bal:.4f} USDT։"
         )
         return
 
     amount = bal  # ամբողջ բալանսը
     wid, err = create_withdrawal(user_id, amount)
     if err == "no_wallet":
-        await query.edit_message_text("Դեռ TON քաշիլոք չես կցել։")
+        await query.edit_message_text("You haven't attached a TON Wallet yet.")
         return
     if err == "not_enough_balance":
-        await query.edit_message_text("Բալանսը բավարար չէ։")
+        await query.edit_message_text("The balance is not enough.")
         return
 
     # ահազանգում ենք ադմինին
     user = get_user_internal(user_id)
     msg = (
-        f"💸 <b>Նոր կանխիկացման հայտ</b>\n\n"
+        f"💸 <b>New cashout request</b>\n\n"
         f"Withdraw ID: <code>{wid}</code>\n"
         f"User tg_id: <code>{user['tg_id']}</code>\n"
         f"Username: @{user['username'] or '—'}\n"
         f"Amount: <b>{amount:.4f} USDT</b>\n"
         f"TON wallet: <code>{user['ton_wallet']}</code>\n\n"
-        f"Հրամաններ՝\n"
-        f"/approve_withdraw {wid} – նշել որպես approved\n"
-        f"/reject_withdraw {wid} – նշել որպես rejected\n"
+        f"Commands:՝\n"
+        f"/approve_withdraw {wid} – mark as approved\n"
+        f"/reject_withdraw {wid} – mark as rejected\n"
     )
     try:
         await context.bot.send_message(ADMIN_ID, msg, parse_mode="HTML")
@@ -572,8 +572,8 @@ async def process_withdraw_request(query, context, user_row):
         log.error(f"Error notifying admin: {e}")
 
     await query.edit_message_text(
-        "✅ Քո կանխիկացման հայտը ուղարկվեց ադմինին։\n"
-        "Ադմինը կստուգի և կուղարկի գումարը քո TON քաշիլոքին։"
+        "✅ Your cashout request has been sent to the admin.\n"
+        "The admin will verify and send the money to your TON wallet."
     )
 
 
@@ -583,7 +583,7 @@ def admin_only(func):
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
         if user.id != ADMIN_ID:
-            await update.message.reply_text("Դու ադմին չես։")
+            await update.message.reply_text("You are not an admin.")
             return
         return await func(update, context)
 
@@ -593,7 +593,7 @@ def admin_only(func):
 async def handle_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if user.id != ADMIN_ID:
-        await update.message.reply_text("Դու ադմին չես։")
+        await update.message.reply_text("You are not an admin.")
         return
     await update.message.reply_text(admin_menu_text(), parse_mode="HTML")
 
@@ -602,18 +602,18 @@ async def handle_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def add_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if len(args) != 2:
-        await update.message.reply_text("Օգտագործում՝ /add_balance <tg_id> <amount>")
+        await update.message.reply_text("User՝ /add_balance <tg_id> <amount>")
         return
     tg_id = int(args[0])
     amount = float(args[1])
 
     u = get_user_by_tg_id(tg_id)
     if not u:
-        await update.message.reply_text("Օգտատերը չի գտնվել։")
+        await update.message.reply_text("User not found.")
         return
     update_balance(u["id"], amount)
     await update.message.reply_text(
-        f"Օգտատերի @{u['username'] or u['tg_id']} բալանսին ավելացվեց {amount} USDT։"
+        f"User @{u['username'] or u['tg_id']} added to balance {amount} USDT։"
     )
 
 
@@ -621,18 +621,18 @@ async def add_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def sub_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if len(args) != 2:
-        await update.message.reply_text("Օգտագործում՝ /sub_balance <tg_id> <amount>")
+        await update.message.reply_text("Usage:՝ /sub_balance <tg_id> <amount>")
         return
     tg_id = int(args[0])
     amount = float(args[1])
 
     u = get_user_by_tg_id(tg_id)
     if not u:
-        await update.message.reply_text("Օգտատերը չի գտնվել։")
+        await update.message.reply_text("User not found.")
         return
     update_balance(u["id"], -amount)
     await update.message.reply_text(
-        f"Օգտատերի @{u['username'] or u['tg_id']} բալանսից հանվեց {amount} USDT։"
+        f"User @{u['username'] or u['tg_id']} taken off balance {amount} USDT։"
     )
 
 
@@ -640,14 +640,14 @@ async def sub_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def add_deposit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if len(args) != 2:
-        await update.message.reply_text("Օգտագործում՝ /add_deposit <tg_id> <amount>")
+        await update.message.reply_text("Usage:՝ /add_deposit <tg_id> <amount>")
         return
     tg_id = int(args[0])
     amount = float(args[1])
 
     u = get_user_by_tg_id(tg_id)
     if not u:
-        await update.message.reply_text("Օգտատերը չի գտնվել։")
+        await update.message.reply_text("User not found.")
         return
 
     conn = get_db()
@@ -660,18 +660,18 @@ async def add_deposit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
 
     await update.message.reply_text(
-        f"Ավելացվեց {amount} USDT VIP դեպոզիտ օգտատերի @{u['username'] or u['tg_id']} համար։"
+        f"Added {amount} USDT VIP deposit user @{u['username'] or u['tg_id']} for"
     )
 
 
 @admin_only
 async def broadcast_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Օգտագործում՝ /broadcast <text>")
+        await update.message.reply_text("Usage:՝ /broadcast <text>")
         return
     text = update.message.text.partition(" ")[2].strip()
     if not text:
-        await update.message.reply_text("Տեքստը դատարկ է։")
+        await update.message.reply_text("The text is empty.")
         return
 
     conn = get_db()
@@ -688,7 +688,7 @@ async def broadcast_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             pass
 
-    await update.message.reply_text(f"Ուղարկվեց {sent} օգտատերի։")
+    await update.message.reply_text(f"Sent {sent} of the user.")
 
 
 @admin_only
@@ -704,7 +704,7 @@ async def list_withdraws_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
     conn.close()
 
     if not rows:
-        await update.message.reply_text("Pending կանխիկացումներ չկան։")
+        await update.message.reply_text("There are no pending withdrawals.")
         return
 
     lines = ["💸 Pending withdraw requests:\n"]
@@ -721,7 +721,7 @@ async def list_withdraws_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def approve_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if len(args) != 1:
-        await update.message.reply_text("Օգտագործում՝ /approve_withdraw <id>")
+        await update.message.reply_text("Usage:՝ /approve_withdraw <id>")
         return
     wid = int(args[0])
 
@@ -731,12 +731,12 @@ async def approve_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYP
     row = c.fetchone()
     if not row:
         conn.close()
-        await update.message.reply_text("Քաշվող հայտը չի գտնվել։")
+        await update.message.reply_text("The pull request was not found.")
         return
 
     if row["status"] != "pending":
         conn.close()
-        await update.message.reply_text("Այս հայտը pending վիճակում չէ։")
+        await update.message.reply_text("This application is not pending.")
         return
 
     c.execute(
@@ -751,19 +751,19 @@ async def approve_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         await context.bot.send_message(
             u["tg_id"],
-            f"✅ Քո {row['amount']:.4f} USDT կանխիկացման հայտը հաստատվել է։ Գումարը ուղարկվել է քո TON քաշիլոքին։",
+            f"✅ Your {row['amount']:.4f} USDT withdrawal request has been approved. The funds have been sent to your TON wallet.",
         )
     except Exception:
         pass
 
-    await update.message.reply_text("Հայտը նշվեց approved։")
+    await update.message.reply_text("The application was marked approved.")
 
 
 @admin_only
 async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if len(args) != 1:
-        await update.message.reply_text("Օգտագործում՝ /reject_withdraw <id>")
+        await update.message.reply_text("Usage:՝ /reject_withdraw <id>")
         return
     wid = int(args[0])
 
@@ -773,12 +773,12 @@ async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
     row = c.fetchone()
     if not row:
         conn.close()
-        await update.message.reply_text("Քաշվող հայտը չի գտնվել։")
+        await update.message.reply_text("The pull request was not found.")
         return
 
     if row["status"] != "pending":
         conn.close()
-        await update.message.reply_text("Այս հայտը pending վիճակում չէ։")
+        await update.message.reply_text("This application is not pending.")
         return
 
     c.execute(
@@ -795,20 +795,20 @@ async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         await context.bot.send_message(
             u["tg_id"],
-            f"❌ Քո {row['amount']:.4f} USDT կանխիկացման հայտը մերժվել է։ Մանրամասների համար գրիր ադմինին։",
+            f"❌ Your {row['amount']:.4f} USDT withdrawal request has been rejected. Contact the admin for details.",
         )
     except Exception:
         pass
 
-    await update.message.reply_text("Հայտը նշվեց rejected։")
+    await update.message.reply_text("The application was marked rejected.")
 
 
 # ===================== TEXT CATCH (wallet input) =====================
 
 async def text_catch(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Սա այն վայրն է, որտեղ լսում ենք՝ օգտատերը TON քաշիլոք է ուղարկում,
-    թե պարզապես սեղմում է մենյուի կոճակները։
+    This is where we hear a user sending a TON wallet,
+    or simply clicking the menu buttons.
     """
     # եթե սպասում ենք քաշիլոք
     if context.user_data.get("awaiting_wallet"):
@@ -821,7 +821,7 @@ async def text_catch(update: Update, context: ContextTypes.DEFAULT_TYPE):
         set_ton_wallet(user_row["id"], wallet)
         context.user_data["awaiting_wallet"] = False
         await update.message.reply_text(
-            f"✅ Քո TON քաշիլոքը պահպանվեց՝\n<code>{wallet}</code>",
+            f"✅ Your TON wallet has been saved.՝\n<code>{wallet}</code>",
             parse_mode="HTML",
             reply_markup=main_menu_kb(),
         )
