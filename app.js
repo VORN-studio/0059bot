@@ -1,34 +1,3 @@
-// ====================== TON CONNECT INIT =======================
-
-// TonConnect class comes from global window.TonConnect (loaded in index.html)
-const TonConnectClass = window.TonConnect;
-
-if (!TonConnectClass) {
-    console.error("TonConnect SDK not loaded");
-}
-
-// Create connector instance
-const connector = new TonConnectClass({
-    manifestUrl: location.origin + "/tonconnect-manifest.json"
-});
-
-// Wallet status listener
-connector.onStatusChange((walletInfo) => {
-    if (walletInfo?.account?.address) {
-        const address = walletInfo.account.address;
-        state.tonWallet = address;
-
-        renderFinancialInfo();
-
-        if (tg) {
-            tg.sendData(JSON.stringify({
-                action: "save_wallet",
-                address: address
-            }));
-        }
-    }
-});
-
 
 // Main Money WebApp frontend
 // This is a UI layer. Later we can connect it to real API endpoints.
