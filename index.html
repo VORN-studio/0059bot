@@ -4,204 +4,210 @@
   <meta charset="UTF-8" />
   <title>0059Bot</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- TON Connect UI (CDN) -->
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-
-  <script defer src="app.js?v=2"></script>
+  <script defer src="app.js"></script>
 </head>
-
 <body>
   <div class="app-shell">
-    <!-- ՎԵՐՎԱԳԻՐ -->
-    <header class="app-header">
-      <div class="header-left">
-        <div class="favorite-star">★</div>
-      </div>
+
+    <!-- HEADER -->
+    <header class="header">
       <div class="header-title">0059Bot</div>
-      <div class="header-right">
-        <div class="balance-pill">
-          <span class="balance-dot"></span>
-          <span id="balanceAmount">0.00 USDT</span>
-        </div>
+      <div class="header-balance">
+        <span id="balanceAmount">0.00 USDT</span>
       </div>
     </header>
 
-    <!-- ՀԻՄՆԱԿԱՆ ՄԱՍ -->
-    <main class="app-main">
-      <!-- 3x3 GRID -->
-      <section class="grid-section">
+    <!-- HOME PAGE (GRID) -->
+    <main class="page" id="home-page">
+      <section class="grid">
         <button class="tile" data-section="earn">
-          <img src="icons/earn.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_earn">Earn</span>
+          <img src="icons/earn.png" alt="">
+          <span>Earn</span>
         </button>
         <button class="tile" data-section="invest">
-          <img src="icons/invest.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_invest">Invest</span>
+          <img src="icons/invest.png" alt="">
+          <span>Invest</span>
         </button>
         <button class="tile" data-section="friends">
-          <img src="icons/friends.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_friends">Friends</span>
+          <img src="icons/friends.png" alt="">
+          <span>Friends</span>
         </button>
 
         <button class="tile" data-section="tasks">
-          <img src="icons/tasks.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_tasks">Tasks</span>
+          <img src="icons/tasks.png" alt="">
+          <span>Tasks</span>
         </button>
         <button class="tile" data-section="shop">
-          <img src="icons/shop.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_shop">Shop</span>
+          <img src="icons/shop.png" alt="">
+          <span>Shop</span>
         </button>
         <button class="tile" data-section="games">
-          <img src="icons/games.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_games">Games</span>
+          <img src="icons/games.png" alt="">
+          <span>Games</span>
         </button>
 
         <button class="tile" data-section="wallet">
-          <img src="icons/wallet.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_wallet">Wallet</span>
+          <img src="icons/wallet.png" alt="">
+          <span>Wallet</span>
         </button>
         <button class="tile" data-section="clan">
-          <img src="icons/clan.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_clan">Clan</span>
+          <img src="icons/clan.png" alt="">
+          <span>Clan</span>
         </button>
         <button class="tile" data-section="offers">
-          <img src="icons/offers.png" alt="" class="tile-icon" />
-          <span class="tile-label" data-i18n="tile_offers">Offers</span>
+          <img src="icons/offers.png" alt="">
+          <span>Offers</span>
         </button>
       </section>
 
-      
-
-
-      <!-- INVITE FRIENDS -->
-      <section class="invite-section">
-        <button class="invite-btn" id="invite-btn" data-i18n="btn_invite_friends">
-          INVITE FRIENDS
-        </button>
-      </section>
-
-      <!-- VIP TASKS -->
-      <section class="vip-section">
-        <div class="vip-card">
-          <div class="vip-icon-wrap">
-            <span class="vip-icon">★</span>
-          </div>
-          <div class="vip-text">
-            <div class="vip-title" data-i18n="vip_title">VIP TASKS</div>
-            <div class="vip-subtitle" data-i18n="vip_subtitle">Earn up to $20/day</div>
-          </div>
-          <div class="vip-arrow">›</div>
-        </div>
+      <section class="home-info">
+        <button id="invite-btn" class="primary-btn">INVITE FRIENDS</button>
       </section>
     </main>
 
+    <!-- 9 ՏԱԽԹԱԿԵՐԻ ԱՌԱՆձԻՆ ԷՋԵՐԸ -->
 
+    <main class="page hidden" id="page-earn">
+      <h2>Earn</h2>
+      <p>Tap the button to earn +0.10 USDT.</p>
+      <button class="primary-btn" id="btn-earn-tap">Tap to earn</button>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
-  <section id="wallet-page" class="hidden wallet-page">
+    <main class="page hidden" id="page-invest">
+      <h2>Invest</h2>
+      <p>Future place for investments & staking.</p>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
-  <h2 class="wallet-title">Wallet</h2>
+    <main class="page hidden" id="page-friends">
+      <h2>Friends</h2>
+      <p>Invite your friends and grow your network.</p>
+      <button class="primary-btn" id="btn-invite-friends">Invite Friends</button>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
-  <div class="wallet-balance-box">
-    <span class="wallet-balance-label">Balance:</span>
-    <span class="wallet-balance-value" id="wallet-balance">0.00 USDT</span>
-  </div>
+    <main class="page hidden" id="page-tasks">
+      <h2>Tasks</h2>
+      <ul class="simple-list">
+        <li>Follow Telegram channel</li>
+        <li>Watch partner video</li>
+        <li>Join our chat</li>
+      </ul>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
-  <div class="wallet-divider"></div>
+    <main class="page hidden" id="page-shop">
+      <h2>Shop</h2>
+      <p>Soon you will be able to spend USDT for items here.</p>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
-  <!-- ATTACH WALLET -->
-  <div class="wallet-section">
-    <h3 class="wallet-subtitle">Wallet Address</h3>
+    <main class="page hidden" id="page-games">
+      <h2>Games</h2>
+      <p>Mini games, tap-to-earn & more coming soon.</p>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
-    <div id="wallet-attached" class="hidden">
-      <p><b>Network:</b> <span id="wallet-network-text"></span></p>
-      <p><b>Address:</b> <span id="wallet-address-text"></span></p>
-      <button class="wallet-btn" onclick="openEditWallet()">Edit Wallet</button>
-    </div>
+    <main class="page hidden" id="page-wallet">
+      <h2>Wallet</h2>
 
-    <div id="wallet-form">
-      <label>Network</label>
-      <select id="wallet-network">
-        <option value="TON">TON</option>
-        <option value="TRC20">USDT TRC20</option>
-        <option value="ERC20">USDT ERC20</option>
-        <option value="BEP20">USDT BEP20</option>
-      </select>
+      <div class="card">
+        <div class="row">
+          <span>Balance:</span>
+          <span id="wallet-balance">0.00 USDT</span>
+        </div>
+      </div>
 
-      <label>Address</label>
-      <input id="wallet-address" type="text" placeholder="Enter your crypto address" />
+      <div class="card">
+        <h3>Telegram TON Wallet</h3>
+        <p>We use Telegram Wallet (TON). Open it to see your address & history.</p>
+        <button class="primary-btn" id="btn-open-ton-wallet">Open Telegram Wallet</button>
+      </div>
 
-      <button class="wallet-btn" onclick="saveWallet()">Save Wallet</button>
-    </div>
-  </div>
+      <div class="card">
+        <h3>Payout Wallet</h3>
+        <div id="wallet-attached" class="hidden">
+          <p><b>Network:</b> <span id="wallet-network-text"></span></p>
+          <p><b>Address:</b> <span id="wallet-address-text"></span></p>
+          <button class="secondary-btn" onclick="openEditWallet()">Edit wallet</button>
+        </div>
 
-  <div class="wallet-divider"></div>
+        <div id="wallet-form">
+          <label for="wallet-network">Network</label>
+          <select id="wallet-network">
+            <option value="TON">TON</option>
+            <option value="TRC20">USDT TRC20</option>
+            <option value="ERC20">USDT ERC20</option>
+            <option value="BEP20">USDT BEP20</option>
+          </select>
 
-  <!-- WITHDRAW -->
-  <div class="wallet-section">
-    <h3 class="wallet-subtitle">Withdraw</h3>
-    <input id="withdraw-amount" type="number" placeholder="Amount (USDT)" />
-    <button class="wallet-btn" onclick="sendWithdraw()">Request Withdraw</button>
-  </div>
+          <label for="wallet-address-input">Address</label>
+          <input id="wallet-address-input" type="text" placeholder="Enter your payout address" />
 
-  <div class="wallet-divider"></div>
+          <button class="primary-btn" onclick="saveWallet()">Save wallet</button>
+        </div>
+      </div>
 
-  <!-- DEPOSIT -->
-  <div class="wallet-section">
-    <h3 class="wallet-subtitle">Deposit</h3>
-    <p>Your personal deposit address:</p>
-    <pre id="deposit-address">TON / USDT deposit address will be here</pre>
+      <div class="card">
+        <h3>Withdraw</h3>
+        <input id="withdraw-amount" type="number" placeholder="Amount (USDT)" />
+        <button class="primary-btn" onclick="sendWithdraw()">Request withdraw</button>
+      </div>
 
-    <button class="wallet-btn" onclick="depositInfo()">I Sent the Money</button>
-  </div>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
-</section>
+    <main class="page hidden" id="page-clan">
+      <h2>Clan</h2>
+      <p>Here you can manage clans, rankings & bonuses (later).</p>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
+    <main class="page hidden" id="page-offers">
+      <h2>Offers</h2>
+      <p>Partner offers & external tasks will appear here.</p>
+      <button class="back-btn" onclick="goHome()">← Back</button>
+    </main>
 
+    <!-- ACTIVITY PAGE (NAV) -->
+    <main class="page hidden" id="page-activity">
+      <h2>Activity</h2>
+      <p>History of earnings, tasks and withdrawals will appear here.</p>
+    </main>
 
-<!-- SETTINGS PAGE -->
-<section id="settings-page" class="hidden settings-page">
+    <!-- MESSAGES PAGE (NAV) -->
+    <main class="page hidden" id="page-messages">
+      <h2>Messages</h2>
+      <p>System messages and announcements will appear here.</p>
+    </main>
 
-  <h2 class="settings-title">Settings</h2>
+    <!-- SETTINGS PAGE (NAV) -->
+    <main class="page hidden" id="settings-page">
+      <h2>Settings</h2>
 
-  <div class="settings-item" id="lang-row">
-    <span class="settings-label">Language</span>
-    <span class="settings-value" id="current-lang">English</span>
-  </div>
+      <div class="card">
+        <div class="row clickable" id="lang-row">
+          <span>Language</span>
+          <span id="current-lang">English</span>
+        </div>
+        <div id="lang-dropdown" class="lang-dropdown hidden">
+          <div onclick="changeLang('en')">🇬🇧 English</div>
+          <div onclick="changeLang('ru')">🇷🇺 Русский</div>
+        </div>
+      </div>
+    </main>
 
-  <div class="settings-divider"></div>
-
-  <div id="lang-dropdown" class="lang-dropdown hidden">
-    <div class="lang-choice" onclick="changeLanguage('en')">🇬🇧 English</div>
-    <div class="lang-choice" onclick="changeLanguage('ru')">🇷🇺 Русский</div>
-  </div>
-
-
-</section>
-
-
-    <!-- ՆԵՐՔԵՎԻ ՆԱՎԲԱՐ -->
+    <!-- BOTTOM NAV -->
     <nav class="bottom-nav">
-      <button class="nav-item nav-item-active" data-tab="home">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label" data-i18n="nav_home">Home</span>
-      </button>
-      <button class="nav-item" data-tab="activity">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label" data-i18n="nav_activity">Activity</span>
-      </button>
-      <button class="nav-item" data-tab="messages">
-        <span class="nav-icon">✉️</span>
-        <span class="nav-label" data-i18n="nav_messages">Messages</span>
-      </button>
-      <button class="nav-item" data-tab="settings">
-        <span class="nav-icon">⚙️</span>
-        <span class="nav-label" data-i18n="nav_settings">Settings</span>
-      </button>
+      <button class="nav-item nav-active" data-tab="home">🏠</button>
+      <button class="nav-item" data-tab="activity">📊</button>
+      <button class="nav-item" data-tab="messages">✉️</button>
+      <button class="nav-item" data-tab="settings">⚙️</button>
     </nav>
-  </div>
 
+  </div>
 </body>
 </html>
