@@ -5,14 +5,8 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
 
+document.getElementById("btn-connect-ton").onclick = () => tonUI.openModal();
 
-document.getElementById("btn-connect-ton").addEventListener("click", async () => {
-  try {
-    await connector.connectWallet();
-  } catch (e) {
-    showToast("Wallet connection failed");
-  }
-});
 
 let tonUI = null;
 let tonWallet = null;
