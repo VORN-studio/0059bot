@@ -1,32 +1,42 @@
+// ====================== TON CONNECT INIT =======================
+
+// TonConnect SDK creates a global object window.TonConnectSDK
+// We must take TonConnect class from there
+const TonConnect = window.TonConnectSDK?.TonConnect;
+
+if (!TonConnect) {
+    console.error("TonConnect SDK is NOT loaded — check script tag!");
+}
+
+// Create connector instance
+const connector = new TonConnect({
+    manifestUrl: location.origin + "/tonconnect-manifest.json"
+});
+
+// Wallet status listener
+connector.onStatusChange((walletInfo) => {
+    if (walletInfo?.account?.address) {
+        const address = walletInfo.account.address;
+        state.tonWallet = address;
+
+        renderFinancialInfo();
+
+        if (tg) {
+            tg.sendData(JSON.stringify({
+                action: "save_wallet",
+                address: address
+            }));
+        }
+    }
+});
+
+
 // Main Money WebApp frontend
 // This is a UI layer. Later we can connect it to real API endpoints.
 
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
-// =============== TON CONNECT INIT ===================
 
-const connector = new TonConnect({
-  manifestUrl: location.origin + "/tonconnect-manifest.json"
-});
-
-// Listen to wallet change events
-connector.onStatusChange((walletInfo) => {
-  if (walletInfo?.account?.address) {
-    const address = walletInfo.account.address;
-    state.tonWallet = address;
-
-    // Save on UI
-    renderFinancialInfo();
-
-    // Send to bot backend (via Telegram Main Button callback)
-    if (tg) {
-      tg.sendData(JSON.stringify({
-        action: "save_wallet",
-        address: address
-      }));
-    }
-  }
-});
 
 document.getElementById("btn-connect-ton").addEventListener("click", async () => {
   try {
