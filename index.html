@@ -2,212 +2,212 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>0059Bot</title>
+  <title>Main Money WebApp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
-  <div class="app-shell">
-
+  <div id="app">
     <!-- HEADER -->
-    <header class="header">
-      <div class="header-title">0059Bot</div>
-      <div class="header-balance">
-        <span id="balanceAmount">0.00 USDT</span>
+    <header class="mm-header">
+      <div class="mm-header-left">
+        <div class="mm-title">Main Money</div>
+        <div class="mm-subtitle">Earn • Invest • Withdraw</div>
+      </div>
+      <div class="mm-header-right">
+        <div class="mm-user-avatar" id="mm-avatar">
+          <span id="mm-avatar-initial">M</span>
+        </div>
       </div>
     </header>
 
-    <!-- HOME PAGE (GRID) -->
-    <main class="page" id="home-page">
-      <section class="grid">
-        <button class="tile" data-section="earn">
-          <img src="icons/earn.png" alt="">
-          <span data-i18n="tile_earn">Earn</span>
-        </button>
-        <button class="tile" data-section="invest">
-          <img src="icons/invest.png" alt="">
-          <span data-i18n="tile_invest">Invest</span>
-        </button>
-        <button class="tile" data-section="friends">
-          <img src="icons/friends.png" alt="">
-          <span data-i18n="tile_friends">Friends</span>
-        </button>
-
-        <button class="tile" data-section="tasks">
-          <img src="icons/tasks.png" alt="">
-          <span data-i18n="tile_tasks">Tasks</span>
-        </button>
-        <button class="tile" data-section="shop">
-          <img src="icons/shop.png" alt="">
-          <span data-i18n="tile_shop">Shop</span>
-        </button>
-        <button class="tile" data-section="games">
-          <img src="icons/games.png" alt="">
-          <span data-i18n="tile_games">Games</span>
-        </button>
-
-        <button class="tile" data-section="wallet">
-          <img src="icons/wallet.png" alt="">
-          <span data-i18n="tile_wallet">Wallet</span>
-        </button>
-        <button class="tile" data-section="clan">
-          <img src="icons/clan.png" alt="">
-          <span data-i18n="tile_clan">Clan</span>
-        </button>
-        <button class="tile" data-section="offers">
-          <img src="icons/offers.png" alt="">
-          <span data-i18n="tile_offers">Offers</span>
-        </button>
-      </section>
-
-      <section class="home-info">
-        <button id="invite-btn" class="primary-btn">INVITE FRIENDS</button>
-      </section>
-    </main>
-
-    <!-- 9 ՏԱԽԹԱԿԵՐԻ ԱՌԱՆձԻՆ ԷՋԵՐԸ -->
-
-    <main class="page hidden" id="page-earn">
-      <h2>Earn</h2>
-      <p>Tap the button to earn +0.10 USDT.</p>
-      <button class="primary-btn" id="btn-earn-tap">Tap to earn</button>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-invest">
-      <h2>Invest</h2>
-      <p>Future place for investments & staking.</p>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-friends">
-      <h2>Friends</h2>
-      <p>Invite your friends and grow your network.</p>
-      <button class="primary-btn" id="btn-invite-friends">Invite Friends</button>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-tasks">
-      <h2>Tasks</h2>
-      <ul class="simple-list">
-        <li>Follow Telegram channel</li>
-        <li>Watch partner video</li>
-        <li>Join our chat</li>
-      </ul>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-shop">
-      <h2>Shop</h2>
-      <p>Soon you will be able to spend USDT for items here.</p>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-games">
-      <h2>Games</h2>
-      <p>Mini games, tap-to-earn & more coming soon.</p>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-wallet">
-      <h2>Wallet</h2>
-
-      <div class="card">
-        <div class="row">
-          <span>Balance:</span>
-          <span id="wallet-balance">0.00 USDT</span>
+    <!-- TOP BALANCE CARD -->
+    <section class="mm-balance-card">
+      <div class="mm-balance-main">
+        <div class="mm-label">Total balance</div>
+        <div class="mm-balance-amount" id="mm-balance-amount">0.0000 USDT</div>
+      </div>
+      <div class="mm-balance-extra">
+        <div>
+          <div class="mm-label">VIP deposit</div>
+          <div class="mm-badge" id="mm-vip-deposit">0.00 USDT</div>
+        </div>
+        <div>
+          <div class="mm-label">TON wallet</div>
+          <div class="mm-badge mm-badge-ton" id="mm-ton-wallet">not linked</div>
         </div>
       </div>
+    </section>
 
-      <div class="card">
-        <h3>Telegram TON Wallet</h3>
-        <p>We use Telegram Wallet (TON). Open it to see your address & history.</p>
-        <button class="primary-btn" id="btn-open-ton-wallet">Open Telegram Wallet</button>
-      </div>
-
-      <div class="card">
-        <h3>Payout Wallet</h3>
-        <div id="wallet-attached" class="hidden">
-          <p><b>Network:</b> <span id="wallet-network-text"></span></p>
-          <p><b>Address:</b> <span id="wallet-address-text"></span></p>
-          <button class="secondary-btn" onclick="openEditWallet()">Edit wallet</button>
-        </div>
-
-        <div id="wallet-form">
-          <label for="wallet-network">Network</label>
-          <select id="wallet-network">
-            <option value="TON">TON</option>
-            <option value="TRC20">USDT TRC20</option>
-            <option value="ERC20">USDT ERC20</option>
-            <option value="BEP20">USDT BEP20</option>
-          </select>
-
-          <label for="wallet-address-input">Address</label>
-          <input id="wallet-address-input" type="text" placeholder="Enter your payout address" />
-
-          <button class="primary-btn" onclick="saveWallet()">Save wallet</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Withdraw</h3>
-        <input id="withdraw-amount" type="number" placeholder="Amount (USDT)" />
-        <button class="primary-btn" onclick="sendWithdraw()">Request withdraw</button>
-      </div>
-
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-clan">
-      <h2>Clan</h2>
-      <p>Here you can manage clans, rankings & bonuses (later).</p>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <main class="page hidden" id="page-offers">
-      <h2>Offers</h2>
-      <p>Partner offers & external tasks will appear here.</p>
-      <button class="back-btn" onclick="goHome()">← Back</button>
-    </main>
-
-    <!-- ACTIVITY PAGE (NAV) -->
-    <main class="page hidden" id="page-activity">
-      <h2>Activity</h2>
-      <p>History of earnings, tasks and withdrawals will appear here.</p>
-    </main>
-
-    <!-- MESSAGES PAGE (NAV) -->
-    <main class="page hidden" id="page-messages">
-      <h2>Messages</h2>
-      <p>System messages and announcements will appear here.</p>
-    </main>
-
-    <!-- SETTINGS PAGE (NAV) -->
-    <main class="page hidden" id="settings-page">
-      <h2>Settings</h2>
-
-      <div class="card">
-        <div class="row clickable" id="lang-row">
-          <span>Language</span>
-          <span id="current-lang">English</span>
-        </div>
-        <div id="lang-dropdown" class="lang-dropdown hidden">
-          <div onclick="changeLang('en')">🇬🇧 English</div>
-          <div onclick="changeLang('ru')">🇷🇺 Русский</div>
-        </div>
-      </div>
-    </main>
-
-    <!-- BOTTOM NAV -->
-    <nav class="bottom-nav">
-      <button class="nav-item nav-active" data-tab="home">🏠</button>
-      <button class="nav-item" data-tab="activity">📊</button>
-      <button class="nav-item" data-tab="messages">✉️</button>
-      <button class="nav-item" data-tab="settings">⚙️</button>
+    <!-- NAV TABS -->
+    <nav class="mm-tabs">
+      <button class="mm-tab active" data-tab="dashboard">Dashboard</button>
+      <button class="mm-tab" data-tab="tasks">Tasks</button>
+      <button class="mm-tab" data-tab="vip">VIP</button>
+      <button class="mm-tab" data-tab="wallet">Wallet</button>
+      <button class="mm-tab" data-tab="profile">Profile</button>
     </nav>
 
+    <!-- PAGES WRAPPER -->
+    <main class="mm-pages">
+
+      <!-- DASHBOARD PAGE -->
+      <section class="mm-page active" id="page-dashboard">
+        <div class="mm-section-title">Today overview</div>
+
+        <div class="mm-card mm-card-row">
+          <div>
+            <div class="mm-label">Tasks completed today</div>
+            <div class="mm-big-number" id="mm-today-completed">0 / 3</div>
+          </div>
+          <div>
+            <div class="mm-label">Earned today</div>
+            <div class="mm-big-number" id="mm-today-earned">0.0000</div>
+          </div>
+        </div>
+
+        <div class="mm-section-title">Quick actions</div>
+        <div class="mm-grid">
+          <button class="mm-action-btn" id="btn-open-tasks">
+            <span>📋</span>
+            <span>Earn tasks</span>
+          </button>
+          <button class="mm-action-btn" id="btn-open-vip">
+            <span>⭐</span>
+            <span>VIP zone</span>
+          </button>
+          <button class="mm-action-btn" id="btn-open-wallet">
+            <span>💼</span>
+            <span>Balance</span>
+          </button>
+          <button class="mm-action-btn" id="btn-open-withdraw">
+            <span>💸</span>
+            <span>Withdraw</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- TASKS PAGE -->
+      <section class="mm-page" id="page-tasks">
+        <div class="mm-section-title">VIP tasks for today</div>
+        <p class="mm-muted">
+          Complete all tasks to get your daily 5% from VIP deposit.  
+          Tasks list here is a demo — later we will load them from the bot API.
+        </p>
+
+        <div class="mm-task-list" id="mm-task-list">
+          <!-- Tasks will be rendered by app.js -->
+        </div>
+
+        <button class="mm-primary-btn" id="btn-refresh-tasks">
+          🔄 Refresh tasks
+        </button>
+      </section>
+
+      <!-- VIP PAGE -->
+      <section class="mm-page" id="page-vip">
+        <div class="mm-section-title">VIP zone</div>
+        <div class="mm-card">
+          <p>
+            In VIP zone you invest USDT and every day receive 3 tasks.  
+            Total daily reward = <b>5% of your VIP deposit</b>.
+          </p>
+          <ul class="mm-list">
+            <li>⭐ Admin adds your deposit from backoffice</li>
+            <li>📅 Every day 3 tasks are generated automatically</li>
+            <li>✅ Mark each task as completed inside the bot</li>
+            <li>💰 Rewards go directly to your Main Money balance</li>
+          </ul>
+        </div>
+
+        <div class="mm-card mm-card-row">
+          <div>
+            <div class="mm-label">Your VIP deposit</div>
+            <div class="mm-big-number" id="mm-vip-deposit-2">0.00 USDT</div>
+          </div>
+          <div>
+            <div class="mm-label">Approx. daily 5%</div>
+            <div class="mm-big-number" id="mm-vip-daily">0.00 USDT</div>
+          </div>
+        </div>
+
+        <p class="mm-muted">
+          To increase your VIP deposit, contact admin inside the bot.
+        </p>
+      </section>
+
+      <!-- WALLET PAGE -->
+      <section class="mm-page" id="page-wallet">
+        <div class="mm-section-title">Wallet & Withdraw</div>
+
+        <div class="mm-card">
+          <div class="mm-row-space">
+            <div>
+              <div class="mm-label">Main balance</div>
+              <div class="mm-big-number" id="mm-wallet-balance">0.0000 USDT</div>
+            </div>
+            <div>
+              <div class="mm-label">MIN withdraw</div>
+              <div class="mm-badge">10 USDT</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mm-card">
+          <div class="mm-row-space">
+            <div>
+              <div class="mm-label">TON wallet</div>
+              <div id="mm-wallet-ton-label" class="mm-ton-label">not linked</div>
+            </div>
+            <button class="mm-secondary-btn" id="btn-connect-ton">
+              🔗 Connect TON
+            </button>
+          </div>
+          <p class="mm-muted small">
+            When you press "Connect TON", Telegram Wallet will open.  
+            Copy your TON address and send it to the bot in chat.
+          </p>
+        </div>
+
+        <div class="mm-card">
+          <div class="mm-label">Withdraw</div>
+          <p class="mm-muted small">
+            To request withdraw, go to "Balance & Withdraw" inside the bot.  
+            WebApp only shows your financial status.
+          </p>
+          <button class="mm-primary-btn" id="btn-open-bot-withdraw">
+            💸 Open bot withdraw screen
+          </button>
+        </div>
+      </section>
+
+      <!-- PROFILE PAGE -->
+      <section class="mm-page" id="page-profile">
+        <div class="mm-section-title">Profile</div>
+
+        <div class="mm-card mm-card-profile">
+          <div class="mm-user-avatar big">
+            <span id="mm-avatar-initial-big">M</span>
+          </div>
+          <div class="mm-profile-info">
+            <div class="mm-profile-name" id="mm-profile-name">User</div>
+            <div class="mm-profile-username" id="mm-profile-username">@username</div>
+            <div class="mm-profile-id" id="mm-profile-id">ID: 0</div>
+          </div>
+        </div>
+
+        <div class="mm-card">
+          <div class="mm-label">About Main Money</div>
+          <p class="mm-muted">
+            Main Money is a Telegram-based earning platform with VIP investment
+            mechanics and manual withdrawals via admin.  
+            Always invest responsibly and only what you can afford to risk.
+          </p>
+        </div>
+      </section>
+    </main>
   </div>
 </body>
 </html>

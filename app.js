@@ -1,408 +1,264 @@
-const API_BASE = ""; // same domain (Render) – leave empty
+// Main Money WebApp frontend
+// This is a UI layer. Later we can connect it to real API endpoints.
 
-// --------------- TELEGRAM HELPERS ---------------
-function tg() {
-  return window.Telegram && Telegram.WebApp ? Telegram.WebApp : null;
-}
+const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
-function tgAlert(msg) {
-  const t = tg();
-  if (t && t.showAlert) t.showAlert(msg);
-  else alert(msg);
-}
-
-function getUserId() {
-  const t = tg();
-  return t?.initDataUnsafe?.user?.id || null;
-}
-
-
-
-// --------------- LANGUAGE ---------------
-let currentLang = "en";
-
-function loadLang() {
-  try {
-    const saved = localStorage.getItem("lang_0059");
-    if (saved && (saved === "en" || saved === "ru")) {
-      currentLang = saved;
-    }
-  } catch (e) {}
-}
-
-function applyLang() {
-  const label = document.getElementById("current-lang");
-  if (label) label.textContent = currentLang === "ru" ? "Русский" : "English";
-
-  const inviteBtn = document.getElementById("invite-btn");
-  const inviteFriendsBtn = document.getElementById("btn-invite-friends");
-  const text = currentLang === "ru" ? "ПРИГЛАСИТЬ ДРУЗЕЙ" : "INVITE FRIENDS";
-  if (inviteBtn) inviteBtn.textContent = text;
-  if (inviteFriendsBtn) inviteFriendsBtn.textContent = text;
-}
-
-function changeLang(lang) {
-  currentLang = lang;
-  try {
-    localStorage.setItem("lang_0059", lang);
-  } catch (e) {}
-  applyLang();
-  const dd = document.getElementById("lang-dropdown");
-  if (dd) dd.classList.add("hidden");
-}
-
-// --------------- PAGE NAVIGATION ---------------
-function showPage(pageId) {
-  document.querySelectorAll(".page").forEach((el) => el.classList.add("hidden"));
-  const page = document.getElementById(pageId);
-  if (page) page.classList.remove("hidden");
-
-  // եթե wallet էջ է՝ բեռնում ենք տվյալները
-  if (pageId === "page-wallet") {
-    loadBalance();
-    loadWalletInfo();
-  }
-  if (pageId === "home-page") {
-    loadBalance();
-  }
-}
-
-function goHome() {
-  showPage("home-page");
-  setActiveNav("home");
-}
-
-function setActiveNav(tab) {
-  document.querySelectorAll(".nav-item").forEach((btn) => {
-    btn.classList.remove("nav-active");
-  });
-  const btn = document.querySelector(`.nav-item[data-tab="${tab}"]`);
-  if (btn) btn.classList.add("nav-active");
-}
-
-// --------------- BOTTOM NAV INIT ---------------
-function initBottomNav() {
-  document.querySelectorAll(".nav-item").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const tab = btn.getAttribute("data-tab");
-      if (tab === "home") {
-        showPage("home-page");
-      } else if (tab === "activity") {
-        showPage("page-activity");
-      } else if (tab === "messages") {
-        showPage("page-messages");
-      } else if (tab === "settings") {
-        showPage("settings-page");
-      }
-      setActiveNav(tab);
-    });
-  });
-
-  const langRow = document.getElementById("lang-row");
-  const langDropdown = document.getElementById("lang-dropdown");
-  if (langRow && langDropdown) {
-    langRow.addEventListener("click", () => {
-      langDropdown.classList.toggle("hidden");
-    });
-  }
-}
-
-// --------------- HOME GRID TILES ---------------
-function initTiles() {
-  const map = {
-    earn: "page-earn",
-    invest: "page-invest",
-    friends: "page-friends",
-    tasks: "page-tasks",
-    shop: "page-shop",
-    games: "page-games",
-    wallet: "page-wallet",
-    clan: "page-clan",
-    offers: "page-offers",
-  };
-
-  document.querySelectorAll(".tile").forEach((tile) => {
-    tile.addEventListener("click", () => {
-      const sec = tile.getAttribute("data-section");
-      const pageId = map[sec];
-      if (pageId) {
-        showPage(pageId);
-      }
-    });
-  });
-}
-
-// --------------- BALANCE / EARN ---------------
-async function loadBalance() {
-  const uid = getUserId();
-  if (!uid) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/api/get_balance?user_id=${uid}`);
-    const data = await res.json();
-    if (!data.ok) return;
-    const bal = Number(data.balance || 0);
-    const text = bal.toFixed(2) + " USDT";
-    const headerBalance = document.getElementById("balanceAmount");
-    const walletBalance = document.getElementById("wallet-balance");
-    if (headerBalance) headerBalance.textContent = text;
-    if (walletBalance) walletBalance.textContent = text;
-  } catch (e) {
-    console.error("loadBalance error:", e);
-  }
-}
-
-async function tapEarn() {
-  const uid = getUserId();
-  if (!uid) {
-    tgAlert("User not found (Telegram).");
-    return;
-  }
-  try {
-    const res = await fetch(`${API_BASE}/api/add_earn`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: uid, amount: 0.1 }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      tgAlert("Error");
-      return;
-    }
-    const bal = Number(data.balance || 0);
-    const text = bal.toFixed(2) + " USDT";
-    const headerBalance = document.getElementById("balanceAmount");
-    const walletBalance = document.getElementById("wallet-balance");
-    if (headerBalance) headerBalance.textContent = text;
-    if (walletBalance) walletBalance.textContent = text;
-    tgAlert(`+0.10 USDT!\nNew balance: ${bal.toFixed(2)} USDT`);
-  } catch (e) {
-    console.error("tapEarn error:", e);
-  }
-}
-
-// --------------- FRIENDS / INVITE ---------------
-function inviteFriends() {
-  const t = tg();
-  const user = t?.initDataUnsafe?.user;
-  const username = user?.username || "";
-  const text =
-    currentLang === "ru"
-      ? `Присоединяйся ко мне в 0059Bot, ${username || "друг"}!`
-      : `Join 0059Bot with ${username || "me"}!`;
-  const url = "";
-
-  const link = `https://t.me/share/url?url=${encodeURIComponent(
-    url
-  )}&text=${encodeURIComponent(text)}`;
-
-  if (t && t.openTelegramLink) t.openTelegramLink(link);
-  else window.open(link, "_blank");
-}
-
-// --------------- TELEGRAM TON WALLET ---------------
-function openTonWallet() {
-  const t = tg();
-  if (t && t.openTelegramLink) {
-    t.openTelegramLink("https://t.me/wallet");
-  } else {
-    window.open("https://t.me/wallet", "_blank");
-  }
-}
-
-// --------------- WALLET API ---------------
-async function loadWalletInfo() {
-  const uid = getUserId();
-  if (!uid) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/api/get_wallet?user_id=${uid}`);
-    const data = await res.json();
-    if (!data.ok) return;
-
-    const attached = document.getElementById("wallet-attached");
-    const form = document.getElementById("wallet-form");
-    const ntext = document.getElementById("wallet-network-text");
-    const atext = document.getElementById("wallet-address-text");
-
-    if (data.address) {
-      if (attached) attached.classList.remove("hidden");
-      if (form) form.classList.add("hidden");
-      if (ntext) ntext.textContent = data.network || "";
-      if (atext) atext.textContent = data.address || "";
-    } else {
-      if (attached) attached.classList.add("hidden");
-      if (form) form.classList.remove("hidden");
-    }
-  } catch (e) {
-    console.error("loadWalletInfo error:", e);
-  }
-}
-
-async function saveWallet() {
-  const uid = getUserId();
-  if (!uid) {
-    tgAlert("User not found.");
-    return;
-  }
-  const netEl = document.getElementById("wallet-network");
-  const addrEl = document.getElementById("wallet-address-input");
-  const network = netEl?.value || "";
-  const address = addrEl?.value || "";
-
-  if (!network || !address) {
-    tgAlert("Fill all fields.");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/api/set_wallet`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: uid, network, address }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      tgAlert("Error saving wallet.");
-      return;
-    }
-    tgAlert("Wallet saved!");
-    loadWalletInfo();
-  } catch (e) {
-    console.error("saveWallet error:", e);
-  }
-}
-
-function openEditWallet() {
-  const attached = document.getElementById("wallet-attached");
-  const form = document.getElementById("wallet-form");
-  if (attached) attached.classList.add("hidden");
-  if (form) form.classList.remove("hidden");
-}
-
-async function sendWithdraw() {
-  const uid = getUserId();
-  if (!uid) {
-    tgAlert("User not found.");
-    return;
-  }
-  const amtEl = document.getElementById("withdraw-amount");
-  const amount = parseFloat(amtEl?.value || "0");
-
-  if (!amount || amount <= 0) {
-    tgAlert("Enter correct amount.");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE}/api/request_withdraw`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: uid, amount }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      if (data.error === "wallet_not_set") tgAlert("Attach payout wallet first.");
-      else if (data.error === "not_enough_balance") tgAlert("Not enough balance.");
-      else tgAlert("Error: " + data.error);
-      return;
-    }
-    tgAlert("Withdraw request sent!");
-    loadBalance();
-  } catch (e) {
-    console.error("sendWithdraw error:", e);
-  }
-}
-
-// --------------- INIT ---------------
-document.addEventListener("DOMContentLoaded", () => {
-  // Telegram init
-  const t = tg();
-  if (t) {
-    t.expand();
-    t.enableClosingConfirmation();
-  }
-
-  // Lang
-  loadLang();
-  applyLang();
-
-  // Nav / tiles
-  initBottomNav();
-  initTiles();
-
-  // Handlers
-  const homeInvite = document.getElementById("invite-btn");
-  if (homeInvite) homeInvite.addEventListener("click", inviteFriends);
-
-  const friendsInvite = document.getElementById("btn-invite-friends");
-  if (friendsInvite) friendsInvite.addEventListener("click", inviteFriends);
-
-  const btnEarnTap = document.getElementById("btn-earn-tap");
-  if (btnEarnTap) btnEarnTap.addEventListener("click", tapEarn);
-
-  const btnTonWallet = document.getElementById("btn-open-ton-wallet");
-  if (btnTonWallet) btnTonWallet.addEventListener("click", openTonWallet);
-
-  // First page
-  showPage("home-page");
-  setActiveNav("home");
-  loadBalance();
-});
-
-// expose some functions for inline handlers
-window.changeLang = changeLang;
-window.goHome = goHome;
-window.openEditWallet = openEditWallet;
-window.saveWallet = saveWallet;
-window.sendWithdraw = sendWithdraw;
-window.openTonWallet = openTonWallet;
-
-
-// =====================================================
-// I18N TRANSLATIONS (ADD THIS PART TO YOUR app.js FILE)
-// =====================================================
-
-const i18n = {
-  en: {
-    tile_earn: "Earn",
-    tile_invest: "Invest",
-    tile_friends: "Friends",
-    tile_tasks: "Tasks",
-    tile_shop: "Shop",
-    tile_games: "Games",
-    tile_wallet: "Wallet",
-    tile_clan: "Clan",
-    tile_offers: "Offers",
+const state = {
+  user: {
+    id: null,
+    username: null,
+    first_name: null,
   },
-
-  ru: {
-    tile_earn: "Заработок",
-    tile_invest: "Инвестиции",
-    tile_friends: "Друзья",
-    tile_tasks: "Задания",
-    tile_shop: "Магазин",
-    tile_games: "Игры",
-    tile_wallet: "Кошелёк",
-    tile_clan: "Клан",
-    tile_offers: "Офферы",
-  }
+  balance: 0,
+  vipDeposit: 0,
+  tonWallet: null,
+  todayTasks: [
+    {
+      id: 1,
+      title: "Watch partner video",
+      reward: 50,
+      status: "pending",
+    },
+    {
+      id: 2,
+      title: "Join Telegram channel",
+      reward: 50,
+      status: "pending",
+    },
+    {
+      id: 3,
+      title: "Stay in channel 5 min",
+      reward: 50,
+      status: "pending",
+    },
+  ],
 };
 
+// ----------------------- INIT -----------------------
 
-// =====================================================
-// UPDATE applyLang() TO THIS VERSION
-// =====================================================
-function applyLang() {
-  const dict = i18n[currentLang];
+document.addEventListener("DOMContentLoaded", () => {
+  initTelegram();
+  initTabs();
+  initQuickActions();
+  renderFromState();
+});
 
-  // փոփոխում է բոլոր data-i18n տեքստերը
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    const key = el.getAttribute("data-i18n");
-    if (dict[key]) el.textContent = dict[key];
+// Telegram init
+function initTelegram() {
+  if (tg) {
+    tg.expand();
+    tg.enableClosingConfirmation();
+    const user = tg.initDataUnsafe?.user;
+    if (user) {
+      state.user.id = user.id;
+      state.user.username = user.username || null;
+      state.user.first_name = user.first_name || "User";
+
+      state.balance = 0;
+      state.vipDeposit = 0;
+      state.tonWallet = null;
+    }
+  } else {
+    // Demo mode (opened in browser)
+    state.user.id = 0;
+    state.user.username = "demo_user";
+    state.user.first_name = "Demo User";
+    state.balance = 123.4567;
+    state.vipDeposit = 1000;
+    state.tonWallet = "UQDxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  }
+}
+
+// ----------------------- UI RENDER -----------------------
+
+function renderFromState() {
+  renderUserProfile();
+  renderFinancialInfo();
+  renderTasks();
+}
+
+function renderUserProfile() {
+  const initial = (state.user.first_name || "M").charAt(0).toUpperCase();
+
+  const avatarSmall = document.getElementById("mm-avatar-initial");
+  const avatarBig = document.getElementById("mm-avatar-initial-big");
+  if (avatarSmall) avatarSmall.textContent = initial;
+  if (avatarBig) avatarBig.textContent = initial;
+
+  const name = document.getElementById("mm-profile-name");
+  const username = document.getElementById("mm-profile-username");
+  const id = document.getElementById("mm-profile-id");
+
+  if (name) name.textContent = state.user.first_name || "User";
+  if (username)
+    username.textContent = state.user.username
+      ? "@" + state.user.username
+      : "@unknown";
+  if (id) id.textContent = "ID: " + (state.user.id || "0");
+}
+
+function renderFinancialInfo() {
+  const balTxt = formatAmount(state.balance) + " USDT";
+  const depTxt = formatAmount(state.vipDeposit) + " USDT";
+
+  const balanceMain = document.getElementById("mm-balance-amount");
+  const vipDeposit = document.getElementById("mm-vip-deposit");
+  const vipDeposit2 = document.getElementById("mm-vip-deposit-2");
+  const vipDaily = document.getElementById("mm-vip-daily");
+  const walletBadge = document.getElementById("mm-ton-wallet");
+  const walletLabel = document.getElementById("mm-wallet-ton-label");
+  const walletBalance = document.getElementById("mm-wallet-balance");
+
+  if (balanceMain) balanceMain.textContent = balTxt;
+  if (walletBalance) walletBalance.textContent = balTxt;
+  if (vipDeposit) vipDeposit.textContent = depTxt;
+  if (vipDeposit2) vipDeposit2.textContent = depTxt;
+
+  const daily = state.vipDeposit * 0.05;
+  if (vipDaily) vipDaily.textContent = formatAmount(daily) + " USDT";
+
+  const walletTxt = state.tonWallet || "not linked";
+  if (walletBadge) walletBadge.textContent = walletTxt;
+  if (walletLabel) walletLabel.textContent = walletTxt;
+}
+
+function renderTasks() {
+  const container = document.getElementById("mm-task-list");
+  if (!container) return;
+  container.innerHTML = "";
+
+  let completed = 0;
+  let earned = 0;
+
+  state.todayTasks.forEach((task) => {
+    if (task.status === "completed") {
+      completed += 1;
+      earned += task.reward;
+    }
+
+    const item = document.createElement("div");
+    item.className = "mm-task-item";
+
+    const main = document.createElement("div");
+    main.className = "mm-task-main";
+
+    const title = document.createElement("div");
+    title.className = "mm-task-title";
+    title.textContent = task.title;
+
+    const meta = document.createElement("div");
+    meta.className = "mm-task-meta";
+    meta.textContent = `Reward: ${formatAmount(task.reward)} USDT`;
+
+    main.appendChild(title);
+    main.appendChild(meta);
+
+    const status = document.createElement("div");
+    status.className = "mm-task-status " + task.status;
+    status.textContent =
+      task.status === "pending" ? "Pending" : "Completed";
+
+    item.appendChild(main);
+    item.appendChild(status);
+
+    container.appendChild(item);
   });
 
-  // Փոխում է Settings-ի լեզվի անունը
-  const label = document.getElementById("current-lang");
-  if (label) label.textContent = currentLang === "ru" ? "Русский" : "English";
+  // update dashboard counters
+  const todayCompleted = document.getElementById("mm-today-completed");
+  const todayEarned = document.getElementById("mm-today-earned");
+  if (todayCompleted) todayCompleted.textContent = `${completed} / ${state.todayTasks.length}`;
+  if (todayEarned) todayEarned.textContent = formatAmount(earned);
+}
+
+// ----------------------- TABS & NAV -----------------------
+
+function initTabs() {
+  const tabs = document.querySelectorAll(".mm-tab");
+  const pages = document.querySelectorAll(".mm-page");
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const target = tab.getAttribute("data-tab");
+
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      pages.forEach((p) => p.classList.remove("active"));
+      const page = document.getElementById("page-" + target);
+      if (page) page.classList.add("active");
+    });
+  });
+}
+
+// quick actions from Dashboard
+function initQuickActions() {
+  const openTasks = document.getElementById("btn-open-tasks");
+  const openVip = document.getElementById("btn-open-vip");
+  const openWallet = document.getElementById("btn-open-wallet");
+  const openWithdraw = document.getElementById("btn-open-withdraw");
+  const refreshTasks = document.getElementById("btn-refresh-tasks");
+  const connectTon = document.getElementById("btn-connect-ton");
+  const openBotWithdraw = document.getElementById("btn-open-bot-withdraw");
+
+  if (openTasks) {
+    openTasks.addEventListener("click", () => switchToTab("tasks"));
+  }
+  if (openVip) {
+    openVip.addEventListener("click", () => switchToTab("vip"));
+  }
+  if (openWallet) {
+    openWallet.addEventListener("click", () => switchToTab("wallet"));
+  }
+  if (openWithdraw) {
+    openWithdraw.addEventListener("click", () => switchToTab("wallet"));
+  }
+  if (refreshTasks) {
+    refreshTasks.addEventListener("click", () => {
+      // Քանի դեռ backend API չունենք, ուղղակի ցնցում ենք UI-ն
+      renderTasks();
+      showToast("Tasks refreshed (demo)");
+    });
+  }
+  if (connectTon) {
+    connectTon.addEventListener("click", () => {
+      if (tg && tg.openTelegramLink) {
+        tg.openTelegramLink("https://t.me/wallet");
+      } else {
+        window.open("https://t.me/wallet", "_blank");
+      }
+    });
+  }
+  if (openBotWithdraw) {
+    openBotWithdraw.addEventListener("click", () => {
+      if (tg && tg.close) {
+        showToast("Open bot and press \"Balance & Withdraw\" button.");
+        tg.close();
+      } else {
+        showToast("Open the bot chat and use the withdraw button.");
+      }
+    });
+  }
+}
+
+function switchToTab(tabName) {
+  const tabBtn = document.querySelector(`.mm-tab[data-tab="${tabName}"]`);
+  if (!tabBtn) return;
+  tabBtn.click();
+}
+
+// ----------------------- HELPERS -----------------------
+
+function formatAmount(value) {
+  const num = Number(value || 0);
+  return num.toFixed(4);
+}
+
+// small toast (uses Telegram alert if inside WebApp)
+function showToast(msg) {
+  if (tg && tg.showAlert) {
+    tg.showAlert(msg);
+  } else {
+    alert(msg);
+  }
 }
