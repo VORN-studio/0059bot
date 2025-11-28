@@ -314,6 +314,31 @@ def admin_menu_text():
 
 # ===================== HANDLERS =====================
 
+from telegram.ext import CallbackQueryHandler, MessageHandler, filters, Application, CommandHandler, ContextTypes, CallbackQueryHandler, PreCheckoutQueryHandler
+
+async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        raw = update.effective_message.web_app_data.data
+        data = json.loads(raw)
+
+        if data.get("action") == "save_wallet":
+            wallet = data.get("address")
+            user = update.effective_user
+            user_row = get_user_by_tg_id(user.id)
+            if not user_row:
+                ensure_user(user)
+                user_row = get_user_by_tg_id(user.id)
+
+            set_ton_wallet(user_row["id"], wallet)
+
+            await update.message.reply_text(
+                f"🔗 TON Wallet connected successfully!\n<code>{wallet}</code>",
+                parse_mode="HTML"
+            )
+    except Exception as e:
+        print("WebApp data error:", e)
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     user_id = ensure_user(user)
@@ -847,6 +872,8 @@ def main():
     app.add_handler(CommandHandler("list_withdraws", list_withdraws_cmd))
     app.add_handler(CommandHandler("approve_withdraw", approve_withdraw_cmd))
     app.add_handler(CommandHandler("reject_withdraw", reject_withdraw_cmd))
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))
+
 
     # callbacks
     app.add_handler(CallbackQueryHandler(callback_handler))

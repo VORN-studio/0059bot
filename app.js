@@ -3,6 +3,40 @@
 
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
+// =============== TON CONNECT INIT ===================
+
+const connector = new TON_CONNECT.TonConnect({
+  manifestUrl: location.origin + "/tonconnect-manifest.json"
+});
+
+// Listen to wallet change events
+connector.onStatusChange((walletInfo) => {
+  if (walletInfo?.account?.address) {
+    const address = walletInfo.account.address;
+    state.tonWallet = address;
+
+    // Save on UI
+    renderFinancialInfo();
+
+    // Send to bot backend (via Telegram Main Button callback)
+    if (tg) {
+      tg.sendData(JSON.stringify({
+        action: "save_wallet",
+        address: address
+      }));
+    }
+  }
+});
+
+document.getElementById("btn-connect-ton").addEventListener("click", async () => {
+  try {
+    await connector.connectWallet();
+  } catch (e) {
+    showToast("Wallet connection failed");
+  }
+});
+
+
 const state = {
   user: {
     id: null,
