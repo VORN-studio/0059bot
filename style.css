@@ -15,6 +15,12 @@
   --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.6);
   --transition-fast: 0.18s ease-out;
   --font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(14px);
+  --glow-green: 0 0 18px rgba(34, 197, 94, 0.25);
+  --glow-accent: 0 0 22px rgba(45, 212, 191, 0.25);
+
 }
 
 *,
@@ -113,9 +119,11 @@ body {
 }
 
 .mm-label {
-  font-size: 11px;
-  color: var(--text-soft);
+  font-size: 12px;
+  color: rgba(229, 231, 235, 0.7);
+  letter-spacing: 0.3px;
 }
+
 
 .mm-balance-amount {
   font-size: 22px;
@@ -203,19 +211,21 @@ body {
 /* CARDS */
 
 .mm-card {
-  background: rgba(15, 23, 42, 0.85);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  padding: 10px 11px;
-  margin-bottom: 10px;
+  border: 1px solid var(--glass-border);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  transition: 0.25s ease;
 }
 
-.mm-card-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
+.mm-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glow-green);
+  border-color: rgba(34, 197, 94, 0.35);
 }
+
 
 .mm-row-space {
   display: flex;
@@ -277,30 +287,36 @@ body {
 
 /* BUTTONS */
 
-.mm-primary-btn,
-.mm-secondary-btn {
-  width: 100%;
-  border-radius: 14px;
-  border: none;
-  padding: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 4px;
-}
-
 .mm-primary-btn {
-  background: radial-gradient(circle at top, #22c55e, #16a34a);
-  color: #022c22;
-  border: 1px solid rgba(22, 163, 74, 0.9);
-  box-shadow: 0 12px 30px rgba(22, 163, 74, 0.45);
+  background: linear-gradient(145deg, #22c55e, #15803d);
+  color: #e6ffe6;
+  border: none;
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 22px rgba(34, 197, 94, 0.35);
+  transition: 0.2s ease;
 }
 
-.mm-secondary-btn {
-  background: rgba(15, 23, 42, 0.9);
-  color: var(--text);
-  border: 1px solid #4b5563;
+.mm-primary-btn:active {
+  transform: scale(0.96);
 }
+
+
+.mm-secondary-btn {
+  background: rgba(30, 41, 59, 0.65);
+  color: #d9dce3;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 12px;
+  padding: 10px;
+  transition: 0.2s ease;
+}
+
+.mm-secondary-btn:active {
+  transform: scale(0.96);
+}
+
 
 /* TASKS */
 
@@ -407,3 +423,23 @@ body {
     font-size: 19px;
   }
 }
+
+@keyframes soft-breath {
+  0% { transform: scale(1); opacity: 0.98; }
+  50% { transform: scale(1.005); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.98; }
+}
+
+#app {
+  animation: soft-breath 8s infinite ease-in-out;
+}
+
+.mm-page {
+  animation: fade-in 0.35s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
