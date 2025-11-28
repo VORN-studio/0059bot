@@ -1,15 +1,14 @@
 // ====================== TON CONNECT INIT =======================
 
-// TonConnect SDK creates a global object window.TonConnectSDK
-// We must take TonConnect class from there
-const TonConnect = window.TonConnectSDK?.TonConnect;
+// TonConnect class comes from global window.TonConnect (loaded in index.html)
+const TonConnectClass = window.TonConnect;
 
-if (!TonConnect) {
-    console.error("TonConnect SDK is NOT loaded — check script tag!");
+if (!TonConnectClass) {
+    console.error("TonConnect SDK not loaded");
 }
 
 // Create connector instance
-const connector = new TonConnect({
+const connector = new TonConnectClass({
     manifestUrl: location.origin + "/tonconnect-manifest.json"
 });
 
