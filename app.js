@@ -45,6 +45,30 @@ document.getElementById("btn-connect-ton").addEventListener("click", async () =>
   }
 });
 
+let tonUI = null;
+let tonWallet = null;
+
+function initTon() {
+  tonUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: "https://vorn-studio.github.io/0059bot/tonconnect-manifest.json",
+  });
+
+  tonUI.onStatusChange((wallet) => {
+    tonWallet = wallet;
+    updateTonUI();
+  });
+}
+
+function updateTonUI() {
+  document.getElementById("wallet-status").textContent =
+    tonWallet ? "Connected" : "Not Connected";
+
+  document.getElementById("wallet-address").textContent = tonWallet
+    ? tonWallet.account.address.slice(0, 6) + "..." +
+      tonWallet.account.address.slice(-4)
+    : "—";
+}
+
 
 const state = {
   user: {
