@@ -251,7 +251,7 @@ function initQuickActions() {
     refreshTasks.addEventListener("click", () => {
       // Քանի դեռ backend API չունենք, ուղղակի ցնցում ենք UI-ն
       renderTasks();
-      showToast("Tasks refreshed (demo)");
+      // showToast("Tasks refreshed (demo)");
     });
   }
   if (connectTon) {
@@ -273,6 +273,25 @@ function initQuickActions() {
       }
     });
   }
+  const inviteFriends = document.getElementById("btn-invite-friends");
+  if (inviteFriends) {
+    inviteFriends.addEventListener("click", () => {
+      const uid = state.user.id || 0;
+
+      const deepLink = `https://t.me/MainMoneyBot?start=ref_${uid}`;
+      const shareText = "Join Main Money and earn with me!";
+      const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(shareText)}`;
+
+      if (tg && tg.openTelegramLink) {
+        tg.openTelegramLink(shareUrl);
+      } else {
+        window.open(shareUrl, "_blank");
+      }
+    });
+  }
+
+
+
 }
 
 function switchToTab(tabName) {
