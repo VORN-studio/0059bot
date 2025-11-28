@@ -10,8 +10,8 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 # ==========================
 # CONFIG
 # ==========================
-TOKEN = "YOUR_BOT_TOKEN_HERE"        # ← ԴУՔ ԴՆԵՍ ՔՈ TOKEN-Ը
-WEBAPP_URL = "https://your-domain.onrender.com"  # ← ԴՆԵՍ ՔՈ WEBAPP LINK-Ը
+TOKEN = "8001785392:AAFlfF-SkcJJqG52GCsWT7calY9YLe1aqGw"        # ← ԴУՔ ԴՆԵՍ ՔՈ TOKEN-Ը
+WEBAPP_URL = "https://vorn-studio.github.io/0059bot/"  # ← ԴՆԵՍ ՔՈ WEBAPP LINK-Ը
 DB_PATH = os.path.join(os.path.dirname(__file__), "bot.db")
 
 logging.basicConfig(level=logging.INFO)

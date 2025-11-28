@@ -16,6 +16,8 @@ function getUserId() {
   return t?.initDataUnsafe?.user?.id || null;
 }
 
+
+
 // --------------- LANGUAGE ---------------
 let currentLang = "en";
 
@@ -355,3 +357,52 @@ window.openEditWallet = openEditWallet;
 window.saveWallet = saveWallet;
 window.sendWithdraw = sendWithdraw;
 window.openTonWallet = openTonWallet;
+
+
+// =====================================================
+// I18N TRANSLATIONS (ADD THIS PART TO YOUR app.js FILE)
+// =====================================================
+
+const i18n = {
+  en: {
+    tile_earn: "Earn",
+    tile_invest: "Invest",
+    tile_friends: "Friends",
+    tile_tasks: "Tasks",
+    tile_shop: "Shop",
+    tile_games: "Games",
+    tile_wallet: "Wallet",
+    tile_clan: "Clan",
+    tile_offers: "Offers",
+  },
+
+  ru: {
+    tile_earn: "Заработок",
+    tile_invest: "Инвестиции",
+    tile_friends: "Друзья",
+    tile_tasks: "Задания",
+    tile_shop: "Магазин",
+    tile_games: "Игры",
+    tile_wallet: "Кошелёк",
+    tile_clan: "Клан",
+    tile_offers: "Офферы",
+  }
+};
+
+
+// =====================================================
+// UPDATE applyLang() TO THIS VERSION
+// =====================================================
+function applyLang() {
+  const dict = i18n[currentLang];
+
+  // փոփոխում է բոլոր data-i18n տեքստերը
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n");
+    if (dict[key]) el.textContent = dict[key];
+  });
+
+  // Փոխում է Settings-ի լեզվի անունը
+  const label = document.getElementById("current-lang");
+  if (label) label.textContent = currentLang === "ru" ? "Русский" : "English";
+}
