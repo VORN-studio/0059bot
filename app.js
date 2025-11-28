@@ -5,7 +5,7 @@ const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : 
 
 // =============== TON CONNECT INIT ===================
 
-const connector = new TON_CONNECT.TonConnect({
+const connector = new TonConnect({
   manifestUrl: location.origin + "/tonconnect-manifest.json"
 });
 
