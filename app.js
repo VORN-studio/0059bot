@@ -5,7 +5,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
 
-document.getElementById("btn-connect-ton").onclick = () => tonUI.openModal();
+
 
 
 let tonUI = null;
@@ -68,6 +68,7 @@ const state = {
 
 document.addEventListener("DOMContentLoaded", () => {
   initTelegram();
+  initTon();          // ← ԱՅՍ ՏՈՂՆ ԱՎԵԼԱՑՐՈՒ
   initTabs();
   initQuickActions();
   renderFromState();
@@ -251,14 +252,15 @@ function initQuickActions() {
     });
   }
   if (connectTon) {
-    connectTon.addEventListener("click", () => {
-      if (tg && tg.openTelegramLink) {
-        tg.openTelegramLink("https://t.me/wallet");
-      } else {
-        window.open("https://t.me/wallet", "_blank");
-      }
-    });
-  }
+  connectTon.addEventListener("click", () => {
+    if (!tonUI) {
+      showToast("Wallet module not ready yet");
+      return;
+    }
+    tonUI.openModal();
+  });
+}
+
   if (openBotWithdraw) {
     openBotWithdraw.addEventListener("click", () => {
       if (tg && tg.close) {
