@@ -359,14 +359,14 @@ document.getElementById("ton-confirm").addEventListener("click", async () => {
 
   if (openBotWithdraw) {
     openBotWithdraw.addEventListener("click", () => {
-      if (tg && tg.close) {
-        showToast("Open bot and press \"Balance & Withdraw\" button.");
-        tg.close();
-      } else {
-        showToast("Open the bot chat and use the withdraw button.");
-      }
+        if (tg && tg.openTelegramLink) {
+            tg.openTelegramLink("https://t.me/n0059_bot?start=withdraw");
+        } else {
+            window.open("https://t.me/n0059_bot?start=withdraw", "_blank");
+        }
     });
-  }
+}
+
   const inviteFriends = document.getElementById("btn-invite-friends");
   if (inviteFriends) {
     inviteFriends.addEventListener("click", () => {

@@ -361,6 +361,11 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     except Exception as e:
         print("WebApp data error:", e)
 
+async def withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "💸 Withdraw Menu\nChoose how much to withdraw…",
+        reply_markup=main_menu_kb()
+    )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -896,6 +901,7 @@ def main():
     app.add_handler(CommandHandler("approve_withdraw", approve_withdraw_cmd))
     app.add_handler(CommandHandler("reject_withdraw", reject_withdraw_cmd))
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))
+    app.add_handler(CommandHandler("withdraw", withdraw_cmd))
 
 
     # callbacks
