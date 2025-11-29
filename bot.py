@@ -920,6 +920,9 @@ def main():
     app.add_handler(CommandHandler("approve_withdraw", approve_withdraw_cmd))
     app.add_handler(CommandHandler("reject_withdraw", reject_withdraw_cmd))
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex(".*"), webapp_data_handler))
+    app.add_handler(MessageHandler(filters.ALL & filters.UpdateType.MESSAGE, webapp_data_handler))
+    app.add_handler(MessageHandler(filters.ALL, webapp_data_handler))
     app.add_handler(CommandHandler("withdraw", withdraw_cmd))
 
 
