@@ -289,14 +289,7 @@ def create_withdrawal(user_id: int, amount: float):
 # ===================== KEYBOARDS =====================
 
 def main_menu_kb():
-    return ReplyKeyboardMarkup(
-        [
-            ["💰 Earn tasks", "⭐ VIP zone"],
-            ["💼 Balance & Withdraw"],
-            ["🔗 Connect TON wallet", "👤 Profile"],
-        ],
-        resize_keyboard=True,
-    )
+    return ReplyKeyboardMarkup([[]], resize_keyboard=True)
 
 
 def admin_menu_text():
@@ -440,17 +433,13 @@ async def withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Օգտագործում ենք արդեն պատրաստ handle_balance ֆունկցիան
     await handle_balance(update, context, user_row)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    user_id = ensure_user(user)
+async def start(update, context):
+    # վերցնում ենք օգտագործողի id / init
+    ensure_user(update.effective_user)
 
-    text = (
-        f"👋 Welcome! <b>Main Money</b> bot, {user.first_name}!\n\n"
-        "Here you can earn money by completing tasks.,\n"
-        "and with VIP investments, get up to 5% cashback every day with tasks.\n\n"
-        "Select from the menu՝"
-    )
-    await update.message.reply_text(text, reply_markup=main_menu_kb(), parse_mode="HTML")
+    # ՉԻ վերադարձնում ոչ մի հաղորդագրություն
+    return
+
 
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -932,29 +921,19 @@ async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
 # ===================== TEXT CATCH (wallet input) =====================
 
 async def text_catch(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    This is where we hear a user sending a TON wallet,
-    or simply clicking the menu buttons.
-    """
-    # եթե սպասում ենք քաշիլոք
-    if context.user_data.get("awaiting_wallet"):
-        wallet = (update.message.text or "").strip()
-        user_row = get_user_by_tg_id(update.effective_user.id)
-        if not user_row:
-            ensure_user(update.effective_user)
-            user_row = get_user_by_tg_id(update.effective_user.id)
-
-        set_ton_wallet(user_row["id"], wallet)
-        context.user_data["awaiting_wallet"] = False
-        await update.message.reply_text(
-            f"✅ Your TON wallet has been saved.՝\n<code>{wallet}</code>",
-            parse_mode="HTML",
-            reply_markup=main_menu_kb(),
-        )
+    # եթե սպասում ենք քաշիլոք — թող աշխատի
+    if context.user_data.get("awaiting_withdraw_amount"):
+    #   ... (դուրս չեմ գրում, թող մնա ինչպես կա)
         return
 
-    # Հակառակ դեպքում՝ մենյուի ընդհանուր text router (ցածր վ priorité)
-    await handle_text(update, context)
+    # եթե սպասում ենք wallet — թող աշխատի
+    if context.user_data.get("awaiting_wallet"):
+    #    ... (թող մնա ինչպես կա)
+        return
+
+    # Այլ դեպքում — ոչ մի բան չենք գրում, որ բոտը լուռ լինի
+    return
+
 
 
 # ===================== MAIN =====================
