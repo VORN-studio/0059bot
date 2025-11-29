@@ -117,8 +117,8 @@ function renderUserProfile() {
 }
 
 function renderFinancialInfo() {
-  const balTxt = formatAmount(state.balance) + " USDT";
-  const depTxt = formatAmount(state.vipDeposit) + " USDT";
+  const balTxt = formatAmount(state.balance) + " TON";
+  const depTxt = formatAmount(state.vipDeposit) + " TON";
 
   const balanceMain = document.getElementById("mm-balance-amount");
   const vipDeposit = document.getElementById("mm-vip-deposit");
@@ -134,7 +134,7 @@ function renderFinancialInfo() {
   if (vipDeposit2) vipDeposit2.textContent = depTxt;
 
   const daily = state.vipDeposit * 0.05;
-  if (vipDaily) vipDaily.textContent = formatAmount(daily) + " USDT";
+  if (vipDaily) vipDaily.textContent = formatAmount(daily) + " TON";
 
   const walletTxt = state.tonWallet || "not linked";
   if (walletBadge) walletBadge.textContent = walletTxt;
@@ -220,7 +220,7 @@ function renderTasks() {
 
     const meta = document.createElement("div");
     meta.className = "mm-task-meta";
-    meta.textContent = `Reward: ${formatAmount(task.reward)} USDT`;
+    meta.textContent = `Reward: ${formatAmount(task.reward)} TON`;
 
     main.appendChild(title);
     main.appendChild(meta);
@@ -275,44 +275,50 @@ function initQuickActions() {
   const buyVip = document.getElementById("btn-buy-vip");
 
   if (buyVip) {
-    buyVip.addEventListener("click", async () => {
-
-        // 1) հարցնում ենք օգտագործողին՝ ինչքա՞ն TON ուզում է ներդնի
-        let amount = prompt("Enter amount in TON:");
-
-        if (!amount || isNaN(amount) || Number(amount) <= 0) {
-            showToast("Invalid amount");
-            return;
-        }
-
-        amount = Number(amount);
-
-        // 2) TONConnect վճարում
-        try {
-            await tonUI.sendTransaction({
-                validUntil: Math.floor(Date.now() / 1000) + 300,
-                messages: [
-                    {
-                        address: "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW",
-                        amount: (amount * 1e9).toString()
-                    }
-                ]
-            });
-
-            showToast("⏳ Waiting for payment confirmation...");
-
-            // 3) Payment success → ուղարկում ենք bot-ին
-            tg.sendData(JSON.stringify({
-                action: "vip_payment",
-                ton: amount
-            }));
-
-            showToast("Payment sent! Wait for confirmation.");
-        } catch (e) {
-            showToast("Payment failed or cancelled.");
-        }
+    buyVip.addEventListener("click", () => {
+        document.getElementById("ton-modal").classList.remove("hidden");
     });
-  }
+}
+
+// Cancel button
+document.getElementById("ton-cancel").addEventListener("click", () => {
+    document.getElementById("ton-modal").classList.add("hidden");
+});
+
+// Confirm payment button
+document.getElementById("ton-confirm").addEventListener("click", async () => {
+    const amount = Number(document.getElementById("ton-amount-input").value);
+
+    if (!amount || amount <= 0) {
+        showToast("Invalid amount");
+        return;
+    }
+
+    document.getElementById("ton-modal").classList.add("hidden");
+
+    try {
+        await tonUI.sendTransaction({
+            validUntil: Math.floor(Date.now() / 1000) + 300,
+            messages: [
+                {
+                    address: MERCHANT_TON,
+                    amount: (amount * 1e9).toString()
+                }
+            ]
+        });
+
+        showToast("⏳ Waiting for payment confirmation...");
+
+        tg.sendData(JSON.stringify({
+            action: "vip_payment",
+            ton: amount
+        }));
+
+    } catch (e) {
+        showToast("Payment failed or cancelled");
+    }
+});
+
 
 
   if (openTasks) {

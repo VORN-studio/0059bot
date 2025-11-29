@@ -40,12 +40,12 @@
     <section class="mm-balance-card">
       <div class="mm-balance-main">
         <div class="mm-label">Total balance</div>
-        <div class="mm-balance-amount" id="mm-balance-amount">0.0000 USDT</div>
+        <div class="mm-balance-amount" id="mm-balance-amount">0.0000 TON</div>
       </div>
       <div class="mm-balance-extra">
         <div>
           <div class="mm-label">VIP deposit</div>
-          <div class="mm-badge" id="mm-vip-deposit">0.00 USDT</div>
+          <div class="mm-badge" id="mm-vip-deposit">0.00 TON</div>
         </div>
         <div>
           <div class="mm-label">TON wallet</div>
@@ -129,7 +129,7 @@
         <div class="mm-section-title">VIP zone</div>
         <div class="mm-card">
           <p>
-            In VIP zone you invest USDT and every day receive 3 tasks.  
+            In VIP zone you invest TON and every day receive 3 tasks.  
             Total daily reward = <b>5% of your VIP deposit</b>.
           </p>
           <ul class="mm-list">
@@ -140,17 +140,17 @@
           </ul>
         </div>
           <button class="mm-primary-btn" id="btn-buy-vip">
-              💎 Buy VIP tasks (1 TON)
+              💎 Buy VIP tasks (TON)
           </button>
 
         <div class="mm-card mm-card-row">
           <div>
             <div class="mm-label">Your VIP deposit</div>
-            <div class="mm-big-number" id="mm-vip-deposit-2">0.00 USDT</div>
+            <div class="mm-big-number" id="mm-vip-deposit-2">0.00 TON</div>
           </div>
           <div>
             <div class="mm-label">Approx. daily 5%</div>
-            <div class="mm-big-number" id="mm-vip-daily">0.00 USDT</div>
+            <div class="mm-big-number" id="mm-vip-daily">0.00 TON</div>
           </div>
         </div>
 
@@ -167,11 +167,11 @@
           <div class="mm-row-space">
             <div>
               <div class="mm-label">Main balance</div>
-              <div class="mm-big-number" id="mm-wallet-balance">0.0000 USDT</div>
+              <div class="mm-big-number" id="mm-wallet-balance">0.0000 TON</div>
             </div>
             <div>
               <div class="mm-label">MIN withdraw</div>
-              <div class="mm-badge">10 USDT</div>
+              <div class="mm-badge">1 TON</div>
             </div>
           </div>
         </div>
@@ -230,5 +230,23 @@
       </section>
     </main>
   </div>
+  <!-- Custom TON Amount Modal -->
+<div id="ton-modal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Enter amount in TON</h2>
+
+    <input id="ton-amount-input"
+           type="number"
+           min="0"
+           step="0.01"
+           placeholder="0.00 TON">
+
+    <div class="modal-buttons">
+      <button id="ton-cancel" class="btn-secondary">Cancel</button>
+      <button id="ton-confirm" class="btn-primary">Pay</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

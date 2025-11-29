@@ -427,7 +427,7 @@ async def handle_earn_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE, 
     for row in tasks:
         status = "✅ Done" if row["status"] == "completed" else "⏳ Waiting"
         lines.append(
-            f"{row['slot']}) {row['reward']:.4f} USDT – {status}"
+            f"{row['slot']}) {row['reward']:.4f} TON – {status}"
         )
         if row["status"] == "pending":
             buttons.append(
@@ -452,9 +452,9 @@ async def handle_vip_zone(update: Update, context: ContextTypes.DEFAULT_TYPE, us
 
     text = (
         "⭐ <b>VIP Zone</b>\n\n"
-        "In VIP, you deposit money (for example, 1000 USDT), and every day you receive\n"
+        "In VIP, you deposit money (for example, 1000 TON), and every day you receive\n"
         "3 tasks, each worth 1/3 of 5%.\n\n"
-        f"Your total active deposit: <b>{total_dep:.2f} USDT</b>\n\n"
+        f"Your total active deposit: <b>{total_dep:.2f} TON</b>\n\n"
         "The admin adds technical inputs.\n"
         "Depending on the size of your investment, the bot automatically creates daily tasks."
     )
@@ -469,10 +469,10 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE, use
 
     text = (
         "💼 <b>Your financial dashboard</b>\n\n"
-        f"Balance՝ <b>{bal:.4f} USDT</b>\n"
-        f"Active VIP deposit՝ <b>{total_dep:.2f} USDT</b>\n"
+        f"Balance՝ <b>{bal:.4f} TON</b>\n"
+        f"Active VIP deposit՝ <b>{total_dep:.2f} TON</b>\n"
         f"TON wallet՝ <b>{ton_wallet}</b>\n\n"
-        "Minimum required for cashout՝ <b>10 USDT</b>։"
+        "Minimum required for cashout՝ <b>10 TON</b>։"
     )
 
     buttons = []
@@ -517,8 +517,8 @@ async def handle_profile(update: Update, context: ContextTypes.DEFAULT_TYPE, use
         f"ID՝ <code>{user_row['tg_id']}</code>\n"
         f"Username՝ @{user_row['username'] or '—'}\n"
         f"Name:՝ {user_row['first_name']}\n"
-        f"Balance՝ <b>{float(user_row['balance'] or 0):.4f} USDT</b>\n"
-        f"Active deposit՝ <b>{total_dep:.2f} USDT</b>\n"
+        f"Balance՝ <b>{float(user_row['balance'] or 0):.4f} TON</b>\n"
+        f"Active deposit՝ <b>{total_dep:.2f} TON</b>\n"
         f"TON Wallet՝ <code>{user_row['ton_wallet'] or 'there is none'}</code>\n"
     )
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
@@ -576,7 +576,7 @@ async def complete_vip_task(query, context, user_row, task_id: int):
     update_balance(user_id, float(row["reward"]))
 
     await query.edit_message_text(
-        f"✅ The task has been marked as completed. You have been added. {row['reward']:.4f} USDT։"
+        f"✅ The task has been marked as completed. You have been added. {row['reward']:.4f} TON։"
     )
 
 
@@ -588,7 +588,7 @@ async def process_withdraw_request(query, context, user_row):
         return
     if bal < 10:
         await query.edit_message_text(
-            f"You need at least 10 USDT to cash out. Your balance՝ {bal:.4f} USDT։"
+            f"You need at least 10 TON to cash out. Your balance՝ {bal:.4f} TON։"
         )
         return
 
@@ -608,7 +608,7 @@ async def process_withdraw_request(query, context, user_row):
         f"Withdraw ID: <code>{wid}</code>\n"
         f"User tg_id: <code>{user['tg_id']}</code>\n"
         f"Username: @{user['username'] or '—'}\n"
-        f"Amount: <b>{amount:.4f} USDT</b>\n"
+        f"Amount: <b>{amount:.4f} TON</b>\n"
         f"TON wallet: <code>{user['ton_wallet']}</code>\n\n"
         f"Commands:՝\n"
         f"/approve_withdraw {wid} – mark as approved\n"
@@ -661,7 +661,7 @@ async def add_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     update_balance(u["id"], amount)
     await update.message.reply_text(
-        f"User @{u['username'] or u['tg_id']} added to balance {amount} USDT։"
+        f"User @{u['username'] or u['tg_id']} added to balance {amount} TON։"
     )
 
 
@@ -680,7 +680,7 @@ async def sub_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     update_balance(u["id"], -amount)
     await update.message.reply_text(
-        f"User @{u['username'] or u['tg_id']} taken off balance {amount} USDT։"
+        f"User @{u['username'] or u['tg_id']} taken off balance {amount} TON։"
     )
 
 
@@ -708,7 +708,7 @@ async def add_deposit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
 
     await update.message.reply_text(
-        f"Added {amount} USDT VIP deposit user @{u['username'] or u['tg_id']} for"
+        f"Added {amount} TON VIP deposit user @{u['username'] or u['tg_id']} for"
     )
 
 
@@ -759,7 +759,7 @@ async def list_withdraws_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
     for r in rows:
         dt = datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
         lines.append(
-            f"ID {r['id']}: {r['amount']:.4f} USDT | @{r['username'] or r['tg_id']} | {dt}\n"
+            f"ID {r['id']}: {r['amount']:.4f} TON | @{r['username'] or r['tg_id']} | {dt}\n"
             f"Wallet: {r['ton_wallet']}"
         )
     await update.message.reply_text("\n\n".join(lines))
@@ -799,7 +799,7 @@ async def approve_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYP
     try:
         await context.bot.send_message(
             u["tg_id"],
-            f"✅ Your {row['amount']:.4f} USDT withdrawal request has been approved. The funds have been sent to your TON wallet.",
+            f"✅ Your {row['amount']:.4f} TON withdrawal request has been approved. The funds have been sent to your TON wallet.",
         )
     except Exception:
         pass
@@ -843,7 +843,7 @@ async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
     try:
         await context.bot.send_message(
             u["tg_id"],
-            f"❌ Your {row['amount']:.4f} USDT withdrawal request has been rejected. Contact the admin for details.",
+            f"❌ Your {row['amount']:.4f} TON withdrawal request has been rejected. Contact the admin for details.",
         )
     except Exception:
         pass
