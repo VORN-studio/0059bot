@@ -312,111 +312,70 @@ from telegram.ext import CallbackQueryHandler, MessageHandler, filters, Applicat
 
 async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
+        if not update.effective_message or not update.effective_message.web_app_data:
+            return
+
         raw = update.effective_message.web_app_data.data
         data = json.loads(raw)
 
         action = data.get("action")
-
         user = update.effective_user
+
+        # load user
         user_row = get_user_by_tg_id(user.id)
         if not user_row:
             ensure_user(user)
             user_row = get_user_by_tg_id(user.id)
 
-        # 1) WebApp → "Open withdraw" կոճակ
+        # 1) Open withdraw menu
         if action == "open_withdraw":
             await update.message.reply_text(
                 "💸 <b>Withdraw request</b>\n\n"
-                "Enter the amount of TON you want to withdraw:\n"
-                "Minimum: 1 TON",
+                "Enter the amount of TON you want to withdraw.\n"
+                "Minimum: 10 TON",
                 parse_mode="HTML"
             )
-            context.user_data["awaiting_withdraw_amount"] = True
+            context.user_data["awaiting_withdraw"] = True
             return
 
-# ===== WITHDRAW AMOUNT =====
-        if context.user_data.get("awaiting_withdraw_amount"):
-            amount_text = (update.message.text or "").strip()
-
-        try:
-            amount = float(amount_text)
-        except:
-            await update.message.reply_text("❌ Invalid number. Please enter a valid TON amount.")
-            return
-
-        user_row = get_user_by_tg_id(update.effective_user.id)
-        balance = float(user_row["balance"] or 0)
-
-        if amount < 10:
-            await update.message.reply_text("❌ Minimum withdraw is 10 TON.")
-            return
-
-        if amount > balance:
-            await update.message.reply_text(
-                f"❌ You don't have enough balance.\nYour balance: {balance:.4f} TON"
-            )
-            return
-
-        # Create pending withdraw
-        wid, err = create_withdrawal(user_row["id"], amount)
-
-        context.user_data["awaiting_withdraw_amount"] = False
-
-        await update.message.reply_text(
-            "✅ Your withdraw request has been sent.\n"
-            "⏳ Wait up to 24 hours for admin approval."
-        )
-
-        return
-
-
-        # 2) Եթե մի օր WebApp–ից ուզես wallet պահել
-        if action == "save_wallet":
-            wallet = data.get("address")
-            if wallet:
-                set_ton_wallet(user_row["id"], wallet)
-                await update.message.reply_text(
-                    f"🔗 TON Wallet connected successfully!\n<code>{wallet}</code>",
-                    parse_mode="HTML",
-                )
-            return
-
-        # 3) VIP deposit TON վճարում WebApp–ից
-        if action == "vip_payment":
-            ton_amount = float(data.get("ton", 0) or 0)
-            if ton_amount <= 0:
-                await update.message.reply_text("❌ Invalid amount.", parse_mode="HTML")
+        # 2) Withdraw amount input
+        if context.user_data.get("awaiting_withdraw"):
+            amount_text = data.get("amount") or data.get("value") or None
+            if not amount_text:
+                context.user_data["awaiting_withdraw"] = False
+                await update.message.reply_text("❌ Invalid input.")
                 return
 
-            conn = get_db()
-            c = conn.cursor()
-            c.execute(
-                "INSERT INTO deposits (user_id, amount, active, created_at) VALUES (?, ?, 1, ?)",
-                (user_row["id"], ton_amount, int(time.time())),
-            )
-            conn.commit()
-            conn.close()
+            try:
+                amount = float(amount_text)
+            except:
+                await update.message.reply_text("❌ Enter a valid number.")
+                return
+
+            balance = float(user_row["balance"] or 0)
+
+            if amount < 10:
+                await update.message.reply_text("❌ Minimum withdraw is 10 TON.")
+                return
+
+            if amount > balance:
+                await update.message.reply_text(
+                    f"❌ You don't have enough balance.\nYour balance: {balance:.4f} TON"
+                )
+                return
+
+            wid, err = create_withdrawal(user_row["id"], amount)
+            context.user_data["awaiting_withdraw"] = False
 
             await update.message.reply_text(
-                f"💎 VIP deposit added!\nYou invested {ton_amount} TON.",
-                parse_mode="HTML",
+                "✅ Your withdraw request has been submitted.\n"
+                "⏳ Please wait up to 24 hours."
             )
             return
 
-        elif data.get("action") == "open_withdraw":
-            user = update.effective_user
-            user_row = get_user_by_tg_id(user.id)
-        if not user_row:
-            ensure_user(user)
-            user_row = get_user_by_tg_id(user.id)
-
-    # ուղարկում ենք հենց բոտի կանխիկացման մենյուն
-            await handle_balance(update, context, user_row)
-            return
-
-
     except Exception as e:
-        print("WebApp data error:", e)
+        print("WEBAPP ERROR:", e)
+
 
 
 
@@ -952,7 +911,9 @@ def main():
     app.add_handler(CommandHandler("list_withdraws", list_withdraws_cmd))
     app.add_handler(CommandHandler("approve_withdraw", approve_withdraw_cmd))
     app.add_handler(CommandHandler("reject_withdraw", reject_withdraw_cmd))
-    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))
+    app.add_handler(MessageHandler(filters.ALL & filters.ChatType.PRIVATE, webapp_data_handler))
+
+
     
     
     
