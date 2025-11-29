@@ -326,6 +326,7 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             return
 
 
+
         if data.get("action") == "save_wallet":
             wallet = data.get("address")
             user = update.effective_user

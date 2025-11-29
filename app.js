@@ -359,12 +359,13 @@ document.getElementById("ton-confirm").addEventListener("click", async () => {
 
   if (openBotWithdraw) {
     openBotWithdraw.addEventListener("click", () => {
-        tg.sendData(JSON.stringify({
-            action: "open_withdraw"
-        }));
-        tg.close(); // փակել WebApp-ը
+        if (tg && tg.sendData) {
+            tg.sendData(JSON.stringify({ action: "open_withdraw" }));
+        }
+        setTimeout(() => tg.close(), 300);
     });
 }
+
 
   const inviteFriends = document.getElementById("btn-invite-friends");
   if (inviteFriends) {
