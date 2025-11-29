@@ -359,9 +359,9 @@ document.getElementById("ton-confirm").addEventListener("click", async () => {
 
   if (openBotWithdraw) {
     openBotWithdraw.addEventListener("click", () => {
-        if (tg && tg.sendData) {
-            tg.sendData(JSON.stringify({ action: "open_withdraw" }));
-        }
+        window.Telegram.WebApp.sendData(
+            JSON.stringify({ action: "open_withdraw" })
+        );
     });
 }
 
