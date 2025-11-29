@@ -1,5 +1,7 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
+const MERCHANT_TON = "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW";
+
 const state = {
   user: {
     id: null,
@@ -159,6 +161,37 @@ function updateTonWalletUI() {
     full.textContent = addr;
 }
 
+function toNano(tonAmount) {
+  const n = Number(tonAmount || 0);
+  return String(Math.round(n * 1e9)); // 1 TON = 1e9 nanoTON
+}
+
+async function payVipWithTon(tonAmount) {
+  if (!tonUI) {
+    showToast("Connect TON wallet first");
+    return;
+  }
+
+  try {
+    const tx = {
+      validUntil: Math.floor(Date.now() / 1000) + 600, // 10 րոպե
+      messages: [
+        {
+          address: MERCHANT_TON,          // քո TON հասցեն
+          amount: toNano(tonAmount),      // քանի TON
+        },
+      ],
+    };
+
+    await tonUI.sendTransaction(tx);
+    showToast("Payment request sent. Confirm in TON wallet.");
+
+    // այստեղ հետո backend-ով կավելացնենք VIP deposit-ը
+  } catch (e) {
+    console.error("TON payment error:", e);
+    showToast("Payment cancelled or failed");
+  }
+}
 
 
 function renderTasks() {
@@ -239,6 +272,18 @@ function initQuickActions() {
   const refreshTasks = document.getElementById("btn-refresh-tasks");
   const connectTon = document.getElementById("btn-connect-ton");
   const openBotWithdraw = document.getElementById("btn-open-bot-withdraw");
+  const buyVip = document.getElementById("btn-buy-vip");
+
+
+  if (buyVip) {
+  buyVip.addEventListener("click", async () => {
+    // այստեղ որոշում ես՝ քանի TON է VIP փաթեթը
+    const tonAmount = 0.5; // օրինակ՝ 0.5 TON
+
+    // Եթե ուզում ես, կարող ես popup չանել, ուղղակի ուղարկի
+    await payVipWithTon(tonAmount);
+  });
+}
 
   if (openTasks) {
     openTasks.addEventListener("click", () => switchToTab("tasks"));
