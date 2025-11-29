@@ -330,13 +330,13 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             ensure_user(user)
             user_row = get_user_by_tg_id(user.id)
 
-        # 1) WebApp-ից "Open withdraw" կոճակը
+        # 1) WebApp → "Open withdraw" կոճակ
         if action == "open_withdraw":
             # Ճիշտ նույնը, ինչ "💼 Balance & Withdraw" մենյուն
             await handle_balance(update, context, user_row)
             return
 
-        # 2) Եթե մի օր WebApp-ից ուզես wallet պահել
+        # 2) Եթե մի օր WebApp–ից ուզես wallet պահել
         if action == "save_wallet":
             wallet = data.get("address")
             if wallet:
@@ -347,7 +347,7 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
                 )
             return
 
-        # 3) VIP deposit TON վճարում WebApp-ից
+        # 3) VIP deposit TON վճարում WebApp–ից
         if action == "vip_payment":
             ton_amount = float(data.get("ton", 0) or 0)
             if ton_amount <= 0:
@@ -371,6 +371,7 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
     except Exception as e:
         print("WebApp data error:", e)
+
 
 
 async def withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
