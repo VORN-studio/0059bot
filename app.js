@@ -1,5 +1,36 @@
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
+const state = {
+  user: {
+    id: null,
+    username: null,
+    first_name: null,
+  },
+  balance: 0,
+  vipDeposit: 0,
+  tonWallet: null,
+  todayTasks: [
+    {
+      id: 1,
+      title: "Watch partner video",
+      reward: 50,
+      status: "pending",
+    },
+    {
+      id: 2,
+      title: "Join Telegram channel",
+      reward: 50,
+      status: "pending",
+    },
+    {
+      id: 3,
+      title: "Stay in channel 5 min",
+      reward: 50,
+      status: "pending",
+    },
+  ],
+};
+
 let tonUI = null;
 
 
