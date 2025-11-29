@@ -9,7 +9,7 @@ const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : 
 
 
 let tonUI = null;
-let tonWallet = null;
+
 
 function initTon() {
   tonUI = new TON_CONNECT_UI.TonConnectUI({
@@ -17,52 +17,14 @@ function initTon() {
   });
 
   tonUI.onStatusChange((wallet) => {
-    tonWallet = wallet;
-    updateTonUI();
-  });
+    if (wallet?.account?.address) {
+        state.tonWallet = wallet.account.address;
+        updateTonWalletUI();
+    }
+});
+
 }
 
-function updateTonUI() {
-  document.getElementById("wallet-status").textContent =
-    tonWallet ? "Connected" : "Not Connected";
-
-  document.getElementById("wallet-address").textContent = tonWallet
-    ? tonWallet.account.address.slice(0, 6) + "..." +
-      tonWallet.account.address.slice(-4)
-    : "—";
-}
-
-
-const state = {
-  user: {
-    id: null,
-    username: null,
-    first_name: null,
-  },
-  balance: 0,
-  vipDeposit: 0,
-  tonWallet: null,
-  todayTasks: [
-    {
-      id: 1,
-      title: "Watch partner video",
-      reward: 50,
-      status: "pending",
-    },
-    {
-      id: 2,
-      title: "Join Telegram channel",
-      reward: 50,
-      status: "pending",
-    },
-    {
-      id: 3,
-      title: "Stay in channel 5 min",
-      reward: 50,
-      status: "pending",
-    },
-  ],
-};
 
 // ----------------------- INIT -----------------------
 
@@ -152,6 +114,24 @@ function renderFinancialInfo() {
   if (walletBadge) walletBadge.textContent = walletTxt;
   if (walletLabel) walletLabel.textContent = walletTxt;
 }
+
+function updateTonWalletUI() {
+    const label = document.getElementById("mm-ton-wallet");
+    const full = document.getElementById("mm-wallet-ton-label");
+
+    if (!state.tonWallet) {
+        label.textContent = "not linked";
+        full.textContent = "not linked";
+        return;
+    }
+
+    const addr = state.tonWallet;
+    const short = addr.slice(0, 4) + "..." + addr.slice(-4);
+
+    label.textContent = short;        // Wallet card-ի փոքր հատվածը
+    full.textContent = addr;          // Wallet էջում ամբողջական հասցեն
+}
+
 
 function renderTasks() {
   const container = document.getElementById("mm-task-list");
@@ -251,6 +231,13 @@ function initQuickActions() {
       // showToast("Tasks refreshed (demo)");
     });
   }
+  if (openWallet) {
+  openWallet.addEventListener("click", () => {
+    switchToTab("wallet");
+    updateTonWalletUI();
+  });
+}
+
   if (connectTon) {
   connectTon.addEventListener("click", () => {
     if (!tonUI) {
