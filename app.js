@@ -278,7 +278,7 @@ function initQuickActions() {
   if (buyVip) {
   buyVip.addEventListener("click", async () => {
     // այստեղ որոշում ես՝ քանի TON է VIP փաթեթը
-    const tonAmount = 0.5; // օրինակ՝ 0.5 TON
+    const tonAmount = 0.0; // օրինակ՝ 0.5 TON
 
     // Եթե ուզում ես, կարող ես popup չանել, ուղղակի ուղարկի
     await payVipWithTon(tonAmount);
