@@ -291,7 +291,7 @@ function initQuickActions() {
     inviteFriends.addEventListener("click", () => {
       const uid = state.user.id || 0;
 
-      const deepLink = `https://t.me/MainMoneyBot?start=ref_${uid}`;
+      const deepLink = `https://t.me/n0059_bot?start=ref_${uid}`;
       const shareText = "Join Main Money and earn with me!";
       const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent(shareText)}`;
 
