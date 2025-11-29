@@ -387,6 +387,40 @@ document.getElementById("ton-confirm").addEventListener("click", async () => {
 
 }
 
+// ===== WITHDRAW POPUP =====
+const withdrawModal = document.getElementById("withdraw-modal");
+const withdrawInput = document.getElementById("withdraw-input");
+const withdrawConfirm = document.getElementById("withdraw-confirm");
+const withdrawCancel = document.getElementById("withdraw-cancel");
+
+// Open popup when user clicks button
+if (openBotWithdraw) {
+    openBotWithdraw.addEventListener("click", () => {
+        withdrawInput.value = "";
+        withdrawModal.classList.remove("hidden");
+    });
+}
+
+// Close popup
+withdrawCancel.addEventListener("click", () => {
+    withdrawModal.classList.add("hidden");
+});
+
+// Confirm withdraw
+withdrawConfirm.addEventListener("click", () => {
+    const amount = Number(withdrawInput.value);
+
+    if (!amount || amount < 1) {
+        showError("Enter a valid TON amount (min 1 TON).");
+        return;
+    }
+
+    // Show success message
+    withdrawModal.classList.add("hidden");
+    showToast("Withdraw request created!");
+});
+
+
 function switchToTab(tabName) {
   const tabBtn = document.querySelector(`.mm-tab[data-tab="${tabName}"]`);
   if (!tabBtn) return;
