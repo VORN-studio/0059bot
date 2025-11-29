@@ -369,6 +369,18 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             )
             return
 
+        elif data.get("action") == "open_withdraw":
+            user = update.effective_user
+            user_row = get_user_by_tg_id(user.id)
+        if not user_row:
+            ensure_user(user)
+            user_row = get_user_by_tg_id(user.id)
+
+    # ուղարկում ենք հենց բոտի կանխիկացման մենյուն
+            await handle_balance(update, context, user_row)
+            return
+
+
     except Exception as e:
         print("WebApp data error:", e)
 
