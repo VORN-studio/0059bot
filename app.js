@@ -315,7 +315,7 @@ document.getElementById("ton-confirm").addEventListener("click", async () => {
         }));
 
     } catch (e) {
-        showToast("Payment failed or cancelled");
+        showError("❌ Payment failed or cancelled. Not enough TON.");
     }
 });
 
@@ -400,6 +400,22 @@ function formatAmount(value) {
   const num = Number(value || 0);
   return num.toFixed(4);
 }
+
+function showError(msg) {
+    const modal = document.getElementById("mm-error-modal");
+    const text = document.getElementById("mm-error-text");
+    const closeBtn = document.getElementById("mm-error-close");
+
+    if (!modal || !text) return;
+
+    text.textContent = msg;
+    modal.classList.remove("hidden");
+
+    closeBtn.onclick = () => {
+        modal.classList.add("hidden");
+    };
+}
+
 
 // small toast (uses Telegram alert if inside WebApp)
 function showToast(msg) {
