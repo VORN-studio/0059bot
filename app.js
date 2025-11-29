@@ -403,9 +403,13 @@ function formatAmount(value) {
 
 // small toast (uses Telegram alert if inside WebApp)
 function showToast(msg) {
-  if (tg && tg.showAlert) {
-    tg.showAlert(msg);
-  } else {
-    alert(msg);
-  }
+    const modal = document.getElementById("mm-error-modal");
+    const text = document.getElementById("mm-error-text");
+
+    text.textContent = msg;
+    modal.classList.remove("hidden");
 }
+
+document.getElementById("mm-error-close").addEventListener("click", () => {
+    document.getElementById("mm-error-modal").classList.add("hidden");
+});

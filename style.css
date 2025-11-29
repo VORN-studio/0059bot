@@ -513,3 +513,68 @@ body {
   border: none;
   font-size: 16px;
 }
+
+/* ERROR MODAL */
+
+.mm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+.mm-modal.hidden {
+  display: none;
+}
+
+.mm-modal-box {
+  background: #151f2b;
+  padding: 22px;
+  width: 80%;
+  max-width: 340px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(0,0,0,0.4);
+  animation: popupFade 0.25s ease;
+}
+
+.mm-modal-box.error {
+  border: 1px solid #ff5060;
+}
+
+.mm-modal-icon {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.mm-modal-message {
+  color: #ffffff;
+  font-size: 17px;
+  margin-bottom: 18px;
+}
+
+.mm-modal-btn {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-radius: 12px;
+  background: #3b82f6;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.mm-modal-btn:hover {
+  background: #2563eb;
+}
+
+@keyframes popupFade {
+  from { transform: scale(.7); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
