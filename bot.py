@@ -325,6 +325,29 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
             wallet = data.get("address")
             user = update.effective_user
             user_row = get_user_by_tg_id(user.id)
+        elif data.get("action") == "vip_payment":
+            ton_amount = float(data.get("ton"))
+            user = update.effective_user
+            user_row = get_user_by_tg_id(user.id)
+            if not user_row:
+                ensure_user(user)
+                user_row = get_user_by_tg_id(user.id)
+
+                # Ավելացնում ենք deposit աղյուսակ
+            conn = get_db()
+            c = conn.cursor()
+            c.execute(
+                "INSERT INTO deposits (user_id, amount, active, created_at) VALUES (?, ?, 1, ?)",
+                (user_row["id"], ton_amount, int(time.time()))
+            )
+            conn.commit()
+            conn.close()
+
+            await update.message.reply_text(
+                f"💎 VIP deposit added!\nYou invested {ton_amount} TON.",
+                parse_mode="HTML"
+            )
+
             if not user_row:
                 ensure_user(user)
                 user_row = get_user_by_tg_id(user.id)

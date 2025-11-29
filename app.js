@@ -274,16 +274,46 @@ function initQuickActions() {
   const openBotWithdraw = document.getElementById("btn-open-bot-withdraw");
   const buyVip = document.getElementById("btn-buy-vip");
 
-
   if (buyVip) {
-  buyVip.addEventListener("click", async () => {
-    // այստեղ որոշում ես՝ քանի TON է VIP փաթեթը
-    const tonAmount = 1; // օրինակ՝ 0.5 TON
+    buyVip.addEventListener("click", async () => {
 
-    // Եթե ուզում ես, կարող ես popup չանել, ուղղակի ուղարկի
-    await payVipWithTon(tonAmount);
-  });
-}
+        // 1) հարցնում ենք օգտագործողին՝ ինչքա՞ն TON ուզում է ներդնի
+        let amount = prompt("Enter amount in TON:");
+
+        if (!amount || isNaN(amount) || Number(amount) <= 0) {
+            showToast("Invalid amount");
+            return;
+        }
+
+        amount = Number(amount);
+
+        // 2) TONConnect վճարում
+        try {
+            await tonUI.sendTransaction({
+                validUntil: Math.floor(Date.now() / 1000) + 300,
+                messages: [
+                    {
+                        address: "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW",
+                        amount: (amount * 1e9).toString()
+                    }
+                ]
+            });
+
+            showToast("⏳ Waiting for payment confirmation...");
+
+            // 3) Payment success → ուղարկում ենք bot-ին
+            tg.sendData(JSON.stringify({
+                action: "vip_payment",
+                ton: amount
+            }));
+
+            showToast("Payment sent! Wait for confirmation.");
+        } catch (e) {
+            showToast("Payment failed or cancelled.");
+        }
+    });
+  }
+
 
   if (openTasks) {
     openTasks.addEventListener("click", () => switchToTab("tasks"));
