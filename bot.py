@@ -3,6 +3,7 @@ import sqlite3
 import logging
 import time
 from datetime import datetime, date
+import json
 
 from telegram import (
     Update,
@@ -321,51 +322,56 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         raw = update.effective_message.web_app_data.data
         data = json.loads(raw)
 
-        if data.get("action") == "open_withdraw":
-            await withdraw_cmd(update, context)
+        action = data.get("action")
+
+        user = update.effective_user
+        user_row = get_user_by_tg_id(user.id)
+        if not user_row:
+            ensure_user(user)
+            user_row = get_user_by_tg_id(user.id)
+
+        # 1) WebApp-ից "Open withdraw" կոճակը
+        if action == "open_withdraw":
+            # Ճիշտ նույնը, ինչ "💼 Balance & Withdraw" մենյուն
+            await handle_balance(update, context, user_row)
             return
 
-
-
-        if data.get("action") == "save_wallet":
+        # 2) Եթե մի օր WebApp-ից ուզես wallet պահել
+        if action == "save_wallet":
             wallet = data.get("address")
-            user = update.effective_user
-            user_row = get_user_by_tg_id(user.id)
-        elif data.get("action") == "vip_payment":
-            ton_amount = float(data.get("ton"))
-            user = update.effective_user
-            user_row = get_user_by_tg_id(user.id)
-            if not user_row:
-                ensure_user(user)
-                user_row = get_user_by_tg_id(user.id)
+            if wallet:
+                set_ton_wallet(user_row["id"], wallet)
+                await update.message.reply_text(
+                    f"🔗 TON Wallet connected successfully!\n<code>{wallet}</code>",
+                    parse_mode="HTML",
+                )
+            return
 
-                # Ավելացնում ենք deposit աղյուսակ
+        # 3) VIP deposit TON վճարում WebApp-ից
+        if action == "vip_payment":
+            ton_amount = float(data.get("ton", 0) or 0)
+            if ton_amount <= 0:
+                await update.message.reply_text("❌ Invalid amount.", parse_mode="HTML")
+                return
+
             conn = get_db()
             c = conn.cursor()
             c.execute(
                 "INSERT INTO deposits (user_id, amount, active, created_at) VALUES (?, ?, 1, ?)",
-                (user_row["id"], ton_amount, int(time.time()))
+                (user_row["id"], ton_amount, int(time.time())),
             )
             conn.commit()
             conn.close()
 
             await update.message.reply_text(
                 f"💎 VIP deposit added!\nYou invested {ton_amount} TON.",
-                parse_mode="HTML"
+                parse_mode="HTML",
             )
+            return
 
-            if not user_row:
-                ensure_user(user)
-                user_row = get_user_by_tg_id(user.id)
-
-            set_ton_wallet(user_row["id"], wallet)
-
-            await update.message.reply_text(
-                f"🔗 TON Wallet connected successfully!\n<code>{wallet}</code>",
-                parse_mode="HTML"
-            )
     except Exception as e:
         print("WebApp data error:", e)
+
 
 async def withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
