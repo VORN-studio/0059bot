@@ -368,10 +368,17 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         print("WebApp data error:", e)
 
 async def withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "💸 Withdraw Menu\nChoose how much to withdraw…",
-        reply_markup=main_menu_kb()
-    )
+    """
+    We open the same menu as "💼 Balance and Draw"
+    """
+    user = update.effective_user
+    user_row = get_user_by_tg_id(user.id)
+    if not user_row:
+        ensure_user(user)
+        user_row = get_user_by_tg_id(user.id)
+
+    # Օգտագործում ենք արդեն պատրաստ handle_balance ֆունկցիան
+    await handle_balance(update, context, user_row)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user

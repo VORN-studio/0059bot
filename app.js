@@ -362,7 +362,6 @@ document.getElementById("ton-confirm").addEventListener("click", async () => {
         if (tg && tg.sendData) {
             tg.sendData(JSON.stringify({ action: "open_withdraw" }));
         }
-        setTimeout(() => tg.close(), 300);
     });
 }
 
