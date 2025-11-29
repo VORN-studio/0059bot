@@ -332,9 +332,50 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         # 1) WebApp → "Open withdraw" կոճակ
         if action == "open_withdraw":
-            # Ճիշտ նույնը, ինչ "💼 Balance & Withdraw" մենյուն
-            await handle_balance(update, context, user_row)
+            await update.message.reply_text(
+                "💸 <b>Withdraw request</b>\n\n"
+                "Enter the amount of TON you want to withdraw:\n"
+                "Minimum: 1 TON",
+                parse_mode="HTML"
+            )
+            context.user_data["awaiting_withdraw_amount"] = True
             return
+
+# ===== WITHDRAW AMOUNT =====
+        if context.user_data.get("awaiting_withdraw_amount"):
+            amount_text = (update.message.text or "").strip()
+
+        try:
+            amount = float(amount_text)
+        except:
+            await update.message.reply_text("❌ Invalid number. Please enter a valid TON amount.")
+            return
+
+        user_row = get_user_by_tg_id(update.effective_user.id)
+        balance = float(user_row["balance"] or 0)
+
+        if amount < 10:
+            await update.message.reply_text("❌ Minimum withdraw is 10 TON.")
+            return
+
+        if amount > balance:
+            await update.message.reply_text(
+                f"❌ You don't have enough balance.\nYour balance: {balance:.4f} TON"
+            )
+            return
+
+        # Create pending withdraw
+        wid, err = create_withdrawal(user_row["id"], amount)
+
+        context.user_data["awaiting_withdraw_amount"] = False
+
+        await update.message.reply_text(
+            "✅ Your withdraw request has been sent.\n"
+            "⏳ Wait up to 24 hours for admin approval."
+        )
+
+        return
+
 
         # 2) Եթե մի օր WebApp–ից ուզես wallet պահել
         if action == "save_wallet":
