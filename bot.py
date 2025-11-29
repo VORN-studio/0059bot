@@ -321,6 +321,11 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         raw = update.effective_message.web_app_data.data
         data = json.loads(raw)
 
+        if data.get("action") == "open_withdraw":
+            await withdraw_cmd(update, context)
+            return
+
+
         if data.get("action") == "save_wallet":
             wallet = data.get("address")
             user = update.effective_user

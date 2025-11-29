@@ -359,11 +359,10 @@ document.getElementById("ton-confirm").addEventListener("click", async () => {
 
   if (openBotWithdraw) {
     openBotWithdraw.addEventListener("click", () => {
-        if (tg && tg.openTelegramLink) {
-            tg.openTelegramLink("https://t.me/n0059_bot?start=withdraw");
-        } else {
-            window.open("https://t.me/n0059_bot?start=withdraw", "_blank");
-        }
+        tg.sendData(JSON.stringify({
+            action: "open_withdraw"
+        }));
+        tg.close(); // փակել WebApp-ը
     });
 }
 
