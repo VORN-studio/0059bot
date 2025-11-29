@@ -1,12 +1,4 @@
-
-// Main Money WebApp frontend
-// This is a UI layer. Later we can connect it to real API endpoints.
-
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-
-
-
-
 
 let tonUI = null;
 
@@ -30,11 +22,12 @@ function initTon() {
 
 document.addEventListener("DOMContentLoaded", () => {
   initTelegram();
-  initTon();          // ← ԱՅՍ ՏՈՂՆ ԱՎԵԼԱՑՐՈՒ
+  setTimeout(initTon, 100);   
   initTabs();
   initQuickActions();
   renderFromState();
 });
+
 
 // Telegram init
 function initTelegram() {
@@ -119,6 +112,9 @@ function updateTonWalletUI() {
     const label = document.getElementById("mm-ton-wallet");
     const full = document.getElementById("mm-wallet-ton-label");
 
+    if (!label) return;
+    if (!full) return;
+
     if (!state.tonWallet) {
         label.textContent = "not linked";
         full.textContent = "not linked";
@@ -128,9 +124,10 @@ function updateTonWalletUI() {
     const addr = state.tonWallet;
     const short = addr.slice(0, 4) + "..." + addr.slice(-4);
 
-    label.textContent = short;        // Wallet card-ի փոքր հատվածը
-    full.textContent = addr;          // Wallet էջում ամբողջական հասցեն
+    label.textContent = short;
+    full.textContent = addr;
 }
+
 
 
 function renderTasks() {
