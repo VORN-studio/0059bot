@@ -7,7 +7,12 @@
   <link rel="stylesheet" href="style.css" />
 
   
-<script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect.min.js"></script>
+<script type="module">
+    import { TonConnect } from "https://unpkg.com/@tonconnect/sdk@2.2.0/dist/esm/tonconnect.esm.js";
+    window.TonConnect = TonConnect;
+</script>
+
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 
