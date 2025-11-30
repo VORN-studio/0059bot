@@ -341,14 +341,16 @@ async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         if action == "disconnect_wallet":
             user_row = get_user_by_tg_id(user.id)
+
             conn = get_db()
             c = conn.cursor()
             c.execute("UPDATE users SET ton_wallet = NULL WHERE id = ?", (user_row["id"],))
             conn.commit()
             conn.close()
 
-            await msg.reply_text("🔌 TON Wallet has been disconnected.")
+            await update.effective_message.reply_text("🔌 TON Wallet has been disconnected.")
             return
+
 
 
         # 2) Withdraw amount input
