@@ -1,38 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+MainMoney Earn Platform Bot
+===========================
+
+⚠ Demo-level, but already quite powerful:
+- User registration + referrals (/start ref_USERID)
+- SQLite database
+- Internal coins balance + TON wallet field
+- Tasks system (admin adds tasks, users complete, earn coins)
+- Withdraw requests (coins → TON, manually processed by admin)
+- WebApp integration via Telegram WebApp.sendData
+- Admin commands: add tasks, edit balances, list withdraws, approve/reject, broadcast
+
+You must:
+- Install python-telegram-bot v20+:
+    pip install python-telegram-bot==20.7
+
+- Run:  python bot.py
+"""
+
 import os
+import time
+import json
 import sqlite3
 import logging
-import time
-from datetime import datetime, date
-import json
+from datetime import datetime
 
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     ReplyKeyboardMarkup,
-    KeyboardButton,
+    WebAppInfo,
 )
 from telegram.ext import (
     Application,
     CommandHandler,
-    ContextTypes,
     MessageHandler,
     CallbackQueryHandler,
+    ContextTypes,
     filters,
 )
 
-# ===================== CONFIG =====================
+# =============== CONFIG ===============
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8001785392:AAFlfF-SkcJJqG52GCsWT7calY9YLe1aqGw")  # ԴԻՆԵՍ ՔՈ TOKEN-Ը
-ADMIN_ID = int(os.getenv("ADMIN_ID", "5274439601"))  # ԴԻՆԵՍ ՔՈ TELEGRAM ID-Ն
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8001785392:AAFlfF-SkcJJqG52GCsWT7calY9YLe1aqGw")
+ADMIN_ID = int(os.getenv("ADMIN_ID", "5274439601"))  # քո Telegram ID-ն
+WEBAPP_URL = os.getenv(
+    "WEBAPP_URL", "https://vorn-studio.github.io/0059bot/"
+)  # փոխիր քո WebApp-ի URL-ով
 
-DB_PATH = "main_money.db"
+DB_PATH = "mainmoney.db"
+MIN_WITHDRAW_COINS = 100  # մինիմալ coins withdraw
+TASK_REWARD_DEFAULT = 20  # default coins per task
 
-logging.basicConfig(level=logging.INFO)
+
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
 log = logging.getLogger("MainMoneyBot")
 
 
-# ===================== DB HELPERS =====================
+# =============== DB HELPERS ===============
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -52,39 +83,55 @@ def init_db():
             tg_id INTEGER UNIQUE,
             username TEXT,
             first_name TEXT,
-            created_at INTEGER,
-            balance REAL DEFAULT 0,
-            ton_wallet TEXT
+            joined_at INTEGER,
+            coins INTEGER DEFAULT 0,
+            ton_wallet TEXT,
+            invited_by INTEGER,
+            total_earned INTEGER DEFAULT 0,
+            total_spent INTEGER DEFAULT 0
         );
         """
     )
 
-    # deposits
+    # referrals
     c.execute(
         """
-        CREATE TABLE IF NOT EXISTS deposits (
+        CREATE TABLE IF NOT EXISTS referrals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            amount REAL NOT NULL,
+            inviter_tg_id INTEGER,
+            invited_tg_id INTEGER,
+            created_at INTEGER
+        );
+        """
+    )
+
+    # tasks
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS tasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            description TEXT,
+            url TEXT,
+            reward INTEGER,
             active INTEGER DEFAULT 1,
-            created_at INTEGER,
-            FOREIGN KEY(user_id) REFERENCES users(id)
+            created_at INTEGER
         );
         """
     )
 
-    # vip daily tasks (generated per user per day)
+    # task completions
     c.execute(
         """
-        CREATE TABLE IF NOT EXISTS vip_tasks (
+        CREATE TABLE IF NOT EXISTS task_completions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            task_date TEXT NOT NULL,
-            slot INTEGER NOT NULL,          -- 1, 2, 3
-            reward REAL NOT NULL,
-            status TEXT DEFAULT 'pending',  -- pending/completed
-            completed_at INTEGER,
-            FOREIGN KEY(user_id) REFERENCES users(id)
+            user_id INTEGER,
+            task_id INTEGER,
+            status TEXT, -- pending/approved/rejected/auto
+            reward INTEGER,
+            created_at INTEGER,
+            FOREIGN KEY(user_id) REFERENCES users(id),
+            FOREIGN KEY(task_id) REFERENCES tasks(id)
         );
         """
     )
@@ -94,10 +141,10 @@ def init_db():
         """
         CREATE TABLE IF NOT EXISTS withdrawals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            amount REAL NOT NULL,
+            user_id INTEGER,
+            amount_coins INTEGER,
             ton_wallet TEXT,
-            status TEXT DEFAULT 'pending',  -- pending/approved/rejected
+            status TEXT, -- pending/approved/rejected
             created_at INTEGER,
             processed_at INTEGER,
             FOREIGN KEY(user_id) REFERENCES users(id)
@@ -109,36 +156,47 @@ def init_db():
     conn.close()
 
 
-def ensure_user(tg_user) -> int:
-    """
-    Returns է users.id
-    """
+def ensure_user(tg_user, inviter_tg_id=None):
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT id FROM users WHERE tg_id = ?", (tg_user.id,))
+    c.execute("SELECT * FROM users WHERE tg_id = ?", (tg_user.id,))
     row = c.fetchone()
     if row:
-        user_id = row["id"]
-    else:
+        conn.close()
+        return row
+
+    c.execute(
+        """
+        INSERT INTO users (tg_id, username, first_name, joined_at, invited_by)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (
+            tg_user.id,
+            tg_user.username,
+            tg_user.first_name,
+            int(time.time()),
+            inviter_tg_id,
+        ),
+    )
+    conn.commit()
+
+    if inviter_tg_id:
         c.execute(
             """
-            INSERT INTO users (tg_id, username, first_name, created_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO referrals (inviter_tg_id, invited_tg_id, created_at)
+            VALUES (?, ?, ?)
             """,
-            (
-                tg_user.id,
-                tg_user.username,
-                tg_user.first_name,
-                int(time.time()),
-            ),
+            (inviter_tg_id, tg_user.id, int(time.time())),
         )
         conn.commit()
-        user_id = c.lastrowid
+
+    c.execute("SELECT * FROM users WHERE tg_id = ?", (tg_user.id,))
+    row = c.fetchone()
     conn.close()
-    return user_id
+    return row
 
 
-def get_user_by_tg_id(tg_id):
+def get_user_by_tg_id(tg_id: int):
     conn = get_db()
     c = conn.cursor()
     c.execute("SELECT * FROM users WHERE tg_id = ?", (tg_id,))
@@ -147,592 +205,624 @@ def get_user_by_tg_id(tg_id):
     return row
 
 
-def get_user_internal(user_id):
+def add_coins(user_id: int, delta: int):
     conn = get_db()
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-    row = c.fetchone()
-    conn.close()
-    return row
-
-
-def update_balance(user_id: int, delta: float):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET balance = balance + ? WHERE id = ?", (delta, user_id))
+    c.execute(
+        "UPDATE users SET coins = coins + ?, total_earned = total_earned + ? WHERE id = ?",
+        (delta, max(delta, 0), user_id),
+    )
     conn.commit()
     conn.close()
 
 
-def get_total_active_deposit(user_id: int) -> float:
+def spend_coins(user_id: int, delta: int):
     conn = get_db()
     c = conn.cursor()
     c.execute(
-        "SELECT COALESCE(SUM(amount), 0) AS total FROM deposits WHERE user_id = ? AND active = 1",
-        (user_id,),
+        "UPDATE users SET coins = coins - ?, total_spent = total_spent + ? WHERE id = ?",
+        (delta, delta, user_id),
     )
-    row = c.fetchone()
+    conn.commit()
     conn.close()
-    return float(row["total"] or 0)
 
 
-def get_today_str() -> str:
-    return date.today().isoformat()
-
-
-def get_or_create_today_vip_tasks(user_id: int):
-    """
-    If there are no VIP tasks today, we create 3, the total amount of which is 5% of the active deposit.
-    Returns a list of tasks.
-    """
+def get_user_referrals(tg_id: int):
     conn = get_db()
     c = conn.cursor()
-    today = get_today_str()
-
     c.execute(
-        "SELECT * FROM vip_tasks WHERE user_id = ? AND task_date = ? ORDER BY slot",
-        (user_id, today),
-    )
-    rows = c.fetchall()
-    if rows:
-        conn.close()
-        return rows
-
-    # no tasks yet → generate
-    total_dep = get_total_active_deposit(user_id)
-    if total_dep <= 0:
-        conn.close()
-        return []
-
-    daily_total = total_dep * 0.05  # 5%
-    per_task = round(daily_total / 3, 4)
-
-    tasks = []
-    for slot in (1, 2, 3):
-        c.execute(
-            """
-            INSERT INTO vip_tasks (user_id, task_date, slot, reward)
-            VALUES (?, ?, ?, ?)
-            """,
-            (user_id, today, slot, per_task),
-        )
-        conn.commit()
-        task_id = c.lastrowid
-        tasks.append(
-            {
-                "id": task_id,
-                "user_id": user_id,
-                "task_date": today,
-                "slot": slot,
-                "reward": per_task,
-                "status": "pending",
-                "completed_at": None,
-            }
-        )
-
-    conn.close()
-    return tasks
-
-
-def get_user_vip_tasks_for_today(user_id: int):
-    conn = get_db()
-    c = conn.cursor()
-    today = get_today_str()
-    c.execute(
-        "SELECT * FROM vip_tasks WHERE user_id = ? AND task_date = ? ORDER BY slot",
-        (user_id, today),
+        "SELECT * FROM referrals WHERE inviter_tg_id = ? ORDER BY created_at DESC",
+        (tg_id,),
     )
     rows = c.fetchall()
     conn.close()
     return rows
 
 
-def set_ton_wallet(user_id: int, wallet: str):
+def get_active_tasks():
     conn = get_db()
     c = conn.cursor()
-    c.execute("UPDATE users SET ton_wallet = ? WHERE id = ?", (wallet, user_id))
-    conn.commit()
+    c.execute("SELECT * FROM tasks WHERE active = 1 ORDER BY id DESC")
+    rows = c.fetchall()
     conn.close()
+    return rows
 
 
-def create_withdrawal(user_id: int, amount: float):
-    user = get_user_internal(user_id)
-    if not user or not user["ton_wallet"]:
-        return None, "no_wallet"
-
+def user_has_completed_task(user_id: int, task_id: int):
     conn = get_db()
     c = conn.cursor()
-    # check balance
-    c.execute("SELECT balance FROM users WHERE id = ?", (user_id,))
+    c.execute(
+        "SELECT * FROM task_completions WHERE user_id = ? AND task_id = ? AND status IN ('pending', 'approved', 'auto')",
+        (user_id, task_id),
+    )
     row = c.fetchone()
-    bal = float(row["balance"] or 0)
-    if bal < amount:
-        conn.close()
-        return None, "not_enough_balance"
+    conn.close()
+    return bool(row)
 
-    # deduct
-    c.execute("UPDATE users SET balance = balance - ? WHERE id = ?", (amount, user_id))
-    # insert withdraw
+
+def create_task_completion(user_id: int, task_id: int, reward: int):
+    conn = get_db()
+    c = conn.cursor()
     c.execute(
         """
-        INSERT INTO withdrawals (user_id, amount, ton_wallet, status, created_at)
-        VALUES (?, ?, ?, 'pending', ?)
+        INSERT INTO task_completions (user_id, task_id, status, reward, created_at)
+        VALUES (?, ?, 'auto', ?, ?)
         """,
-        (user_id, amount, user["ton_wallet"], int(time.time())),
+        (user_id, task_id, reward, int(time.time())),
     )
     conn.commit()
-    w_id = c.lastrowid
     conn.close()
-    return w_id, None
 
 
-# ===================== KEYBOARDS =====================
+def create_withdraw(user_row, amount_coins: int):
+    user_id = user_row["id"]
+    coins = int(user_row["coins"] or 0)
+    wallet = user_row["ton_wallet"]
+
+    if not wallet:
+        return None, "no_wallet"
+    if amount_coins < MIN_WITHDRAW_COINS:
+        return None, "too_small"
+    if coins < amount_coins:
+        return None, "not_enough"
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        "UPDATE users SET coins = coins - ? WHERE id = ?",
+        (amount_coins, user_id),
+    )
+    now = int(time.time())
+    c.execute(
+        """
+        INSERT INTO withdrawals (user_id, amount_coins, ton_wallet, status, created_at)
+        VALUES (?, ?, ?, 'pending', ?)
+        """,
+        (user_id, amount_coins, wallet, now),
+    )
+    wid = c.lastrowid
+    conn.commit()
+    conn.close()
+    return wid, None
+
+
+def list_pending_withdraws():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        """
+        SELECT w.*, u.tg_id, u.username
+        FROM withdrawals w
+        JOIN users u ON u.id = w.user_id
+        WHERE w.status = 'pending'
+        ORDER BY w.created_at DESC
+        """
+    )
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+
+def set_withdraw_status(wid: int, status: str):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        "UPDATE withdrawals SET status = ?, processed_at = ? WHERE id = ?",
+        (status, int(time.time()), wid),
+    )
+    conn.commit()
+    conn.close()
+
+
+# =============== KEYBOARDS ===============
 
 def main_menu_kb():
-    return ReplyKeyboardMarkup([[]], resize_keyboard=True)
-
-
-def admin_menu_text():
-    return (
-        "🛠 <b>Main Money Admin Panel</b>\n\n"
-        "Հասանելի հրամաններ՝\n"
-        "/add_balance <tg_id> <amount> – Ավելացնել բալանս\n"
-        "/sub_balance <tg_id> <amount> – Հանել բալանս\n"
-        "/add_deposit <tg_id> <amount> – Ավելացնել VIP դեպոզիտ\n"
-        "/broadcast <text> – Ուղարկել հաղորդագրություն բոլոր օգտատերերին\n"
-        "/list_withdraws – Ցուցադրել pending կանխիկացումները\n"
-        "/approve_withdraw <id> – Նշել որպես approved\n"
-        "/reject_withdraw <id> – Նշել որպես rejected\n"
+    return ReplyKeyboardMarkup(
+        [
+            ["📊 Account", "🎯 Tasks"],
+            ["💸 Withdraw", "💼 Wallet"],
+            ["👥 Partners", "🏪 Shop"],
+        ],
+        resize_keyboard=True,
     )
 
 
-# ===================== HANDLERS =====================
-
-from telegram.ext import CallbackQueryHandler, MessageHandler, filters, Application, CommandHandler, ContextTypes, CallbackQueryHandler, PreCheckoutQueryHandler
-
-async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        if not update.effective_message or not update.effective_message.web_app_data:
-            return
-
-        raw = update.effective_message.web_app_data.data
-        data = json.loads(raw)
-
-        action = data.get("action")
-        user = update.effective_user
-
-        # load user
-        user_row = get_user_by_tg_id(user.id)
-        if not user_row:
-            ensure_user(user)
-            user_row = get_user_by_tg_id(user.id)
-
-        # 1) Open withdraw menu
-        if action == "open_withdraw":
-            await update.message.reply_text(
-                "💸 <b>Withdraw request</b>\n\n"
-                "Enter the amount of TON you want to withdraw.\n"
-                "Minimum: 10 TON",
-                parse_mode="HTML"
-            )
-            context.user_data["awaiting_withdraw"] = True
-            return
-
-
-        if action == "disconnect_wallet":
-            user_row = get_user_by_tg_id(user.id)
-
-            conn = get_db()
-            c = conn.cursor()
-            c.execute("UPDATE users SET ton_wallet = NULL WHERE id = ?", (user_row["id"],))
-            conn.commit()
-            conn.close()
-
-            await update.effective_message.reply_text("🔌 TON Wallet has been disconnected.")
-            return
-
-
-
-        # 2) Withdraw amount input
-        if context.user_data.get("awaiting_withdraw"):
-            amount_text = data.get("amount") or data.get("value") or None
-            if not amount_text:
-                context.user_data["awaiting_withdraw"] = False
-                await update.message.reply_text("❌ Invalid input.")
-                return
-
-            try:
-                amount = float(amount_text)
-            except:
-                await update.message.reply_text("❌ Enter a valid number.")
-                return
-
-            balance = float(user_row["balance"] or 0)
-
-            if amount < 10:
-                await update.message.reply_text("❌ Minimum withdraw is 10 TON.")
-                return
-
-            if amount > balance:
-                await update.message.reply_text(
-                    f"❌ You don't have enough balance.\nYour balance: {balance:.4f} TON"
-                )
-                return
-
-            wid, err = create_withdrawal(user_row["id"], amount)
-            context.user_data["awaiting_withdraw"] = False
-
-            await update.message.reply_text(
-                "✅ Your withdraw request has been submitted.\n"
-                "⏳ Please wait up to 24 hours."
-            )
-            return
-
-    except Exception as e:
-        print("WEBAPP ERROR:", e)
-
-
-
-
-async def withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    We open the same menu as "💼 Balance and Draw"
-    """
-    user = update.effective_user
-    user_row = get_user_by_tg_id(user.id)
-    if not user_row:
-        ensure_user(user)
-        user_row = get_user_by_tg_id(user.id)
-
-    # Օգտագործում ենք արդեն պատրաստ handle_balance ֆունկցիան
-    await handle_balance(update, context, user_row)
-
-async def start(update, context):
-    # վերցնում ենք օգտագործողի id / init
-    ensure_user(update.effective_user)
-
-    # ՉԻ վերադարձնում ոչ մի հաղորդագրություն
-    return
-
-
-
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    chat_id = update.effective_chat.id
-    text = (update.message.text or "").strip()
-    user_row = get_user_by_tg_id(user.id)
-    if not user_row:
-        ensure_user(user)
-        user_row = get_user_by_tg_id(user.id)
-
-    if text == "💰 Earn tasks":
-        await handle_earn_tasks(update, context, user_row)
-    elif text == "⭐ VIP zone":
-        await handle_vip_zone(update, context, user_row)
-    elif text == "💼 Balance & Withdraw":
-        await handle_balance(update, context, user_row)
-    elif text == "🔗 Connect TON wallet":
-        await handle_connect_wallet(update, context, user_row)
-    elif text == "👤 Profile":
-        await handle_profile(update, context, user_row)
-    elif text.startswith("/admin"):
-        await handle_admin(update, context)
-    else:
-        await update.message.reply_text(
-            "Select the appropriate button from the menu.", reply_markup=main_menu_kb()
-        )
-
-
-async def handle_earn_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
-    user_id = user_row["id"]
-    total_dep = get_total_active_deposit(user_id)
-    if total_dep <= 0:
-        await update.message.reply_text(
-            "You currently have no active VIP investments.\n"
-            "⭐ You can see the investment conditions in the VIP Zone section.",
-            reply_markup=main_menu_kb(),
-        )
-        return
-
-    # ստեղծում կամ բերում ենք այսօրվա VIP tasks
-    tasks = get_or_create_today_vip_tasks(user_id)
-    if not tasks:
-        await update.message.reply_text(
-            "There are no tasks at this time. Please try again later.",
-            reply_markup=main_menu_kb(),
-        )
-        return
-
-    lines = ["📋 Your VIP tasks for today?\n"]
-    buttons = []
-    for row in tasks:
-        status = "✅ Done" if row["status"] == "completed" else "⏳ Waiting"
-        lines.append(
-            f"{row['slot']}) {row['reward']:.4f} TON – {status}"
-        )
-        if row["status"] == "pending":
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        f"✅ Mark {row['slot']} Done",
-                        callback_data=f"vip_done:{row['id']}",
-                    )
-                ]
-            )
-
-    kb = InlineKeyboardMarkup(buttons) if buttons else None
-    await update.message.reply_text(
-        "\n".join(lines),
-        reply_markup=kb or main_menu_kb(),
-    )
-
-
-async def handle_vip_zone(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
-    user_id = user_row["id"]
-    total_dep = get_total_active_deposit(user_id)
-
-    text = (
-        "⭐ <b>VIP Zone</b>\n\n"
-        "In VIP, you deposit money (for example, 1000 TON), and every day you receive\n"
-        "3 tasks, each worth 1/3 of 5%.\n\n"
-        f"Your total active deposit: <b>{total_dep:.2f} TON</b>\n\n"
-        "The admin adds technical inputs.\n"
-        "Depending on the size of your investment, the bot automatically creates daily tasks."
-    )
-    await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
-
-
-async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
-    user_id = user_row["id"]
-    bal = float(user_row["balance"] or 0)
-    ton_wallet = user_row["ton_wallet"] or "not attached"
-    total_dep = get_total_active_deposit(user_id)
-
-    text = (
-        "💼 <b>Your financial dashboard</b>\n\n"
-        f"Balance՝ <b>{bal:.4f} TON</b>\n"
-        f"Active VIP deposit՝ <b>{total_dep:.2f} TON</b>\n"
-        f"TON wallet՝ <b>{ton_wallet}</b>\n\n"
-        "Minimum required for cashout՝ <b>10 TON</b>։"
-    )
-
-    buttons = []
-    if bal >= 10 and user_row["ton_wallet"]:
-        buttons.append(
-            [InlineKeyboardButton("💸 Send a cash withdrawal request", callback_data="withdraw_req")]
-        )
-
-    kb = InlineKeyboardMarkup(buttons) if buttons else None
-    await update.message.reply_text(text, parse_mode="HTML", reply_markup=kb or main_menu_kb())
-
-
-async def handle_connect_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
-    text = (
-        "🔗 <b>Connect TON wallet</b>\n\n"
-        "1) Click the button below to open Telegram Wallet. (TON)\n"
-        "2) See your TON address in your wallet.\n"
-        "3) Copy the address and send it to me here as a single line.\n\n"
-        "For example:՝ <code>UQDxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>\n\n"
-        "Your last saved address՝ "
-        f"<b>{user_row['ton_wallet'] or 'there is none'}</b>"
-    )
-    kb = InlineKeyboardMarkup(
+def webapp_button_kb():
+    return InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "💼 Open Telegram Wallet", url="https://t.me/wallet"
+                    "🌐 Open MainMoney App",
+                    web_app=WebAppInfo(url=WEBAPP_URL),
                 )
             ]
         ]
     )
-    await update.message.reply_text(text, parse_mode="HTML", reply_markup=kb)
-
-    # Պահում ենք state, որ հաջորդ տեքստը դիտարկենք որպես քաշիլոք
-    context.user_data["awaiting_wallet"] = True
 
 
-async def handle_profile(update: Update, context: ContextTypes.DEFAULT_TYPE, user_row):
-    total_dep = get_total_active_deposit(user_row["id"])
+# =============== USER HANDLERS ===============
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    text = update.message.text or ""
+
+    inviter = None
+    parts = text.split()
+    if len(parts) > 1 and parts[1].startswith("ref_"):
+        try:
+            inviter_id = int(parts[1].split("_", 1)[1])
+            if inviter_id != user.id:
+                inviter = inviter_id
+        except Exception:
+            inviter = None
+
+    user_row = ensure_user(user, inviter_tg_id=inviter)
+
+    msg = (
+        "👋 Բարի գալուստ <b>MainMoney Earn Platform</b>-ի demo տարբերակ։\n\n"
+        "Աստեղ դու կարող ես կատարել առաջադրանքներ, հրավիրել մարդկանց, հավաքել coins, "
+        "և հետագայում դրանք փոխարկել TON-ի (admin-ի կողմից հաստատումով).\n\n"
+        "📱 Ունենք նաև WebApp ինտերֆեյս՝ ավելի հարմար կառավարման համար։"
+    )
+
+    await update.message.reply_text(
+        msg, parse_mode="HTML", reply_markup=main_menu_kb()
+    )
+    await update.message.reply_text(
+        "Սեղմիր ներքևի կոճակը WebApp-ը բացելու համար 👇",
+        reply_markup=webapp_button_kb(),
+    )
+
+
+async def text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    text = (update.message.text or "").strip()
+    user_row = get_user_by_tg_id(user.id)
+    if not user_row:
+        user_row = ensure_user(user)
+
+    # states
+    if context.user_data.get("awaiting_wallet"):
+        await handle_wallet_input(update, context, user_row)
+        return
+
+    if context.user_data.get("awaiting_withdraw"):
+        await handle_withdraw_amount_input(update, context, user_row)
+        return
+
+    # menu buttons
+    if text == "📊 Account":
+        await handle_account(update, context, user_row)
+    elif text == "🎯 Tasks":
+        await handle_tasks(update, context, user_row)
+    elif text == "💼 Wallet":
+        await handle_wallet(update, context, user_row)
+    elif text == "💸 Withdraw":
+        await handle_withdraw(update, context, user_row)
+    elif text == "👥 Partners":
+        await handle_partners(update, context, user_row)
+    elif text == "🏪 Shop":
+        await handle_shop(update, context, user_row)
+    elif text.startswith("/admin"):
+        await admin_help(update, context)
+    else:
+        await update.message.reply_text(
+            "Օգտագործիր մենյուի կոճակները կամ /admin (admin-ի համար)", reply_markup=main_menu_kb()
+        )
+
+
+async def handle_account(update: Update, context, user_row):
+    coins = int(user_row["coins"] or 0)
+    total_earned = int(user_row["total_earned"] or 0)
+    total_spent = int(user_row["total_spent"] or 0)
+    wallet = user_row["ton_wallet"] or "not linked"
+
     text = (
-        "👤 <b>Your profile</b>\n\n"
-        f"ID՝ <code>{user_row['tg_id']}</code>\n"
-        f"Username՝ @{user_row['username'] or '—'}\n"
-        f"Name:՝ {user_row['first_name']}\n"
-        f"Balance՝ <b>{float(user_row['balance'] or 0):.4f} TON</b>\n"
-        f"Active deposit՝ <b>{total_dep:.2f} TON</b>\n"
-        f"TON Wallet՝ <code>{user_row['ton_wallet'] or 'there is none'}</code>\n"
+        "📊 <b>Քո հաշիվը</b>\n\n"
+        f"💰 Coins balance: <b>{coins}</b>\n"
+        f"📈 Total earned: <b>{total_earned}</b>\n"
+        f"💸 Total spent: <b>{total_spent}</b>\n"
+        f"🔗 TON wallet: <code>{wallet}</code>\n\n"
+        "WebApp-ում կարող ես ավելի հարմար տեսնել ամեն բան։"
     )
     await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
 
 
-# ===================== CALLBACKS =====================
+async def handle_tasks(update: Update, context, user_row):
+    tasks = get_active_tasks()
+    if not tasks:
+        await update.message.reply_text(
+            "Այս պահին ակտիվ tasks չկան։", reply_markup=main_menu_kb()
+        )
+        return
 
-async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    data = query.data or ""
+    lines = ["🎯 <b>Ակտիվ tasks</b>\n"]
+    for t in tasks:
+        already = user_has_completed_task(user_row["id"], t["id"])
+        status = "✅ Done" if already else "🕒 Available"
+        lines.append(
+            f"#{t['id']} {status}\n"
+            f"<b>{t['title']}</b> (+{t['reward']} coins)\n"
+            f"{t['description']}\n"
+            f"{t['url']}\n"
+        )
 
-    user = query.from_user
-    user_row = get_user_by_tg_id(user.id)
-    if not user_row:
-        ensure_user(user)
-        user_row = get_user_by_tg_id(user.id)
-
-    if data.startswith("vip_done:"):
-        task_id = int(data.split(":")[1])
-        await complete_vip_task(query, context, user_row, task_id)
-    elif data == "withdraw_req":
-        await process_withdraw_request(query, context, user_row)
+    lines.append("\nՏասկը ավարտելուց հետո վերադարձիր բոտ և սեղմիր /done_TASKID օրինակ՝ /done_3")
+    await update.message.reply_text(
+        "\n".join(lines), parse_mode="HTML", reply_markup=main_menu_kb()
+    )
 
 
-async def complete_vip_task(query, context, user_row, task_id: int):
-    user_id = user_row["id"]
+async def handle_wallet(update: Update, context, user_row):
+    wallet = user_row["ton_wallet"] or "not linked"
+    text = (
+        "💼 <b>TON wallet</b>\n\n"
+        f"Ընթացիկ: <code>{wallet}</code>\n\n"
+        "Եթե ուզում ես փոխել կամ նշել նորը, ուղարկի՛ր քո TON հասցեն մեկ տողով։"
+    )
+    await update.message.reply_text(text, parse_mode="HTML")
+    context.user_data["awaiting_wallet"] = True
+
+
+async def handle_wallet_input(update: Update, context, user_row):
+    context.user_data["awaiting_wallet"] = False
+    wallet = (update.message.text or "").strip()
+    if len(wallet) < 16:
+        await update.message.reply_text("❌ Սա վալիդ TON հասցե չի թվում, փորձիր նորից։")
+        return
 
     conn = get_db()
     c = conn.cursor()
     c.execute(
-        "SELECT * FROM vip_tasks WHERE id = ? AND user_id = ?",
-        (task_id, user_id),
-    )
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        await query.edit_message_text("The task was not found.")
-        return
-
-    if row["status"] == "completed":
-        conn.close()
-        await query.edit_message_text("This task has already been completed.")
-        return
-
-    # Mark completed
-    c.execute(
-        "UPDATE vip_tasks SET status = 'completed', completed_at = ? WHERE id = ?",
-        (int(time.time()), task_id),
+        "UPDATE users SET ton_wallet = ? WHERE id = ?",
+        (wallet, user_row["id"]),
     )
     conn.commit()
     conn.close()
 
-    # Add reward
-    update_balance(user_id, float(row["reward"]))
-
-    await query.edit_message_text(
-        f"✅ The task has been marked as completed. You have been added. {row['reward']:.4f} TON։"
+    await update.message.reply_text(
+        f"✅ Wallet-ը պահպանված է.\n<code>{wallet}</code>",
+        parse_mode="HTML",
+        reply_markup=main_menu_kb(),
     )
 
 
-async def process_withdraw_request(query, context, user_row):
-    user_id = user_row["id"]
-    bal = float(user_row["balance"] or 0)
-    if not user_row["ton_wallet"]:
-        await query.edit_message_text("You haven't attached a TON wallet yet. Attach a wallet first.")
-        return
-    if bal < 10:
-        await query.edit_message_text(
-            f"You need at least 10 TON to cash out. Your balance՝ {bal:.4f} TON։"
+async def handle_withdraw(update: Update, context, user_row):
+    coins = int(user_row["coins"] or 0)
+    if coins < MIN_WITHDRAW_COINS:
+        await update.message.reply_text(
+            f"❌ Քեզ մոտ քիչ coins կան.\nԲալանս: {coins}\nՄինիմում withdraw: {MIN_WITHDRAW_COINS}",
+            reply_markup=main_menu_kb(),
         )
         return
 
-    amount = bal  # ամբողջ բալանսը
-    wid, err = create_withdrawal(user_id, amount)
-    if err == "no_wallet":
-        await query.edit_message_text("You haven't attached a TON Wallet yet.")
-        return
-    if err == "not_enough_balance":
-        await query.edit_message_text("The balance is not enough.")
+    if not user_row["ton_wallet"]:
+        await update.message.reply_text(
+            "❌ TON wallet չես կցել։ Սկզբում Wallet բաժնում ավելացրու։",
+            reply_markup=main_menu_kb(),
+        )
         return
 
-    # ահազանգում ենք ադմինին
-    user = get_user_internal(user_id)
-    msg = (
-        f"💸 <b>New cashout request</b>\n\n"
-        f"Withdraw ID: <code>{wid}</code>\n"
-        f"User tg_id: <code>{user['tg_id']}</code>\n"
-        f"Username: @{user['username'] or '—'}\n"
-        f"Amount: <b>{amount:.4f} TON</b>\n"
-        f"TON wallet: <code>{user['ton_wallet']}</code>\n\n"
-        f"Commands:՝\n"
-        f"/approve_withdraw {wid} – mark as approved\n"
-        f"/reject_withdraw {wid} – mark as rejected\n"
+    await update.message.reply_text(
+        f"💸 Քո բալանսը՝ {coins} coins.\n\nԳրիր, թե քանի coins ես ուզում հանել։",
+        reply_markup=main_menu_kb(),
     )
+    context.user_data["awaiting_withdraw"] = True
+
+
+async def handle_withdraw_amount_input(update: Update, context, user_row):
+    context.user_data["awaiting_withdraw"] = False
+    text = (update.message.text or "").strip()
+
     try:
-        await context.bot.send_message(ADMIN_ID, msg, parse_mode="HTML")
-    except Exception as e:
-        log.error(f"Error notifying admin: {e}")
+        amount = int(float(text))
+    except ValueError:
+        await update.message.reply_text("❌ Գրի թիվ (coins-ի քանակը).")
+        return
 
-    await query.edit_message_text(
-        "✅ Your cashout request has been sent to the admin.\n"
-        "The admin will verify and send the money to your TON wallet."
+    wid, err = create_withdraw(user_row, amount)
+    if err == "no_wallet":
+        await update.message.reply_text("❌ Wallet չունես։ Սկզբում կցիր TON wallet։")
+        return
+    if err == "too_small":
+        await update.message.reply_text(
+            f"❌ Մինիմալ withdraw-ը {MIN_WITHDRAW_COINS} coins է։"
+        )
+        return
+    if err == "not_enough":
+        await update.message.reply_text("❌ Բալանսը բավարար չէ։")
+        return
+
+    # notify admin
+    try:
+        msg = (
+            "💸 <b>New withdraw request</b>\n\n"
+            f"ID: <code>{wid}</code>\n"
+            f"User: <code>{user_row['tg_id']}</code> @{user_row['username'] or '—'}\n"
+            f"Amount: <b>{amount} coins</b>\n"
+            f"Wallet: <code>{user_row['ton_wallet']}</code>\n\n"
+            f"/approve_withdraw {wid}\n/reject_withdraw {wid}"
+        )
+        await update.get_bot().send_message(ADMIN_ID, msg, parse_mode="HTML")
+    except Exception as e:
+        log.error(f"Failed to notify admin: {e}")
+
+    await update.message.reply_text(
+        "✅ Քո withdraw հայտը ուղարկվել է admin-ին.\n⏳ Պատասխանը կստանաս 24 ժամվա ընթացքում։",
+        reply_markup=main_menu_kb(),
     )
 
 
-# ===================== ADMIN COMMANDS =====================
+async def handle_partners(update: Update, context, user_row):
+    refs = get_user_referrals(user_row["tg_id"])
+    count = len(refs)
+    lines = []
+    lines.append("👥 <b>Partners</b>\n")
+    lines.append(f"Ընդամենը հրավիրված․ <b>{count}</b>\n")
+
+    if refs:
+        lines.append("Վերջին ռեֆերալները՝")
+        for r in refs[:20]:
+            dt = datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
+            lines.append(f"• user_id={r['invited_tg_id']} — {dt}")
+    else:
+        lines.append("Դեռ չունես ռեֆերալներ։")
+
+    bot_me = await update.get_bot().get_me()
+    ref_link = f"https://t.me/{bot_me.username}?start=ref_{user_row['tg_id']}"
+    lines.append("")
+    lines.append("Քո referral հղումը՝")
+    lines.append(f"<code>{ref_link}</code>")
+
+    await update.message.reply_text(
+        "\n".join(lines), parse_mode="HTML", reply_markup=main_menu_kb()
+    )
+
+
+async def handle_shop(update: Update, context, user_row):
+    text = (
+        "🏪 <b>Shop (demo)</b>\n\n"
+        "Աստեղ հետո կարող ենք ավելացնել premium features, boosts, advertising slots և այլն։\n\n"
+        "Հիմա պարզապես demo է, որը ցույց է տալիս, որ այդ բաժինը կա։"
+    )
+    await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
+
+
+# =============== COMMAND: /done_TASKID for task auto-complete demo ===============
+
+async def done_task_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    user_row = get_user_by_tg_id(user.id)
+    if not user_row:
+        user_row = ensure_user(user)
+
+    text = update.message.text or ""
+    if not text.startswith("/done_"):
+        return
+
+    try:
+        task_id = int(text.split("_", 1)[1])
+    except Exception:
+        await update.message.reply_text("❌ Սխալ task ID։ Օրինակ՝ /done_3")
+        return
+
+    tasks = get_active_tasks()
+    task_map = {t["id"]: t for t in tasks}
+    if task_id not in task_map:
+        await update.message.reply_text("❌ Այդ ID-ով ակտիվ task չկա։")
+        return
+
+    if user_has_completed_task(user_row["id"], task_id):
+        await update.message.reply_text("✅ Այս task-ը արդեն գրանցված է որպես complete։")
+        return
+
+    task = task_map[task_id]
+    reward = int(task["reward"] or TASK_REWARD_DEFAULT)
+
+    create_task_completion(user_row["id"], task_id, reward)
+    add_coins(user_row["id"], reward)
+
+    await update.message.reply_text(
+        f"✅ Task #{task_id} ավարտված է և քեզ ավելացվեց {reward} coins։",
+        reply_markup=main_menu_kb(),
+    )
+
+
+# =============== WEBAPP DATA HANDLER ===============
+
+async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Handles WebApp.sendData(JSON).
+    """
+    try:
+        msg = update.effective_message
+        if not msg or not msg.web_app_data:
+            return
+
+        data_raw = msg.web_app_data.data
+        data = json.loads(data_raw)
+
+        action = data.get("action")
+        user = update.effective_user
+        user_row = get_user_by_tg_id(user.id) or ensure_user(user)
+
+        if action == "set_wallet":
+            wallet = data.get("wallet", "").strip()
+            if len(wallet) < 16:
+                await msg.reply_text("❌ Invalid TON wallet from WebApp.")
+                return
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute(
+                "UPDATE users SET ton_wallet = ? WHERE id = ?",
+                (wallet, user_row["id"]),
+            )
+            conn.commit()
+            conn.close()
+
+            await msg.reply_text(
+                f"✅ TON wallet saved from WebApp:\n<code>{wallet}</code>",
+                parse_mode="HTML",
+            )
+            return
+
+        if action == "disconnect_wallet":
+            conn = get_db()
+            c = conn.cursor()
+            c.execute(
+                "UPDATE users SET ton_wallet = NULL WHERE id = ?",
+                (user_row["id"],),
+            )
+            conn.commit()
+            conn.close()
+
+            await msg.reply_text("🔌 TON wallet disconnected from WebApp.")
+            return
+
+        if action == "withdraw":
+            amount = int(float(data.get("amount", 0)))
+            wid, err = create_withdraw(user_row, amount)
+            if err == "no_wallet":
+                await msg.reply_text("❌ No TON wallet. Set it first.")
+                return
+            if err == "too_small":
+                await msg.reply_text(
+                    f"❌ Too small. Min withdraw is {MIN_WITHDRAW_COINS} coins."
+                )
+                return
+            if err == "not_enough":
+                await msg.reply_text("❌ Not enough coins.")
+                return
+
+            # notify admin
+            try:
+                notif = (
+                    "💸 <b>New withdraw from WebApp</b>\n\n"
+                    f"ID: <code>{wid}</code>\n"
+                    f"User: <code>{user_row['tg_id']}</code> @{user_row['username'] or '—'}\n"
+                    f"Amount: <b>{amount} coins</b>\n"
+                    f"Wallet: <code>{user_row['ton_wallet']}</code>\n\n"
+                    f"/approve_withdraw {wid}\n/reject_withdraw {wid}"
+                )
+                await context.bot.send_message(ADMIN_ID, notif, parse_mode="HTML")
+            except Exception as e:
+                log.error(f"Admin notify error: {e}")
+
+            await msg.reply_text(
+                "✅ Withdraw request created from WebApp.\n⏳ Wait for admin approval."
+            )
+            return
+
+    except Exception as e:
+        log.error(f"webapp_data_handler error: {e}")
+
+
+# =============== ADMIN PART ===============
 
 def admin_only(func):
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        if user.id != ADMIN_ID:
-            await update.message.reply_text("You are not an admin.")
+        if update.effective_user.id != ADMIN_ID:
+            await update.message.reply_text("❌ Դու admin չես։")
             return
         return await func(update, context)
 
     return wrapper
 
 
-async def handle_admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    if user.id != ADMIN_ID:
-        await update.message.reply_text("You are not an admin.")
+async def admin_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("❌ Դու admin չես։")
         return
-    await update.message.reply_text(admin_menu_text(), parse_mode="HTML")
 
-
-@admin_only
-async def add_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if len(args) != 2:
-        await update.message.reply_text("User՝ /add_balance <tg_id> <amount>")
-        return
-    tg_id = int(args[0])
-    amount = float(args[1])
-
-    u = get_user_by_tg_id(tg_id)
-    if not u:
-        await update.message.reply_text("User not found.")
-        return
-    update_balance(u["id"], amount)
-    await update.message.reply_text(
-        f"User @{u['username'] or u['tg_id']} added to balance {amount} TON։"
+    text = (
+        "🛠 <b>Admin panel</b>\n\n"
+        "/admin – այս մենյուն\n"
+        "/add_task title | description | url | reward\n"
+        "/list_tasks – tasks list\n"
+        "/set_coins tg_id amount – set user coins\n"
+        "/add_coins tg_id amount – add coins\n"
+        "/list_withdraws – pending withdraws\n"
+        "/approve_withdraw id\n"
+        "/reject_withdraw id\n"
+        "/broadcast text\n"
     )
+    await update.message.reply_text(text, parse_mode="HTML")
 
 
 @admin_only
-async def sub_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if len(args) != 2:
-        await update.message.reply_text("Usage:՝ /sub_balance <tg_id> <amount>")
+async def add_task_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # format: /add_task title | description | url | reward
+    text = update.message.text.partition(" ")[2].strip()
+    parts = [p.strip() for p in text.split("|")]
+    if len(parts) != 4:
+        await update.message.reply_text("Օգտագործիր՝ /add_task title | description | url | reward")
         return
-    tg_id = int(args[0])
-    amount = float(args[1])
 
-    u = get_user_by_tg_id(tg_id)
-    if not u:
-        await update.message.reply_text("User not found.")
+    title, description, url, reward_s = parts
+    try:
+        reward = int(reward_s)
+    except ValueError:
+        await update.message.reply_text("Reward-ը թիվ պիտի լինի։")
         return
-    update_balance(u["id"], -amount)
-    await update.message.reply_text(
-        f"User @{u['username'] or u['tg_id']} taken off balance {amount} TON։"
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        """
+        INSERT INTO tasks (title, description, url, reward, active, created_at)
+        VALUES (?, ?, ?, ?, 1, ?)
+        """,
+        (title, description, url, reward, int(time.time())),
     )
+    conn.commit()
+    conn.close()
+
+    await update.message.reply_text("✅ Task added.")
 
 
 @admin_only
-async def add_deposit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if len(args) != 2:
-        await update.message.reply_text("Usage:՝ /add_deposit <tg_id> <amount>")
+async def list_tasks_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    tasks = get_active_tasks()
+    if not tasks:
+        await update.message.reply_text("No active tasks.")
         return
-    tg_id = int(args[0])
-    amount = float(args[1])
+
+    lines = ["🎯 Active tasks:"]
+    for t in tasks:
+        lines.append(
+            f"#{t['id']} {t['title']} (+{t['reward']} coins)\n{t['url']}"
+        )
+    await update.message.reply_text("\n\n".join(lines))
+
+
+@admin_only
+async def set_coins_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 2:
+        await update.message.reply_text("Օգտագործիր՝ /set_coins tg_id amount")
+        return
+    tg_id = int(context.args[0])
+    amount = int(context.args[1])
 
     u = get_user_by_tg_id(tg_id)
     if not u:
@@ -741,26 +831,75 @@ async def add_deposit_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     conn = get_db()
     c = conn.cursor()
-    c.execute(
-        "INSERT INTO deposits (user_id, amount, active, created_at) VALUES (?, ?, 1, ?)",
-        (u["id"], amount, int(time.time())),
-    )
+    c.execute("UPDATE users SET coins = ? WHERE id = ?", (amount, u["id"]))
     conn.commit()
     conn.close()
 
-    await update.message.reply_text(
-        f"Added {amount} TON VIP deposit user @{u['username'] or u['tg_id']} for"
-    )
+    await update.message.reply_text("✅ Coins set.")
+
+
+@admin_only
+async def add_coins_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 2:
+        await update.message.reply_text("Օգտագործիր՝ /add_coins tg_id amount")
+        return
+    tg_id = int(context.args[0])
+    amount = int(context.args[1])
+
+    u = get_user_by_tg_id(tg_id)
+    if not u:
+        await update.message.reply_text("User not found.")
+        return
+
+    add_coins(u["id"], amount)
+    await update.message.reply_text("✅ Coins added.")
+
+
+@admin_only
+async def list_withdraws_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    rows = list_pending_withdraws()
+    if not rows:
+        await update.message.reply_text("No pending withdraws.")
+        return
+
+    lines = ["💸 Pending withdraws:"]
+    for r in rows:
+        dt = datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
+        uname = r["username"] or r["tg_id"]
+        lines.append(
+            f"ID {r['id']}: {r['amount_coins']} coins | @{uname} | {dt}\nWallet: {r['ton_wallet']}"
+        )
+
+    await update.message.reply_text("\n\n".join(lines))
+
+
+@admin_only
+async def approve_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 1:
+        await update.message.reply_text("Օգտագործիր՝ /approve_withdraw id")
+        return
+
+    wid = int(context.args[0])
+    set_withdraw_status(wid, "approved")
+    await update.message.reply_text("✅ Withdraw approved (remember to pay manually on TON).")
+
+
+@admin_only
+async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 1:
+        await update.message.reply_text("Օգտագործիր՝ /reject_withdraw id")
+        return
+
+    wid = int(context.args[0])
+    set_withdraw_status(wid, "rejected")
+    await update.message.reply_text("✅ Withdraw rejected.")
 
 
 @admin_only
 async def broadcast_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("Usage:՝ /broadcast <text>")
-        return
     text = update.message.text.partition(" ")[2].strip()
     if not text:
-        await update.message.reply_text("The text is empty.")
+        await update.message.reply_text("Օգտագործիր՝ /broadcast text")
         return
 
     conn = get_db()
@@ -770,147 +909,17 @@ async def broadcast_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
 
     sent = 0
-    for row in rows:
+    for r in rows:
         try:
-            await context.bot.send_message(row["tg_id"], text)
+            await context.bot.send_message(r["tg_id"], text)
             sent += 1
         except Exception:
             pass
 
-    await update.message.reply_text(f"Sent {sent} of the user.")
+    await update.message.reply_text(f"✅ Broadcast sent to {sent} users.")
 
 
-@admin_only
-async def list_withdraws_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(
-        "SELECT w.*, u.tg_id, u.username "
-        "FROM withdrawals w JOIN users u ON u.id = w.user_id "
-        "WHERE w.status = 'pending' ORDER BY w.created_at DESC"
-    )
-    rows = c.fetchall()
-    conn.close()
-
-    if not rows:
-        await update.message.reply_text("There are no pending withdrawals.")
-        return
-
-    lines = ["💸 Pending withdraw requests:\n"]
-    for r in rows:
-        dt = datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
-        lines.append(
-            f"ID {r['id']}: {r['amount']:.4f} TON | @{r['username'] or r['tg_id']} | {dt}\n"
-            f"Wallet: {r['ton_wallet']}"
-        )
-    await update.message.reply_text("\n\n".join(lines))
-
-
-@admin_only
-async def approve_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if len(args) != 1:
-        await update.message.reply_text("Usage:՝ /approve_withdraw <id>")
-        return
-    wid = int(args[0])
-
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM withdrawals WHERE id = ?", (wid,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        await update.message.reply_text("The pull request was not found.")
-        return
-
-    if row["status"] != "pending":
-        conn.close()
-        await update.message.reply_text("This application is not pending.")
-        return
-
-    c.execute(
-        "UPDATE withdrawals SET status = 'approved', processed_at = ? WHERE id = ?",
-        (int(time.time()), wid),
-    )
-    conn.commit()
-    conn.close()
-
-    # տեղեկացնում ենք օգտատերին
-    u = get_user_internal(row["user_id"])
-    try:
-        await context.bot.send_message(
-            u["tg_id"],
-            f"✅ Your {row['amount']:.4f} TON withdrawal request has been approved. The funds have been sent to your TON wallet.",
-        )
-    except Exception:
-        pass
-
-    await update.message.reply_text("The application was marked approved.")
-
-
-@admin_only
-async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if len(args) != 1:
-        await update.message.reply_text("Usage:՝ /reject_withdraw <id>")
-        return
-    wid = int(args[0])
-
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM withdrawals WHERE id = ?", (wid,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        await update.message.reply_text("The pull request was not found.")
-        return
-
-    if row["status"] != "pending":
-        conn.close()
-        await update.message.reply_text("This application is not pending.")
-        return
-
-    c.execute(
-        "UPDATE withdrawals SET status = 'rejected', processed_at = ? WHERE id = ?",
-        (int(time.time()), wid),
-    )
-    conn.commit()
-    conn.close()
-
-    # optionally՝ վերադարձնել գումարը բալանսին
-    # update_balance(row["user_id"], row["amount"])
-
-    u = get_user_internal(row["user_id"])
-    try:
-        await context.bot.send_message(
-            u["tg_id"],
-            f"❌ Your {row['amount']:.4f} TON withdrawal request has been rejected. Contact the admin for details.",
-        )
-    except Exception:
-        pass
-
-    await update.message.reply_text("The application was marked rejected.")
-
-
-# ===================== TEXT CATCH (wallet input) =====================
-
-async def text_catch(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # եթե սպասում ենք քաշիլոք — թող աշխատի
-    if context.user_data.get("awaiting_withdraw_amount"):
-    #   ... (դուրս չեմ գրում, թող մնա ինչպես կա)
-        return
-
-    # եթե սպասում ենք wallet — թող աշխատի
-    if context.user_data.get("awaiting_wallet"):
-    #    ... (թող մնա ինչպես կա)
-        return
-
-    # Այլ դեպքում — ոչ մի բան չենք գրում, որ բոտը լուռ լինի
-    return
-
-
-
-# ===================== MAIN =====================
+# =============== MAIN ===============
 
 def main():
     init_db()
@@ -918,30 +927,25 @@ def main():
 
     # commands
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("admin", handle_admin))
-    app.add_handler(CommandHandler("add_balance", add_balance_cmd))
-    app.add_handler(CommandHandler("sub_balance", sub_balance_cmd))
-    app.add_handler(CommandHandler("add_deposit", add_deposit_cmd))
-    app.add_handler(CommandHandler("broadcast", broadcast_cmd))
+    app.add_handler(CommandHandler("admin", admin_help))
+    app.add_handler(CommandHandler("add_task", add_task_cmd))
+    app.add_handler(CommandHandler("list_tasks", list_tasks_cmd))
+    app.add_handler(CommandHandler("set_coins", set_coins_cmd))
+    app.add_handler(CommandHandler("add_coins", add_coins_cmd))
     app.add_handler(CommandHandler("list_withdraws", list_withdraws_cmd))
     app.add_handler(CommandHandler("approve_withdraw", approve_withdraw_cmd))
     app.add_handler(CommandHandler("reject_withdraw", reject_withdraw_cmd))
-    app.add_handler(MessageHandler(filters.ALL & filters.ChatType.PRIVATE, webapp_data_handler))
+    app.add_handler(CommandHandler("broadcast", broadcast_cmd))
+    app.add_handler(CommandHandler("done", done_task_handler))  # /done_3 captured via text handler
 
+    # message handlers
+    app.add_handler(
+        MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler)
+    )
+    app.add_handler(MessageHandler(filters.Regex(r"^/done_\d+"), done_task_handler))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
 
-    
-    
-    
-    app.add_handler(CommandHandler("withdraw", withdraw_cmd))
-
-
-    # callbacks
-    app.add_handler(CallbackQueryHandler(callback_handler))
-
-    # text handler (ALL)
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_catch))
-
-    log.info("Main Money bot started...")
+    log.info("MainMoney bot started...")
     app.run_polling()
 
 

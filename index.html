@@ -1,282 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Main Money WebApp</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css" />
-
-<script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect.min.js"></script>
-
-
-<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-
-
-  <!-- TELEGRAM WEBAPP SDK -->
+  <meta charset="UTF-8">
+  <title>MainMoney WebApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- APP -->
-  <script defer src="app.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
-
-
-
 <body>
-  <div id="app">
-    <!-- HEADER -->
-    <header class="mm-header">
-      <div class="mm-header-left">
-        <div class="mm-title">Main Money</div>
-        <div class="mm-subtitle">Earn • Invest • Withdraw</div>
-      </div>
-      <div class="mm-header-right">
-        <div class="mm-user-avatar" id="mm-avatar">
-          <span id="mm-avatar-initial">M</span>
-        </div>
-      </div>
-    </header>
+<div id="app">
+  <header>
+    <h2>MainMoney</h2>
+    <p id="user-label">Loading...</p>
+  </header>
 
-    <!-- TOP BALANCE CARD -->
-    <section class="mm-balance-card">
-      <div class="mm-balance-main">
-        <div class="mm-label">Total balance</div>
-        <div class="mm-balance-amount" id="mm-balance-amount">0.0000 TON</div>
-      </div>
-      <div class="mm-balance-extra">
-        <div>
-          <div class="mm-label">VIP deposit</div>
-          <div class="mm-badge" id="mm-vip-deposit">0.00 TON</div>
-        </div>
-        <div>
-          <div class="mm-label">TON wallet</div>
-          <div class="mm-badge mm-badge-ton" id="mm-ton-wallet">not linked</div>
-        </div>
-      </div>
-    </section>
+  <nav id="nav">
+    <button data-tab="account" class="active">📊 Account</button>
+    <button data-tab="tasks">🎯 Tasks</button>
+    <button data-tab="wallet">💼 Wallet</button>
+    <button data-tab="withdraw">💸 Withdraw</button>
+    <button data-tab="partners">👥 Partners</button>
+  </nav>
 
-    <!-- NAV TABS -->
-    <nav class="mm-tabs">
-      <button class="mm-tab active" data-tab="dashboard">Dashboard</button>
-      <button class="mm-tab" data-tab="tasks">Tasks</button>
-      <button class="mm-tab" data-tab="vip">VIP</button>
-      <button class="mm-tab" data-tab="wallet">Wallet</button>
-      <button class="mm-tab" data-tab="profile">Profile</button>
-    </nav>
+  <section id="tab-account" class="tab active">
+    <h3>Your account</h3>
+    <p>Use chat button <b>📊 Account</b> to refresh your numbers.</p>
+    <p>Here WebApp just helps you send actions faster.</p>
+  </section>
 
-    <!-- PAGES WRAPPER -->
-    <main class="mm-pages">
+  <section id="tab-tasks" class="tab">
+    <h3>🎯 Tasks</h3>
+    <p>Open chat → press <b>🎯 Tasks</b> to see list.</p>
+    <p>After you finish, send <code>/done_TASKID</code> in chat.</p>
+  </section>
 
-      <!-- DASHBOARD PAGE -->
-      <section class="mm-page active" id="page-dashboard">
-        <div class="mm-section-title">Today overview</div>
+  <section id="tab-wallet" class="tab">
+    <h3>💼 TON Wallet</h3>
+    <p>Enter TON address:</p>
+    <input type="text" id="wallet-input" placeholder="UQ...">
+    <button id="btn-save-wallet" class="primary">Save wallet</button>
+    <button id="btn-disconnect-wallet" class="secondary">Disconnect wallet</button>
+  </section>
 
-        <div class="mm-card mm-card-row">
-          <div>
-            <div class="mm-label">Tasks completed today</div>
-            <div class="mm-big-number" id="mm-today-completed">0 / 3</div>
-          </div>
-          <div>
-            <div class="mm-label">Earned today</div>
-            <div class="mm-big-number" id="mm-today-earned">0.0000</div>
-          </div>
-        </div>
+  <section id="tab-withdraw" class="tab">
+    <h3>💸 Withdraw</h3>
+    <p>Enter coins amount you want to withdraw:</p>
+    <input type="number" id="withdraw-amount" min="1" placeholder="100">
+    <button id="btn-send-withdraw" class="primary">Send withdraw request</button>
+    <p class="hint">Min amount is defined by bot (now 100 coins).</p>
+  </section>
 
-        <div class="mm-section-title">Quick actions</div>
-        <div class="mm-grid">
-          <button class="mm-action-btn" id="btn-open-tasks">
-            <span>📋</span>
-            <span>Earn tasks</span>
-          </button>
-          <button class="mm-action-btn" id="btn-open-vip">
-            <span>⭐</span>
-            <span>VIP zone</span>
-          </button>
-          <button class="mm-action-btn" id="btn-open-wallet">
-            <span>💼</span>
-            <span>Balance</span>
-          </button>
-          <button class="mm-action-btn" id="btn-open-withdraw">
-            <span>💸</span>
-            <span>Withdraw</span>
-          </button>
-          <button class="mm-action-btn" id="btn-invite-friends">
-            <span>👥</span>
-            <span>Invite friends</span>
-          </button>
-        </div>
-        
-      </section>
-
-      <!-- TASKS PAGE -->
-      <section class="mm-page" id="page-tasks">
-        <div class="mm-section-title">VIP tasks for today</div>
-        <p class="mm-muted">
-          Complete all tasks to get your daily 5% from VIP deposit.  
-          Tasks list here is a demo — later we will load them from the bot API.
-        </p>
-
-        <div class="mm-task-list" id="mm-task-list">
-          <!-- Tasks will be rendered by app.js -->
-        </div>
-
-        <button class="mm-primary-btn" id="btn-refresh-tasks">
-          🔄 Refresh tasks
-        </button>
-      </section>
-
-      <!-- VIP PAGE -->
-      <section class="mm-page" id="page-vip">
-        <div class="mm-section-title">VIP zone</div>
-        <div class="mm-card">
-          <p>
-            In VIP zone you invest TON and every day receive 3 tasks.  
-            Total daily reward = <b>5% of your VIP deposit</b>.
-          </p>
-          <ul class="mm-list">
-            <li>⭐ Admin adds your deposit from backoffice</li>
-            <li>📅 Every day 3 tasks are generated automatically</li>
-            <li>✅ Mark each task as completed inside the bot</li>
-            <li>💰 Rewards go directly to your Main Money balance</li>
-          </ul>
-        </div>
-          <button class="mm-primary-btn" id="btn-buy-vip">
-              💎 Buy VIP tasks (TON)
-          </button>
-
-        <div class="mm-card mm-card-row">
-          <div>
-            <div class="mm-label">Your VIP deposit</div>
-            <div class="mm-big-number" id="mm-vip-deposit-2">0.00 TON</div>
-          </div>
-          <div>
-            <div class="mm-label">Approx. daily 5%</div>
-            <div class="mm-big-number" id="mm-vip-daily">0.00 TON</div>
-          </div>
-        </div>
-
-        <p class="mm-muted">
-          To increase your VIP deposit, contact admin inside the bot.
-        </p>
-      </section>
-
-      <!-- WALLET PAGE -->
-      <section class="mm-page" id="page-wallet">
-        <div class="mm-section-title">Wallet & Withdraw</div>
-
-        <div class="mm-card">
-          <div class="mm-row-space">
-            <div>
-              <div class="mm-label">Main balance</div>
-              <div class="mm-big-number" id="mm-wallet-balance">0.0000 TON</div>
-            </div>
-            <div>
-              <div class="mm-label">MIN withdraw</div>
-              <div class="mm-badge">1 TON</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="mm-card">
-          <div class="mm-row-space">
-            <div>
-              <div class="mm-label">TON wallet</div>
-              <div id="mm-wallet-ton-label" class="mm-ton-label">not linked</div>
-            </div>
-            <button class="mm-secondary-btn" id="btn-connect-ton">
-              🔗 Connect TON
-            </button>
-          </div>
-          <p class="mm-muted small">
-            When you press "Connect TON", Telegram Wallet will open.  
-            Copy your TON address and send it to the bot in chat.
-          </p>
-        </div>
-          <button id="btn-disconnect-ton" class="mm-secondary-btn">
-              Disconnect Wallet
-          </button>
-
-        <div class="mm-card">
-          <div class="mm-label">Withdraw</div>
-          <p class="mm-muted small">
-            To request withdraw, go to "Balance & Withdraw" inside the bot.  
-            WebApp only shows your financial status.
-          </p>
-          <button class="mm-primary-btn" id="btn-open-bot-withdraw">
-            💸 Open bot withdraw screen
-          </button>
-        </div>
-      </section>
-
-      <!-- PROFILE PAGE -->
-      <section class="mm-page" id="page-profile">
-        <div class="mm-section-title">Profile</div>
-
-        <div class="mm-card mm-card-profile">
-          <div class="mm-user-avatar big">
-            <span id="mm-avatar-initial-big">M</span>
-          </div>
-          <div class="mm-profile-info">
-            <div class="mm-profile-name" id="mm-profile-name">User</div>
-            <div class="mm-profile-username" id="mm-profile-username">@username</div>
-            <div class="mm-profile-id" id="mm-profile-id">ID: 0</div>
-          </div>
-        </div>
-
-        <div class="mm-card">
-          <div class="mm-label">About Main Money</div>
-          <p class="mm-muted">
-            Main Money is a Telegram-based earning platform with VIP investment
-            mechanics and manual withdrawals via admin.  
-            Always invest responsibly and only what you can afford to risk.
-          </p>
-        </div>
-      </section>
-    </main>
-  </div>
-  <!-- Custom TON Amount Modal -->
-<div id="ton-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2>Enter amount in TON</h2>
-
-    <input id="ton-amount-input"
-           type="number"
-           min="0"
-           step="0.01"
-           placeholder="0.00 TON">
-
-    <div class="modal-buttons">
-      <button id="ton-cancel" class="btn-secondary">Cancel</button>
-      <button id="ton-confirm" class="btn-primary">Pay</button>
-    </div>
-  </div>
-</div>
-<div id="mm-error-modal" class="mm-modal hidden">
-    <div class="mm-modal-box error">
-        <div class="mm-modal-icon">⚠️</div>
-        <div id="mm-error-text" class="mm-modal-message"></div>
-        <button id="mm-error-close" class="mm-modal-btn">Close</button>
-    </div>
-</div>
- 
-<!-- Withdraw Modal -->
-<div id="withdraw-modal" class="modal hidden">
-  <div class="modal-content">
-    <h2>Withdraw TON</h2>
-
-    <input 
-      id="withdraw-input" 
-      type="number" 
-      placeholder="Enter TON amount" 
-      min="1"
-    />
-
-    <div class="modal-buttons">
-      <button id="withdraw-confirm" class="btn-primary">Withdraw</button>
-      <button id="withdraw-cancel" class="btn-secondary">Cancel</button>
-    </div>
-  </div>
+  <section id="tab-partners" class="tab">
+    <h3>👥 Partners</h3>
+    <p>Use chat button <b>👥 Partners</b> to see stats and your referral link.</p>
+  </section>
 </div>
 
-
+<script src="app.js"></script>
 </body>
 </html>
