@@ -2,68 +2,76 @@
 # -*- coding: utf-8 -*-
 
 """
-MainMoney Earn Platform Bot
-===========================
+MainMoney Deposit Platform (WebApp-only)
+---------------------------------------
 
-⚠ Demo-level, but already quite powerful:
-- User registration + referrals (/start ref_USERID)
-- SQLite database
-- Internal coins balance + TON wallet field
-- Tasks system (admin adds tasks, users complete, earn coins)
-- Withdraw requests (coins → TON, manually processed by admin)
-- WebApp integration via Telegram WebApp.sendData
-- Admin commands: add tasks, edit balances, list withdraws, approve/reject, broadcast
+Պահանջվող փաթեթներ՝
+    pip install python-telegram-bot==20.7 Flask==3.0.0
 
-You must:
-- Install python-telegram-bot v20+:
-    pip install python-telegram-bot==20.7
+Բոտի ֆունկցիոնալը.
+- /start – գրանցում է user-ին + տալիս WebApp կոճակ
+- Չատում այլ user-ական մենյու չկա, ամեն ինչ WebApp-ում է
+- SQLite DB
+- Դեպոզիտ պլաններ + օրական տոկոս
+- Դեպոզիտների ստեղծում WebApp-ից
+- Օրական շահույթի հաշվարկ (bootstrap-ի ընթացքում)
+- Withdraw հայտեր WebApp-ից
+- TON wallet կցում/անջատում WebApp-ից
+- Referrals (`/start ref_123` ձևաչափով)
+- Admin հրամաններ plans, withdraws, broadcast, coins balance
 
-- Run:  python bot.py
+WebApp-ը կապվում է Flask API-ին՝ /api/... ուղիներով:
 """
 
 import os
 import time
 import json
+import threading
 import sqlite3
 import logging
 from datetime import datetime
+
+from flask import Flask, request, jsonify
 
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    ReplyKeyboardMarkup,
     WebAppInfo,
 )
 from telegram.ext import (
     Application,
     CommandHandler,
-    MessageHandler,
-    CallbackQueryHandler,
     ContextTypes,
+    MessageHandler,
     filters,
 )
 
-# =============== CONFIG ===============
+# ======== CONFIG ========
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "8001785392:AAFlfF-SkcJJqG52GCsWT7calY9YLe1aqGw")
-ADMIN_ID = int(os.getenv("ADMIN_ID", "5274439601"))  # քո Telegram ID-ն
-WEBAPP_URL = os.getenv(
-    "WEBAPP_URL", "https://vorn-studio.github.io/0059bot/"
-)  # փոխիր քո WebApp-ի URL-ով
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8001785392:AAFlfF-SkcJJqG52GCsWT7calY9YLe1aqGw")  # <-- ԴԻՐ ՔՈ TOKEN-ը
+ADMIN_ID = int(os.getenv("ADMIN_ID", "5274439601"))             # <-- ԴԻՐ ՔՈ TG ID-Ն
 
-DB_PATH = "mainmoney.db"
-MIN_WITHDRAW_COINS = 100  # մինիմալ coins withdraw
-TASK_REWARD_DEFAULT = 20  # default coins per task
+# Սա պիտի լինի ՔՈ API URL-ը, որտեղ կաշխատի bot.py / Flask–ը
+# օրինակ Render–ում՝  https://mainmoney-xxxx.onrender.com
+API_BASE_URL = os.getenv("API_BASE_URL", "https://vorn-studio.github.io/0059bot/")
 
+# Սա WebApp–ի URL-ն է, որտեղ կդնես index.html–դ (օր. GitHub Pages)
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://vorn-studio.github.io/0059bot/")
+
+DB_PATH = "mainmoney_deposits.db"
+
+MIN_WITHDRAW = 10.0        # մինիմալ withdraw (TON կամ միավոր)
+DEFAULT_DAILY_PERCENT = 3.0
+PLATFORM_MAIN_WALLET = "UQXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # քո TON հասցե (դեպոզիտի համար ուղարկելու)
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 log = logging.getLogger("MainMoneyBot")
 
-
-# =============== DB HELPERS ===============
+# ======== DB HELPERS ========
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -75,7 +83,6 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
 
-    # users
     c.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
@@ -84,16 +91,15 @@ def init_db():
             username TEXT,
             first_name TEXT,
             joined_at INTEGER,
-            coins INTEGER DEFAULT 0,
             ton_wallet TEXT,
             invited_by INTEGER,
-            total_earned INTEGER DEFAULT 0,
-            total_spent INTEGER DEFAULT 0
+            balance REAL DEFAULT 0,
+            total_profit REAL DEFAULT 0,
+            total_withdrawn REAL DEFAULT 0
         );
         """
     )
 
-    # referrals
     c.execute(
         """
         CREATE TABLE IF NOT EXISTS referrals (
@@ -105,46 +111,47 @@ def init_db():
         """
     )
 
-    # tasks
     c.execute(
         """
-        CREATE TABLE IF NOT EXISTS tasks (
+        CREATE TABLE IF NOT EXISTS plans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            description TEXT,
-            url TEXT,
-            reward INTEGER,
+            name TEXT,
+            min_amount REAL,
+            max_amount REAL,
+            daily_percent REAL,
+            duration_days INTEGER,
             active INTEGER DEFAULT 1,
             created_at INTEGER
         );
         """
     )
 
-    # task completions
     c.execute(
         """
-        CREATE TABLE IF NOT EXISTS task_completions (
+        CREATE TABLE IF NOT EXISTS deposits (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
-            task_id INTEGER,
-            status TEXT, -- pending/approved/rejected/auto
-            reward INTEGER,
+            plan_id INTEGER,
+            amount REAL,
+            daily_percent REAL,
+            duration_days INTEGER,
             created_at INTEGER,
+            last_profit_at INTEGER,
+            status TEXT, -- active / finished / pending / cancelled
             FOREIGN KEY(user_id) REFERENCES users(id),
-            FOREIGN KEY(task_id) REFERENCES tasks(id)
+            FOREIGN KEY(plan_id) REFERENCES plans(id)
         );
         """
     )
 
-    # withdrawals
     c.execute(
         """
         CREATE TABLE IF NOT EXISTS withdrawals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
-            amount_coins INTEGER,
+            amount REAL,
             ton_wallet TEXT,
-            status TEXT, -- pending/approved/rejected
+            status TEXT, -- pending / approved / rejected
             created_at INTEGER,
             processed_at INTEGER,
             FOREIGN KEY(user_id) REFERENCES users(id)
@@ -153,6 +160,31 @@ def init_db():
     )
 
     conn.commit()
+    conn.close()
+
+
+def ensure_default_plans():
+    """Ստեղծենք մի քանի պլան, եթե չկան."""
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) as cnt FROM plans")
+    cnt = c.fetchone()["cnt"]
+    if cnt == 0:
+        now = int(time.time())
+        plans = [
+            ("Starter", 10, 200, 2.0, 30),
+            ("Pro", 200, 1000, 2.5, 45),
+            ("VIP", 1000, 999999, 3.0, 60),
+        ]
+        for name, mn, mx, pct, dur in plans:
+            c.execute(
+                """
+                INSERT INTO plans (name, min_amount, max_amount, daily_percent, duration_days, active, created_at)
+                VALUES (?, ?, ?, ?, ?, 1, ?)
+                """,
+                (name, mn, mx, pct, dur, now),
+            )
+        conn.commit()
     conn.close()
 
 
@@ -205,100 +237,150 @@ def get_user_by_tg_id(tg_id: int):
     return row
 
 
-def add_coins(user_id: int, delta: int):
+def accrue_profit_for_user(user_row):
+    """Հաշվում է տվյալ user-ի active deposits-ի շահույթը (օրական տոկոսով) և ավելացնում balance-ին."""
+    user_id = user_row["id"]
+    now = int(time.time())
     conn = get_db()
     c = conn.cursor()
     c.execute(
-        "UPDATE users SET coins = coins + ?, total_earned = total_earned + ? WHERE id = ?",
-        (delta, max(delta, 0), user_id),
-    )
-    conn.commit()
-    conn.close()
-
-
-def spend_coins(user_id: int, delta: int):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(
-        "UPDATE users SET coins = coins - ?, total_spent = total_spent + ? WHERE id = ?",
-        (delta, delta, user_id),
-    )
-    conn.commit()
-    conn.close()
-
-
-def get_user_referrals(tg_id: int):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(
-        "SELECT * FROM referrals WHERE inviter_tg_id = ? ORDER BY created_at DESC",
-        (tg_id,),
+        "SELECT * FROM deposits WHERE user_id = ? AND status = 'active'",
+        (user_id,),
     )
     rows = c.fetchall()
+    if not rows:
+        conn.close()
+        return 0.0
+
+    total_added = 0.0
+    for dep in rows:
+        last = dep["last_profit_at"] or dep["created_at"]
+        delta_sec = max(0, now - last)
+        if delta_sec < 60:
+            continue
+        days = delta_sec / 86400.0
+        daily_percent = float(dep["daily_percent"] or DEFAULT_DAILY_PERCENT)
+        amount = float(dep["amount"])
+        profit = amount * (daily_percent / 100.0) * days
+        if profit <= 0:
+            continue
+
+        total_added += profit
+        c.execute(
+            "UPDATE deposits SET last_profit_at = ? WHERE id = ?",
+            (now, dep["id"]),
+        )
+
+    if total_added > 0:
+        c.execute(
+            "UPDATE users SET balance = balance + ?, total_profit = total_profit + ? WHERE id = ?",
+            (total_added, total_added, user_id),
+        )
+
+    conn.commit()
     conn.close()
-    return rows
+    return total_added
 
 
-def get_active_tasks():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("SELECT * FROM tasks WHERE active = 1 ORDER BY id DESC")
-    rows = c.fetchall()
-    conn.close()
-    return rows
-
-
-def user_has_completed_task(user_id: int, task_id: int):
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(
-        "SELECT * FROM task_completions WHERE user_id = ? AND task_id = ? AND status IN ('pending', 'approved', 'auto')",
-        (user_id, task_id),
-    )
-    row = c.fetchone()
-    conn.close()
-    return bool(row)
-
-
-def create_task_completion(user_id: int, task_id: int, reward: int):
+def get_user_deposits(user_id: int):
     conn = get_db()
     c = conn.cursor()
     c.execute(
         """
-        INSERT INTO task_completions (user_id, task_id, status, reward, created_at)
-        VALUES (?, ?, 'auto', ?, ?)
+        SELECT d.*, p.name as plan_name
+        FROM deposits d
+        LEFT JOIN plans p ON p.id = d.plan_id
+        WHERE d.user_id = ?
+        ORDER BY d.created_at DESC
         """,
-        (user_id, task_id, reward, int(time.time())),
+        (user_id,),
     )
-    conn.commit()
+    rows = c.fetchall()
     conn.close()
+    return rows
 
 
-def create_withdraw(user_row, amount_coins: int):
-    user_id = user_row["id"]
-    coins = int(user_row["coins"] or 0)
-    wallet = user_row["ton_wallet"]
-
-    if not wallet:
-        return None, "no_wallet"
-    if amount_coins < MIN_WITHDRAW_COINS:
-        return None, "too_small"
-    if coins < amount_coins:
-        return None, "not_enough"
-
+def get_active_plans():
     conn = get_db()
     c = conn.cursor()
     c.execute(
-        "UPDATE users SET coins = coins - ? WHERE id = ?",
-        (amount_coins, user_id),
+        "SELECT * FROM plans WHERE active = 1 ORDER BY min_amount ASC"
     )
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+
+def create_deposit(user_row, plan_id: int, amount: float):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM plans WHERE id = ? AND active = 1", (plan_id,))
+    plan = c.fetchone()
+    if not plan:
+        conn.close()
+        return None, "no_plan"
+
+    mn = float(plan["min_amount"])
+    mx = float(plan["max_amount"])
+    if amount < mn:
+        conn.close()
+        return None, "too_small"
+    if amount > mx:
+        conn.close()
+        return None, "too_large"
+
     now = int(time.time())
     c.execute(
         """
-        INSERT INTO withdrawals (user_id, amount_coins, ton_wallet, status, created_at)
+        INSERT INTO deposits (user_id, plan_id, amount, daily_percent, duration_days,
+                              created_at, last_profit_at, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'active')
+        """,
+        (
+            user_row["id"],
+            plan_id,
+            amount,
+            float(plan["daily_percent"]),
+            int(plan["duration_days"]),
+            now,
+            now,
+        ),
+    )
+    dep_id = c.lastrowid
+    conn.commit()
+    conn.close()
+    return dep_id, None
+
+
+def create_withdraw(user_row, amount: float):
+    user_id = user_row["id"]
+    wallet = user_row["ton_wallet"]
+    if not wallet:
+        return None, "no_wallet"
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT balance FROM users WHERE id = ?", (user_id,))
+    bal = float(c.fetchone()["balance"] or 0)
+
+    if amount < MIN_WITHDRAW:
+        conn.close()
+        return None, "too_small"
+    if bal < amount:
+        conn.close()
+        return None, "not_enough"
+
+    now = int(time.time())
+    c.execute(
+        "UPDATE users SET balance = balance - ?, total_withdrawn = total_withdrawn + ? WHERE id = ?",
+        (amount, amount, user_id),
+    )
+    c.execute(
+        """
+        INSERT INTO withdrawals (user_id, amount, ton_wallet, status, created_at)
         VALUES (?, ?, ?, 'pending', ?)
         """,
-        (user_id, amount_coins, wallet, now),
+        (user_id, amount, wallet, now),
     )
     wid = c.lastrowid
     conn.commit()
@@ -334,20 +416,221 @@ def set_withdraw_status(wid: int, status: str):
     conn.close()
 
 
-# =============== KEYBOARDS ===============
+def get_referral_count(tg_id: int):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute(
+        "SELECT COUNT(*) as cnt FROM referrals WHERE inviter_tg_id = ?",
+        (tg_id,),
+    )
+    cnt = c.fetchone()["cnt"] or 0
+    conn.close()
+    return cnt
 
-def main_menu_kb():
-    return ReplyKeyboardMarkup(
-        [
-            ["📊 Account", "🎯 Tasks"],
-            ["💸 Withdraw", "💼 Wallet"],
-            ["👥 Partners", "🏪 Shop"],
-        ],
-        resize_keyboard=True,
+
+# ======== FLASK HTTP API ========
+
+http_app = Flask(__name__)
+
+
+def json_user_state(user_row):
+    """Վերադարձնում է user-ի state-ը JSON dict-ով WebApp-ի համար."""
+    accrue_profit_for_user(user_row)
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE id = ?", (user_row["id"],))
+    u = c.fetchone()
+    conn.close()
+
+    deposits = get_user_deposits(user_row["id"])
+    dep_list = []
+    for d in deposits:
+        dep_list.append(
+            {
+                "id": d["id"],
+                "plan_name": d["plan_name"],
+                "amount": float(d["amount"]),
+                "daily_percent": float(d["daily_percent"]),
+                "duration_days": int(d["duration_days"]),
+                "status": d["status"],
+                "created_at": d["created_at"],
+            }
+        )
+
+    plans = get_active_plans()
+    plan_list = []
+    for p in plans:
+        plan_list.append(
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "min_amount": float(p["min_amount"]),
+                "max_amount": float(p["max_amount"]),
+                "daily_percent": float(p["daily_percent"]),
+                "duration_days": int(p["duration_days"]),
+            }
+        )
+
+    ref_cnt = get_referral_count(user_row["tg_id"])
+
+    return {
+        "user": {
+            "tg_id": user_row["tg_id"],
+            "username": user_row["username"],
+            "first_name": user_row["first_name"],
+        },
+        "balance": float(u["balance"] or 0),
+        "ton_wallet": u["ton_wallet"],
+        "total_profit": float(u["total_profit"] or 0),
+        "total_withdrawn": float(u["total_withdrawn"] or 0),
+        "deposits": dep_list,
+        "plans": plan_list,
+        "referrals": {
+            "count": ref_cnt,
+        },
+        "platform_wallet": PLATFORM_MAIN_WALLET,
+        "min_withdraw": MIN_WITHDRAW,
+    }
+
+
+@http_app.route("/api/bootstrap", methods=["POST"])
+def api_bootstrap():
+    data = request.get_json(force=True, silent=True) or {}
+    tg_id = int(data.get("tg_id", 0) or 0)
+    username = data.get("username")
+    first_name = data.get("first_name")
+
+    if not tg_id:
+        return jsonify({"ok": False, "error": "no tg_id"}), 400
+
+    # ensure user exists (no inviter here անցած է /start–ից)
+    # ստեղծենք "fake" user object նմանատիպ կառուցվածքով
+    class FakeUser:
+        id = tg_id
+        username = username
+        first_name = first_name
+
+    user_row = ensure_user(FakeUser)
+
+    return jsonify({"ok": True, "state": json_user_state(user_row)})
+
+
+@http_app.route("/api/set_wallet", methods=["POST"])
+def api_set_wallet():
+    data = request.get_json(force=True, silent=True) or {}
+    tg_id = int(data.get("tg_id", 0) or 0)
+    wallet = (data.get("wallet") or "").strip()
+
+    if not tg_id or len(wallet) < 10:
+        return jsonify({"ok": False, "error": "invalid data"}), 400
+
+    user_row = get_user_by_tg_id(tg_id)
+    if not user_row:
+        return jsonify({"ok": False, "error": "no user"}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET ton_wallet = ? WHERE id = ?", (wallet, user_row["id"]))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "message": "Wallet saved"})
+
+
+@http_app.route("/api/disconnect_wallet", methods=["POST"])
+def api_disconnect_wallet():
+    data = request.get_json(force=True, silent=True) or {}
+    tg_id = int(data.get("tg_id", 0) or 0)
+    if not tg_id:
+        return jsonify({"ok": False, "error": "no tg_id"}), 400
+
+    user_row = get_user_by_tg_id(tg_id)
+    if not user_row:
+        return jsonify({"ok": False, "error": "no user"}), 400
+
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET ton_wallet = NULL WHERE id = ?", (user_row["id"],))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "message": "Wallet disconnected"})
+
+
+@http_app.route("/api/create_deposit", methods=["POST"])
+def api_create_deposit():
+    data = request.get_json(force=True, silent=True) or {}
+    tg_id = int(data.get("tg_id", 0) or 0)
+    plan_id = int(data.get("plan_id", 0) or 0)
+    amount = float(data.get("amount", 0) or 0)
+
+    if not tg_id or not plan_id or amount <= 0:
+        return jsonify({"ok": False, "error": "invalid data"}), 400
+
+    user_row = get_user_by_tg_id(tg_id)
+    if not user_row:
+        return jsonify({"ok": False, "error": "no user"}), 400
+
+    dep_id, err = create_deposit(user_row, plan_id, amount)
+    if err == "no_plan":
+        return jsonify({"ok": False, "error": "plan not found"}), 400
+    if err == "too_small":
+        return jsonify({"ok": False, "error": "too small"}), 400
+    if err == "too_large":
+        return jsonify({"ok": False, "error": "too large"}), 400
+
+    # NOTE: money transfer to PLATFORM_MAIN_WALLET must be done manually by user
+    return jsonify(
+        {
+            "ok": True,
+            "deposit_id": dep_id,
+            "platform_wallet": PLATFORM_MAIN_WALLET,
+        }
     )
 
 
-def webapp_button_kb():
+@http_app.route("/api/create_withdraw", methods=["POST"])
+def api_create_withdraw():
+    data = request.get_json(force=True, silent=True) or {}
+    tg_id = int(data.get("tg_id", 0) or 0)
+    amount = float(data.get("amount", 0) or 0)
+
+    if not tg_id or amount <= 0:
+        return jsonify({"ok": False, "error": "invalid data"}), 400
+
+    user_row = get_user_by_tg_id(tg_id)
+    if not user_row:
+        return jsonify({"ok": False, "error": "no user"}), 400
+
+    wid, err = create_withdraw(user_row, amount)
+    if err == "no_wallet":
+        return jsonify({"ok": False, "error": "no_wallet"}), 400
+    if err == "too_small":
+        return jsonify({"ok": False, "error": "too_small"}), 400
+    if err == "not_enough":
+        return jsonify({"ok": False, "error": "not_enough"}), 400
+
+    return jsonify({"ok": True, "withdraw_id": wid})
+
+
+@http_app.route("/api/state", methods=["POST"])
+def api_state():
+    data = request.get_json(force=True, silent=True) or {}
+    tg_id = int(data.get("tg_id", 0) or 0)
+    if not tg_id:
+        return jsonify({"ok": False, "error": "no tg_id"}), 400
+
+    user_row = get_user_by_tg_id(tg_id)
+    if not user_row:
+        return jsonify({"ok": False, "error": "no user"}), 400
+
+    return jsonify({"ok": True, "state": json_user_state(user_row)})
+
+
+# ======== TELEGRAM BOT PART ========
+
+def main_menu_webapp_kb():
     return InlineKeyboardMarkup(
         [
             [
@@ -360,499 +643,104 @@ def webapp_button_kb():
     )
 
 
-# =============== USER HANDLERS ===============
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     text = update.message.text or ""
-
     inviter = None
+
+    # referrals: /start ref_123456
     parts = text.split()
     if len(parts) > 1 and parts[1].startswith("ref_"):
         try:
-            inviter_id = int(parts[1].split("_", 1)[1])
-            if inviter_id != user.id:
-                inviter = inviter_id
+            ref_id = int(parts[1].split("_", 1)[1])
+            if ref_id != user.id:
+                inviter = ref_id
         except Exception:
             inviter = None
 
-    user_row = ensure_user(user, inviter_tg_id=inviter)
+    ensure_user(user, inviter_tg_id=inviter)
 
     msg = (
-        "👋 Բարի գալուստ <b>MainMoney Earn Platform</b>-ի demo տարբերակ։\n\n"
-        "Աստեղ դու կարող ես կատարել առաջադրանքներ, հրավիրել մարդկանց, հավաքել coins, "
-        "և հետագայում դրանք փոխարկել TON-ի (admin-ի կողմից հաստատումով).\n\n"
-        "📱 Ունենք նաև WebApp ինտերֆեյս՝ ավելի հարմար կառավարման համար։"
+        "👋 Բարի գալուստ <b>MainMoney Deposit Platform</b>-ի WebApp տարբերակ։\n\n"
+        "Ամբողջ կառավարման ինտերֆեյսը բջջայինում է՝ ներքևի կոճակով։\n"
+        "Չատում այլ մենյու չկա, ամեն բան անում ես ներսում։"
     )
-
+    await update.message.reply_text(msg, parse_mode="HTML")
     await update.message.reply_text(
-        msg, parse_mode="HTML", reply_markup=main_menu_kb()
-    )
-    await update.message.reply_text(
-        "Սեղմիր ներքևի կոճակը WebApp-ը բացելու համար 👇",
-        reply_markup=webapp_button_kb(),
+        "Սեղմիր այստեղ՝ բացելու համար 👇", reply_markup=main_menu_webapp_kb()
     )
 
 
-async def text_router(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    text = (update.message.text or "").strip()
-    user_row = get_user_by_tg_id(user.id)
-    if not user_row:
-        user_row = ensure_user(user)
-
-    # states
-    if context.user_data.get("awaiting_wallet"):
-        await handle_wallet_input(update, context, user_row)
+async def admin_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_ID:
         return
-
-    if context.user_data.get("awaiting_withdraw"):
-        await handle_withdraw_amount_input(update, context, user_row)
-        return
-
-    # menu buttons
-    if text == "📊 Account":
-        await handle_account(update, context, user_row)
-    elif text == "🎯 Tasks":
-        await handle_tasks(update, context, user_row)
-    elif text == "💼 Wallet":
-        await handle_wallet(update, context, user_row)
-    elif text == "💸 Withdraw":
-        await handle_withdraw(update, context, user_row)
-    elif text == "👥 Partners":
-        await handle_partners(update, context, user_row)
-    elif text == "🏪 Shop":
-        await handle_shop(update, context, user_row)
-    elif text.startswith("/admin"):
-        await admin_help(update, context)
-    else:
-        await update.message.reply_text(
-            "Օգտագործիր մենյուի կոճակները կամ /admin (admin-ի համար)", reply_markup=main_menu_kb()
-        )
-
-
-async def handle_account(update: Update, context, user_row):
-    coins = int(user_row["coins"] or 0)
-    total_earned = int(user_row["total_earned"] or 0)
-    total_spent = int(user_row["total_spent"] or 0)
-    wallet = user_row["ton_wallet"] or "not linked"
 
     text = (
-        "📊 <b>Քո հաշիվը</b>\n\n"
-        f"💰 Coins balance: <b>{coins}</b>\n"
-        f"📈 Total earned: <b>{total_earned}</b>\n"
-        f"💸 Total spent: <b>{total_spent}</b>\n"
-        f"🔗 TON wallet: <code>{wallet}</code>\n\n"
-        "WebApp-ում կարող ես ավելի հարմար տեսնել ամեն բան։"
-    )
-    await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
-
-
-async def handle_tasks(update: Update, context, user_row):
-    tasks = get_active_tasks()
-    if not tasks:
-        await update.message.reply_text(
-            "Այս պահին ակտիվ tasks չկան։", reply_markup=main_menu_kb()
-        )
-        return
-
-    lines = ["🎯 <b>Ակտիվ tasks</b>\n"]
-    for t in tasks:
-        already = user_has_completed_task(user_row["id"], t["id"])
-        status = "✅ Done" if already else "🕒 Available"
-        lines.append(
-            f"#{t['id']} {status}\n"
-            f"<b>{t['title']}</b> (+{t['reward']} coins)\n"
-            f"{t['description']}\n"
-            f"{t['url']}\n"
-        )
-
-    lines.append("\nՏասկը ավարտելուց հետո վերադարձիր բոտ և սեղմիր /done_TASKID օրինակ՝ /done_3")
-    await update.message.reply_text(
-        "\n".join(lines), parse_mode="HTML", reply_markup=main_menu_kb()
-    )
-
-
-async def handle_wallet(update: Update, context, user_row):
-    wallet = user_row["ton_wallet"] or "not linked"
-    text = (
-        "💼 <b>TON wallet</b>\n\n"
-        f"Ընթացիկ: <code>{wallet}</code>\n\n"
-        "Եթե ուզում ես փոխել կամ նշել նորը, ուղարկի՛ր քո TON հասցեն մեկ տողով։"
+        "🛠 <b>Admin panel</b>\n\n"
+        "/admin – սա մենյուն\n"
+        "/plans – ցուցադրել plans\n"
+        "/add_plan name|min|max|percent|days\n"
+        "/list_withdraws – pending withdraws\n"
+        "/approve_withdraw id\n"
+        "/reject_withdraw id\n"
+        "/broadcast խոսք\n"
     )
     await update.message.reply_text(text, parse_mode="HTML")
-    context.user_data["awaiting_wallet"] = True
 
-
-async def handle_wallet_input(update: Update, context, user_row):
-    context.user_data["awaiting_wallet"] = False
-    wallet = (update.message.text or "").strip()
-    if len(wallet) < 16:
-        await update.message.reply_text("❌ Սա վալիդ TON հասցե չի թվում, փորձիր նորից։")
-        return
-
-    conn = get_db()
-    c = conn.cursor()
-    c.execute(
-        "UPDATE users SET ton_wallet = ? WHERE id = ?",
-        (wallet, user_row["id"]),
-    )
-    conn.commit()
-    conn.close()
-
-    await update.message.reply_text(
-        f"✅ Wallet-ը պահպանված է.\n<code>{wallet}</code>",
-        parse_mode="HTML",
-        reply_markup=main_menu_kb(),
-    )
-
-
-async def handle_withdraw(update: Update, context, user_row):
-    coins = int(user_row["coins"] or 0)
-    if coins < MIN_WITHDRAW_COINS:
-        await update.message.reply_text(
-            f"❌ Քեզ մոտ քիչ coins կան.\nԲալանս: {coins}\nՄինիմում withdraw: {MIN_WITHDRAW_COINS}",
-            reply_markup=main_menu_kb(),
-        )
-        return
-
-    if not user_row["ton_wallet"]:
-        await update.message.reply_text(
-            "❌ TON wallet չես կցել։ Սկզբում Wallet բաժնում ավելացրու։",
-            reply_markup=main_menu_kb(),
-        )
-        return
-
-    await update.message.reply_text(
-        f"💸 Քո բալանսը՝ {coins} coins.\n\nԳրիր, թե քանի coins ես ուզում հանել։",
-        reply_markup=main_menu_kb(),
-    )
-    context.user_data["awaiting_withdraw"] = True
-
-
-async def handle_withdraw_amount_input(update: Update, context, user_row):
-    context.user_data["awaiting_withdraw"] = False
-    text = (update.message.text or "").strip()
-
-    try:
-        amount = int(float(text))
-    except ValueError:
-        await update.message.reply_text("❌ Գրի թիվ (coins-ի քանակը).")
-        return
-
-    wid, err = create_withdraw(user_row, amount)
-    if err == "no_wallet":
-        await update.message.reply_text("❌ Wallet չունես։ Սկզբում կցիր TON wallet։")
-        return
-    if err == "too_small":
-        await update.message.reply_text(
-            f"❌ Մինիմալ withdraw-ը {MIN_WITHDRAW_COINS} coins է։"
-        )
-        return
-    if err == "not_enough":
-        await update.message.reply_text("❌ Բալանսը բավարար չէ։")
-        return
-
-    # notify admin
-    try:
-        msg = (
-            "💸 <b>New withdraw request</b>\n\n"
-            f"ID: <code>{wid}</code>\n"
-            f"User: <code>{user_row['tg_id']}</code> @{user_row['username'] or '—'}\n"
-            f"Amount: <b>{amount} coins</b>\n"
-            f"Wallet: <code>{user_row['ton_wallet']}</code>\n\n"
-            f"/approve_withdraw {wid}\n/reject_withdraw {wid}"
-        )
-        await update.get_bot().send_message(ADMIN_ID, msg, parse_mode="HTML")
-    except Exception as e:
-        log.error(f"Failed to notify admin: {e}")
-
-    await update.message.reply_text(
-        "✅ Քո withdraw հայտը ուղարկվել է admin-ին.\n⏳ Պատասխանը կստանաս 24 ժամվա ընթացքում։",
-        reply_markup=main_menu_kb(),
-    )
-
-
-async def handle_partners(update: Update, context, user_row):
-    refs = get_user_referrals(user_row["tg_id"])
-    count = len(refs)
-    lines = []
-    lines.append("👥 <b>Partners</b>\n")
-    lines.append(f"Ընդամենը հրավիրված․ <b>{count}</b>\n")
-
-    if refs:
-        lines.append("Վերջին ռեֆերալները՝")
-        for r in refs[:20]:
-            dt = datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
-            lines.append(f"• user_id={r['invited_tg_id']} — {dt}")
-    else:
-        lines.append("Դեռ չունես ռեֆերալներ։")
-
-    bot_me = await update.get_bot().get_me()
-    ref_link = f"https://t.me/{bot_me.username}?start=ref_{user_row['tg_id']}"
-    lines.append("")
-    lines.append("Քո referral հղումը՝")
-    lines.append(f"<code>{ref_link}</code>")
-
-    await update.message.reply_text(
-        "\n".join(lines), parse_mode="HTML", reply_markup=main_menu_kb()
-    )
-
-
-async def handle_shop(update: Update, context, user_row):
-    text = (
-        "🏪 <b>Shop (demo)</b>\n\n"
-        "Աստեղ հետո կարող ենք ավելացնել premium features, boosts, advertising slots և այլն։\n\n"
-        "Հիմա պարզապես demo է, որը ցույց է տալիս, որ այդ բաժինը կա։"
-    )
-    await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_kb())
-
-
-# =============== COMMAND: /done_TASKID for task auto-complete demo ===============
-
-async def done_task_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    user_row = get_user_by_tg_id(user.id)
-    if not user_row:
-        user_row = ensure_user(user)
-
-    text = update.message.text or ""
-    if not text.startswith("/done_"):
-        return
-
-    try:
-        task_id = int(text.split("_", 1)[1])
-    except Exception:
-        await update.message.reply_text("❌ Սխալ task ID։ Օրինակ՝ /done_3")
-        return
-
-    tasks = get_active_tasks()
-    task_map = {t["id"]: t for t in tasks}
-    if task_id not in task_map:
-        await update.message.reply_text("❌ Այդ ID-ով ակտիվ task չկա։")
-        return
-
-    if user_has_completed_task(user_row["id"], task_id):
-        await update.message.reply_text("✅ Այս task-ը արդեն գրանցված է որպես complete։")
-        return
-
-    task = task_map[task_id]
-    reward = int(task["reward"] or TASK_REWARD_DEFAULT)
-
-    create_task_completion(user_row["id"], task_id, reward)
-    add_coins(user_row["id"], reward)
-
-    await update.message.reply_text(
-        f"✅ Task #{task_id} ավարտված է և քեզ ավելացվեց {reward} coins։",
-        reply_markup=main_menu_kb(),
-    )
-
-
-# =============== WEBAPP DATA HANDLER ===============
-
-async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Handles WebApp.sendData(JSON).
-    """
-    try:
-        msg = update.effective_message
-        if not msg or not msg.web_app_data:
-            return
-
-        data_raw = msg.web_app_data.data
-        data = json.loads(data_raw)
-
-        action = data.get("action")
-        user = update.effective_user
-        user_row = get_user_by_tg_id(user.id) or ensure_user(user)
-
-        if action == "set_wallet":
-            wallet = data.get("wallet", "").strip()
-            if len(wallet) < 16:
-                await msg.reply_text("❌ Invalid TON wallet from WebApp.")
-                return
-
-            conn = get_db()
-            c = conn.cursor()
-            c.execute(
-                "UPDATE users SET ton_wallet = ? WHERE id = ?",
-                (wallet, user_row["id"]),
-            )
-            conn.commit()
-            conn.close()
-
-            await msg.reply_text(
-                f"✅ TON wallet saved from WebApp:\n<code>{wallet}</code>",
-                parse_mode="HTML",
-            )
-            return
-
-        if action == "disconnect_wallet":
-            conn = get_db()
-            c = conn.cursor()
-            c.execute(
-                "UPDATE users SET ton_wallet = NULL WHERE id = ?",
-                (user_row["id"],),
-            )
-            conn.commit()
-            conn.close()
-
-            await msg.reply_text("🔌 TON wallet disconnected from WebApp.")
-            return
-
-        if action == "withdraw":
-            amount = int(float(data.get("amount", 0)))
-            wid, err = create_withdraw(user_row, amount)
-            if err == "no_wallet":
-                await msg.reply_text("❌ No TON wallet. Set it first.")
-                return
-            if err == "too_small":
-                await msg.reply_text(
-                    f"❌ Too small. Min withdraw is {MIN_WITHDRAW_COINS} coins."
-                )
-                return
-            if err == "not_enough":
-                await msg.reply_text("❌ Not enough coins.")
-                return
-
-            # notify admin
-            try:
-                notif = (
-                    "💸 <b>New withdraw from WebApp</b>\n\n"
-                    f"ID: <code>{wid}</code>\n"
-                    f"User: <code>{user_row['tg_id']}</code> @{user_row['username'] or '—'}\n"
-                    f"Amount: <b>{amount} coins</b>\n"
-                    f"Wallet: <code>{user_row['ton_wallet']}</code>\n\n"
-                    f"/approve_withdraw {wid}\n/reject_withdraw {wid}"
-                )
-                await context.bot.send_message(ADMIN_ID, notif, parse_mode="HTML")
-            except Exception as e:
-                log.error(f"Admin notify error: {e}")
-
-            await msg.reply_text(
-                "✅ Withdraw request created from WebApp.\n⏳ Wait for admin approval."
-            )
-            return
-
-    except Exception as e:
-        log.error(f"webapp_data_handler error: {e}")
-
-
-# =============== ADMIN PART ===============
 
 def admin_only(func):
     async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.effective_user.id != ADMIN_ID:
-            await update.message.reply_text("❌ Դու admin չես։")
             return
         return await func(update, context)
 
     return wrapper
 
 
-async def admin_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_ID:
-        await update.message.reply_text("❌ Դու admin չես։")
+@admin_only
+async def plans_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    plans = get_active_plans()
+    if not plans:
+        await update.message.reply_text("No active plans.")
         return
 
-    text = (
-        "🛠 <b>Admin panel</b>\n\n"
-        "/admin – այս մենյուն\n"
-        "/add_task title | description | url | reward\n"
-        "/list_tasks – tasks list\n"
-        "/set_coins tg_id amount – set user coins\n"
-        "/add_coins tg_id amount – add coins\n"
-        "/list_withdraws – pending withdraws\n"
-        "/approve_withdraw id\n"
-        "/reject_withdraw id\n"
-        "/broadcast text\n"
-    )
-    await update.message.reply_text(text, parse_mode="HTML")
+    lines = ["📦 Active plans:\n"]
+    for p in plans:
+        lines.append(
+            f"#{p['id']} {p['name']} – {p['daily_percent']}% / day, "
+            f"{p['min_amount']}–{p['max_amount']} TON, {p['duration_days']} days"
+        )
+    await update.message.reply_text("\n".join(lines))
 
 
 @admin_only
-async def add_task_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # format: /add_task title | description | url | reward
+async def add_plan_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # /add_plan name|min|max|percent|days
     text = update.message.text.partition(" ")[2].strip()
     parts = [p.strip() for p in text.split("|")]
-    if len(parts) != 4:
-        await update.message.reply_text("Օգտագործիր՝ /add_task title | description | url | reward")
+    if len(parts) != 5:
+        await update.message.reply_text("Format: /add_plan name|min|max|percent|days")
         return
-
-    title, description, url, reward_s = parts
-    try:
-        reward = int(reward_s)
-    except ValueError:
-        await update.message.reply_text("Reward-ը թիվ պիտի լինի։")
-        return
+    name, mn_s, mx_s, pct_s, days_s = parts
+    mn = float(mn_s)
+    mx = float(mx_s)
+    pct = float(pct_s)
+    days = int(days_s)
+    now = int(time.time())
 
     conn = get_db()
     c = conn.cursor()
     c.execute(
         """
-        INSERT INTO tasks (title, description, url, reward, active, created_at)
-        VALUES (?, ?, ?, ?, 1, ?)
+        INSERT INTO plans (name, min_amount, max_amount, daily_percent, duration_days, active, created_at)
+        VALUES (?, ?, ?, ?, ?, 1, ?)
         """,
-        (title, description, url, reward, int(time.time())),
+        (name, mn, mx, pct, days, now),
     )
     conn.commit()
     conn.close()
 
-    await update.message.reply_text("✅ Task added.")
-
-
-@admin_only
-async def list_tasks_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    tasks = get_active_tasks()
-    if not tasks:
-        await update.message.reply_text("No active tasks.")
-        return
-
-    lines = ["🎯 Active tasks:"]
-    for t in tasks:
-        lines.append(
-            f"#{t['id']} {t['title']} (+{t['reward']} coins)\n{t['url']}"
-        )
-    await update.message.reply_text("\n\n".join(lines))
-
-
-@admin_only
-async def set_coins_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) != 2:
-        await update.message.reply_text("Օգտագործիր՝ /set_coins tg_id amount")
-        return
-    tg_id = int(context.args[0])
-    amount = int(context.args[1])
-
-    u = get_user_by_tg_id(tg_id)
-    if not u:
-        await update.message.reply_text("User not found.")
-        return
-
-    conn = get_db()
-    c = conn.cursor()
-    c.execute("UPDATE users SET coins = ? WHERE id = ?", (amount, u["id"]))
-    conn.commit()
-    conn.close()
-
-    await update.message.reply_text("✅ Coins set.")
-
-
-@admin_only
-async def add_coins_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) != 2:
-        await update.message.reply_text("Օգտագործիր՝ /add_coins tg_id amount")
-        return
-    tg_id = int(context.args[0])
-    amount = int(context.args[1])
-
-    u = get_user_by_tg_id(tg_id)
-    if not u:
-        await update.message.reply_text("User not found.")
-        return
-
-    add_coins(u["id"], amount)
-    await update.message.reply_text("✅ Coins added.")
+    await update.message.reply_text("✅ Plan added.")
 
 
 @admin_only
@@ -862,12 +750,12 @@ async def list_withdraws_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await update.message.reply_text("No pending withdraws.")
         return
 
-    lines = ["💸 Pending withdraws:"]
+    lines = ["💸 Pending withdraws:\n"]
     for r in rows:
         dt = datetime.fromtimestamp(r["created_at"]).strftime("%Y-%m-%d %H:%M")
         uname = r["username"] or r["tg_id"]
         lines.append(
-            f"ID {r['id']}: {r['amount_coins']} coins | @{uname} | {dt}\nWallet: {r['ton_wallet']}"
+            f"ID {r['id']}: {r['amount']} TON | @{uname} | {dt}\nWallet: {r['ton_wallet']}"
         )
 
     await update.message.reply_text("\n\n".join(lines))
@@ -876,20 +764,18 @@ async def list_withdraws_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
 @admin_only
 async def approve_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) != 1:
-        await update.message.reply_text("Օգտագործիր՝ /approve_withdraw id")
+        await update.message.reply_text("Usage: /approve_withdraw id")
         return
-
     wid = int(context.args[0])
     set_withdraw_status(wid, "approved")
-    await update.message.reply_text("✅ Withdraw approved (remember to pay manually on TON).")
+    await update.message.reply_text("✅ Withdraw approved (remember to pay manually).")
 
 
 @admin_only
 async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(context.args) != 1:
-        await update.message.reply_text("Օգտագործիր՝ /reject_withdraw id")
+        await update.message.reply_text("Usage: /reject_withdraw id")
         return
-
     wid = int(context.args[0])
     set_withdraw_status(wid, "rejected")
     await update.message.reply_text("✅ Withdraw rejected.")
@@ -899,7 +785,7 @@ async def reject_withdraw_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def broadcast_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.partition(" ")[2].strip()
     if not text:
-        await update.message.reply_text("Օգտագործիր՝ /broadcast text")
+        await update.message.reply_text("Usage: /broadcast some text")
         return
 
     conn = get_db()
@@ -919,97 +805,44 @@ async def broadcast_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✅ Broadcast sent to {sent} users.")
 
 
-async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        msg = update.effective_message
-        raw = msg.web_app_data.data
-        data = json.loads(raw)
-
-        action = data.get("action")
-        user = update.effective_user
-        user_row = get_user_by_tg_id(user.id) or ensure_user(user)
-
-        if action == "set_wallet":
-            wallet = data.get("wallet", "").strip()
-
-            if len(wallet) < 10:
-                await msg.reply_text("❌ Invalid TON wallet")
-                return
-
-            conn = get_db()
-            c = conn.cursor()
-            c.execute(
-                "UPDATE users SET ton_wallet = ? WHERE id = ?",
-                (wallet, user_row["id"]),
-            )
-            conn.commit()
-            conn.close()
-
-            await msg.reply_text(f"✅ TON wallet saved:\n<code>{wallet}</code>", parse_mode="HTML")
-            return
-
-        if action == "disconnect_wallet":
-            conn = get_db()
-            c = conn.cursor()
-            c.execute(
-                "UPDATE users SET ton_wallet = NULL WHERE id = ?",
-                (user_row["id"],),
-            )
-            conn.commit()
-            conn.close()
-
-            await msg.reply_text("🔌 TON wallet disconnected.")
-            return
-
-        if action == "withdraw":
-            amount = int(float(data.get("amount", 0)))
-            wid, err = create_withdraw(user_row, amount)
-
-            if err == "no_wallet":
-                await msg.reply_text("❌ You must set wallet first.")
-                return
-            if err == "too_small":
-                await msg.reply_text("❌ Amount too small.")
-                return
-            if err == "not_enough":
-                await msg.reply_text("❌ Not enough coins.")
-                return
-
-            await msg.reply_text("✅ Withdraw request sent.")
-            return
-
-    except Exception as e:
-        print("WEBAPP ERROR:", e)
+async def dummy_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # User text in chat – ուղղակի հուշում, որ ամեն բան WebApp-ում է
+    await update.message.reply_text(
+        "Այս բոտը աշխատում է WebApp-ի միջոցով.\nՕգտագործիր /start և բացիր WebApp կոճակը։"
+    )
 
 
-# =============== MAIN ===============
+# ======== START EVERYTHING ========
+
+def run_flask():
+    port = int(os.getenv("PORT", "8000"))
+    log.info(f"Starting Flask API on port {port}")
+    http_app.run(host="0.0.0.0", port=port, debug=False)
+
 
 def main():
     init_db()
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))
+    ensure_default_plans()
 
-    # commands
+    # Flask HTTP server առանձին թելով
+    t = threading.Thread(target=run_flask, daemon=True)
+    t.start()
+
+    app = Application.builder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("admin", admin_help))
-    app.add_handler(CommandHandler("add_task", add_task_cmd))
-    app.add_handler(CommandHandler("list_tasks", list_tasks_cmd))
-    app.add_handler(CommandHandler("set_coins", set_coins_cmd))
-    app.add_handler(CommandHandler("add_coins", add_coins_cmd))
+    app.add_handler(CommandHandler("plans", plans_cmd))
+    app.add_handler(CommandHandler("add_plan", add_plan_cmd))
     app.add_handler(CommandHandler("list_withdraws", list_withdraws_cmd))
     app.add_handler(CommandHandler("approve_withdraw", approve_withdraw_cmd))
     app.add_handler(CommandHandler("reject_withdraw", reject_withdraw_cmd))
     app.add_handler(CommandHandler("broadcast", broadcast_cmd))
-    app.add_handler(CommandHandler("done", done_task_handler))  # /done_3 captured via text handler
 
-    # message handlers
-    app.add_handler(
-        MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler)
-    )
-    app.add_handler(MessageHandler(filters.Regex(r"^/done_\d+"), done_task_handler))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_router))
+    # any other text → reminder that everything is in WebApp
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, dummy_text))
 
-    log.info("MainMoney bot started...")
+    log.info("Telegram bot started...")
     app.run_polling()
 
 
