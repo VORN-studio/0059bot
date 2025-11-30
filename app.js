@@ -420,6 +420,21 @@ withdrawConfirm.addEventListener("click", () => {
     showToast("Withdraw request created!");
 });
 
+const disconnectTon = document.getElementById("btn-disconnect-ton");
+
+if (disconnectTon) {
+    disconnectTon.addEventListener("click", () => {
+        tg.sendData(JSON.stringify({
+            action: "disconnect_wallet"
+        }));
+
+        // UI update (optional)
+        state.tonWallet = null;
+        updateTonWalletUI();
+        showToast("TON Wallet disconnected");
+    });
+}
+
 
 function switchToTab(tabName) {
   const tabBtn = document.querySelector(`.mm-tab[data-tab="${tabName}"]`);
