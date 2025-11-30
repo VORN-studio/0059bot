@@ -433,7 +433,20 @@ if (disconnectTon) {
         updateTonWalletUI();
         showToast("TON Wallet disconnected");
     });
-}
+  }
+
+  // === FIX DISCONNECT TON BUTTON ===
+setTimeout(() => {
+    const disconnectTon = document.getElementById("btn-disconnect-ton");
+    if (disconnectTon) {
+        disconnectTon.addEventListener("click", () => {
+            tg.sendData(JSON.stringify({ action: "disconnect_wallet" }));
+            state.tonWallet = null;
+            updateTonWalletUI();
+            showToast("TON Wallet disconnected");
+        });
+    }
+}, 300);
 
 
 function switchToTab(tabName) {
