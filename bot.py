@@ -919,11 +919,75 @@ async def broadcast_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✅ Broadcast sent to {sent} users.")
 
 
+async def webapp_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        msg = update.effective_message
+        raw = msg.web_app_data.data
+        data = json.loads(raw)
+
+        action = data.get("action")
+        user = update.effective_user
+        user_row = get_user_by_tg_id(user.id) or ensure_user(user)
+
+        if action == "set_wallet":
+            wallet = data.get("wallet", "").strip()
+
+            if len(wallet) < 10:
+                await msg.reply_text("❌ Invalid TON wallet")
+                return
+
+            conn = get_db()
+            c = conn.cursor()
+            c.execute(
+                "UPDATE users SET ton_wallet = ? WHERE id = ?",
+                (wallet, user_row["id"]),
+            )
+            conn.commit()
+            conn.close()
+
+            await msg.reply_text(f"✅ TON wallet saved:\n<code>{wallet}</code>", parse_mode="HTML")
+            return
+
+        if action == "disconnect_wallet":
+            conn = get_db()
+            c = conn.cursor()
+            c.execute(
+                "UPDATE users SET ton_wallet = NULL WHERE id = ?",
+                (user_row["id"],),
+            )
+            conn.commit()
+            conn.close()
+
+            await msg.reply_text("🔌 TON wallet disconnected.")
+            return
+
+        if action == "withdraw":
+            amount = int(float(data.get("amount", 0)))
+            wid, err = create_withdraw(user_row, amount)
+
+            if err == "no_wallet":
+                await msg.reply_text("❌ You must set wallet first.")
+                return
+            if err == "too_small":
+                await msg.reply_text("❌ Amount too small.")
+                return
+            if err == "not_enough":
+                await msg.reply_text("❌ Not enough coins.")
+                return
+
+            await msg.reply_text("✅ Withdraw request sent.")
+            return
+
+    except Exception as e:
+        print("WEBAPP ERROR:", e)
+
+
 # =============== MAIN ===============
 
 def main():
     init_db()
     app = Application.builder().token(BOT_TOKEN).build()
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler))
 
     # commands
     app.add_handler(CommandHandler("start", start))
