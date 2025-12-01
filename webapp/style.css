@@ -100,3 +100,11 @@ input[type="number"] {
 .ref-stats p {
   margin-top: 4px;
 }
+
+.status {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+}

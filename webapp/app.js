@@ -18,7 +18,8 @@ tonConnectUI.onStatusChange((walletInfo) => {
     // ցույց տանք user-ին
     const walletStatus = document.getElementById("wallet-status");
     if (walletStatus) {
-      walletStatus.textContent = "Wallet connected: " + TON_WALLET;
+      const short = TON_WALLET.slice(0, 6) + "..." + TON_WALLET.slice(-4);
+      walletStatus.textContent = "Wallet connected: " + short;
     }
 
     // OPTIONAL — կարող ենք ավտոմատ կցել backend-ին
