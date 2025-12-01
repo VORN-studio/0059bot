@@ -229,50 +229,49 @@ const depositBtn = $("deposit-btn");
 
 if (depositBtn) {
   depositBtn.addEventListener("click", async () => {
+
     const amount = Number(depositInput.value);
     if (!amount || amount <= 0) {
-      depositStatus.textContent = "Գրիր ճիշտ գումար։";
-      return;
-    }
-    if (!CURRENT_USER_ID) {
-      depositStatus.textContent = "Telegram user ID չգտանք։";
+      depositStatus.textContent = "Գրիր ճիշտ TON գումար։";
       return;
     }
 
-    depositStatus.textContent = "Deposit հարցումը ուղարկում ենք…";
+    if (!TON_WALLET) {
+      depositStatus.textContent = "Կցրու քո TON Wallet-ը։";
+      return;
+    }
 
-    // Հետո backend-ում սա կաշխատի իրականով
-    const url = `${API_BASE}/api/deposit_request`;
+    depositStatus.textContent = "Բացում ենք TON վճարման popup-ը…";
+
+    const RECEIVER_TON_ADDRESS = "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW"; // ← ԱՅՍՏԵՂ ԴՆԵՍ ՔՈ TON ՀԱՍՑԵՆ
+
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: CURRENT_USER_ID,
-          amount: amount,
-        }),
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300, // 5 րոպե
+        messages: [
+          {
+            address: RECEIVER_TON_ADDRESS,
+            amount: (amount * 1e9).toString(), // TON → nanotons
+          },
+        ],
       });
 
-      if (!res.ok) {
-        depositStatus.textContent = "Backend սխալ տվեց, հետո կսարքենք։";
-        return;
-      }
+      // Եթե user-ը ուղարկեց TON
+      console.log("TON Transaction:", result);
 
-      const data = await res.json();
-      if (data.ok) {
-        depositStatus.textContent =
-          "Deposit հարցումը գրանցված է ✅ (վերիֆիկացիան կլինի admin-ի կողմից)";
-      } else {
-        depositStatus.textContent =
-          data.error || "Deposit-ը չստացվեց (backend պատասխան)։";
-      }
-    } catch (err) {
-      console.log("❌ Deposit հարցման սխալ:", err);
       depositStatus.textContent =
-        "Չստացվեց կապվել սերվերին։ Հետո Render-ում կաշխատի։";
+        "Դեպոզիտը ուղարկված է։ Tx hash: " + result.boc.slice(0, 10) + "...";
+
+      // Այստեղ հետո կուղարկենք backend-ին փաստաթուղթը
+      // sendDepositToBackend(result);
+
+    } catch (err) {
+      console.log("❌ TON popup error:", err);
+      depositStatus.textContent = "Օգտատերը չեղարկեց կամ սխալ առաջացավ։";
     }
   });
 }
+
 
 // ---------------- WITHDRAW (միայն կառուցվածք) ----------------
 const withdrawInput = $("withdraw-amount");
