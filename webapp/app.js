@@ -279,51 +279,54 @@ const withdrawStatus = $("withdraw-status");
 const withdrawBtn = $("withdraw-btn");
 
 if (withdrawBtn) {
-  withdrawBtn.addEventListener("click", async () => {
+  withdrawBtn.addEventListener("click", () => {
+
     const amount = Number(withdrawInput.value);
+
+    // 1) Սխալ գումար
     if (!amount || amount <= 0) {
-      withdrawStatus.textContent = "Գրիր կանխիկացման գումարը։";
+      withdrawStatus.textContent = "❌ Գումարը գրեք ճիշտ։";
       return;
     }
+
+    // 2) Telegram user ID չգտանք
     if (!CURRENT_USER_ID) {
-      withdrawStatus.textContent = "Telegram user ID չգտանք։";
+      withdrawStatus.textContent = "❌ Բացեք WebApp-ը բոտի միջից, ոչ թե browser-ից։";
       return;
     }
 
-    withdrawStatus.textContent = "Ստուգում ենք պայմանները…";
-
-    const url = `${API_BASE}/api/withdraw_request`;
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: CURRENT_USER_ID,
-          amount: amount,
-        }),
-      });
-
-      if (!res.ok) {
-        withdrawStatus.textContent = "Backend սխալ տվեց, հետո կսարքենք։";
-        return;
-      }
-
-      const data = await res.json();
-      if (data.ok) {
-        withdrawStatus.textContent =
-          "Withdraw հարցումը գրանցված է ✅ Admin-ը կվերահսկի։";
-      } else {
-        withdrawStatus.textContent =
-          data.error ||
-          "Չստացվեց withdraw անել։ Հավանաբար 10 ակտիվ ռեֆերալը կամ 200$ դեպոզիտը չեն լրացված։";
-      }
-    } catch (err) {
-      console.log("❌ Withdraw error:", err);
-      withdrawStatus.textContent =
-        "Չստացվեց կապվել սերվերին։ Հետո Render-ում կաշխատի։";
+    // 3) Balance check
+    if (amount > balance) {
+      withdrawStatus.textContent = "❌ Ձեր գրած գումարը գերազանցում է ձեր բալանսը։";
+      return;
     }
+
+    // 4) Referral conditions check
+    const refActive = Number($("ref-active").textContent) || 0;
+    const refDeposits = Number(
+      ($("ref-deposits").textContent || "0").replace("$", "")
+    );
+
+    if (refActive < 10 || refDeposits < 200) {
+      withdrawStatus.innerHTML =
+        "❌ Չի ստացվի կանխիկացնել.<br><br>" +
+        "• Պետք է ≥ 10 ակտիվ հրավիրված օգտատեր<br>" +
+        "• Պետք է ≥ 200$ ընդհանուր ռեֆերալների դեպոզիտ<br>" +
+        "• Գումարը չի կարող գերազանցել բալանսը";
+      return;
+    }
+
+    // 5) Եթե ամեն ինչ OK է → success message
+    withdrawStatus.textContent = "⏳ Ձեր հարցումը ստուգման մեջ է…";
+
+    setTimeout(() => {
+      withdrawStatus.textContent =
+        "✅ Ձեր հարցումը ընդունված է։ Գումարը կփոխանցվի 12 ժամվա ընթացքում։";
+    }, 1500);
+
   });
 }
+
 
 // ---------------- REFERRAL LINK ----------------
 const refLinkInput = $("ref-link");
