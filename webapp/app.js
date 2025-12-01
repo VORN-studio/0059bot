@@ -1,34 +1,131 @@
 console.log("✅ Casino WebApp loaded");
 
-const tg = window.Telegram?.WebApp;
+// ================== TELEGRAM INIT ==================
+const tg = window.Telegram && window.Telegram.WebApp;
 
-// ------------ INIT TELEGRAM INFO ------------
-if (tg) {
-  tg.expand(); // լրիվ էկրանով բացվի
-  const user = tg.initDataUnsafe?.user;
+// Քո backend-ի հիմքը (Render-ում կփոխենք իրական հղումով)
+const API_BASE = "https://your-backend.onrender.com"; // ← հետո կփոխենք
+
+// Օգտատիրոջ տվյալները կպահենք այստեղ
+let CURRENT_USER_ID = null;
+let CURRENT_USERNAME = null;
+
+// 💰 balance-ը սկզբում 0 է, backend-ից ենք բերելու
+let balance = 0.0;
+
+// ---------------- HELPERS ----------------
+function $(id) {
+  return document.getElementById(id);
+}
+
+function updateUserHeader() {
+  if ($("user-id")) $("user-id").textContent = CURRENT_USER_ID ?? "-";
+  if ($("user-name")) $("user-name").textContent = CURRENT_USERNAME ?? "-";
+}
+
+function updateBalanceDisplay() {
+  const el = $("user-balance");
+  if (el) el.textContent = balance.toFixed(2) + " $";
+}
+
+// ---------------- LOAD FROM TELEGRAM ----------------
+function initFromTelegram() {
+  if (!tg) {
+    console.log("⚠️ Telegram WebApp object չկա (բացված է բրաուզերում)");
+    updateUserHeader();
+    updateBalanceDisplay();
+    return;
+  }
+
+  tg.ready();
+  tg.expand();
+
+  console.log("ℹ️ tg.initDataUnsafe =", tg.initDataUnsafe);
+
+  const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
   if (user) {
-    document.getElementById("user-id").textContent = user.id;
-    document.getElementById("user-name").textContent =
+    CURRENT_USER_ID = user.id;
+    CURRENT_USERNAME =
       user.first_name + (user.username ? " (@" + user.username + ")" : "");
+  } else {
+    console.log("⚠️ user object չկա initDataUnsafe-ից");
+  }
+
+  updateUserHeader();
+  updateBalanceDisplay();
+
+  // Այստեղ կարող ենք backend-ից բալանսը վերցնել
+  loadUserFromBackend();
+}
+
+// ---------------- LOAD USER FROM BACKEND (STRUCTURE) ----------------
+async function loadUserFromBackend() {
+  if (!CURRENT_USER_ID) {
+    console.log("⛔ Չկա CURRENT_USER_ID, չենք կանչում backend-ը");
+    return;
+  }
+
+  // Երբ Render + Neon պատրաստ լինեն, այստեղ API կանչ կանենք՝
+  // օրինակ՝ GET /api/user/<telegram_id>
+  const url = `${API_BASE}/api/user/${CURRENT_USER_ID}`;
+  console.log("🌐 Կփորձենք բեռնել օգտատիրոջ տվյալները ՝", url);
+
+  try {
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) {
+      console.log("⚠️ Backend returned non-OK:", res.status);
+      return;
+    }
+    const data = await res.json();
+    console.log("✅ User from backend:", data);
+
+    // Սպասվող data կառուցվածքը (հետո backend-ում այդպես կանենք)
+    // {
+    //   ok: true,
+    //   user: {
+    //     balance: 123.45,
+    //     wallet: "USDT...",
+    //     ref_total: 5,
+    //     ref_active: 2,
+    //     ref_deposits: 250.0
+    //   }
+    // }
+
+    if (data && data.ok && data.user) {
+      if (typeof data.user.balance === "number") {
+        balance = data.user.balance;
+      }
+
+      updateBalanceDisplay();
+
+      // Referral stats (եթե կա)
+      if ($("ref-total") && typeof data.user.ref_total === "number") {
+        $("ref-total").textContent = data.user.ref_total;
+      }
+      if ($("ref-active") && typeof data.user.ref_active === "number") {
+        $("ref-active").textContent = data.user.ref_active;
+      }
+      if ($("ref-deposits") && typeof data.user.ref_deposits === "number") {
+        $("ref-deposits").textContent = data.user.ref_deposits.toFixed(2) + " $";
+      }
+
+      // Եթե user.wallet կա, կարող ենք լցնել wallet input-ը
+      if ($("wallet-input") && data.user.wallet) {
+        $("wallet-input").value = data.user.wallet;
+      }
+    }
+  } catch (err) {
+    console.log("❌ Սխալ backend-ի հետ կապվելիս:", err);
   }
 }
 
-// 💰 մինջև backend ունենալը, բալանսը կպահենք memory-ում
-let fakeBalance = 10.0; // սկսենք 10$ բալանսից, հետո API-ով կբերենք Neon-ից
-
-function updateBalanceDisplay() {
-  const el = document.getElementById("user-balance");
-  if (el) el.textContent = fakeBalance.toFixed(2) + " $";
-}
-updateBalanceDisplay();
-
-// ------------ NAVIGATION BETWEEN SCREENS ------------
+// ---------------- NAVIGATION ----------------
 const buttons = document.querySelectorAll(".btn[data-section]");
 const screens = document.querySelectorAll(".screen");
 
 function showScreen(name) {
   screens.forEach((s) => s.classList.remove("active"));
-  const screen = document.getElementById("screen-" + name);
+  const screen = $("screen-" + name);
   if (screen) screen.classList.add("active");
 }
 
@@ -39,79 +136,195 @@ buttons.forEach((btn) => {
   });
 });
 
-// Wallet save (առայժմ լոկալ)
-const walletInput = document.getElementById("wallet-input");
-const walletStatus = document.getElementById("wallet-status");
-const walletSaveBtn = document.getElementById("wallet-save-btn");
+// ---------------- WALLET SAVE (STRUCTURE) ----------------
+const walletInput = $("wallet-input");
+const walletStatus = $("wallet-status");
+const walletSaveBtn = $("wallet-save-btn");
 
 if (walletSaveBtn) {
-  walletSaveBtn.addEventListener("click", () => {
+  walletSaveBtn.addEventListener("click", async () => {
     const value = walletInput.value.trim();
     if (!value) {
       walletStatus.textContent = "Խնդրում ենք գրել wallet հասցեն։";
       return;
     }
-    // Այստեղ հետո կուղարկենք API-ին → Render + Neon
-    walletStatus.textContent = "Wallet-ը պահպանված է (локալ v1). Բոնուսը կտանք backend-ում։";
+    if (!CURRENT_USER_ID) {
+      walletStatus.textContent = "Telegram user ID չգտանք։ Բացիր բոտից, ոչ թե browser-ից։";
+      return;
+    }
+
+    walletStatus.textContent = "Պահպանում ենք wallet-ը…";
+
+    // Backend save structure (երբ Render պատրաստ լինի)
+    const url = `${API_BASE}/api/wallet_connect`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: CURRENT_USER_ID,
+          wallet: value,
+        }),
+      });
+
+      if (!res.ok) {
+        walletStatus.textContent = "Սխալ backend-ից (կվերանայենք հետո)։";
+        return;
+      }
+
+      const data = await res.json();
+      if (data.ok) {
+        walletStatus.textContent =
+          "Wallet-ը հաջողությամբ պահպանված է։ Բոնուսը կավելացվի backend-ում 💰";
+        // Թարմացնենք balance-ը, եթե backend-ը վերադարձնի նոր balance
+        if (data.user && typeof data.user.balance === "number") {
+          balance = data.user.balance;
+          updateBalanceDisplay();
+        }
+      } else {
+        walletStatus.textContent =
+          data.error || "Չստացվեց պահպանել wallet-ը (backend պատասխան)։";
+      }
+    } catch (err) {
+      console.log("❌ Wallet save error:", err);
+      walletStatus.textContent =
+        "Չստացվեց կապվել սերվերին։ Հետո Render-ում կաշխատի։";
+    }
   });
 }
 
-// Deposit fake
-const depositInput = document.getElementById("deposit-amount");
-const depositStatus = document.getElementById("deposit-status");
-const depositBtn = document.getElementById("deposit-btn");
+// ---------------- DEPOSIT (դեռ ֆեյք, բայց պատրաստ կառուցվածքով) ----------------
+const depositInput = $("deposit-amount");
+const depositStatus = $("deposit-status");
+const depositBtn = $("deposit-btn");
 
 if (depositBtn) {
-  depositBtn.addEventListener("click", () => {
+  depositBtn.addEventListener("click", async () => {
     const amount = Number(depositInput.value);
     if (!amount || amount <= 0) {
       depositStatus.textContent = "Գրիր ճիշտ գումար։";
       return;
     }
-    depositStatus.textContent =
-      `Deposit հարցումը գրանցված է (ֆեյք v1: +${amount}$ բալանսին):`;
-    fakeBalance += amount;
-    updateBalanceDisplay();
+    if (!CURRENT_USER_ID) {
+      depositStatus.textContent = "Telegram user ID չգտանք։";
+      return;
+    }
+
+    depositStatus.textContent = "Deposit հարցումը ուղարկում ենք…";
+
+    // Հետո backend-ում սա կաշխատի իրականով
+    const url = `${API_BASE}/api/deposit_request`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: CURRENT_USER_ID,
+          amount: amount,
+        }),
+      });
+
+      if (!res.ok) {
+        depositStatus.textContent = "Backend սխալ տվեց, հետո կսարքենք։";
+        return;
+      }
+
+      const data = await res.json();
+      if (data.ok) {
+        depositStatus.textContent =
+          "Deposit հարցումը գրանցված է ✅ (վերիֆիկացիան կլինի admin-ի կողմից)";
+      } else {
+        depositStatus.textContent =
+          data.error || "Deposit-ը չստացվեց (backend պատասխան)։";
+      }
+    } catch (err) {
+      console.log("❌ Deposit հարցման սխալ:", err);
+      depositStatus.textContent =
+        "Չստացվեց կապվել սերվերին։ Հետո Render-ում կաշխատի։";
+    }
   });
 }
 
-// Withdraw fake
-const withdrawInput = document.getElementById("withdraw-amount");
-const withdrawStatus = document.getElementById("withdraw-status");
-const withdrawBtn = document.getElementById("withdraw-btn");
+// ---------------- WITHDRAW (միայն կառուցվածք) ----------------
+const withdrawInput = $("withdraw-amount");
+const withdrawStatus = $("withdraw-status");
+const withdrawBtn = $("withdraw-btn");
 
 if (withdrawBtn) {
-  withdrawBtn.addEventListener("click", () => {
+  withdrawBtn.addEventListener("click", async () => {
     const amount = Number(withdrawInput.value);
     if (!amount || amount <= 0) {
       withdrawStatus.textContent = "Գրիր կանխիկացման գումարը։";
       return;
     }
-    withdrawStatus.textContent =
-      "v1 ռեժիմում սա դեռ ֆեյք է։ Իրական պայմաններն ու Neon/Postgres ստուգումը հետո կկապենք Render-ում։";
+    if (!CURRENT_USER_ID) {
+      withdrawStatus.textContent = "Telegram user ID չգտանք։";
+      return;
+    }
+
+    withdrawStatus.textContent = "Ստուգում ենք պայմանները…";
+
+    const url = `${API_BASE}/api/withdraw_request`;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: CURRENT_USER_ID,
+          amount: amount,
+        }),
+      });
+
+      if (!res.ok) {
+        withdrawStatus.textContent = "Backend սխալ տվեց, հետո կսարքենք։";
+        return;
+      }
+
+      const data = await res.json();
+      if (data.ok) {
+        withdrawStatus.textContent =
+          "Withdraw հարցումը գրանցված է ✅ Admin-ը կվերահսկի։";
+      } else {
+        withdrawStatus.textContent =
+          data.error ||
+          "Չստացվեց withdraw անել։ Հավանաբար 10 ակտիվ ռեֆերալը կամ 200$ դեպոզիտը չեն լրացված։";
+      }
+    } catch (err) {
+      console.log("❌ Withdraw error:", err);
+      withdrawStatus.textContent =
+        "Չստացվեց կապվել սերվերին։ Հետո Render-ում կաշխատի։";
+    }
   });
 }
 
-// Referral link (լոկալ գեներացիա)
-const refLinkInput = document.getElementById("ref-link");
-const refCopyBtn = document.getElementById("ref-copy-btn");
+// ---------------- REFERRAL LINK ----------------
+const refLinkInput = $("ref-link");
+const refCopyBtn = $("ref-copy-btn");
 
-if (refLinkInput) {
-  const userId = tg?.initDataUnsafe?.user?.id;
-  if (userId) {
-    // քո բոտի անունը դնելու ես այստեղ
-    const botUsername = "YourCasinoBot"; // ← փոխիր քո բոտի username-ով
-    const link = `https://t.me/${botUsername}?start=ref_${userId}`;
+function initReferralLink() {
+  if (!refLinkInput) return;
+
+  if (CURRENT_USER_ID) {
+    // այստեղ դնում ես ՔՈ բոտի username-ը
+    const botUsername = "doominobot"; // ← փոխիր կոնկրետ քոնը, եթե ուրիշ է
+    const link = `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
     refLinkInput.value = link;
   } else {
-    refLinkInput.value = "user id չկա (Telegram WebApp-ից դուրս ես փորձարկում)";
+    refLinkInput.value =
+      "user id չկա (Telegram WebApp-ից դուրս ես փորձարկում)";
   }
 }
 
 if (refCopyBtn) {
   refCopyBtn.addEventListener("click", () => {
+    if (!refLinkInput) return;
     refLinkInput.select();
     document.execCommand("copy");
     if (tg) tg.showPopup({ message: "Հղումը կոպի է արված ✅" });
   });
 }
+
+// ---------------- START ----------------
+initFromTelegram();
+initReferralLink();
+updateBalanceDisplay();
