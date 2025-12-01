@@ -7,7 +7,7 @@ BOT_TOKEN = "8419124438:AAEjbuv8DtIb8GdmuBP5SKGtWs48qFEl1hc"
 
 # 👉 ԱՅՍՏԵՂ ԴՆԵՍ ՔՈ GitHub Pages WebApp հղումը
 # օրինակ՝ "https://vorn-studio.github.io/casino-bot/webapp/"
-WEBAPP_URL = "https://vorn-studio.github.io/0059bot/"
+WEBAPP_URL = "https://vorn-studio.github.io/0059bot/webapp/"
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
