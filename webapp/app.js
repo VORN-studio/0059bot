@@ -2,7 +2,7 @@
 
 // TON Connect controller (SDK)
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-  manifestUrl: "https://vorn-studio.github.io/0059bot/tonconnect-manifest.json",
+  manifestUrl: "https://vorn-studio.github.io/0059bot/webapp/tonconnect-manifest.json",
   buttonRootId: "ton-connect",
 });
 

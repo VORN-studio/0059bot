@@ -21,7 +21,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # WebApp կոճակ
     webapp_button = KeyboardButton(
-        text="🎰 Բացել Casino WebApp",
+        text="🎰 Բացել Domino WebApp",
         web_app=WebAppInfo(url=WEBAPP_URL)
     )
 
