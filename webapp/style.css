@@ -108,3 +108,11 @@ input[type="number"] {
   display: block;
   max-width: 100%;
 }
+
+.status {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #ff6b6b; /* կարմիր սխալի համար */
+  white-space: normal !important;
+  word-break: break-word;
+}
