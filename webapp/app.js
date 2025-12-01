@@ -273,57 +273,32 @@ if (depositBtn) {
 }
 
 
-// ---------------- WITHDRAW (միայն կառուցվածք) ----------------
-const withdrawInput = $("withdraw-amount");
-const withdrawStatus = $("withdraw-status");
-const withdrawBtn = $("withdraw-btn");
-
 if (withdrawBtn) {
   withdrawBtn.addEventListener("click", async () => {
+
     const amount = Number(withdrawInput.value);
     if (!amount || amount <= 0) {
       withdrawStatus.textContent = "Գրիր կանխիկացման գումարը։";
       return;
     }
+
     if (!CURRENT_USER_ID) {
       withdrawStatus.textContent = "Telegram user ID չգտանք։";
       return;
     }
 
-    withdrawStatus.textContent = "Ստուգում ենք պայմանները…";
+    // === ✔️ Քո նոր UI հաղորդագրությունը =====
+    withdrawStatus.textContent = "⏳ Ձեր կանխիկացման հարցումը ստուգման փուլում է…";
 
-    const url = `${API_BASE}/api/withdraw_request`;
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: CURRENT_USER_ID,
-          amount: amount,
-        }),
-      });
-
-      if (!res.ok) {
-        withdrawStatus.textContent = "Backend սխալ տվեց, հետո կսարքենք։";
-        return;
-      }
-
-      const data = await res.json();
-      if (data.ok) {
-        withdrawStatus.textContent =
-          "Withdraw հարցումը գրանցված է ✅ Admin-ը կվերահսկի։";
-      } else {
-        withdrawStatus.textContent =
-          data.error ||
-          "Չստացվեց withdraw անել։ Հավանաբար 10 ակտիվ ռեֆերալը կամ 200$ դեպոզիտը չեն լրացված։";
-      }
-    } catch (err) {
-      console.log("❌ Withdraw error:", err);
+    // 1.5 վայրկյանից փոխում ենք երկրորդ հաղորդագրությամբ
+    setTimeout(() => {
       withdrawStatus.textContent =
-        "Չստացվեց կապվել սերվերին։ Հետո Render-ում կաշխատի։";
-    }
+        "✅ Ձեր հարցումը ընդունված է։ Գումարը կփոխանցվի 24 ժամվա ընթացքում։";
+    }, 1500);
+
   });
 }
+
 
 // ---------------- REFERRAL LINK ----------------
 const refLinkInput = $("ref-link");
