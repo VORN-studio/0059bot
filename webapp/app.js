@@ -1,3 +1,31 @@
+// ============ TON CONNECT INIT ============
+
+// TON Connect controller (SDK)
+const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+  manifestUrl: "https://vorn-studio.github.io/0059bot/tonconnect-manifest.json",
+  buttonRootId: "ton-connect",
+});
+
+// TON wallet address
+let TON_WALLET = null;
+
+// When user connects wallet (popup)
+tonConnectUI.onStatusChange((walletInfo) => {
+  if (walletInfo && walletInfo.account) {
+    TON_WALLET = walletInfo.account.address;
+    console.log("💎 TON Wallet Connected:", TON_WALLET);
+
+    // ցույց տանք user-ին
+    const walletStatus = document.getElementById("wallet-status");
+    if (walletStatus) {
+      walletStatus.textContent = "Wallet connected: " + TON_WALLET;
+    }
+
+    // OPTIONAL — կարող ենք ավտոմատ կցել backend-ին
+    // sendTonWalletToBackend(TON_WALLET);
+  }
+});
+
 console.log("✅ Casino WebApp loaded");
 
 // ================== TELEGRAM INIT ==================
