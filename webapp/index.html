@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+  <meta charset="UTF-8" />
+  <title>Casino WebApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Telegram WebApp JS -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="top">
+      <h1>🎰 Casino Panel</h1>
+      <div class="user-info">
+        <div><strong>ID:</strong> <span id="user-id">-</span></div>
+        <div><strong>Անուն:</strong> <span id="user-name">-</span></div>
+        <div><strong>Բալանս:</strong> <span id="user-balance">0.00 $</span></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="buttons">
+        <button class="btn" data-section="wallet">💼 Wallet</button>
+        <button class="btn" data-section="game">🎮 Game</button>
+        <button class="btn" data-section="deposit">💳 Deposit</button>
+        <button class="btn" data-section="withdraw">💸 Withdraw</button>
+        <button class="btn" data-section="referral">👥 Referral</button>
+      </section>
+
+      <section id="screen">
+
+        <!-- Սկզբնական էկրան -->
+        <div id="screen-default" class="screen active">
+          <h2>Բարի գալուստ կազինո</h2>
+          <p>Միացրու քո wallet-ը, ստացիր բոնուս և հրավիրիր ընկերներին․</p>
+          <p>👉 10 ակտիվ ընկեր + 200$ ընդհանուր դեպոզիտ → կանխիկացում հնարավոր է։</p>
+        </div>
+
+        <!-- Wallet -->
+        <div id="screen-wallet" class="screen">
+          <h2>💼 Wallet</h2>
+          <p>Կցրու քո դրամապանակը և ստացիր X$ բոնուս։</p>
+          <input type="text" id="wallet-input" placeholder="Քո wallet հասցեն" />
+          <button id="wallet-save-btn" class="btn primary">Պահպանել wallet-ը</button>
+          <p id="wallet-status" class="status"></p>
+        </div>
+
+        <!-- Game -->
+        <div id="screen-game" class="screen">
+          <h2>🎮 Game (Casino)</h2>
+          <p>Այստեղ կլինեն կազինո խաղերը (slot, crash և այլն)։</p>
+          <p>Հիմա սա պարզապես սքելետ է, backend-ը հետո կկապենք Render + Neon-ի հետ։</p>
+        </div>
+
+        <!-- Deposit -->
+        <div id="screen-deposit" class="screen">
+          <h2>💳 Deposit</h2>
+          <p>Ընտրիր գումարը, ուղարկիր նշված հաշվին, հետո admin-ը կհաստատի (v1 տարբերակ)</p>
+          <input type="number" id="deposit-amount" placeholder="Գումարը, օրինակ՝ 50" />
+          <button id="deposit-btn" class="btn primary">Ստեղծել deposit հարցում</button>
+          <p id="deposit-status" class="status"></p>
+        </div>
+
+        <!-- Withdraw -->
+        <div id="screen-withdraw" class="screen">
+          <h2>💸 Withdraw</h2>
+          <p>Կանխիկացումը հասանելի է, եթե․</p>
+          <ul>
+            <li>ունես ≥ 10 ակտիվ հրավիրված օգտատեր</li>
+            <li>նրանց ընդհանուր deposit-ը ≥ 200$</li>
+          </ul>
+          <input type="number" id="withdraw-amount" placeholder="Գումարը" />
+          <button id="withdraw-btn" class="btn primary">Ուղարկել withdraw հարցում</button>
+          <p id="withdraw-status" class="status"></p>
+        </div>
+
+        <!-- Referral -->
+        <div id="screen-referral" class="screen">
+          <h2>👥 Referral</h2>
+          <p>Քո ռեֆերալ հղումը․</p>
+          <input type="text" id="ref-link" readonly />
+          <button id="ref-copy-btn" class="btn">Կոպի անել հղումը</button>
+
+          <div class="ref-stats">
+            <p>Ընդհանուր հրավիրվածներ: <span id="ref-total">0</span></p>
+            <p>Ակտիվ հրավիրվածներ: <span id="ref-active">0</span></p>
+            <p>Նրանց ընդհանուր deposit-ը: <span id="ref-deposits">0.00 $</span></p>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

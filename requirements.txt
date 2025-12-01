@@ -1,4 +1,0 @@
-python-telegram-bot==20.8
-psycopg2-binary
-Flask==3.0.0
-requests
