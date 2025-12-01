@@ -1,52 +1,57 @@
 import logging
+from threading import Thread
+from flask import Flask
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# 👉 ԱՅՍՏԵՂ ԵՍ ԴՆԵՍ ՔՈ ԲՈՏԻ TOKEN-Ը
 BOT_TOKEN = "8419124438:AAEjbuv8DtIb8GdmuBP5SKGtWs48qFEl1hc"
 
-# 👉 ԱՅՍՏԵՂ ԴՆԵՍ ՔՈ GitHub Pages WebApp հղումը
-# օրինակ՝ "https://vorn-studio.github.io/casino-bot/webapp/"
 WEBAPP_URL = "https://vorn-studio.github.io/0059bot/webapp/"
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
-logger = logging.getLogger(__name__)
+# ---------------------------
+# 1) Flask Web Server (Render)
+# ---------------------------
+app_web = Flask(__name__)
 
+@app_web.route("/")
+def home():
+    return "Domino backend running"
 
+# ---------------------------
+# 2) Telegram Bot Logic
+# ---------------------------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
 
-    # WebApp կոճակ
     webapp_button = KeyboardButton(
         text="🎰 Բացել Domino WebApp",
         web_app=WebAppInfo(url=WEBAPP_URL)
     )
 
     keyboard = [[webapp_button]]
-    reply_markup = ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+
+    await update.message.reply_text(
+        f"Բարև, {user.first_name}!\n\nԲացիր Domino կազինոն 👇",
+        reply_markup=reply_markup
     )
 
-    text = (
-        f"Բարև, {user.first_name}!\n\n"
-        "Սա քո կազինո բոտն է․ բացի WebApp-ը և ներսում\n"
-        "կտեսնես քո ID-ն, բալանսը, ռեֆերալները, wallet connect և այլն։"
-    )
 
-    await update.message.reply_text(text, reply_markup=reply_markup)
+def run_bot():
+    app_bot = ApplicationBuilder().token(BOT_TOKEN).build()
+    app_bot.add_handler(CommandHandler("start", start))
 
-
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-
-    app.run_polling()
+    app_bot.run_polling()
 
 
+# ---------------------------
+# 3) Run Flask + Telegram Together
+# ---------------------------
 if __name__ == "__main__":
-    main()
+    # Start bot in background thread
+    Thread(target=run_bot).start()
+
+    # Start Flask (Render will use port $PORT)
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app_web.run(host="0.0.0.0", port=port)
