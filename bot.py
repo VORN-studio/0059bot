@@ -717,7 +717,7 @@ def api_game_bet():
     user_id = int(data.get("user_id", 0))
     amount = float(data.get("amount", 0))
     game = data.get("game", "")
-    choice = data.get("choice")  # օրինակ Dice number, Coinflip side
+    choice = data.get("choice")  # multiplier for crash
 
     if user_id == 0 or amount <= 0 or not game:
         return jsonify({"ok": False, "error": "bad_params"}), 400
@@ -726,18 +726,24 @@ def api_game_bet():
     if not stats:
         return jsonify({"ok": False, "error": "not_found"}), 404
 
-    # balance check
     if amount > stats["balance_usd"]:
         return jsonify({"ok": False, "error": "low_balance"}), 200
 
-    # GAME LOGIC
     import random
 
-    if game == "dice":
+    # ------------------- CRASH GAME -------------------
+    if game == "crash":
+        result_multiplier = float(choice)
+        win = True
+        payout = amount * result_multiplier
+
+    # ------------------- DICE --------------------------
+    elif game == "dice":
         result = random.randint(1, 6)
         win = (result == int(choice))
         payout = amount * 6 if win else 0
 
+    # ------------------- COINFLIP ----------------------
     elif game == "coinflip":
         result = random.choice(["heads", "tails"])
         win = (result == choice)
@@ -746,9 +752,10 @@ def api_game_bet():
     else:
         return jsonify({"ok": False, "error": "unknown_game"}), 400
 
-    # update balance
+    # ------------------- UPDATE BALANCE ----------------
     conn = db()
     c = conn.cursor()
+
     new_balance = stats["balance_usd"] - amount + payout
 
     c.execute("""
@@ -762,11 +769,11 @@ def api_game_bet():
 
     return jsonify({
         "ok": True,
-        "result": result,
         "win": win,
         "payout": payout,
         "new_balance": new_balance
     })
+
 
 
 @app_web.route("/api/ton_rate")
