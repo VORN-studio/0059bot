@@ -139,75 +139,71 @@ def release_db(conn):
         print("⚠️ release_db error:", e)
 
 
-def init_db():
-    """
-    Ստեղծում ենք Domino-ի աղյուսակները
-    """
-
-    for sql in alters:
-        try: 
-            c.execute(sql)
-        except: 
-            pass
-
-    print("🛠️ init_db() — Domino")
-    conn = db()
-    c = conn.cursor()
-
-    # հիմնական օգտատերեր
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS dom_users (
-        user_id BIGINT PRIMARY KEY,
-        username TEXT,
-        wallet_address TEXT,
-        balance_usd NUMERIC(18,2) DEFAULT 0,
-        total_deposit_usd NUMERIC(18,2) DEFAULT 0,
-        total_withdraw_usd NUMERIC(18,2) DEFAULT 0,
-        inviter_id BIGINT,
-        created_at BIGINT,
-        ton_balance NUMERIC(20,6) DEFAULT 0,
-        usd_balance NUMERIC(20,2) DEFAULT 0,
-        last_rate NUMERIC(20,6) DEFAULT 0
-    )
-
-    """)
-
-    # դեպոզիտների հայտեր
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS dom_deposits (
-        id SERIAL PRIMARY KEY,
-        user_id BIGINT,
-        amount_usd NUMERIC(18,2),
-        status TEXT DEFAULT 'auto_credited', -- pending / approved / rejected / auto_credited
-        created_at BIGINT,
-        processed_at BIGINT
-    )
-    """)
-
-    # կանխիկացման հայտեր
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS dom_withdrawals (
-        id SERIAL PRIMARY KEY,
-        user_id BIGINT,
-        amount_usd NUMERIC(18,2),
-        status TEXT DEFAULT 'pending',  -- pending / approved / rejected
-        created_at BIGINT,
-        processed_at BIGINT
-    )
-    """)
-
-   
-    conn.commit()
-    release_db(conn)
-    print("✅ Domino tables ready.")
-
-
-
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0"
 ]
+
+def init_db():
+    """
+    Creates base tables and applies ALTER patches safely.
+    """
+    print("🛠️ init_db() — Domino")
+
+    conn = db()
+    c = conn.cursor()
+
+    # ---------- BASE TABLE ----------
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_users (
+            user_id BIGINT PRIMARY KEY,
+            username TEXT,
+            wallet_address TEXT,
+            balance_usd NUMERIC(18,2) DEFAULT 0,
+            total_deposit_usd NUMERIC(18,2) DEFAULT 0,
+            total_withdraw_usd NUMERIC(18,2) DEFAULT 0,
+            inviter_id BIGINT,
+            created_at BIGINT
+        )
+    """)
+
+    # ---------- APPLY ALTER PATCHES ----------
+    for sql in alters:
+        try:
+            c.execute(sql)
+            print("Applied:", sql)
+        except Exception as e:
+            print("Skip alter:", sql, "Reason:", e)
+
+    # ---------- DEPOSITS ----------
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_deposits (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            amount_usd NUMERIC(18,2),
+            status TEXT DEFAULT 'auto_credited',
+            created_at BIGINT,
+            processed_at BIGINT
+        )
+    """)
+
+    # ---------- WITHDRAWALS ----------
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_withdrawals (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            amount_usd NUMERIC(18,2),
+            status TEXT DEFAULT 'pending',
+            created_at BIGINT,
+            processed_at BIGINT
+        )
+    """)
+
+    conn.commit()
+    release_db(conn)
+    print("✅ Domino tables ready with applied patches!")
+
 
 # =========================
 # DB Helpers
