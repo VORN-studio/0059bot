@@ -469,39 +469,46 @@ TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=toncoin&currencies=usd"
 
 
 def fetch_ton_rate():
-    """
-    Fetch current TON → USD rate from tonapi.io
-    Returns float or None if failed.
-    """
     try:
+        print("🌐 Calling tonapi.io ...")
         r = requests.get(TON_RATE_URL, timeout=5)
+        print("📦 API status:", r.status_code)
+        print("📦 API raw response:", r.text)
+
         data = r.json()
-        return float(data["rates"]["ton"]["prices"]["USD"])
+        rate = float(data["rates"]["ton"]["prices"]["USD"])
+        print("📊 Parsed rate:", rate)
+        return rate
+
     except Exception as e:
-        print("⚠️ TON rate fetch failed:", e)
+        print("🚨 fetch_ton_rate() error:", e)
         return None
+
 
 def ton_rate_updater():
     print("🔄 TON updater thread started")
+
     while True:
         try:
+            print("➡️ Fetching TON rate ...")
             rate = fetch_ton_rate()
-            print("Fetched TON rate:", rate)
+            print("📥 fetch_ton_rate() returned:", rate)
 
-            if rate:
+            if rate is None:
+                print("❌ TON RATE = None (API call failed)")
+            else:
                 conn = db()
                 c = conn.cursor()
                 c.execute("UPDATE dom_users SET last_rate = %s", (rate,))
                 conn.commit()
                 release_db(conn)
-                print("💹 Updated last_rate in DB →", rate)
-            else:
-                print("❌ Could not fetch TON rate")
+                print("💹 last_rate updated in DB:", rate)
 
         except Exception as e:
-            print("⚠️ TON updater error:", e)
+            print("🔥 TON updater crashed:", e)
 
-        time.sleep(30)
+        time.sleep(15)
+
 
 
 application = None  # global PTB application
