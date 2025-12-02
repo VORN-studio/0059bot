@@ -157,12 +157,12 @@ def init_db():
         total_deposit_usd NUMERIC(18,2) DEFAULT 0,
         total_withdraw_usd NUMERIC(18,2) DEFAULT 0,
         inviter_id BIGINT,
-        created_at BIGINT
+        created_at BIGINT,
         ton_balance NUMERIC(20,6) DEFAULT 0,
         usd_balance NUMERIC(20,2) DEFAULT 0,
         last_rate NUMERIC(20,6) DEFAULT 0
-
     )
+
     """)
 
     # դեպոզիտների հայտեր
@@ -189,22 +189,22 @@ def init_db():
     )
     """)
 
+    for sql in alters:
+        try: 
+            c.execute(sql)
+        except: 
+            pass
     conn.commit()
     release_db(conn)
     print("✅ Domino tables ready.")
 
 
-alters = [
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
-    "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
-]
-for sql in alters:
-    try: c.execute(sql)
-    except: pass
-    conn.commit()
-    release_db(conn)
 
+alters = [
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
+]
 
 # =========================
 # DB Helpers
@@ -477,7 +477,7 @@ def ton_rate_updater():
                 conn = db()
                 c = conn.cursor()
                 c.execute("""
-                    UPDATE users
+                    UPDATE dom_users
                     SET last_rate = %s
                 """, (rate,))
                 conn.commit()
@@ -637,7 +637,7 @@ def api_ton_rate():
     try:
         conn = db()
         c = conn.cursor()
-        c.execute("SELECT last_rate FROM users LIMIT 1")
+        c.execute("SELECT last_rate FROM dom_users LIMIT 1")
         row = c.fetchone()
         release_db(conn)
         return jsonify({"ok": True, "ton_usd": float(row[0] or 0)})
