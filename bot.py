@@ -143,6 +143,13 @@ def init_db():
     """
     Ստեղծում ենք Domino-ի աղյուսակները
     """
+
+    for sql in alters:
+        try: 
+            c.execute(sql)
+        except: 
+            pass
+
     print("🛠️ init_db() — Domino")
     conn = db()
     c = conn.cursor()
@@ -189,11 +196,7 @@ def init_db():
     )
     """)
 
-    for sql in alters:
-        try: 
-            c.execute(sql)
-        except: 
-            pass
+   
     conn.commit()
     release_db(conn)
     print("✅ Domino tables ready.")
