@@ -482,23 +482,26 @@ def fetch_ton_rate():
         return None
 
 def ton_rate_updater():
+    print("🔄 TON updater thread started")
     while True:
-        rate = fetch_ton_rate()
-        if rate:
-            try:
+        try:
+            rate = fetch_ton_rate()
+            print("Fetched TON rate:", rate)
+
+            if rate:
                 conn = db()
                 c = conn.cursor()
-                c.execute("""
-                    UPDATE dom_users
-                    SET last_rate = %s
-                """, (rate,))
+                c.execute("UPDATE dom_users SET last_rate = %s", (rate,))
                 conn.commit()
                 release_db(conn)
-                print(f"💹 TON rate updated → {rate}$")
-            except Exception as e:
-                print("⚠️ Rate update DB error:", e)
+                print("💹 Updated last_rate in DB →", rate)
+            else:
+                print("❌ Could not fetch TON rate")
 
-        time.sleep(60)  # refresh every 60 sec
+        except Exception as e:
+            print("⚠️ TON updater error:", e)
+
+        time.sleep(30)
 
 
 application = None  # global PTB application
