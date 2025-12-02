@@ -64,7 +64,7 @@ async function loadTonRate() {
 
         if (data.ok) {
             const rate = data.ton_usd; // ← ԱՅՍՏԵՂ Է ՃԻՇՏԸ
-            document.getElementById("ton-rate").textContent = rate.toFixed(4) + " $";
+            document.getElementById("ton-current").textContent = rate.toFixed(4);
         } else {
             document.getElementById("ton-rate").textContent = "—";
         }
