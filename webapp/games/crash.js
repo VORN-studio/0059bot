@@ -111,19 +111,51 @@ function startCrash() {
     setMultiplier();
     setDomino("fly");
 
+    // հանենք բեթը crashBalance–ից հենց հիմա
+    crashBalance -= currentBet;
+    if (crashBalance < 0) crashBalance = 0;
+    updateBalances();
+
+
     document.getElementById("start-btn").style.display = "none";
     document.getElementById("cashout-btn").style.display = "block";
 
     show("🎮 Խաղը սկսվեց");
 
     timer = setInterval(() => {
-        multiplier += 0.018 + Math.random() * 0.04;
-        setMultiplier();
+      multiplier += 0.018 + Math.random() * 0.04;
+      setMultiplier();
 
-        if (Math.random() < 0.013 * multiplier) {
-            crashNow();
-        }
+      updateDominoFall();  // ← ԱՅՍՏԵՂ Է ՀԵՐԹՈՎ ԸՆԿՆՈՒՄ ԴՈՄԻՆՈՆԵՐԸ
+
+      if (Math.random() < 0.013 * multiplier) {
+        crashNow();
+      }
     }, 90);
+
+}
+
+function buildDominoChain(count = 20) {
+    const chain = document.getElementById("domino-chain");
+    chain.innerHTML = "";
+
+    for (let i = 0; i < count; i++) {
+        const tile = document.createElement("div");
+        tile.className = "domino-tile";
+        tile.dataset.index = i;
+        chain.appendChild(tile);
+    }
+}
+
+let dominoIndex = 0;
+
+function updateDominoFall() {
+    const tiles = document.querySelectorAll(".domino-tile");
+
+    if (dominoIndex < tiles.length) {
+        tiles[dominoIndex].classList.add("fall");
+        dominoIndex++;
+    }
 }
 
 
@@ -136,17 +168,17 @@ function crashNow() {
     crashed = true;
     clearInterval(timer);
 
-    setDomino("fall");
+    // Last domino falls sideways
+    const tiles = document.querySelectorAll(".domino-tile");
+    if (dominoIndex < tiles.length) {
+        tiles[dominoIndex].classList.add("crashed");
+    }
 
-    crashBalance -= currentBet;
-    if (crashBalance < 0) crashBalance = 0;
-    updateBalances();
-
+    show("💥 Crash!");
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
-
-    show("💥 Crash! Չհասցրեցիր Claim անել");
 }
+
 
 
 // ============== CLAIM WIN ==============
@@ -176,7 +208,7 @@ async function cashOut() {
 
     if (js.ok) {
         mainBalance = js.new_balance;     // backend actual balance
-        crashBalance = crashBalance - currentBet + win;
+        crashBalance += win;
         updateBalances();
         show("🟢 +" + win.toFixed(2) + " $");
     } else {
@@ -206,6 +238,6 @@ window.onload = () => {
     } else {
         USER_ID = getUidFromUrl();
     }
-
+    buildDominoChain();
     loadUser();
 };
