@@ -375,8 +375,8 @@ if (refCopyBtn) {
 initFromTelegram();
 initReferralLink();
 updateBalanceDisplay();
-loadTonRate();
-setInterval(loadTonRate, 60000);
+//loadTonRate();
+//setInterval(loadTonRate, 60000);
 
 function loadTonChart() {
   new TradingView.widget({
@@ -394,5 +394,5 @@ function loadTonChart() {
 
 loadTonChart();
 
-loadTonRate();
-setInterval(loadTonRate, 15000); // ամեն 15 վրկ մեկ թարմացնի
+//loadTonRate();
+//setInterval(loadTonRate, 15000); // ամեն 15 վրկ մեկ թարմացնի

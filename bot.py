@@ -256,7 +256,7 @@ def get_user_stats(user_id: int):
         release_db(conn)
         return None
 
-    username, balance_usd, total_dep, total_wd = row
+    username, balance_usd, total_dep, total_wd, ton_balance = row
 
     # referrals count
     c.execute("SELECT COUNT(*) FROM dom_users WHERE inviter_id=%s", (user_id,))
@@ -286,6 +286,7 @@ def get_user_stats(user_id: int):
         "balance_usd": float(balance_usd),
         "total_deposit_usd": float(total_dep),
         "total_withdraw_usd": float(total_wd),
+        "ton_balance": float(ton_balance),
         "ref_count": int(ref_count),
         "active_refs": int(active_refs),
         "team_deposit_usd": float(team_dep),
