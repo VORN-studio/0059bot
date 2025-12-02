@@ -633,15 +633,20 @@ def telegram_webhook():
 
 @app_web.route("/api/ton_rate")
 def api_ton_rate():
+    """
+    Returns REAL-TIME TON→USD price directly from tonapi.io
+    (ignores DB, always fresh)
+    """
     try:
-        conn = db()
-        c = conn.cursor()
-        c.execute("SELECT last_rate FROM dom_users LIMIT 1")
-        row = c.fetchone()
-        release_db(conn)
-        return jsonify({"ok": True, "ton_usd": float(row[0] or 0)})
+        rate = fetch_ton_rate()
+        if rate is None:
+            return jsonify({"ok": False, "ton_usd": 0}), 200
+
+        return jsonify({"ok": True, "ton_usd": rate}), 200
+
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
 
 
 # =========================
