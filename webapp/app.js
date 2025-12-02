@@ -33,7 +33,7 @@ console.log("✅ Casino WebApp loaded");
 const tg = window.Telegram && window.Telegram.WebApp;
 
 // Քո backend-ի հիմքը (Render-ում կփոխենք իրական հղումով)
-const API_BASE = "https://your-backend.onrender.com"; // ← հետո կփոխենք
+const API_BASE = "https://domino-backend-iavj.onrender.com"; // ← հետո կփոխենք
 
 // Օգտատիրոջ տվյալները կպահենք այստեղ
 let CURRENT_USER_ID = null;
@@ -90,63 +90,56 @@ function initFromTelegram() {
 // ---------------- LOAD USER FROM BACKEND (STRUCTURE) ----------------
 async function loadUserFromBackend() {
   if (!CURRENT_USER_ID) {
-    console.log("⛔ Չկա CURRENT_USER_ID, չենք կանչում backend-ը");
+    console.log("⛔ CURRENT_USER_ID չկա");
     return;
   }
 
-  // Երբ Render + Neon պատրաստ լինեն, այստեղ API կանչ կանենք՝
-  // օրինակ՝ GET /api/user/<telegram_id>
   const url = `${API_BASE}/api/user/${CURRENT_USER_ID}`;
-  console.log("🌐 Կփորձենք բեռնել օգտատիրոջ տվյալները ՝", url);
+  console.log("🌐 Բեռնում ենք user տվյալները:", url);
 
   try {
-    const res = await fetch(url, { method: "GET" });
-    if (!res.ok) {
-      console.log("⚠️ Backend returned non-OK:", res.status);
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.ok || !data.user) {
+      console.log("⚠️ user not found");
       return;
     }
-    const data = await res.json();
-    console.log("✅ User from backend:", data);
 
-    // Սպասվող data կառուցվածքը (հետո backend-ում այդպես կանենք)
-    // {
-    //   ok: true,
-    //   user: {
-    //     balance: 123.45,
-    //     wallet: "USDT...",
-    //     ref_total: 5,
-    //     ref_active: 2,
-    //     ref_deposits: 250.0
-    //   }
-    // }
+    const U = data.user;
 
-    if (data && data.ok && data.user) {
-      if (typeof data.user.balance === "number") {
-        balance = data.user.balance;
-      }
+    // ---------------------
+    // 1) HEADER FIELDS
+    // ---------------------
 
-      updateBalanceDisplay();
+    $("user-id").textContent = CURRENT_USER_ID;
+    $("user-name").textContent = U.username || "-";
+    $("user-balance").textContent = U.balance_usd.toFixed(2) + " $";
 
-      // Referral stats (եթե կա)
-      if ($("ref-total") && typeof data.user.ref_total === "number") {
-        $("ref-total").textContent = data.user.ref_total;
-      }
-      if ($("ref-active") && typeof data.user.ref_active === "number") {
-        $("ref-active").textContent = data.user.ref_active;
-      }
-      if ($("ref-deposits") && typeof data.user.ref_deposits === "number") {
-        $("ref-deposits").textContent = data.user.ref_deposits.toFixed(2) + " $";
-      }
 
-      // Եթե user.wallet կա, կարող ենք լցնել wallet input-ը
-      if ($("wallet-input") && data.user.wallet) {
-        $("wallet-input").value = data.user.wallet;
-      }
-    }
+    // ---------------------
+    // 2) REFERRAL STATS
+    // ---------------------
+
+    $("ref-total").textContent = U.ref_count;
+    $("ref-active").textContent = U.active_refs;
+    $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " $";
+
+
+    // ---------------------
+    // 3) GENERATE REF LINK
+    // ---------------------
+    const botUsername = "doominobot"; // փոխիր եթե բոտդ ուրիշ անուն ունի
+    $("ref-link").value =
+      `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
+
+    console.log("✔ User loaded OK");
+
   } catch (err) {
-    console.log("❌ Սխալ backend-ի հետ կապվելիս:", err);
+    console.log("❌ loadUser error:", err);
   }
 }
+
 
 // ---------------- NAVIGATION ----------------
 const buttons = document.querySelectorAll(".btn[data-section]");
