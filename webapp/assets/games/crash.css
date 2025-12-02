@@ -1,0 +1,47 @@
+body {
+    background: #050b14;
+    color: white;
+    font-family: system-ui;
+    text-align: center;
+    padding: 20px;
+}
+
+#game {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 14px;
+}
+
+#multiplier {
+    font-size: 42px;
+    margin: 20px 0;
+    color: #38bdf8;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    background: #1f2937;
+    color: white;
+    border: 1px solid #374151;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    font-size: 18px;
+    margin-top: 10px;
+}
+
+button:active {
+    transform: scale(0.97);
+}
+
+#status {
+    margin-top: 12px;
+    font-size: 16px;
+}

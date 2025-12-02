@@ -1,25 +1,40 @@
-async function startCrash() {
+let tg = window.Telegram.WebApp;
+const uid = new URLSearchParams(window.location.search).get("uid");
 
-    const amount = Number(document.getElementById("bet-amount").value);
+let running = false;
+let currentMultiplier = 1.00;
+let interval = null;
 
-    const response = await fetch(`${API_BASE}/api/game/bet`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: CURRENT_USER_ID,
-            amount: amount,
-            game: "crash",
-            choice: null
-        })
-    });
+function crashPoint() {
+    // իրական crash random (կարող ենք backend-ով փոխել)
+    return (Math.random() * 3 + 1).toFixed(2); // min 1x max 4x
+}
 
-    const data = await response.json();
+document.getElementById("play-btn").addEventListener("click", () => {
+    if (running) return;
 
-    if (!data.ok) {
-        document.getElementById("result").textContent = "Error: " + data.error;
+    let bet = Number(document.getElementById("bet").value);
+    if (bet <= 0) {
+        document.getElementById("status").textContent = "Մուտքագրիր ճիշտ գումար։";
         return;
     }
 
-    document.getElementById("result").textContent =
-        data.win ? `You won ${data.payout}$` : "You lost";
-}
+    running = true;
+    currentMultiplier = 1.00;
+    document.getElementById("status").textContent = "Խաղը սկսվեց...";
+
+    const point = crashPoint();
+    console.log("Crash at:", point);
+
+    interval = setInterval(() => {
+        currentMultiplier += 0.05;
+        document.getElementById("multiplier").textContent = currentMultiplier.toFixed(2) + "x";
+
+        if (currentMultiplier >= point) {
+            clearInterval(interval);
+            running = false;
+            document.getElementById("multiplier").textContent = point + "x 💥 CRASH";
+            document.getElementById("status").textContent = "Դու պարտվեցիր։";
+        }
+    }, 100);
+});
