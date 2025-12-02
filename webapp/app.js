@@ -58,19 +58,21 @@ function updateBalanceDisplay() {
 }
 
 async function loadTonRate() {
-  try {
-    const res = await fetch(API_BASE + "/api/ton_rate");
-    const data = await res.json();
+    try {
+        const res = await fetch(`${API_BASE}/api/ton_rate`);
+        const data = await res.json();
 
-    if (data.ok && data.ton_usd) {
-      $("ton-rate").textContent = data.ton_usd.toFixed(3);
-    } else {
-      $("ton-rate").textContent = "—";
+        if (data.ok) {
+            const rate = data.ton_usd; // ← ԱՅՍՏԵՂ Է ՃԻՇՏԸ
+            document.getElementById("ton-rate").textContent = rate.toFixed(4) + " $";
+        } else {
+            document.getElementById("ton-rate").textContent = "—";
+        }
+    } catch (e) {
+        document.getElementById("ton-rate").textContent = "—";
     }
-  } catch (e) {
-    $("ton-rate").textContent = "—";
-  }
 }
+
 
 
 // ---------------- LOAD FROM TELEGRAM ----------------
@@ -386,3 +388,6 @@ function loadTonChart() {
 }
 
 loadTonChart();
+
+loadTonRate();
+setInterval(loadTonRate, 15000); // ամեն 15 վրկ մեկ թարմացնի
