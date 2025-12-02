@@ -57,6 +57,22 @@ function updateBalanceDisplay() {
   if (el) el.textContent = balance.toFixed(2) + " $";
 }
 
+async function loadTonRate() {
+  try {
+    const res = await fetch(API_BASE + "/api/ton_rate");
+    const data = await res.json();
+
+    if (data.ok && data.ton_usd) {
+      $("ton-rate").textContent = data.ton_usd.toFixed(3);
+    } else {
+      $("ton-rate").textContent = "—";
+    }
+  } catch (e) {
+    $("ton-rate").textContent = "—";
+  }
+}
+
+
 // ---------------- LOAD FROM TELEGRAM ----------------
 function initFromTelegram() {
   if (!tg) {
@@ -352,3 +368,5 @@ if (refCopyBtn) {
 initFromTelegram();
 initReferralLink();
 updateBalanceDisplay();
+loadTonRate();
+setInterval(loadTonRate, 60000); // update every 60 sec
