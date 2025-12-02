@@ -333,12 +333,38 @@ if (withdrawBtn) {
     }
 
     // 5) Եթե ամեն ինչ OK է → success message
-    withdrawStatus.textContent = "⏳ Ձեր հարցումը ստուգման մեջ է…";
+    withdrawStatus.textContent = "⏳ Ստուգում ենք…";
 
-    setTimeout(() => {
-      withdrawStatus.textContent =
-        "✅ Ձեր հարցումը ընդունված է։ Գումարը կփոխանցվի 12 ժամվա ընթացքում։";
-    }, 1500);
+    fetch(`${API_BASE}/api/withdraw_request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: CURRENT_USER_ID,
+        amount: amount
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) {
+        withdrawStatus.textContent = "❌ " + (data.message || "Սխալ առաջացավ");
+      } else {
+        withdrawStatus.textContent = "✅ " + data.message;
+
+    // Balance update
+        if (data.user) {
+          balance = data.user.balance_usd;
+          updateBalanceDisplay();
+          $("ref-total").textContent = data.user.ref_count;
+          $("ref-active").textContent = data.user.active_refs;
+          $("ref-deposits").textContent = data.user.team_deposit_usd.toFixed(2) + " $";
+        }
+      }
+    })
+    .catch(err => {
+      withdrawStatus.textContent = "❌ Սերվերի սխալ";
+      console.error(err);
+    });
+
 
   });
 }
