@@ -63,15 +63,18 @@ async function loadTonRate() {
         const data = await res.json();
 
         if (data.ok) {
-            const rate = data.ton_usd; // ← ԱՅՍՏԵՂ Է ՃԻՇՏԸ
+            const rate = data.ton_usd;
+
+            // ԱՅՍՏԵՂ — ԳՐՈՒՄ ԵՍ ՃԻՇՏ span-ի մեջ
             document.getElementById("ton-current").textContent = rate.toFixed(4);
         } else {
-            document.getElementById("ton-rate").textContent = "—";
+            document.getElementById("ton-current").textContent = "—";
         }
     } catch (e) {
-        document.getElementById("ton-rate").textContent = "—";
+        document.getElementById("ton-current").textContent = "—";
     }
 }
+
 
 
 
