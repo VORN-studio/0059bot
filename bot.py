@@ -465,7 +465,8 @@ def api_withdraw_request():
 import requests
 import time
 
-TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=ton&currencies=usd"
+TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=toncoin&currencies=usd"
+
 
 def fetch_ton_rate():
     """
