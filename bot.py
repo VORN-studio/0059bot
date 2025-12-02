@@ -578,7 +578,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ensure_user(user.id, user.username, inviter_id)
 
     base = (PUBLIC_BASE_URL or "").rstrip("/")
-    wa_url = f"https://domino-backend-iavj.onrender.com/app?uid={user.id}"
+    wa_url = f"https://domino-backend-iavj.onrender.com/webapp?uid={user.id}"
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]
