@@ -235,18 +235,20 @@ def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int]
 
 def get_user_stats(user_id: int):
     """
-    Վերադարձնում ենք օգտատիրոջ բալանսը, դեպոզիտները, ռեֆերալների վիճակը։
+    Վերադարձնում ենք օգտատիրոջ USD balance-ը, TON balance-ը (հաշվարկված),
+    ռեֆերալների վիճակը և այլն։
     """
     conn = db()
     c = conn.cursor()
 
-    # user row
+    # Գլխավոր user row
     c.execute("""
         SELECT username,
-           COALESCE(balance_usd,0),
-           COALESCE(total_deposit_usd,0),
-           COALESCE(total_withdraw_usd,0),
-           COALESCE(ton_balance,0)
+               COALESCE(balance_usd,0),
+               COALESCE(total_deposit_usd,0),
+               COALESCE(total_withdraw_usd,0),
+               COALESCE(ton_balance,0),
+               COALESCE(last_rate,0)
         FROM dom_users
         WHERE user_id=%s
     """, (user_id,))
@@ -256,13 +258,19 @@ def get_user_stats(user_id: int):
         release_db(conn)
         return None
 
-    username, balance_usd, total_dep, total_wd, ton_balance = row
+    username, balance_usd, total_dep, total_wd, ton_balance, last_rate = row
+
+    # հաշվում ենք TON-ը USD-ից
+    if last_rate and last_rate > 0:
+        ton_balance = balance_usd / last_rate
+    else:
+        ton_balance = 0
 
     # referrals count
     c.execute("SELECT COUNT(*) FROM dom_users WHERE inviter_id=%s", (user_id,))
     ref_count = c.fetchone()[0] or 0
 
-    # active refs (դեպոզիտ արածներ)
+    # active refs
     c.execute("""
         SELECT COUNT(*)
         FROM dom_users
@@ -270,7 +278,7 @@ def get_user_stats(user_id: int):
     """, (user_id,))
     active_refs = c.fetchone()[0] or 0
 
-    # թիմի համախառն դեպոզիտը
+    # team deposits
     c.execute("""
         SELECT COALESCE(SUM(total_deposit_usd),0)
         FROM dom_users
@@ -284,13 +292,14 @@ def get_user_stats(user_id: int):
         "user_id": user_id,
         "username": username,
         "balance_usd": float(balance_usd),
+        "ton_balance": float(ton_balance),
         "total_deposit_usd": float(total_dep),
         "total_withdraw_usd": float(total_wd),
-        "ton_balance": float(ton_balance),
         "ref_count": int(ref_count),
         "active_refs": int(active_refs),
         "team_deposit_usd": float(team_dep),
     }
+
 
 
 def apply_deposit(user_id: int, amount: float):
@@ -578,6 +587,31 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(msg)
 
+async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+
+    if len(context.args) < 2:
+        await update.message.reply_text("Օգտագործում՝ /admin_add user_id amount")
+        return
+
+    target = int(context.args[0])
+    amount = float(context.args[1])
+
+    conn = db()
+    c = conn.cursor()
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd,0) + %s
+        WHERE user_id=%s
+    """, (amount, target))
+    conn.commit()
+    release_db(conn)
+
+    await update.message.reply_text(f"✔ {amount}$ ավելացվեց օգտատեր {target}-ի հաշվին։")
+
 
 async def start_bot_webhook():
     """
@@ -593,6 +627,7 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("stats", stats_cmd))
     application.add_handler(CallbackQueryHandler(btn_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, block_text))
+    application.add_handler(CommandHandler("admin_add", admin_add))
 
     # initialize
     await application.initialize()
