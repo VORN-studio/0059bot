@@ -1,33 +1,68 @@
 <!DOCTYPE html>
 <html lang="hy">
 <head>
-  <meta charset="UTF-8">
-  <title>Crash Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="crash.css">
+  <meta charset="UTF-8" />
+  <title>Domino Crash</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="crash.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="header">
-        <button class="btn mini" onclick="depositToCrash()">➕ Դեպոզիտ Crash</button>
-        <button class="back-btn" onclick="goBack()">← Վերադառնալ</button>
-        <div class="balance-box">
-            💰 Բալանս՝ <span id="balance">0.00</span> $
+  <div class="page">
+
+    <!-- 🔙 Վերադարձ + բալանսներ -->
+    <div class="top-bar">
+      <button class="btn back" onclick="goBack()">← Վերադառնալ</button>
+
+      <div class="balances">
+        <div class="badge">
+          💼 Հիմնական՝ <span id="main-balance">0.00</span> $
         </div>
+        <div class="badge crash">
+          🎮 Crash՝ <span id="crash-balance">0.00</span> $
+        </div>
+      </div>
     </div>
 
+    <!-- 🀄 Crash քարտ -->
     <div class="card">
-        <div class="title">🚀 Crash</div>
-        <div id="multiplier" class="multiplier">1.00x</div>
+      <h2 class="game-title">🀄 Domino Crash</h2>
 
-        <input id="bet" type="number" placeholder="Գումարը ($)">
-        
-        <button id="start" class="btn play" onclick="startCrash()">Start Game</button>
-        <button id="cashout" class="btn cashout" onclick="cashOut()" style="display:none;">💸 Claim</button>
+      <!-- Domino անիմացիա -->
+      <div class="domino-scene">
+        <div id="domino" class="domino"></div>
+      </div>
 
-        <div id="status" class="status"></div>
+      <!-- Մուլտիպլייער -->
+      <div id="multiplier" class="multiplier">1.00x</div>
+
+      <!-- Bet input -->
+      <div class="bet-row">
+        <input id="bet" type="number" placeholder="Գումարը ($)" inputmode="decimal" />
+      </div>
+
+      <!-- Deposit / Withdraw -->
+      <div class="transfer-row">
+        <button class="btn mini" onclick="depositToCrash()">➕ Դեպոզիտ Crash</button>
+        <button class="btn mini ghost" onclick="withdrawFromCrash()">⬅ Կանխիկացնել</button>
+      </div>
+
+      <!-- Start / Claim -->
+      <div class="actions-row">
+        <button id="start-btn" class="btn primary" onclick="startCrash()">Start Game</button>
+        <button id="cashout-btn" class="btn success" onclick="cashOut()" style="display:none;">
+          💸 Claim
+        </button>
+      </div>
+
+      <!-- Status -->
+      <div id="status" class="status"></div>
     </div>
 
-    <script src="crash.js"></script>
+    <div class="footer">@doominobot</div>
+  </div>
+
+  <script src="crash.js"></script>
 </body>
 </html>

@@ -1,150 +1,252 @@
-const tg = window.Telegram.WebApp;
-const API = "https://domino-backend-iavj.onrender.com";
+// Crash Game — Domino style
+
+const tg = window.Telegram && window.Telegram.WebApp;
+const API = window.location.origin || "https://domino-backend-iavj.onrender.com";
 
 let USER_ID = null;
-let BALANCE = 0;
-let multiplier = 1.00;
 
+let mainBalance = 0;   // հիմնական բալանս (backend-ից)
+let crashBalance = 0;  // խաղի ներսի բալանս (մինչև backend ինտեգրումը՝ միայն client-side)
+
+let multiplier = 1.0;
 let running = false;
 let crashed = false;
-let loop = null;
+let timer = null;
+let currentBet = 0;
 
-tg.ready();
-if (tg.initDataUnsafe?.user) {
-    USER_ID = tg.initDataUnsafe.user.id;
+// ───────────────────────────────── HELPERS ──────────────────────────────
+
+function getUidFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get("uid");
+    return v ? Number(v) : null;
+  } catch {
+    return null;
+  }
 }
 
-// ---------------------- LOAD BALANCE ----------------------
-async function loadBalance() {
-    if (!USER_ID) return;
-
-    const r = await fetch(`${API}/api/user/${USER_ID}`);
-    const js = await r.json();
-
-    if (js.ok) {
-        BALANCE = js.user.balance_usd;
-        document.getElementById("balance").textContent = BALANCE.toFixed(2);
-    }
-}
-loadBalance();
-
-// ---------------------- START GAME ----------------------
-function startCrash() {
-    if (running) return;
-
-    const bet = Number(document.getElementById("bet").value);
-    if (!bet || bet <= 0) return show("❌ Գումարը սխալ է");
-    if (bet > BALANCE) return show("❌ Բալանսը բավարար չէ");
-
-    running = true;
-    crashed = false;
-    multiplier = 1.00;
-
-    document.getElementById("start").style.display = "none";
-    document.getElementById("cashout").style.display = "block";
-    show("🎮 Խաղը սկսվեց");
-
-    loop = setInterval(() => {
-        multiplier += 0.015 + Math.random()*0.04;
-        updateMultiplier();
-
-        if (Math.random() < 0.012 * multiplier) {
-            crash();
-        }
-    }, 90);
-}
-
-function updateMultiplier() {
-    const el = document.getElementById("multiplier");
-    el.textContent = multiplier.toFixed(2) + "x";
-    el.style.transform = "scale(1.06)";
-    setTimeout(()=> el.style.transform="scale(1)", 100);
-}
-
-// ---------------------- CRASH EVENT ----------------------
-function crash() {
-    crashed = true;
-    running = false;
-    clearInterval(loop);
-
-    document.getElementById("cashout").style.display = "none";
-    document.getElementById("start").style.display = "block";
-
-    show("💥 Crash! Դուք չհասցրեցիք Claim անել");
-}
-
-async function depositToCrash() {
-    const amount = prompt("Գումարը ($):");
-    if (!amount || amount <= 0) return;
-
-    if (amount > CURRENT_BALANCE) {
-        return showStatus("❌ Բավարար Wallet balance չկա");
-    }
-
-    CURRENT_BALANCE -= Number(amount);
-    CRASH_BALANCE += Number(amount);
-
-    updateBalances();
-}
-
-async function withdrawFromCrash() {
-    if (CRASH_BALANCE <= 0) return showStatus("❌ Crash balance = 0");
-
-    CURRENT_BALANCE += CRASH_BALANCE;
-    CRASH_BALANCE = 0;
-
-    updateBalances();
+function setDominoState(state) {
+  const d = document.getElementById("domino");
+  if (!d) return;
+  d.classList.remove("flying", "crashed");
+  if (state === "flying") d.classList.add("flying");
+  if (state === "crashed") d.classList.add("crashed");
 }
 
 function updateBalances() {
-    document.getElementById("balance").textContent = CURRENT_BALANCE.toFixed(2);
+  document.getElementById("main-balance").textContent = mainBalance.toFixed(2);
+  document.getElementById("crash-balance").textContent = crashBalance.toFixed(2);
 }
 
+function setMultiplierView() {
+  const el = document.getElementById("multiplier");
+  el.textContent = multiplier.toFixed(2) + "x";
+  el.style.transform = "scale(1.08)";
+  setTimeout(() => (el.style.transform = "scale(1)"), 80);
+}
 
-// ---------------------- CLAIM ----------------------
+function show(msg) {
+  document.getElementById("status").innerHTML = msg;
+}
+
+// ───────────────────────────── LOAD USER / BALANCE ──────────────────────
+
+async function loadUser() {
+  if (!USER_ID) return;
+
+  try {
+    const r = await fetch(`${API}/api/user/${USER_ID}`);
+    const js = await r.json();
+    if (!js.ok || !js.user) return;
+
+    mainBalance = js.user.balance_usd || 0;
+    if (!crashBalance) crashBalance = 0;
+    updateBalances();
+  } catch (e) {
+    console.log("loadUser error:", e);
+  }
+}
+
+// ───────────────────────────── DEPOSIT / WITHDRAW ───────────────────────
+
+function depositToCrash() {
+  if (!mainBalance) {
+    return show("❌ Նախ գլխավորը լցրու բալանսով․ Deposit մենյուից։");
+  }
+
+  const raw = prompt("Գումարը ($), որը ուզում ես խաղա՛լ Crash-ում:");
+  const amount = Number(raw);
+
+  if (!amount || amount <= 0) {
+    return show("❌ Գրիր ճիշտ գումար");
+  }
+  if (amount > mainBalance) {
+    return show("❌ Այդքան գումար չունես հիմնական բալանսում");
+  }
+
+  crashBalance += amount;
+  updateBalances();
+  show("✅ Crash balance-ը ավելացավ " + amount.toFixed(2) + " $-ով");
+}
+
+function withdrawFromCrash() {
+  if (crashBalance <= 0) {
+    return show("❌ Crash balance = 0");
+  }
+  crashBalance = 0;
+  updateBalances();
+  show("✅ Crash balance-ը վերադարձվեց որպես «չօգտագործված» գումար");
+}
+
+// ───────────────────────────── START GAME ───────────────────────────────
+
+function startCrash() {
+  if (running) return;
+
+  const betInput = document.getElementById("bet");
+  const bet = Number(betInput.value);
+
+  if (!bet || bet <= 0) {
+    return show("❌ Գրիր ճիշտ գումար");
+  }
+
+  // Bet-ը պետք է լինի և՛ հիմնականից, և՛ crash-balance-ից
+  if (bet > mainBalance) {
+    return show("❌ Բալանսը բավարար չէ");
+  }
+  if (crashBalance <= 0 || bet > crashBalance) {
+    return show("❌ Crash balance-ը չի հերիքում (սեղմիր «Դեպոզիտ Crash»)");
+  }
+
+  running = true;
+  crashed = false;
+  currentBet = bet;
+
+  multiplier = 1.0;
+  setMultiplierView();
+  setDominoState("flying");
+  show("🎮 Խաղը սկսվեց — սպասիր ճիշտ պահին Claim անելուն");
+
+  document.getElementById("start-btn").style.display = "none";
+  document.getElementById("cashout-btn").style.display = "block";
+
+  // Էֆեկտ — multiplier-ի աճ + պատահական crash
+  timer = setInterval(() => {
+    multiplier += 0.015 + Math.random() * 0.04; // արագությունը
+    setMultiplierView();
+
+    // crash probability (կախված multiplier-ից)
+    const chance = 0.012 * multiplier;
+    if (Math.random() < chance) {
+      crashNow();
+    }
+  }, 90);
+}
+
+// ───────────────────────────── CRASH EVENT ──────────────────────────────
+
+function crashNow() {
+  if (!running) return;
+
+  running = false;
+  crashed = true;
+  clearInterval(timer);
+
+  setDominoState("crashed");
+
+  // կորցնում ենք միայն crash balance-ից
+  crashBalance -= currentBet;
+  if (crashBalance < 0) crashBalance = 0;
+  updateBalances();
+
+  document.getElementById("cashout-btn").style.display = "none";
+  document.getElementById("start-btn").style.display = "block";
+
+  show("💥 Crash! Չհասցրիր Claim անել — բեթը այրվեց");
+}
+
+// ───────────────────────────── CLAIM / CASHOUT ──────────────────────────
+
 async function cashOut() {
-    if (!running || crashed) return;
+  if (!running || crashed) return;
 
-    clearInterval(loop);
-    running = false;
+  running = false;
+  clearInterval(timer);
+  setDominoState(null);
 
-    const bet = Number(document.getElementById("bet").value);
-    const win = bet * multiplier;
+  const bet = currentBet;
+  const winAmount = bet * multiplier;
 
-    show("💸 Հաշվում ենք…");
+  show("💸 Հաշվում ենք շահումը…");
 
+  try {
     const res = await fetch(`${API}/api/game/bet`, {
-        method:"POST",
-        headers:{ "Content-Type": "application/json" },
-        body:JSON.stringify({
-            user_id: USER_ID,
-            amount: bet,
-            game: "crash",
-            choice: multiplier
-        })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: USER_ID,
+        amount: bet,
+        game: "crash",
+        choice: multiplier, // backend-ի համար multiplier-ը
+      }),
     });
 
     const js = await res.json();
 
     if (js.ok) {
-        BALANCE = js.new_balance;
-        document.getElementById("balance").textContent = BALANCE.toFixed(2);
-        show("🟢 Հաջող Claim! +" + win.toFixed(2) + " $");
+      // backend-ի նոր հիմնական balance
+      mainBalance = js.new_balance || mainBalance;
+
+      // crash balance-ի թարմացում՝ հին բեթը դուրս, շահումը ներս
+      crashBalance = crashBalance - bet + winAmount;
+      if (crashBalance < 0) crashBalance = 0;
+
+      updateBalances();
+      show("🟢 Հաջող Claim! +" + winAmount.toFixed(2) + " $");
     } else {
-        show("❌ Backend error");
+      show("❌ Backend error (game_bet)");
     }
+  } catch (e) {
+    console.log("cashOut error:", e);
+    show("❌ Սերվերի սխալ");
+  }
 
-    document.getElementById("cashout").style.display = "none";
-    document.getElementById("start").style.display = "block";
+  document.getElementById("cashout-btn").style.display = "none";
+  document.getElementById("start-btn").style.display = "block";
 }
 
-// ---------------------- BACK ----------------------
+// ───────────────────────────── BACK TO MAIN ─────────────────────────────
+
 function goBack() {
-    window.location.href = "https://domino-backend-iavj.onrender.com/app?uid=" + USER_ID;
+  // վերադառնում ենք Domino WebApp-ի գլխավոր մենյուին
+  const base = window.location.origin;
+  const uid = USER_ID || getUidFromUrl() || "";
+  window.location.href = `${base}/app?uid=${uid}`;
 }
 
+// ───────────────────────────── INIT ─────────────────────────────────────
 
-// ----------------------
-function show(msg) {
-    document.getElementById("status").innerHTML = msg;
+function initCrash() {
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    USER_ID = tg.initDataUnsafe.user.id;
+  } else {
+    USER_ID = getUidFromUrl();
+  }
+
+  if (!USER_ID) {
+    show("⚠️ USER_ID չկա (փորձիր բացել բոտի միջից)");
+    return;
+  }
+
+  if (tg) {
+    tg.ready();
+    tg.expand();
+  }
+
+  loadUser();
+  setMultiplierView();
+  setDominoState(null);
 }
+
+window.addEventListener("load", initCrash);
