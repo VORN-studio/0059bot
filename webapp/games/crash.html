@@ -1,63 +1,32 @@
-@app_web.route("/api/game/bet", methods=["POST"])
-def api_game_bet():
-    data = request.get_json(force=True, silent=True) or {}
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+  <meta charset="UTF-8">
+  <title>Crash Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="crash.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn" onclick="goBack()">← Վերադառնալ</button>
+        <div class="balance-box">
+            💰 Բալանս՝ <span id="balance">0.00</span> $
+        </div>
+    </div>
 
-    user_id = int(data.get("user_id", 0))
-    amount = float(data.get("amount", 0))
-    game = data.get("game", "")
-    choice = data.get("choice")  # multiplier for crash
+    <div class="card">
+        <div class="title">🚀 Crash</div>
+        <div id="multiplier" class="multiplier">1.00x</div>
 
-    if user_id == 0 or amount <= 0 or not game:
-        return jsonify({"ok": False, "error": "bad_params"}), 400
+        <input id="bet" type="number" placeholder="Գումարը ($)">
+        
+        <button id="start" class="btn play" onclick="startCrash()">Start Game</button>
+        <button id="cashout" class="btn cashout" onclick="cashOut()" style="display:none;">💸 Claim</button>
 
-    stats = get_user_stats(user_id)
-    if not stats:
-        return jsonify({"ok": False, "error": "not_found"}), 404
+        <div id="status" class="status"></div>
+    </div>
 
-    if amount > stats["balance_usd"]:
-        return jsonify({"ok": False, "error": "low_balance"}), 200
-
-    import random
-
-    # ------------------- CRASH GAME -------------------
-    if game == "crash":
-        result_multiplier = float(choice)
-        win = True
-        payout = amount * result_multiplier
-
-    # ------------------- DICE --------------------------
-    elif game == "dice":
-        result = random.randint(1, 6)
-        win = (result == int(choice))
-        payout = amount * 6 if win else 0
-
-    # ------------------- COINFLIP ----------------------
-    elif game == "coinflip":
-        result = random.choice(["heads", "tails"])
-        win = (result == choice)
-        payout = amount * 2 if win else 0
-
-    else:
-        return jsonify({"ok": False, "error": "unknown_game"}), 400
-
-    # ------------------- UPDATE BALANCE ----------------
-    conn = db()
-    c = conn.cursor()
-
-    new_balance = stats["balance_usd"] - amount + payout
-
-    c.execute("""
-        UPDATE dom_users
-        SET balance_usd=%s
-        WHERE user_id=%s
-    """, (new_balance, user_id))
-
-    conn.commit()
-    release_db(conn)
-
-    return jsonify({
-        "ok": True,
-        "win": win,
-        "payout": payout,
-        "new_balance": new_balance
-    })
+    <script src="crash.js"></script>
+</body>
+</html>
