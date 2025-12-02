@@ -369,4 +369,20 @@ initFromTelegram();
 initReferralLink();
 updateBalanceDisplay();
 loadTonRate();
-setInterval(loadTonRate, 60000); // update every 60 sec
+setInterval(loadTonRate, 60000);
+
+function loadTonChart() {
+  new TradingView.widget({
+    "width": "100%",
+    "height": 250,
+    "symbol": "TONUSD",
+    "interval": "30",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "container_id": "ton-chart"
+  });
+}
+
+loadTonChart();
