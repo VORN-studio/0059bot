@@ -90,6 +90,11 @@ def serve_webapp(filename):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
+@app_web.route("/webapp/games/<path:filename>")
+def serve_games(filename):
+    games_dir = os.path.join(WEBAPP_DIR, "games")
+    return send_from_directory(games_dir, filename)
+
 
 @app_web.route("/favicon.ico")
 def favicon():
