@@ -705,6 +705,64 @@ def telegram_webhook():
         print("🔥 Webhook error:", e)
         return jsonify({"ok": False, "error": str(e)}), 500
 
+@app_web.route("/api/game/bet", methods=["POST"])
+def api_game_bet():
+    data = request.get_json(force=True, silent=True) or {}
+
+    user_id = int(data.get("user_id", 0))
+    amount = float(data.get("amount", 0))
+    game = data.get("game", "")
+    choice = data.get("choice")  # օրինակ Dice number, Coinflip side
+
+    if user_id == 0 or amount <= 0 or not game:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    stats = get_user_stats(user_id)
+    if not stats:
+        return jsonify({"ok": False, "error": "not_found"}), 404
+
+    # balance check
+    if amount > stats["balance_usd"]:
+        return jsonify({"ok": False, "error": "low_balance"}), 200
+
+    # GAME LOGIC
+    import random
+
+    if game == "dice":
+        result = random.randint(1, 6)
+        win = (result == int(choice))
+        payout = amount * 6 if win else 0
+
+    elif game == "coinflip":
+        result = random.choice(["heads", "tails"])
+        win = (result == choice)
+        payout = amount * 2 if win else 0
+
+    else:
+        return jsonify({"ok": False, "error": "unknown_game"}), 400
+
+    # update balance
+    conn = db()
+    c = conn.cursor()
+    new_balance = stats["balance_usd"] - amount + payout
+
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd=%s
+        WHERE user_id=%s
+    """, (new_balance, user_id))
+
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({
+        "ok": True,
+        "result": result,
+        "win": win,
+        "payout": payout,
+        "new_balance": new_balance
+    })
+
 
 @app_web.route("/api/ton_rate")
 def api_ton_rate():

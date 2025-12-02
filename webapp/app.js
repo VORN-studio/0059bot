@@ -164,6 +164,19 @@ async function loadUserFromBackend() {
   }
 }
 
+function openCrash() {
+    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/crash.html?uid=" + CURRENT_USER_ID;
+}
+function openDice() {
+    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/dice.html?uid=" + CURRENT_USER_ID;
+}
+function openSlots() {
+    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/slots.html?uid=" + CURRENT_USER_ID;
+}
+function openCoinflip() {
+    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/coinflip.html?uid=" + CURRENT_USER_ID;
+}
+
 
 // ---------------- NAVIGATION ----------------
 const buttons = document.querySelectorAll(".btn[data-section]");
