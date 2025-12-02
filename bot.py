@@ -465,24 +465,27 @@ def api_withdraw_request():
 import requests
 import time
 
-TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=toncoin&currencies=usd"
+TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=TON&currencies=USD"
+
 
 
 def fetch_ton_rate():
     try:
         print("🌐 Calling tonapi.io ...")
-        r = requests.get(TON_RATE_URL, timeout=5)
+        r = requests.get(TON_RATE_URL, timeout=10)
+
         print("📦 API status:", r.status_code)
-        print("📦 API raw response:", r.text)
+        print("📦 API raw body:", r.text)
 
         data = r.json()
-        rate = float(data["rates"]["ton"]["prices"]["USD"])
+        rate = float(data["rates"]["TON"]["prices"]["USD"])
         print("📊 Parsed rate:", rate)
         return rate
 
     except Exception as e:
-        print("🚨 fetch_ton_rate() error:", e)
+        print("🔥 ERROR in fetch_ton_rate():", e)
         return None
+
 
 
 def ton_rate_updater():
