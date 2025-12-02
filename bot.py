@@ -158,6 +158,10 @@ def init_db():
         total_withdraw_usd NUMERIC(18,2) DEFAULT 0,
         inviter_id BIGINT,
         created_at BIGINT
+        ton_balance NUMERIC(20,6) DEFAULT 0,
+        usd_balance NUMERIC(20,2) DEFAULT 0,
+        last_rate NUMERIC(20,6) DEFAULT 0
+
     )
     """)
 
@@ -188,6 +192,18 @@ def init_db():
     conn.commit()
     release_db(conn)
     print("✅ Domino tables ready.")
+
+
+alters = [
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
+]
+for sql in alters:
+    try: c.execute(sql)
+    except: pass
+    conn.commit()
+    release_db(conn)
 
 
 # =========================
@@ -435,6 +451,44 @@ def api_withdraw_request():
 # Telegram Bot (Webhook Mode)
 # =========================
 
+import requests
+import time
+
+TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=ton&currencies=usd"
+
+def fetch_ton_rate():
+    """
+    Fetch current TON → USD rate from tonapi.io
+    Returns float or None if failed.
+    """
+    try:
+        r = requests.get(TON_RATE_URL, timeout=5)
+        data = r.json()
+        return float(data["rates"]["ton"]["prices"]["USD"])
+    except Exception as e:
+        print("⚠️ TON rate fetch failed:", e)
+        return None
+
+def ton_rate_updater():
+    while True:
+        rate = fetch_ton_rate()
+        if rate:
+            try:
+                conn = db()
+                c = conn.cursor()
+                c.execute("""
+                    UPDATE users
+                    SET last_rate = %s
+                """, (rate,))
+                conn.commit()
+                release_db(conn)
+                print(f"💹 TON rate updated → {rate}$")
+            except Exception as e:
+                print("⚠️ Rate update DB error:", e)
+
+        time.sleep(60)  # refresh every 60 sec
+
+
 application = None  # global PTB application
 bot_loop = None     # main asyncio loop bot-ի համար
 
@@ -578,6 +632,19 @@ def telegram_webhook():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+@app_web.route("/api/ton_rate")
+def api_ton_rate():
+    try:
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT last_rate FROM users LIMIT 1")
+        row = c.fetchone()
+        release_db(conn)
+        return jsonify({"ok": True, "ton_usd": float(row[0] or 0)})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 # =========================
 # MAIN ENTRYPOINT (Render)
 # =========================
@@ -622,6 +689,11 @@ if __name__ == "__main__":
     # Telegram bot-ը
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
+
+    # TON live rate updater
+    ton_thread = threading.Thread(target=ton_rate_updater, daemon=True)
+    ton_thread.start()
+
 
     print("🚀 Domino Flask + Telegram bot started.")
 
