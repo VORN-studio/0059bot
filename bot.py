@@ -467,6 +467,22 @@ import time
 
 TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=TON&currencies=USD"
 
+# =========================================
+# KEEP-ALIVE PROTECTION (Render autosleep fix)
+# =========================================
+import requests
+
+def keep_alive():
+    print("🟢 Keep-alive thread started")
+    url = f"{PUBLIC_BASE_URL}/"
+    while True:
+        try:
+            r = requests.get(url, timeout=10)
+            print("🔄 Keep-alive ping:", r.status_code)
+        except Exception as e:
+            print("❌ Keep-alive error:", e)
+
+        time.sleep(240)  # ping every 4 minutes
 
 
 def fetch_ton_rate():
@@ -756,6 +772,10 @@ if __name__ == "__main__":
     # TON live rate updater
     ton_thread = threading.Thread(target=ton_rate_updater, daemon=True)
     ton_thread.start()
+
+    # Keep-alive thread (prevents Render autosleep)
+    keepalive_thread = threading.Thread(target=keep_alive, daemon=True)
+    keepalive_thread.start()
 
 
     print("🚀 Domino Flask + Telegram bot started.")
