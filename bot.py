@@ -497,15 +497,22 @@ def ton_rate_updater():
             rate = fetch_ton_rate()
             print("📥 fetch_ton_rate() returned:", rate)
 
-            if rate is None:
-                print("❌ TON RATE = None (API call failed)")
-            else:
-                conn = db()
-                c = conn.cursor()
-                c.execute("UPDATE dom_users SET last_rate = %s", (rate,))
-                conn.commit()
-                release_db(conn)
-                print("💹 last_rate updated in DB:", rate)
+            # ❗ PROTECTION: NEVER write 0 or None
+            if rate is None or rate <= 0:
+                print("⚠️ Invalid TON rate, skipping DB update")
+                time.sleep(15)
+                continue
+
+            # safe update
+            conn = db()
+            c = conn.cursor()
+            c.execute("""
+                UPDATE dom_users
+                SET last_rate = %s
+            """, (rate,))
+            conn.commit()
+            release_db(conn)
+            print("💹 last_rate updated in DB:", rate)
 
         except Exception as e:
             print("🔥 TON updater crashed:", e)
