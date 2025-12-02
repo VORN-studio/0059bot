@@ -243,12 +243,14 @@ def get_user_stats(user_id: int):
     # user row
     c.execute("""
         SELECT username,
-               COALESCE(balance_usd,0),
-               COALESCE(total_deposit_usd,0),
-               COALESCE(total_withdraw_usd,0)
+           COALESCE(balance_usd,0),
+           COALESCE(total_deposit_usd,0),
+           COALESCE(total_withdraw_usd,0),
+           COALESCE(ton_balance,0)
         FROM dom_users
         WHERE user_id=%s
     """, (user_id,))
+
     row = c.fetchone()
     if not row:
         release_db(conn)

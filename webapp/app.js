@@ -136,6 +136,8 @@ async function loadUserFromBackend() {
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";
     $("user-balance").textContent = U.balance_usd.toFixed(2) + " $";
+    $("ton-current").textContent = U.ton_balance.toFixed(4);
+
 
 
     // ---------------------
