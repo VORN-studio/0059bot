@@ -91,3 +91,17 @@ input {
     min-height:20px;
     opacity:0.9;
 }
+
+.crash-balance-actions {
+    margin-top: 12px;
+    display:flex;
+    gap:10px;
+}
+
+.btn.mini {
+    flex:1;
+    padding:10px;
+    background:#334155;
+    border-radius:10px;
+    color:white;
+}

@@ -733,9 +733,11 @@ def api_game_bet():
 
     # ------------------- CRASH GAME -------------------
     if game == "crash":
+        # crash multiplier is client-side; we accept it and pay out
         result_multiplier = float(choice)
         win = True
         payout = amount * result_multiplier
+
 
     # ------------------- DICE --------------------------
     elif game == "dice":

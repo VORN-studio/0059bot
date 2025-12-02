@@ -73,6 +73,34 @@ function crash() {
     show("💥 Crash! Դուք չհասցրեցիք Claim անել");
 }
 
+async function depositToCrash() {
+    const amount = prompt("Գումարը ($):");
+    if (!amount || amount <= 0) return;
+
+    if (amount > CURRENT_BALANCE) {
+        return showStatus("❌ Բավարար Wallet balance չկա");
+    }
+
+    CURRENT_BALANCE -= Number(amount);
+    CRASH_BALANCE += Number(amount);
+
+    updateBalances();
+}
+
+async function withdrawFromCrash() {
+    if (CRASH_BALANCE <= 0) return showStatus("❌ Crash balance = 0");
+
+    CURRENT_BALANCE += CRASH_BALANCE;
+    CRASH_BALANCE = 0;
+
+    updateBalances();
+}
+
+function updateBalances() {
+    document.getElementById("balance").textContent = CURRENT_BALANCE.toFixed(2);
+}
+
+
 // ---------------------- CLAIM ----------------------
 async function cashOut() {
     if (!running || crashed) return;
@@ -112,8 +140,9 @@ async function cashOut() {
 
 // ---------------------- BACK ----------------------
 function goBack() {
-    tg.close();
+    window.location.href = "https://domino-backend-iavj.onrender.com/app?uid=" + USER_ID;
 }
+
 
 // ----------------------
 function show(msg) {
