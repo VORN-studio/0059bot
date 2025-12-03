@@ -112,14 +112,9 @@ async function depositToCrash() {
 
 
 function withdrawFromCrash() {
-    if (crashBalance <= 0) return show("❌ Crash balance = 0");
-
-    mainBalance += crashBalance;
-    crashBalance = 0;
-
-    updateBalances();
-    show("⬅ Crash balance-ը վերադարձվեց հիմնական բալանսին");
+    show("⚠ Crash balance cannot be returned manually after a win.");
 }
+
 
 // ================= GAME =================
 
@@ -224,6 +219,8 @@ async function cashOut() {
     // 4) Կոճակները վերականգնում ենք
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
+    crashBalance = 0;
+
 }
 
 
