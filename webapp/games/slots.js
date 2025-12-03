@@ -151,30 +151,29 @@ function spinReel(reelId, finalSymbol) {
   return new Promise((resolve) => {
     const reel = $(reelId);
 
-    // 1) start animation
+    // safe start
     reel.classList.add("spinning");
 
-    // 2) show random fast spin 20–30 times
-    let steps = 0;
-    const maxSteps = 18 + Math.floor(Math.random() * 8); // random 18–26 loops
+    let ticks = 0;
+    let maxTicks = 20 + Math.floor(Math.random() * 10);
 
-    const interval = setInterval(() => {
-      reel.textContent = getRandomSymbol();
-      steps++;
+    const timer = setInterval(() => {
+      reel.textContent = getRandomSymbol();  
+      ticks++;
 
-      if (steps >= maxSteps) {
-        clearInterval(interval);
+      if (ticks >= maxTicks) {
+        clearInterval(timer);
 
-        // 3) stop spinning after tiny delay for smoothness
         setTimeout(() => {
           reel.classList.remove("spinning");
           reel.textContent = finalSymbol;
           resolve();
-        }, 120);
+        }, 150);
       }
-    }, 70);
+    }, 80);
   });
 }
+
 
 
 async function spin() {
