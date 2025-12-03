@@ -219,7 +219,7 @@ async function cashOut() {
     // 4) Կոճակները վերականգնում ենք
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
-    crashBalance = 0;
+    
 
 }
 
@@ -227,6 +227,7 @@ async function cashOut() {
 // ================= BACK =================
 
 function goBack() {
+    crashBalance = 0;
     // Force reload so that main menu fetches REAL balance from DB
     window.location.href = `${window.location.origin}/app?uid=${USER_ID}&t=${Date.now()}`;
 }
