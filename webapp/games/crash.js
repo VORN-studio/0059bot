@@ -3,8 +3,8 @@ const API = window.location.origin;
 
 let USER_ID = null;
 
-let mainBalance = 0;
-let crashBalance = 0;
+let mainBalance = 0;     // բազայից եկող ընդհանուր բալանս
+let crashBalance = 0;    // միայն Crash խաղի ներսում
 
 let multiplier = 1.0;
 let running = false;
@@ -35,11 +35,13 @@ function setMultiplier() {
     setTimeout(() => el.style.transform = "scale(1)", 90);
 }
 
-// Build domino chain
+// ---- Domino chain build / animation ----
+
 function buildDominoChain() {
     const chain = document.getElementById("domino-chain");
     chain.innerHTML = "";
-    for (let i = 0; i < 12; i++) {
+    // շղթայի երկարությունը
+    for (let i = 0; i < 14; i++) {
         const d = document.createElement("div");
         d.className = "domino";
         chain.appendChild(d);
@@ -51,41 +53,53 @@ function fallEffect() {
     pieces.forEach((p, i) => {
         setTimeout(() => {
             p.classList.add("fall");
-        }, i * 80);
+        }, i * 80);   // domino effect, մեկը մյուսի հետևից
     });
 }
 
 function crashEffect() {
     const pieces = document.querySelectorAll(".domino");
+    if (!pieces.length) return;
     const last = pieces[pieces.length - 1];
     last.classList.add("crashed");
 }
 
-// ================= Load User =================
+// ================= Load User from backend =================
 
 async function loadUser() {
-    const r = await fetch(`${API}/api/user/${USER_ID}`);
-    const js = await r.json();
-    if (js.ok) {
-        mainBalance = js.user.balance_usd;
-        updateBalances();
+    try {
+        const r = await fetch(`${API}/api/user/${USER_ID}`);
+        const js = await r.json();
+        if (js.ok) {
+            mainBalance = js.user.balance_usd;
+            updateBalances();
+        } else {
+            show("❌ Չհաջողվեց բեռնել բալանսը");
+        }
+    } catch (e) {
+        console.log("loadUser error", e);
+        show("❌ Սերվերի սխալ");
     }
 }
 
 // ================= Deposit / Withdraw =================
 
 function depositToCrash() {
-    const raw = prompt("Գումարը ($):");
+    if (mainBalance <= 0) {
+        return show("❌ Նախ լիցքավորիր հիմնական բալանսը Deposit բաժնից");
+    }
+
+    const raw = prompt("Գումարը ($), որը ուզում ես խաղալ Crash-ում:");
     const amount = Number(raw);
 
     if (!amount || amount <= 0) return show("❌ Սխալ գումար");
-    if (amount > mainBalance) return show("❌ Բավարար չէ");
+    if (amount > mainBalance) return show("❌ Այդքան գումար չունես հիմնական բալանսում");
 
     mainBalance -= amount;
     crashBalance += amount;
 
     updateBalances();
-    show("➕ Տեղափոխված է Crash balance");
+    show("➕ " + amount.toFixed(2) + " $ տեղափոխվեց Crash balance");
 }
 
 function withdrawFromCrash() {
@@ -95,7 +109,7 @@ function withdrawFromCrash() {
     crashBalance = 0;
 
     updateBalances();
-    show("⬅ Հනված է հիմնական բալանսին");
+    show("⬅ Crash balance-ը վերադարձվեց հիմնական բալանսին");
 }
 
 // ================= GAME =================
@@ -103,74 +117,58 @@ function withdrawFromCrash() {
 function startCrash() {
     const bet = Number(document.getElementById("bet").value);
 
-    if (!bet || bet <= 0) return show("❌ Սխալ գումար");
+    if (!bet || bet <= 0) return show("❌ Գումարը գրիր ճիշտ");
     if (bet > crashBalance) return show("❌ Crash balance-ը չի հերիքում");
 
+    if (running) return;
+
     currentBet = bet;
-    crashBalance -= bet;
+
+    // հանենք բեթը Crash balance-ից հենց սկզբում
+    crashBalance -= currentBet;
+    if (crashBalance < 0) crashBalance = 0;
     updateBalances();
 
     running = true;
     crashed = false;
 
-    multiplier = 1;
+    multiplier = 1.0;
     setMultiplier();
+
+    // նոր կառուցենք շղթան ու թողնենք ընկնի հերթով
     buildDominoChain();
     fallEffect();
 
     document.getElementById("start-btn").style.display = "none";
     document.getElementById("cashout-btn").style.display = "block";
 
+    show("🎮 Խաղը սկսվեց");
+
     timer = setInterval(() => {
         multiplier += 0.018 + Math.random() * 0.035;
         setMultiplier();
 
+        // crash հավանականություն — մեծանալու հետ ռիսկն էլ է աճում
         if (Math.random() < 0.014 * multiplier) {
             crashNow();
         }
     }, 90);
 }
 
-async function crashNow() {
+function crashNow() {
     if (!running) return;
 
     running = false;
     crashed = true;
     clearInterval(timer);
 
-    setDomino("fall");
-
-    // 👉 Փոխենք սկզբում տեղային crashBalance-ը
-    crashBalance -= currentBet;
-    if (crashBalance < 0) crashBalance = 0;
-    updateBalances();
-
-    show("💥 Crash! Չհասցրեցիր Claim անել");
-
-    // 👉 Հիմա backend-ին ասում ենք՝ bet-ը տեղի է ունեցել և win=0
-    const res = await fetch(`${API}/api/game/bet`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({
-            user_id: USER_ID,
-            amount: currentBet,
-            game: "crash",
-            choice: 0  // ❗️ win multiplier = 0 → backend will subtract bet
-        })
-    });
-
-    const js = await res.json();
-
-    if (js.ok) {
-        // Backend actual main balance
-        mainBalance = js.new_balance;
-        updateBalances();
-    }
+    crashEffect();  // վերջին դոմինոն կողքի
 
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
-}
 
+    show("💥 Crash! Չհասցրեցիր Claim անել");
+}
 
 // ================= CLAIM =================
 
@@ -184,28 +182,33 @@ async function cashOut() {
 
     show("💸 Հաշվում ենք…");
 
-    const r = await fetch(`${API}/api/game/bet`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json"},
-        body: JSON.stringify({
-            user_id: USER_ID,
-            amount: currentBet,
-            game: "crash",
-            choice: multiplier
-        })
-    });
+    let js;
+    try {
+        const r = await fetch(`${API}/api/game/bet`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json"},
+            body: JSON.stringify({
+                user_id: USER_ID,
+                amount: currentBet,
+                game: "crash",
+                choice: multiplier
+            })
+        });
+        js = await r.json();
+    } catch (e) {
+        console.log("bet error", e);
+        return show("❌ Սերվերի սխալ");
+    }
 
-    const js = await r.json();
-    if (!js.ok) return show("❌ Backend error");
+    if (!js.ok) {
+        return show("❌ Backend error");
+    }
 
-    // Backend-ը արդեն main balance-ին գումարը չի տալիս,
-    // մենք էլ ՉՊԵՏՔ Է դնենք այն այնտեղ:
-
-    crashBalance += win;      // շահումը գնում է crash balance ONLY
+    // ❗ Backend-ը main balance-ը այս պահին չպետք է փոփոխի crash-ի համար
+    // շահումը գնում է միայն Crash balance-ի վրա
+    crashBalance += win;
     updateBalances();
 
-
-    updateBalances();
     show("🟢 +" + win.toFixed(2) + " $");
 
     document.getElementById("cashout-btn").style.display = "none";

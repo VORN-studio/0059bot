@@ -1,8 +1,8 @@
 * {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: system-ui;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 body {
@@ -16,7 +16,7 @@ body {
   padding: 16px 16px 24px;
 }
 
-/* TOP BAR */
+/* ─── TOP BAR ─────────────────────────────────── */
 
 .top-bar {
   display: flex;
@@ -27,150 +27,182 @@ body {
 
 .btn {
   border: none;
-  padding: 9px 14px;
-  border-radius: 999px;
-  background: #111827;
-  color: white;
   cursor: pointer;
-  transition: 0.1s;
+  font-size: 14px;
+  border-radius: 999px;
+  padding: 9px 14px;
+  background: #111827;
+  color: #e5e7eb;
+  transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
+}
+
+.btn.back {
+  white-space: nowrap;
 }
 
 .balances {
   display: flex;
-  gap: 6px;
   flex: 1;
   justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .badge {
   font-size: 12px;
   padding: 6px 10px;
+  border-radius: 999px;
   background: #020617;
   border: 1px solid #1f2937;
-  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .badge.crash {
-  border-color: #64748b;
+  background: radial-gradient(circle at 0 0, #111827, #020617);
+  border-color: #4b5563;
 }
 
-/* CARD */
+/* ─── CARD ────────────────────────────────────── */
 
 .card {
   margin-top: 6px;
-  background: #020617;
-  border: 1px solid #111827;
+  background: radial-gradient(circle at top, #020617, #020617 35%, #020617 100%);
+  padding: 20px 16px 18px;
   border-radius: 20px;
-  padding: 20px 16px;
-  box-shadow: 0 20px 45px rgba(0,0,0,0.55);
+  border: 1px solid #111827;
+  box-shadow:
+    0 18px 40px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.6);
 }
 
 .game-title {
   text-align: center;
   font-size: 20px;
+  letter-spacing: 0.03em;
+  margin-bottom: 10px;
 }
 
-/* Domino chain animation */
+/* ─── DOMINO CHAIN ANIMATION ──────────────────── */
 
 .domino-scene {
-  margin-top: 10px;
-  width: 100%;
-  height: 110px;
-  background: #0f172a;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid #1e293b;
   position: relative;
+  width: 100%;
+  height: 90px;
+  margin: 8px 0 4px;
+  border-radius: 16px;
+  background: radial-gradient(circle at 10% 0%, #020617, #020617 40%, #020617 100%);
+  overflow: hidden;
+  border: 1px solid #0f172a;
+  padding: 0 14px;
+  display: flex;
+  align-items: flex-end;
 }
 
 .domino-chain {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 90px;
   display: flex;
+  gap: 6px;
   align-items: flex-end;
-  padding-left: 10px;
+  width: 200%;
+  transform: translateX(-10%);
 }
 
 .domino {
-  width: 40px;
-  height: 70px;
-  margin-right: 10px;
-  border-radius: 10px;
-  background: linear-gradient(145deg, #fafafa, #d1d5db);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+  width: 18px;
+  height: 44px;
+  border-radius: 6px;
+  background: linear-gradient(145deg, #f9fafb, #d1d5db);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 2px rgba(15, 23, 42, 0.35);
   position: relative;
   transform-origin: bottom center;
-  transition: transform 0.2s ease;
+  transform: rotate(0deg);
+  transition: transform 0.16s ease-out;
 }
 
+/* դրված պիպիկներ (քարերի անցքեր) */
 .domino::before,
 .domino::after {
   content: "";
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background: black;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
+  background: #111827;
 }
 
 .domino::before {
-  top: 15px;
-  left: 10px;
+  top: 9px;
+  left: 5px;
 }
 
 .domino::after {
-  bottom: 15px;
-  right: 10px;
+  bottom: 9px;
+  right: 5px;
 }
 
+/* երբ շղթան ընկնում է հերթով */
 .domino.fall {
-  transform: rotate(85deg);
+  transform: rotate(78deg);
 }
 
+/* երբ արդեն crash է՝ վերջինը կողքի, մի քիչ ավելի անկյունով */
 .domino.crashed {
-  transform: rotate(100deg) translateY(15px);
+  transform: rotate(88deg) translateY(3px);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.7),
+    inset 0 0 0 2px rgba(15, 23, 42, 0.5);
 }
 
-/* MULTIPLIER */
+/* ─── MULTIPLIER ─────────────────────────────── */
 
 .multiplier {
   text-align: center;
   font-size: 46px;
-  margin: 14px 0;
+  margin: 10px 0 12px;
   color: #38bdf8;
-  font-weight: bold;
-  text-shadow: 0 0 25px rgba(56,189,248,0.5);
-  transition: transform 0.1s;
+  font-weight: 600;
+  text-shadow:
+    0 0 20px rgba(56, 189, 248, 0.4),
+    0 0 40px rgba(59, 130, 246, 0.4);
+  transition: transform 0.08s ease;
 }
 
-/* INPUT / BUTTONS */
+/* ─── INPUT & BUTTONS ───────────────────────── */
+
+.bet-row {
+  margin-bottom: 10px;
+}
 
 .bet-row input {
   width: 100%;
-  padding: 10px;
+  padding: 10px 11px;
   border-radius: 999px;
-  background: #020617;
   border: 1px solid #1f2937;
-  color: white;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 14px;
   outline: none;
 }
 
+.bet-row input::placeholder {
+  color: #6b7280;
+}
+
 .transfer-row {
-  margin-top: 10px;
   display: flex;
   gap: 8px;
+  margin-bottom: 12px;
 }
 
 .btn.mini {
   flex: 1;
+  font-size: 13px;
   padding: 8px 10px;
-  border-radius: 999px;
 }
 
 .btn.mini.ghost {
@@ -178,23 +210,40 @@ body {
   border: 1px solid #374151;
 }
 
+.actions-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
 .btn.primary {
   width: 100%;
-  margin-top: 12px;
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.45);
 }
 
 .btn.success {
   width: 100%;
-  margin-top: 12px;
   background: linear-gradient(135deg, #16a34a, #15803d);
+  box-shadow: 0 8px 22px rgba(22, 163, 74, 0.55);
 }
 
-/* STATUS */
+/* ─── STATUS ─────────────────────────────────── */
 
 .status {
+  min-height: 20px;
   text-align: center;
-  margin-top: 6px;
-  font-size: 14px;
-  opacity: 0.95;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #e5e7eb;
+  opacity: 0.9;
+}
+
+/* ─── FOOTER ─────────────────────────────────── */
+
+.footer {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
 }
