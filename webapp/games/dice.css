@@ -400,6 +400,12 @@ body::after {
   z-index: 1;
 }
 
+/* երբ զառը ընկնում է բաժակի տակ — դնենք բաժակներից ՎԵՐև */
+.dice-glow.drop {
+  z-index: 4; /* cups-ի վրայից երեւա, հետո class-ը կհանվի ու կիջնի */
+}
+
+
 /* երբ զառը “ընկնում է” բաժակի տակ */
 .dice-glow.drop {
   animation: diceDrop 0.7s ease-out forwards;
