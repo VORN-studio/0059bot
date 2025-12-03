@@ -12,6 +12,30 @@ let crashed = false;
 let timer = null;
 let currentBet = 0;
 
+// ================= CONFIG =================
+
+// Այս թվերով ես կառավարում խաղի բարդությունը
+const CRASH_CONFIG = {
+    // multiplier-ի աճի արագություն (որքան արագ է բարձրանում x-ը)
+    GROWTH_MIN: 0.050,   // ամեն քայլի +1.5% նվազագույն
+    GROWTH_MAX: 0.085,   // ամեն քայլի +3.0% առավելագույն
+
+    // House edge — որքանով է խաղը կոշտ
+    // 0.10 = մեղմ, 0.30 = սովորական, 0.50+ = շատ կոշտ
+    HOUSE_EDGE: 0.70,
+
+    // Մաքսիմալ multiplier, որից բարձր երբեք չի գնա
+    MAX_MULTIPLIER: 10.0,
+
+    // Ինստանտ (շատ փոքր) crash-ի հավանականություն
+    // օրինակ 0.15 = 15% պահը երբ խաղը կպայթի 1.00–1.05x վրա
+    INSTANT_CRASH_CHANCE: 0.30
+};
+
+// crash point, որտեղ պիտի պայթի
+let crashPoint = null;
+
+
 // ================= Helpers =================
 
 function getUid() {
@@ -34,6 +58,35 @@ function setMultiplier() {
     el.style.transform = "scale(1.08)";
     setTimeout(() => el.style.transform = "scale(1)", 90);
 }
+
+function generateCrashPoint() {
+    // 1) Մասամբ շատ արագ պարտություններ (ինստանտ crash)
+    if (Math.random() < CRASH_CONFIG.INSTANT_CRASH_CHANCE) {
+        // 1.00x – 1.10x միջակայք
+        const instant = 1.0 + Math.random() * 0.10;
+        return parseFloat(instant.toFixed(2));
+    }
+
+    // 2) Հիմնական crash point — հնչեղ բաշխում, բայց կտրած
+    // base = 1 / (1 - r) տալիս է ծանր պոչով բաշխում (շատ հազվադեպ բարձր x)
+    const r = Math.random();
+    let base = 1 / (1 - r);  // 1.0 ... ∞
+
+    // House edge-ի կիրառություն — որքան մեծ է HOUSE_EDGE-ը,
+    // այնքան փոքր է իրական crash point-ը
+    base = base / (1 + CRASH_CONFIG.HOUSE_EDGE * 3);
+
+    // Max cap
+    if (base > CRASH_CONFIG.MAX_MULTIPLIER) {
+        base = CRASH_CONFIG.MAX_MULTIPLIER;
+    }
+
+    // 1.01x-ից փոքր չլինի
+    if (base < 1.01) base = 1.01;
+
+    return parseFloat(base.toFixed(2));
+}
+
 
 // ---- Domino chain build / animation ----
 
@@ -153,7 +206,6 @@ function startCrash() {
 
     if (!bet || bet <= 0) return show("❌ Գումարը գրիր ճիշտ");
     if (bet > crashBalance) return show("❌ Crash balance-ը չի հերիքում");
-
     if (running) return;
 
     currentBet = bet;
@@ -169,6 +221,10 @@ function startCrash() {
     multiplier = 1.0;
     setMultiplier();
 
+    // 🆕 Գեներացնում ենք crash point-ը հենց խաղի սկզբում
+    crashPoint = generateCrashPoint();
+    console.log("🎯 Crash point:", crashPoint, "x");
+
     // նոր կառուցենք շղթան ու թողնենք ընկնի հերթով
     buildDominoChain();
     fallEffect();
@@ -178,16 +234,23 @@ function startCrash() {
 
     show("🎮 Խաղը սկսվեց");
 
+    // 🆕 multiplier-ի աճը հիմա կախված է CONFIG-ից
     timer = setInterval(() => {
-        multiplier += 0.018 + Math.random() * 0.035;
+        const step =
+            CRASH_CONFIG.GROWTH_MIN +
+            Math.random() * (CRASH_CONFIG.GROWTH_MAX - CRASH_CONFIG.GROWTH_MIN);
+
+        multiplier += step;
         setMultiplier();
 
-        // crash հավանականություն — մեծանալու հետ ռիսկն էլ է աճում
-        if (Math.random() < 0.014 * multiplier) {
+        // Եթե հասել ենք կամ անցել crashPoint → պայթում է
+        if (multiplier >= crashPoint) {
             crashNow();
         }
+
     }, 90);
 }
+
 
 function crashNow() {
     if (!running) return;
