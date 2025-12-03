@@ -111,8 +111,38 @@ async function depositToCrash() {
 }
 
 
-function withdrawFromCrash() {
-    show("⚠ Crash balance cannot be returned manually after a win.");
+async function withdrawFromCrash() {
+    if (crashBalance <= 0) {
+        return show("❌ Crash balance = 0");
+    }
+
+    const amount = crashBalance;
+
+    try {
+        const r = await fetch(`${API}/api/crash/withdraw`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: USER_ID,
+                amount: amount
+            })
+        });
+
+        const js = await r.json();
+        if (!js.ok) {
+            return show("❌ Backend error");
+        }
+
+        // frontend state update
+        mainBalance += amount;
+        crashBalance = 0;
+        updateBalances();
+
+        show("⬅ Crash balance-ը վերադարձվեց հիմնական բալանսին");
+    } catch (e) {
+        console.log("withdraw error", e);
+        show("❌ Սերվերի սխալ");
+    }
 }
 
 
@@ -160,21 +190,14 @@ function startCrash() {
 }
 
 function crashNow() {
-    if (!running) return;  // ⬅️ նախ ստուգում ենք, որ խաղը իսկապես ակտիվ է
+    if (!running) return;
 
     running = false;
     crashed = true;
     clearInterval(timer);
 
-    // 🟥 հիմա արդեն 100% անվտանգ է lose-ին գրանցելը
-    fetch(`${API}/api/crash/lose`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: USER_ID,
-            amount: currentBet
-        })
-    });
+    // ❌ Այստեղ այլևս ոչ մի fetch /api/crash/lose չկա
+    // պարտվելիս փողը արդեն հանված է crashBalance-ից startCrash-ում
 
     crashEffect();  // վերջին դոմինոն կողքի
 
@@ -183,6 +206,7 @@ function crashNow() {
 
     show("💥 Crash! Չհասցրեցիր Claim անել");
 }
+
 
 
 
@@ -197,51 +221,30 @@ async function cashOut() {
 
     const win = currentBet * multiplier;
 
-    show("💸 Հաշվում ենք…");
-
-    // 1) Ուղարկում ենք backend-ին, որ շահած գումարը գրի բազայում
-    try {
-        const r = await fetch(`${API}/api/crash/claim`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                user_id: USER_ID,
-                win: win
-            })
-        });
-
-        const js = await r.json();
-
-        if (!js.ok) {
-            return show("❌ Backend error");
-        }
-    } catch (e) {
-        console.log("claim error", e);
-        return show("❌ Սերվերի սխալ");
-    }
-
-    // 2) Crash balance-ի վրա ավելացնում ենք win-ը
+    // win-ը պահում ենք միայն Crash balance-ում
     crashBalance += win;
     updateBalances();
 
-    // 3) Ցուցադրում ենք շահումը
     show("🟢 +" + win.toFixed(2) + " $");
 
-    // 4) Կոճակները վերականգնում ենք
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
-    
-
 }
+
 
 
 // ================= BACK =================
 
-function goBack() {
-    crashBalance = 0;
-    // Force reload so that main menu fetches REAL balance from DB
+async function goBack() {
+    // Եթե Crash balance-ում փող կա՝ նախ վերադարձնենք հիմնական բալանսին
+    if (crashBalance > 0) {
+        await withdrawFromCrash();   // backend + frontend update
+    }
+
+    // հետո գնում ենք հիմնական app
     window.location.href = `${window.location.origin}/app?uid=${USER_ID}&t=${Date.now()}`;
 }
+
 
 
 // ================= INIT =================

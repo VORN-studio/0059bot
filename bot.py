@@ -440,17 +440,11 @@ def api_crash_claim():
     if user_id == 0 or win <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
-    conn = db()
-    c = conn.cursor()
-    c.execute("""
-        UPDATE dom_users
-        SET balance_usd = balance_usd + %s
-        WHERE user_id = %s
-    """, (win, user_id))
-    conn.commit()
-    release_db(conn)
+    # 🟢 Այստեղ այլևս ոչ մի UPDATE չկա
+    # շահումը պահում ենք միայն frontend-ի crashBalance-ի մեջ
 
     return jsonify({"ok": True})
+
 
 @app_web.route("/api/crash/lose", methods=["POST"])
 def api_crash_lose():
@@ -461,18 +455,33 @@ def api_crash_lose():
     if user_id == 0 or amount <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
-    # Պարտվելու դեպքում իջեցնում ենք balance_usd-ը
+    # ❗ Այստեղ էլ DB-ին չենք դիպչում
+    # Պարտությունը արդեն խաղում է միայն crashBalance-ի ներսում
+
+    return jsonify({"ok": True})
+
+@app_web.route("/api/crash/withdraw", methods=["POST"])
+def api_crash_withdraw():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    amount = float(data.get("amount", 0))
+
+    if user_id == 0 or amount <= 0:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    # վերադարձնում ենք crash balance-ը հիմնական բալանսին
     conn = db()
     c = conn.cursor()
     c.execute("""
         UPDATE dom_users
-        SET balance_usd = balance_usd - %s
+        SET balance_usd = balance_usd + %s
         WHERE user_id = %s
     """, (amount, user_id))
     conn.commit()
     release_db(conn)
 
     return jsonify({"ok": True})
+
 
 
 @app_web.route("/api/withdraw_request", methods=["POST"])
