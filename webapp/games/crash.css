@@ -948,6 +948,9 @@ body::-webkit-scrollbar-thumb {
   margin: 14px 0 12px;
   font-size: 15px;
   outline: none;
+  position: relative;         
+  z-index: 10;                
+  pointer-events: auto;   
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
