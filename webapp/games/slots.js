@@ -57,32 +57,35 @@ function openSlot(name) {
 }
 
 // ============ DEPOSIT ============
+// ============ SLOT DEPOSIT ============
+
 function openDepositModal() {
-  $("deposit-input").value = "";
-  $("deposit-error").textContent = "";
-  $("deposit-modal").classList.remove("hidden");
+  $("slot-deposit-input").value = "";
+  $("slot-deposit-error").textContent = "";
+  $("slot-deposit-modal").classList.remove("hidden");
 }
 
 function closeDepositModal() {
-  $("deposit-modal").classList.add("hidden");
+  $("slot-deposit-modal").classList.add("hidden");
 }
 
 async function confirmDeposit() {
-  const amount = Number($("deposit-input").value);
+  const amount = Number($("slot-deposit-input").value);
+
   if (!amount || amount <= 0) {
-    $("deposit-error").textContent = "Գրիր ճիշտ գումար";
+    $("slot-deposit-error").textContent = "Գրիր ճիշտ գումար";
     return;
   }
 
   if (amount > mainBalance) {
-    $("deposit-error").textContent = "Չունես այդքան գումար";
+    $("slot-deposit-error").textContent = "Չունես այդքան գումար";
     return;
   }
 
   closeDepositModal();
 
   try {
-    const r = await fetch(`${API}/api/slots/deposit`, { // same logic
+    const r = await fetch(`${API}/api/slots/deposit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: USER_ID, amount })
@@ -93,12 +96,14 @@ async function confirmDeposit() {
 
     mainBalance = js.new_main;
     slotsBalance += amount;
+
     updateBalances();
     showStatus(`➕ ${amount}$ փոխանցվեց Slots balance`);
   } catch (e) {
     showStatus("❌ Սերվերի սխալ");
   }
 }
+
 
 async function withdrawFromSlots() {
   if (slotsBalance <= 0) return showStatus("Slots balance = 0");
