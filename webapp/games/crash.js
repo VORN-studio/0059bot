@@ -155,24 +155,20 @@ function startCrash() {
     }, 90);
 }
 
-async function crashNow() {
+function crashNow() {
     if (!running) return;
 
     running = false;
     crashed = true;
     clearInterval(timer);
 
-    await fetch(`${API}/api/crash/lost_bet`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ user_id: USER_ID, amount: currentBet })
-    });
+    crashEffect();  // վերջին դոմինոն կողքի
 
-    loadUser();
+    document.getElementById("cashout-btn").style.display = "none";
+    document.getElementById("start-btn").style.display = "block";
 
-    show("💥 Պարտվեցիր");
+    show("💥 Crash! Չհասցրեցիր Claim անել");
 }
-
 
 async function depositToCrash() {
     const raw = prompt("Գումարը ($):");
