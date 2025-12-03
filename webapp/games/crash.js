@@ -142,12 +142,35 @@ async function loadUser() {
 
 // ================= Deposit / Withdraw =================
 
-async function depositToCrash() {
-    const raw = prompt("Գումարը ($), որը ուզում ես խաղալ Crash-ում:");
-    const amount = Number(raw);
+function depositToCrash() {
+    openDepositModal();
+}
 
-    if (!amount || amount <= 0) return show("❌ Սխալ գումար");
-    if (amount > mainBalance) return show("❌ Այդքան գումար չունես հիմնական բալանսում");
+
+function openDepositModal() {
+    document.getElementById("deposit-input").value = "";
+    document.getElementById("deposit-error").textContent = "";
+    document.getElementById("deposit-modal").classList.remove("hidden");
+}
+
+function closeDepositModal() {
+    document.getElementById("deposit-modal").classList.add("hidden");
+}
+
+async function confirmDeposit() {
+    const amount = Number(document.getElementById("deposit-input").value);
+
+    if (!amount || amount <= 0) {
+        document.getElementById("deposit-error").textContent = "Գրիր ճիշտ գումար";
+        return;
+    }
+
+    if (amount > mainBalance) {
+        document.getElementById("deposit-error").textContent = "Դուք չունեք այդքան գումար։";
+        return;
+    }
+
+    closeDepositModal();
 
     // BACKEND-ին ասում ենք՝ հանի հիմնական բալանսից
     let r = await fetch(`${API}/api/crash/deposit`, {
