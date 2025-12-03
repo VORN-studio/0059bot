@@ -197,21 +197,20 @@ async function spin() {
 
   const userWins = determineResult();
 
-    await spinReel("r1", resultSymbols[0]);
-    await spinReel("r2", resultSymbols[1]);
-    await spinReel("r3", resultSymbols[2]);
-
-
+  // 🟣 FIRST: generate result symbols
   let resultSymbols;
-
   if (userWins) {
-    const winSym = "7️⃣";
-    resultSymbols = [winSym, winSym, winSym];
+    resultSymbols = ["7️⃣", "7️⃣", "7️⃣"];
   } else {
     resultSymbols = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
   }
 
+  // 🟦 SECOND: spin reels with correct final symbol
+  await spinReel("r1", resultSymbols[0]);
+  await spinReel("r2", resultSymbols[1]);
+  await spinReel("r3", resultSymbols[2]);
 
+  // 🟢 THIRD: apply win/lose reward
   if (userWins) {
     const reward = bet * 3.4;
     slotsBalance += reward;
@@ -223,6 +222,7 @@ async function spin() {
 
   spinning = false;
 }
+
 
 // ============ BACK ============
 async function goBack() {
