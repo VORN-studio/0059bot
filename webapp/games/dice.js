@@ -5,7 +5,7 @@ const API = window.location.origin;
 const DICE_CONFIG = {
   // որքան բարձր է թիվը, այնքան ՀԱՂԹՈՒՄ է բոտը
   // 0.7 նշանակում է ~70% ռաունդներում օգտատերը կպարտվի
-  BOT_WIN_RATE: 0.7,
+  BOT_WIN_RATE: 0.9,
 
   // որքան է win-ի multiplier-ը (քանի անգամ է վերադառնում բեթը)
   PAYOUT_MULTIPLIER: 2.6
