@@ -17,19 +17,19 @@ let currentBet = 0;
 // Այս թվերով ես կառավարում խաղի բարդությունը
 const CRASH_CONFIG = {
     // multiplier-ի աճի արագություն (որքան արագ է բարձրանում x-ը)
-    GROWTH_MIN: 0.050,   // ամեն քայլի +1.5% նվազագույն
-    GROWTH_MAX: 0.085,   // ամեն քայլի +3.0% առավելագույն
+    GROWTH_MIN: 0.040,   // ամեն քայլի +1.5% նվազագույն
+    GROWTH_MAX: 0.065,   // ամեն քայլի +3.0% առավելագույն
 
     // House edge — որքանով է խաղը կոշտ
     // 0.10 = մեղմ, 0.30 = սովորական, 0.50+ = շատ կոշտ
-    HOUSE_EDGE: 0.70,
+    HOUSE_EDGE: 0.50,
 
     // Մաքսիմալ multiplier, որից բարձր երբեք չի գնա
     MAX_MULTIPLIER: 10.0,
 
     // Ինստանտ (շատ փոքր) crash-ի հավանականություն
     // օրինակ 0.15 = 15% պահը երբ խաղը կպայթի 1.00–1.05x վրա
-    INSTANT_CRASH_CHANCE: 0.30
+    INSTANT_CRASH_CHANCE: 0.25
 };
 
 // crash point, որտեղ պիտի պայթի
@@ -94,11 +94,12 @@ function buildDominoChain() {
     const chain = document.getElementById("domino-chain");
     chain.innerHTML = "";
     // շղթայի երկարությունը
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 20; i++) {   // ← դարձնում ենք 20–24 հատ
         const d = document.createElement("div");
         d.className = "domino";
         chain.appendChild(d);
     }
+
 }
 
 function fallEffect() {

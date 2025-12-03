@@ -100,14 +100,22 @@ body {
   padding: 0 14px;
   display: flex;
   align-items: flex-end;
+  overflow: hidden;     
+  white-space: nowrap;  
 }
 
 .domino-chain {
   display: flex;
   gap: 6px;
   align-items: flex-end;
-  width: 200%;
-  transform: translateX(-10%);
+  width: max-content;
+  animation: moveScene 4s linear infinite; /* ← ԱՅՍ Է ՖԻՇԿԱ */
+}
+
+/* Շարժվող տեսարանի անիմացիա */
+@keyframes moveScene {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-140px); }
 }
 
 .domino {
