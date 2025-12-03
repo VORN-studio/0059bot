@@ -95,8 +95,11 @@ function depositToCrash() {
     if (!amount || amount <= 0) return show("❌ Սխալ գումար");
     if (amount > mainBalance) return show("❌ Այդքան գումար չունես հիմնական բալանսում");
 
-    mainBalance -= amount;
     crashBalance += amount;
+    updateBalances();
+    show("➕ " + amount.toFixed(2) + " $ տեղափոխվեց Crash balance");
+    return;
+
 
     updateBalances();
     show("➕ " + amount.toFixed(2) + " $ տեղափոխվեց Crash balance");
@@ -220,8 +223,10 @@ async function cashOut() {
 // ================= BACK =================
 
 function goBack() {
-    window.location.href = `${window.location.origin}/app?uid=${USER_ID}`;
+    // Force reload so that main menu fetches REAL balance from DB
+    window.location.href = `${window.location.origin}/app?uid=${USER_ID}&t=${Date.now()}`;
 }
+
 
 // ================= INIT =================
 
