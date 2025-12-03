@@ -603,6 +603,75 @@ def api_dice_withdraw():
 
     return jsonify({"ok": True})
 
+# =========================
+#      SLOTS DEPOSIT
+# =========================
+@app_web.route("/api/slots/deposit", methods=["POST"])
+def api_slots_deposit():
+    data = request.get_json(force=True)
+    user_id = int(data.get("user_id"))
+    amount = float(data.get("amount", 0))
+
+    if amount <= 0:
+        return jsonify({"ok": False, "error": "bad_amount"}), 400
+
+    conn = db(); c = conn.cursor()
+
+    c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
+    row = c.fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "no_user"})
+
+    main_balance = float(row[0])
+    if main_balance < amount:
+        return jsonify({"ok": False, "error": "not_enough"})
+
+    new_main = main_balance - amount
+
+    c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s",
+              (new_main, user_id))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "new_main": new_main
+    })
+
+# =========================
+#      SLOTS WITHDRAW
+# =========================
+@app_web.route("/api/slots/withdraw", methods=["POST"])
+def api_slots_withdraw():
+    data = request.get_json(force=True)
+    user_id = int(data.get("user_id"))
+    amount = float(data.get("amount", 0))
+
+    if amount <= 0:
+        return jsonify({"ok": False, "error": "bad_amount"}), 400
+
+    conn = db(); c = conn.cursor()
+
+    c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
+    row = c.fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "no_user"})
+
+    main_balance = float(row[0])
+    new_main = main_balance + amount
+
+    c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s",
+              (new_main, user_id))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "new_main": new_main
+    })
+
 
 # =========================
 # Telegram Bot (Webhook Mode)
