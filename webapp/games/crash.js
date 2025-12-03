@@ -131,20 +131,46 @@ function startCrash() {
     }, 90);
 }
 
-function crashNow() {
+async function crashNow() {
     if (!running) return;
 
     running = false;
     crashed = true;
     clearInterval(timer);
 
-    crashEffect();
+    setDomino("fall");
+
+    // 👉 Փոխենք սկզբում տեղային crashBalance-ը
+    crashBalance -= currentBet;
+    if (crashBalance < 0) crashBalance = 0;
+    updateBalances();
+
+    show("💥 Crash! Չհասցրեցիր Claim անել");
+
+    // 👉 Հիմա backend-ին ասում ենք՝ bet-ը տեղի է ունեցել և win=0
+    const res = await fetch(`${API}/api/game/bet`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json"},
+        body: JSON.stringify({
+            user_id: USER_ID,
+            amount: currentBet,
+            game: "crash",
+            choice: 0  // ❗️ win multiplier = 0 → backend will subtract bet
+        })
+    });
+
+    const js = await res.json();
+
+    if (js.ok) {
+        // Backend actual main balance
+        mainBalance = js.new_balance;
+        updateBalances();
+    }
 
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
-
-    show("💥 Crash! Չհասցրեցիր Claim անել");
 }
+
 
 // ================= CLAIM =================
 
