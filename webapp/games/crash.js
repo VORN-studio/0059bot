@@ -84,26 +84,32 @@ async function loadUser() {
 
 // ================= Deposit / Withdraw =================
 
-function depositToCrash() {
-    if (mainBalance <= 0) {
-        return show("❌ Նախ լիցքավորիր հիմնական բալանսը Deposit բաժնից");
-    }
-
+async function depositToCrash() {
     const raw = prompt("Գումարը ($), որը ուզում ես խաղալ Crash-ում:");
     const amount = Number(raw);
 
     if (!amount || amount <= 0) return show("❌ Սխալ գումար");
     if (amount > mainBalance) return show("❌ Այդքան գումար չունես հիմնական բալանսում");
 
-    crashBalance += amount;
-    updateBalances();
-    show("➕ " + amount.toFixed(2) + " $ տեղափոխվեց Crash balance");
-    return;
+    // BACKEND-ին ասում ենք՝ հանի հիմնական բալանսից
+    let r = await fetch(`${API}/api/crash/deposit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: USER_ID, amount })
+    });
 
+    let js = await r.json();
+    if (!js.ok) {
+        return show("❌ Backend error");
+    }
+
+    mainBalance = js.new_main;
+    crashBalance += amount;
 
     updateBalances();
     show("➕ " + amount.toFixed(2) + " $ տեղափոխվեց Crash balance");
 }
+
 
 function withdrawFromCrash() {
     if (crashBalance <= 0) return show("❌ Crash balance = 0");
