@@ -1,27 +1,54 @@
-/* ========== GLOBAL BACKGROUND ========== */
+/* =========================================================
+   DOMINO MEGA STYLE
+   Շատ ուժեղ, նեոն, վստահություն + էմոցիաներ
+   ========================================================= */
 
-* {
+/* ---------- RESET & BASE TYPOGRAPHY ---------- */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: radial-gradient(circle at top, #020617 0%, #020617 35%, #020617 100%);
+  background: radial-gradient(circle at top, #020617 0%, #020617 40%, #020617 100%);
   color: #e5e7eb;
   overflow-x: hidden;
   position: relative;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* animated nebula background */
+/* գեղեցիկ սքրոլբար՝ եթե պետք լինի */
+body::-webkit-scrollbar {
+  width: 6px;
+}
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4f46e5, #06b6d4);
+  border-radius: 999px;
+}
+
+/* ---------- MOVING NEBULA BACKGROUND ---------- */
+
 body::before {
   content: "";
   position: fixed;
   inset: -40%;
   background:
     radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(129, 140, 248, 0.2), transparent 50%),
+    radial-gradient(circle at 80% 0%, rgba(129, 140, 248, 0.23), transparent 50%),
     radial-gradient(circle at 0% 100%, rgba(45, 212, 191, 0.18), transparent 55%);
   opacity: 0.9;
   filter: blur(4px);
@@ -29,13 +56,11 @@ body::before {
   animation: bgMove 18s ease-in-out infinite alternate;
 }
 
-/* tiny floating particles */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
-  background-image:
-    radial-gradient(circle, rgba(255,255,255,0.22) 0, transparent 55%);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.19) 0, transparent 58%);
   background-size: 260px 260px;
   background-position: 0 0;
   mix-blend-mode: screen;
@@ -45,54 +70,90 @@ body::after {
 }
 
 @keyframes bgMove {
-  from { transform: translate3d(-4%, 2%, 0) scale(1.02); }
-  to   { transform: translate3d(5%, -3%, 0) scale(1.05); }
+  from {
+    transform: translate3d(-4%, 2%, 0) scale(1.02);
+  }
+  to {
+    transform: translate3d(5%, -3%, 0) scale(1.05);
+  }
 }
 
 @keyframes starsDrift {
-  from { background-position: 0 0; }
-  to   { background-position: 480px 640px; }
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 480px 640px;
+  }
 }
 
-
-/* ========== APP CONTAINER ========== */
+/* =========================================================
+   APP CONTAINER
+   ========================================================= */
 
 #app {
   max-width: 480px;
   margin: 0 auto;
-  padding: 20px 16px 24px;
+  padding: 20px 16px 26px;
   position: relative;
 }
 
-/* subtle glow frame around app */
+/* վերևի թեթև լուսավոր գիծ */
 #app::before {
   content: "";
   position: absolute;
   inset: 8px 10px auto 10px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(148,163,184,0.7), transparent);
-  opacity: 0.6;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148, 163, 184, 0.7),
+    transparent
+  );
+  opacity: 0.7;
 }
 
+/* ներքևի գիծ */
+#app::after {
+  content: "";
+  position: absolute;
+  inset: auto 12px 4px 12px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(30, 64, 175, 0.75),
+    rgba(56, 189, 248, 0.6),
+    transparent
+  );
+  opacity: 0.35;
+}
 
-/* ========== TOP HEADER ========== */
+/* =========================================================
+   TOP TITLE / LOGO
+   ========================================================= */
+
+.top {
+  position: relative;
+  padding-top: 40px;
+  margin-bottom: 10px;
+}
 
 .top h1 {
   text-align: center;
-  margin-bottom: 18px;
+  margin-bottom: 4px;
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 0.4px;
   color: #f9fafb;
   position: relative;
-  padding-top: 40px;
 }
 
-/* domino icon bubble above title */
+/* game icon bubble */
 .top h1::before {
   content: "👾";
   position: absolute;
-  top: 0;
+  top: -40px;
   left: 50%;
   transform: translateX(-50%);
   width: 42px;
@@ -109,72 +170,102 @@ body::after {
   animation: pulseOrbit 2.6s ease-in-out infinite;
 }
 
-/* glow ring */
+/* glowing ring */
 .top h1::after {
   content: "";
   position: absolute;
-  top: 5px;
+  top: -44px;
   left: 50%;
   transform: translateX(-50%);
-  width: 62px;
-  height: 62px;
+  width: 60px;
+  height: 60px;
   border-radius: 999px;
-  border: 1px solid rgba(129,140,248,0.45);
+  border: 1px solid rgba(129, 140, 248, 0.5);
   opacity: 0.5;
   filter: blur(1px);
 }
 
 @keyframes pulseOrbit {
-  0%,100% { transform: translateX(-50%) translateY(0) scale(1); }
-  50%     { transform: translateX(-50%) translateY(-2px) scale(1.05); }
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-2px) scale(1.05);
+  }
 }
 
+/* փոքր ենթավերնագիր, եթե երբևէ օգտագործես */
+.top-subtitle {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
 
-/* ========== USER CARD (BALANCE + INFO) ========== */
+/* =========================================================
+   USER CARD (BALANCE, ID, NAME)
+   ========================================================= */
 
 .user-info {
-  background: radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 50%),
-              radial-gradient(circle at bottom right, rgba(129,140,248,0.2), transparent 55%),
-              rgba(15,23,42,0.92);
+  background: radial-gradient(
+      circle at top left,
+      rgba(56, 189, 248, 0.12),
+      transparent 50%
+    ),
+    radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.2), transparent 55%),
+    rgba(15, 23, 42, 0.96);
   backdrop-filter: blur(18px);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 16px 18px 14px;
-  border: 1px solid rgba(148,163,184,0.45);
+  border: 1px solid rgba(148, 163, 184, 0.45);
   box-shadow:
-    0 16px 40px rgba(15, 23, 42, 0.95),
-    0 0 0 1px rgba(15,23,42,0.8);
-  font-size: 15px;
+    0 16px 40px rgba(15, 23, 42, 0.96),
+    0 0 0 1px rgba(15, 23, 42, 0.7);
+  font-size: 14px;
   line-height: 1.6;
   position: relative;
   overflow: hidden;
-  animation: fadeInUp 0.8s ease both;
+  animation: fadeInUp 0.75s ease both;
 }
 
-/* light gradient border inside */
+/* inner soft line */
 .user-info::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 1px solid rgba(248,250,252,0.02);
+  border: 1px solid rgba(248, 250, 252, 0.02);
   pointer-events: none;
 }
 
-/* tiny gradient streak */
+/* moving light streak */
 .user-info::after {
   content: "";
   position: absolute;
-  width: 140px;
-  height: 140px;
-  right: -60px;
+  width: 160px;
+  height: 160px;
+  right: -70px;
   top: -40px;
-  background: conic-gradient(from 160deg,
-              rgba(96,165,250,0.15),
-              transparent,
-              rgba(129,140,248,0.4),
-              transparent);
-  opacity: 0.9;
+  background: conic-gradient(
+    from 160deg,
+    rgba(96, 165, 250, 0.15),
+    transparent,
+    rgba(129, 140, 248, 0.5),
+    transparent
+  );
+  opacity: 0.85;
   filter: blur(18px);
+  animation: sweepLight 7s linear infinite;
+}
+
+@keyframes sweepLight {
+  0% {
+    transform: rotate(0deg) translate3d(0, 0, 0);
+  }
+  100% {
+    transform: rotate(360deg) translate3d(0, 0, 0);
+  }
 }
 
 .user-info div {
@@ -186,28 +277,46 @@ body::after {
   color: #ffffff;
 }
 
-.user-info div:last-child {
-  margin-bottom: 0;
+/* balance highlight line, եթե կա "Բալանս" տողը */
+.user-info .balance-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.4);
 }
 
+.user-info .balance-row strong {
+  font-size: 16px;
+}
 
-/* ========== BUTTON GRID (MAIN MENU) ========== */
+/* TON row, կարող ես կիրառել class="ton-row" */
+.user-info .ton-row {
+  font-size: 13px;
+  color: #a5b4fc;
+}
+
+/* =========================================================
+   MAIN BUTTON GRID (Wallet / Game / Deposit / Withdraw / Referral)
+   ========================================================= */
 
 .buttons {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin: 22px 0 24px;
+  margin: 22px 0 26px;
   animation: fadeInUp 0.9s ease both;
 }
 
-/* generic button style */
+/* Generic fancy button */
 .btn {
   position: relative;
   border: none;
-  border-radius: 16px;
-  padding: 12px 12px 13px;
-  background: radial-gradient(circle at top left, rgba(148,163,184,0.35), rgba(15,23,42,0.9));
+  border-radius: 18px;
+  padding: 11px 12px 12px;
+  background: radial-gradient(
+      circle at top left,
+      rgba(148, 163, 184, 0.35),
+      rgba(15, 23, 42, 0.98)
+    );
   color: #e5e7eb;
   font-size: 15px;
   font-weight: 600;
@@ -216,27 +325,31 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   box-shadow:
-    0 12px 26px rgba(15,23,42,0.85),
-    0 0 0 1px rgba(15,23,42,1);
+    0 12px 26px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(15, 23, 42, 0.95);
   letter-spacing: 0.2px;
   transition:
     transform 0.14s ease,
     box-shadow 0.18s ease,
     background 0.18s ease,
-    border-color 0.18s ease;
+    border-color 0.18s ease,
+    filter 0.18s ease;
 }
 
+/* glass overlay on hover */
 .btn::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(120deg,
-    rgba(248,250,252,0.1),
+  background: linear-gradient(
+    120deg,
+    rgba(248, 250, 252, 0.16),
     transparent 40%,
-    rgba(129,140,248,0.14),
-    transparent 70%);
+    rgba(129, 140, 248, 0.16),
+    transparent 76%
+  );
   opacity: 0;
   transform: translateX(-40%);
   transition: opacity 0.22s ease, transform 0.22s ease;
@@ -247,7 +360,7 @@ body::after {
   z-index: 2;
 }
 
-/* icons by position */
+/* icons ըստ հերթականության */
 .buttons .btn:nth-child(1)::after {
   content: "💼";
 }
@@ -268,59 +381,98 @@ body::after {
   position: relative;
   z-index: 2;
   font-size: 18px;
-  margin-left: 6px;
+  margin-left: 4px;
+}
+
+/* wallet button՝ ավելի կարագված լույս */
+.buttons .btn:nth-child(1) {
+  background: radial-gradient(circle at top left, #16a34a, #064e3b);
+  box-shadow:
+    0 14px 32px rgba(22, 163, 74, 0.75),
+    0 0 0 1px rgba(6, 78, 59, 0.9);
+}
+
+/* game button */
+.buttons .btn:nth-child(2) {
+  background: radial-gradient(circle at top left, #4f46e5, #111827);
+  box-shadow:
+    0 14px 32px rgba(79, 70, 229, 0.8),
+    0 0 0 1px rgba(30, 64, 175, 0.95);
+}
+
+/* deposit */
+.buttons .btn:nth-child(3) {
+  background: radial-gradient(circle at top left, #0ea5e9, #022c22);
+  box-shadow:
+    0 14px 32px rgba(14, 165, 233, 0.7),
+    0 0 0 1px rgba(6, 95, 70, 0.95);
+}
+
+/* withdraw */
+.buttons .btn:nth-child(4) {
+  background: radial-gradient(circle at top left, #f97316, #111827);
+  box-shadow:
+    0 14px 32px rgba(249, 115, 22, 0.8),
+    0 0 0 1px rgba(124, 45, 18, 0.95);
+}
+
+/* referral */
+.buttons .btn:nth-child(5) {
+  grid-column: span 2;
+  background: radial-gradient(circle at top left, #ec4899, #111827);
+  box-shadow:
+    0 18px 38px rgba(236, 72, 153, 0.8),
+    0 0 0 1px rgba(131, 24, 67, 0.95);
 }
 
 .btn:hover {
-  background: radial-gradient(circle at top left, rgba(96,165,250,0.4), rgba(15,23,42,0.96));
+  filter: saturate(1.1);
   box-shadow:
-    0 18px 40px rgba(37,99,235,0.55),
-    0 0 0 1px rgba(37,99,235,0.9);
+    0 18px 40px rgba(37, 99, 235, 0.7),
+    0 0 0 1px rgba(37, 99, 235, 0.95);
   transform: translateY(-2px);
 }
 
 .btn:hover::before {
-  opacity: 0.9;
+  opacity: 0.95;
   transform: translateX(0);
 }
 
 .btn:active {
   transform: translateY(0) scale(0.97);
   box-shadow:
-    0 10px 24px rgba(15,23,42,0.9),
-    0 0 0 1px rgba(15,23,42,1);
+    0 10px 24px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(15, 23, 42, 1);
 }
 
-/* primary button (if used) */
+/* եթե մի տեղ class="btn primary" օգտագործես */
 .btn.primary {
   background: linear-gradient(135deg, #2563eb, #7c3aed);
   box-shadow:
-    0 16px 38px rgba(37,99,235,0.7),
-    0 0 0 1px rgba(30,64,175,0.9);
+    0 16px 38px rgba(37, 99, 235, 0.7),
+    0 0 0 1px rgba(30, 64, 175, 0.9);
 }
 
-.btn.primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #6d28d9);
-}
-
-
-/* ========== SCREENS (WALLET / DEPOSIT / REFERRAL…) ========== */
+/* =========================================================
+   SCREENS (Wallet / Game / Deposit / Withdraw / Referral)
+   ========================================================= */
 
 .screen {
   display: none;
-  background: radial-gradient(circle at top, rgba(30,64,175,0.18), transparent 60%),
-              rgba(15,23,42,0.96);
+  background: radial-gradient(circle at top, rgba(30, 64, 175, 0.18), transparent 60%),
+    rgba(15, 23, 42, 0.98);
   backdrop-filter: blur(18px);
   padding: 18px 16px 16px;
-  border-radius: 18px;
-  font-size: 15px;
-  border: 1px solid rgba(148,163,184,0.55);
+  border-radius: 20px;
+  font-size: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
   box-shadow:
     0 16px 40px rgba(15, 23, 42, 0.96),
-    0 0 0 1px rgba(15,23,42,0.9);
+    0 0 0 1px rgba(15, 23, 42, 0.9);
   animation: fadeIn 0.4s ease both;
   position: relative;
   overflow: hidden;
+  margin-bottom: 16px;
 }
 
 .screen::before {
@@ -328,8 +480,26 @@ body::after {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 1px solid rgba(248,250,252,0.02);
+  border: 1px solid rgba(248, 250, 252, 0.02);
   pointer-events: none;
+}
+
+/* indicator line վրայից */
+.screen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(45, 212, 191, 0.5),
+    rgba(56, 189, 248, 0.7),
+    rgba(168, 85, 247, 0.7)
+  );
+  opacity: 0.9;
 }
 
 .screen.active {
@@ -341,6 +511,14 @@ body::after {
   font-size: 20px;
   font-weight: 700;
   color: #f9fafb;
+  letter-spacing: 0.2px;
+}
+
+/* փոքր subtitle class, եթե պետք լինի */
+.screen-title-sub {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 8px;
 }
 
 .screen p,
@@ -349,16 +527,35 @@ body::after {
   color: #cbd5e1;
 }
 
+/* unordered list գեղեցիկ կետերով */
+.screen ul {
+  list-style: none;
+  padding-left: 0;
+}
+.screen ul li {
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 6px;
+}
+.screen ul li::before {
+  content: "•";
+  position: absolute;
+  left: 4px;
+  top: -1px;
+  color: #38bdf8;
+}
 
-/* ========== INPUTS & FIELDS ========== */
+/* =========================================================
+   FORM FIELDS / INPUTS
+   ========================================================= */
 
 input[type="text"],
 input[type="number"] {
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(148,163,184,0.7);
-  background: rgba(15,23,42,0.92);
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.96);
   color: #f9fafb;
   margin: 10px 0 12px;
   font-size: 15px;
@@ -366,7 +563,8 @@ input[type="number"] {
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
-    background 0.18s ease;
+    background 0.18s ease,
+    transform 0.1s ease;
 }
 
 input[type="text"]::placeholder,
@@ -377,34 +575,90 @@ input[type="number"]::placeholder {
 input[type="text"]:focus,
 input[type="number"]:focus {
   border-color: #38bdf8;
-  box-shadow: 0 0 0 1px rgba(56,189,248,0.8), 0 0 18px rgba(56,189,248,0.3);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.85),
+    0 0 18px rgba(56, 189, 248, 0.3);
   background: #020617;
+  transform: translateY(-1px);
 }
 
+/* read-only field՝ օրինակ ref link */
+input[readonly] {
+  cursor: text;
+  background: rgba(15, 23, 42, 0.96);
+}
 
-/* ========== STATUS & REF STATS ========== */
+/* փոքր label helper, եթե HTML-ում ունենաս */
+.field-label {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 4px;
+}
+
+/* =========================================================
+   STATUS TEXT / ALERTS
+   ========================================================= */
 
 .status {
-  margin-top: 12px;
-  font-size: 14px;
+  margin-top: 10px;
+  font-size: 13px;
   color: #f97373;
   white-space: normal !important;
   word-break: break-word;
   line-height: 1.5;
+  opacity: 0.96;
 }
 
-/* եթե երբեմն success text գրես կանաչով */
+/* green success */
 .status.success {
   color: #4ade80;
 }
+
+/* neutral info */
+.status.info {
+  color: #60a5fa;
+}
+
+/* subtle glowing underline animation for status */
+.status::after {
+  content: "";
+  display: block;
+  margin-top: 4px;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(248, 250, 252, 0.48),
+    transparent
+  );
+  opacity: 0.32;
+}
+
+/* =========================================================
+   REFERRAL STATS / TEXT BLOCKS
+   ========================================================= */
 
 .ref-stats p {
   margin-top: 4px;
   color: #cbd5e1;
 }
 
+/* փոքր բեյջեր՝ օրինակ "Lvl 1 • Team" */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  color: #e5e7eb;
+}
 
-/* ========== GAME MENU CARDS (IF USED) ========== */
+/* =========================================================
+   GAME MENU CARD STYLE (եթե օգտագործում ես .game-menu / .game-card)
+   ========================================================= */
 
 .game-menu {
   display: flex;
@@ -414,19 +668,23 @@ input[type="number"]:focus {
 }
 
 .game-card {
-  background: radial-gradient(circle at top left, rgba(56,189,248,0.2), rgba(15,23,42,0.96));
-  border: 1px solid rgba(129,140,248,0.7);
-  padding: 16px 14px;
-  border-radius: 16px;
+  background: radial-gradient(
+      circle at top left,
+      rgba(56, 189, 248, 0.2),
+      rgba(15, 23, 42, 0.98)
+    );
+  border: 1px solid rgba(129, 140, 248, 0.75);
+  padding: 16px 14px 14px;
+  border-radius: 18px;
   color: #e5e7eb;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition: 0.22s ease;
   box-shadow:
-    0 16px 36px rgba(15,23,42,0.96),
-    0 0 0 1px rgba(15,23,42,1);
+    0 16px 36px rgba(15, 23, 42, 0.98),
+    0 0 0 1px rgba(15, 23, 42, 1);
   position: relative;
   overflow: hidden;
 }
@@ -435,28 +693,162 @@ input[type="number"]:focus {
   content: "🎲";
   position: absolute;
   right: 16px;
-  top: 14px;
-  font-size: 24px;
-  opacity: 0.85;
+  top: 12px;
+  font-size: 22px;
+  opacity: 0.88;
 }
 
 .game-card:hover {
   transform: translateY(-3px);
   box-shadow:
-    0 20px 46px rgba(59,130,246,0.7),
-    0 0 0 1px rgba(59,130,246,0.9);
-  background: radial-gradient(circle at top left, rgba(59,130,246,0.5), rgba(15,23,42,1));
+    0 20px 46px rgba(59, 130, 246, 0.75),
+    0 0 0 1px rgba(59, 130, 246, 0.95);
+  background: radial-gradient(
+      circle at top left,
+      rgba(59, 130, 246, 0.55),
+      rgba(15, 23, 42, 1)
+    );
 }
 
+.game-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
 
-/* ========== ANIMATIONS HELPERS ========== */
+/* երկրորդ տող, եթե գրես <div class="game-card-sub"> */
+.game-card-sub {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin-top: 4px;
+}
+
+/* =========================================================
+   FOOTER / BRAND BAR
+   ========================================================= */
+
+.footer-bar {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 11px;
+  color: #6b7280;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  position: relative;
+  padding-top: 8px;
+}
+
+/* փոքր լուսավոր գիծ */
+.footer-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 80px;
+  right: 80px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(148, 163, 184, 0.7),
+    transparent
+  );
+  opacity: 0.6;
+}
+
+/* =========================================================
+   SMALL UTILITY CLASSES (կարաս օգտագործես որտեղ ուզես)
+   ========================================================= */
+
+/* spacerներ */
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-12 { margin-bottom: 12px; }
+
+/* text helpers */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-muted { color: #9ca3af; }
+.text-accent { color: #38bdf8; }
+
+/* flex helpers */
+.flex {
+  display: flex;
+}
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+
+/* =========================================================
+   ANIMATIONS HELPERS
+   ========================================================= */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px) scale(0.99); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* փոքր pulse, եթե երբեք ստատուսին դնես class="pulse" */
+@keyframes softPulse {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+.pulse {
+  animation: softPulse 1.6s ease-in-out infinite;
+}
+
+/* =========================================================
+   RESPONSIVE TWEAKS
+   ========================================================= */
+
+@media (max-width: 360px) {
+  .buttons {
+    gap: 10px;
+  }
+  .btn {
+    font-size: 14px;
+    padding: 10px 10px 11px;
+  }
+  .user-info {
+    padding: 14px 14px 12px;
+  }
+}
+
+@media (min-width: 520px) {
+  #app {
+    margin-top: 6px;
+  }
 }
