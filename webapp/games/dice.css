@@ -355,23 +355,29 @@ body::after {
 }
 
 /* shuffle animation - applied via JS to all three cups */
+/* շատ ավելի արագ ու ագրեսիվ shuffle */
 .cup.shuffle {
-  animation: cupShuffle 1.3s ease-in-out infinite;
+  animation: cupShuffle 0.35s ease-in-out infinite;
 }
 
 @keyframes cupShuffle {
-  0%,
-  100% {
+  0% {
     transform: perspective(280px) rotateX(18deg) translateX(0);
   }
-  25% {
-    transform: perspective(280px) rotateX(18deg) translateX(-10px);
+  20% {
+    transform: perspective(280px) rotateX(18deg) translateX(-26px);
   }
-  50% {
-    transform: perspective(280px) rotateX(18deg) translateX(10px);
+  40% {
+    transform: perspective(280px) rotateX(18deg) translateX(20px);
   }
-  75% {
-    transform: perspective(280px) rotateX(18deg) translateX(-6px);
+  60% {
+    transform: perspective(280px) rotateX(18deg) translateX(-18px);
+  }
+  80% {
+    transform: perspective(280px) rotateX(18deg) translateX(14px);
+  }
+  100% {
+    transform: perspective(280px) rotateX(18deg) translateX(0);
   }
 }
 
@@ -393,6 +399,27 @@ body::after {
   opacity: 0;
   z-index: 1;
 }
+
+/* երբ զառը “ընկնում է” բաժակի տակ */
+.dice-glow.drop {
+  animation: diceDrop 0.7s ease-out forwards;
+}
+
+@keyframes diceDrop {
+  0% {
+    transform: translate(-50%, -40px) scale(0.3);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(-50%, 0) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+
 
 /* positioned for cup index 0 / 1 / 2 (JS-ով ենք փոխում class-ը) */
 .dice-pos-0 {

@@ -19,6 +19,7 @@ let roundRunning = false;
 let allowPick = false;
 let currentBet = 0;
 let plannedResult = null; // "win" կամ "lose"
+let hiddenCupIndex = 1; // որի տակ “պահվում է” զառը տվյալ ռաունդի համար
 
 // ================= Helpers =================
 
@@ -69,6 +70,22 @@ function setCupsSelectable(flag) {
   });
 }
 
+function showDiceDrop(index) {
+  const glow = document.getElementById("dice-glow");
+
+  // reset classes
+  glow.className = "dice-glow";
+  glow.classList.add(`dice-pos-${index}`, "visible", "drop");
+
+  // 0.7վրկ հետո բացում ենք shuffle-ը
+  setTimeout(() => {
+    glow.classList.remove("drop", "visible");
+    showStatus("♻️ Խառնում ենք բաժակները…");
+    startShuffleAnimation();
+  }, 700);
+}
+
+
 function startShuffleAnimation() {
   const cups = document.querySelectorAll(".cup");
   cups.forEach((c, idx) => {
@@ -88,15 +105,21 @@ function startShuffleAnimation() {
 
 function revealDice(userIndex, didWin) {
   const glow = document.getElementById("dice-glow");
-  glow.classList.remove("visible", "dice-pos-0", "dice-pos-1", "dice-pos-2");
+  glow.className = "dice-glow"; // reset classes
+  glow.classList.remove("dice-pos-0", "dice-pos-1", "dice-pos-2", "visible");
 
   let diceIndex;
+
   if (didWin) {
+    // հաղթելու դեպքում՝ իրականում զառը հենց օգտատիրոջ ընտրած բաժակի տակ է
     diceIndex = userIndex;
   } else {
+    // պարտվելու դեպքում՝ ընտրում ենք ուրիշ բաժակ, բայց ոչ օգտատիրոջը
     const options = [0, 1, 2].filter((i) => i !== userIndex);
     diceIndex = options[Math.floor(Math.random() * options.length)];
   }
+
+  hiddenCupIndex = diceIndex; // “իրական” դիրքը պահենք
 
   glow.classList.add(`dice-pos-${diceIndex}`, "visible");
 
@@ -235,10 +258,14 @@ function startRound() {
   allowPick = false;
   plannedResult = decideResult();
 
-  setCupsSelectable(false);
-  showStatus("♻️ Խառնում ենք բաժակները…");
+  // պատահական որոշում ենք՝ որ բաժակի տակ է զառը մտնում
+  hiddenCupIndex = Math.floor(Math.random() * 3);
 
-  startShuffleAnimation();
+  setCupsSelectable(false);
+  showStatus("🎲 Զառը մտնում է բաժակի տակ…");
+
+  // նախ ցույց ենք տալիս զառի “ընկնելը”, հետո՝ shuffle
+  showDiceDrop(hiddenCupIndex);
 }
 
 function cancelRound() {
