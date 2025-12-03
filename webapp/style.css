@@ -1,4 +1,4 @@
-/* ========== GLOBAL ========== */
+/* ========== GLOBAL BACKGROUND ========== */
 
 * {
   box-sizing: border-box;
@@ -8,113 +8,328 @@
 }
 
 body {
-  background: #0a0f1c;
-  color: #f1f5f9;
+  background: radial-gradient(circle at top, #020617 0%, #020617 35%, #020617 100%);
+  color: #e5e7eb;
   overflow-x: hidden;
-  transition: background 0.4s ease;
+  position: relative;
 }
+
+/* animated nebula background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -40%;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(129, 140, 248, 0.2), transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(45, 212, 191, 0.18), transparent 55%);
+  opacity: 0.9;
+  filter: blur(4px);
+  z-index: -2;
+  animation: bgMove 18s ease-in-out infinite alternate;
+}
+
+/* tiny floating particles */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.22) 0, transparent 55%);
+  background-size: 260px 260px;
+  background-position: 0 0;
+  mix-blend-mode: screen;
+  opacity: 0.07;
+  z-index: -1;
+  animation: starsDrift 26s linear infinite;
+}
+
+@keyframes bgMove {
+  from { transform: translate3d(-4%, 2%, 0) scale(1.02); }
+  to   { transform: translate3d(5%, -3%, 0) scale(1.05); }
+}
+
+@keyframes starsDrift {
+  from { background-position: 0 0; }
+  to   { background-position: 480px 640px; }
+}
+
+
+/* ========== APP CONTAINER ========== */
 
 #app {
   max-width: 480px;
   margin: 0 auto;
-  padding: 18px;
+  padding: 20px 16px 24px;
+  position: relative;
+}
+
+/* subtle glow frame around app */
+#app::before {
+  content: "";
+  position: absolute;
+  inset: 8px 10px auto 10px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(148,163,184,0.7), transparent);
+  opacity: 0.6;
 }
 
 
-/* ========== TOP TITLE ========== */
+/* ========== TOP HEADER ========== */
 
 .top h1 {
   text-align: center;
-  margin-bottom: 14px;
-  font-size: 26px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.3px;
-  text-shadow: 0 0 14px rgba(120, 162, 255, 0.35);
+  margin-bottom: 18px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: #f9fafb;
+  position: relative;
+  padding-top: 40px;
+}
+
+/* domino icon bubble above title */
+.top h1::before {
+  content: "👾";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 0%, #a855f7, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow:
+    0 0 18px rgba(129, 140, 248, 0.8),
+    0 10px 28px rgba(15, 23, 42, 0.9);
+  animation: pulseOrbit 2.6s ease-in-out infinite;
+}
+
+/* glow ring */
+.top h1::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 62px;
+  height: 62px;
+  border-radius: 999px;
+  border: 1px solid rgba(129,140,248,0.45);
+  opacity: 0.5;
+  filter: blur(1px);
+}
+
+@keyframes pulseOrbit {
+  0%,100% { transform: translateX(-50%) translateY(0) scale(1); }
+  50%     { transform: translateX(-50%) translateY(-2px) scale(1.05); }
 }
 
 
-/* ========== USER CARD ========== */
+/* ========== USER CARD (BALANCE + INFO) ========== */
 
 .user-info {
-  background: rgba(17, 25, 40, 0.85);
-  backdrop-filter: blur(14px);
-  border-radius: 14px;
-  padding: 14px 16px;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+  background: radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 50%),
+              radial-gradient(circle at bottom right, rgba(129,140,248,0.2), transparent 55%),
+              rgba(15,23,42,0.92);
+  backdrop-filter: blur(18px);
+  border-radius: 18px;
+  padding: 16px 18px 14px;
+  border: 1px solid rgba(148,163,184,0.45);
+  box-shadow:
+    0 16px 40px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(15,23,42,0.8);
   font-size: 15px;
-  line-height: 1.55;
-  animation: fadeIn 0.7s ease both;
+  line-height: 1.6;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.8s ease both;
+}
+
+/* light gradient border inside */
+.user-info::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(248,250,252,0.02);
+  pointer-events: none;
+}
+
+/* tiny gradient streak */
+.user-info::after {
+  content: "";
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  right: -60px;
+  top: -40px;
+  background: conic-gradient(from 160deg,
+              rgba(96,165,250,0.15),
+              transparent,
+              rgba(129,140,248,0.4),
+              transparent);
+  opacity: 0.9;
+  filter: blur(18px);
 }
 
 .user-info div {
   margin-bottom: 6px;
-  color: #cbd5e1;
+  color: #e2e8f0;
 }
 
 .user-info div strong {
   color: #ffffff;
 }
 
+.user-info div:last-child {
+  margin-bottom: 0;
+}
 
-/* ========== BUTTON GRID ========== */
+
+/* ========== BUTTON GRID (MAIN MENU) ========== */
 
 .buttons {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin: 20px 0 24px;
-  animation: fadeInUp 0.7s ease both;
+  margin: 22px 0 24px;
+  animation: fadeInUp 0.9s ease both;
 }
 
+/* generic button style */
 .btn {
+  position: relative;
   border: none;
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 12px 12px 13px;
+  background: radial-gradient(circle at top left, rgba(148,163,184,0.35), rgba(15,23,42,0.9));
+  color: #e5e7eb;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  color: #e2e8f0;
-  background: rgba(30, 41, 59, 0.65);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.04);
-  transition: all 0.18s ease;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow:
+    0 12px 26px rgba(15,23,42,0.85),
+    0 0 0 1px rgba(15,23,42,1);
   letter-spacing: 0.2px;
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg,
+    rgba(248,250,252,0.1),
+    transparent 40%,
+    rgba(129,140,248,0.14),
+    transparent 70%);
+  opacity: 0;
+  transform: translateX(-40%);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.btn span {
+  position: relative;
+  z-index: 2;
+}
+
+/* icons by position */
+.buttons .btn:nth-child(1)::after {
+  content: "💼";
+}
+.buttons .btn:nth-child(2)::after {
+  content: "🎮";
+}
+.buttons .btn:nth-child(3)::after {
+  content: "💎";
+}
+.buttons .btn:nth-child(4)::after {
+  content: "💸";
+}
+.buttons .btn:nth-child(5)::after {
+  content: "👥";
+}
+
+.buttons .btn::after {
+  position: relative;
+  z-index: 2;
+  font-size: 18px;
+  margin-left: 6px;
 }
 
 .btn:hover {
-  background: rgba(37, 99, 235, 0.27);
-  box-shadow: 0 0 16px rgba(37,99,235,0.35);
+  background: radial-gradient(circle at top left, rgba(96,165,250,0.4), rgba(15,23,42,0.96));
+  box-shadow:
+    0 18px 40px rgba(37,99,235,0.55),
+    0 0 0 1px rgba(37,99,235,0.9);
+  transform: translateY(-2px);
 }
 
-.btn.primary {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.42);
-  color: #fff;
-}
-
-.btn.primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+.btn:hover::before {
+  opacity: 0.9;
+  transform: translateX(0);
 }
 
 .btn:active {
-  transform: scale(0.96);
+  transform: translateY(0) scale(0.97);
+  box-shadow:
+    0 10px 24px rgba(15,23,42,0.9),
+    0 0 0 1px rgba(15,23,42,1);
+}
+
+/* primary button (if used) */
+.btn.primary {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  box-shadow:
+    0 16px 38px rgba(37,99,235,0.7),
+    0 0 0 1px rgba(30,64,175,0.9);
+}
+
+.btn.primary:hover {
+  background: linear-gradient(135deg, #1d4ed8, #6d28d9);
 }
 
 
-/* ========== SCREENS ========== */
+/* ========== SCREENS (WALLET / DEPOSIT / REFERRAL…) ========== */
 
 .screen {
   display: none;
-  background: rgba(17, 25, 40, 0.85);
-  backdrop-filter: blur(14px);
-  padding: 18px;
-  border-radius: 14px;
+  background: radial-gradient(circle at top, rgba(30,64,175,0.18), transparent 60%),
+              rgba(15,23,42,0.96);
+  backdrop-filter: blur(18px);
+  padding: 18px 16px 16px;
+  border-radius: 18px;
   font-size: 15px;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 8px 22px rgba(0,0,0,0.35);
-  animation: fadeIn 0.5s ease both;
+  border: 1px solid rgba(148,163,184,0.55);
+  box-shadow:
+    0 16px 40px rgba(15, 23, 42, 0.96),
+    0 0 0 1px rgba(15,23,42,0.9);
+  animation: fadeIn 0.4s ease both;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(248,250,252,0.02);
+  pointer-events: none;
 }
 
 .screen.active {
@@ -123,8 +338,9 @@ body {
 
 .screen h2 {
   margin-bottom: 10px;
-  font-size: 19px;
-  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f9fafb;
 }
 
 .screen p,
@@ -134,41 +350,61 @@ body {
 }
 
 
-/* ========== INPUTS ========== */
+/* ========== INPUTS & FIELDS ========== */
 
 input[type="text"],
 input[type="number"] {
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(15, 23, 42, 0.75);
-  color: #f1f5f9;
+  border: 1px solid rgba(148,163,184,0.7);
+  background: rgba(15,23,42,0.92);
+  color: #f9fafb;
   margin: 10px 0 12px;
   font-size: 15px;
   outline: none;
-  transition: border 0.2s ease, background 0.2s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 
-input:focus {
-  border-color: #3b82f6;
-  background: rgba(15, 23, 42, 0.9);
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+  color: #64748b;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px rgba(56,189,248,0.8), 0 0 18px rgba(56,189,248,0.3);
+  background: #020617;
 }
 
 
-/* ========== STATUS MESSAGE ========== */
+/* ========== STATUS & REF STATS ========== */
 
 .status {
-  margin-top: 14px;
-  font-size: 15px;
-  color: #f87171;
+  margin-top: 12px;
+  font-size: 14px;
+  color: #f97373;
   white-space: normal !important;
   word-break: break-word;
-  animation: fadeIn 0.4s ease both;
+  line-height: 1.5;
+}
+
+/* եթե երբեմն success text գրես կանաչով */
+.status.success {
+  color: #4ade80;
+}
+
+.ref-stats p {
+  margin-top: 4px;
+  color: #cbd5e1;
 }
 
 
-/* ========== GAME MENU CARDS ========== */
+/* ========== GAME MENU CARDS (IF USED) ========== */
 
 .game-menu {
   display: flex;
@@ -178,33 +414,49 @@ input:focus {
 }
 
 .game-card {
-  background: rgba(17, 25, 40, 0.9);
-  border: 1px solid rgba(255,255,255,0.06);
-  padding: 16px;
-  border-radius: 14px;
-  color: #fff;
-  font-size: 19px;
+  background: radial-gradient(circle at top left, rgba(56,189,248,0.2), rgba(15,23,42,0.96));
+  border: 1px solid rgba(129,140,248,0.7);
+  padding: 16px 14px;
+  border-radius: 16px;
+  color: #e5e7eb;
+  font-size: 18px;
   font-weight: 600;
-  text-align: center;
+  text-align: left;
   cursor: pointer;
-  transition: 0.25s;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  transition: 0.22s ease;
+  box-shadow:
+    0 16px 36px rgba(15,23,42,0.96),
+    0 0 0 1px rgba(15,23,42,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-card::before {
+  content: "🎲";
+  position: absolute;
+  right: 16px;
+  top: 14px;
+  font-size: 24px;
+  opacity: 0.85;
 }
 
 .game-card:hover {
-  background: rgba(37, 99, 235, 0.25);
-  box-shadow: 0 0 18px rgba(37,99,235,0.4);
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 46px rgba(59,130,246,0.7),
+    0 0 0 1px rgba(59,130,246,0.9);
+  background: radial-gradient(circle at top left, rgba(59,130,246,0.5), rgba(15,23,42,1));
 }
 
 
-/* ========== ANIMATIONS ========== */
+/* ========== ANIMATIONS HELPERS ========== */
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateY(4px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
