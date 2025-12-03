@@ -979,6 +979,9 @@ body::-webkit-scrollbar-thumb {
   gap: 10px;
   justify-content: center;
   margin-top: 4px;
+  position: relative;
+  z-index: 20; 
+  pointer-events: auto !important;
 }
 
 /* cancel button */
@@ -988,6 +991,9 @@ body::-webkit-scrollbar-thumb {
     rgba(30, 41, 59, 0.98);
   border-radius: 999px;
   padding-inline: 16px;
+  position: relative; 
+  z-index: 25;
+  pointer-events: auto;
 }
 
 /* confirm button */
