@@ -147,7 +147,9 @@ def release_db(conn):
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0"
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS crash_balance NUMERIC(18,2) DEFAULT 0;"
+
 ]
 
 def init_db():
@@ -303,6 +305,7 @@ def get_user_stats(user_id: int):
         "ref_count": int(ref_count),
         "active_refs": int(active_refs),
         "team_deposit_usd": float(team_dep),
+        "crash_balance": float(crash_balance),
     }
 
 
@@ -369,6 +372,78 @@ def api_user(user_id):
         return jsonify({"ok": False, "error": "user_not_found"}), 404
 
     return jsonify({"ok": True, "user": stats})
+
+@app_web.route("/api/crash/withdraw", methods=["POST"])
+def api_crash_withdraw():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+
+    if user_id == 0:
+        return jsonify({"ok": False}), 400
+
+    stats = get_user_stats(user_id)
+    amount = stats["crash_balance"]
+
+    if amount <= 0:
+        return jsonify({"ok": False, "error": "empty"}), 200
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = balance_usd + crash_balance,
+            crash_balance = 0
+        WHERE user_id=%s
+    """, (user_id,))
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True})
+
+@app_web.route("/api/crash/lost_bet", methods=["POST"])
+def api_crash_lost():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    amount = float(data.get("amount", 0))
+
+    if user_id == 0 or amount <= 0:
+        return jsonify({"ok": False}), 400
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        UPDATE dom_users
+        SET crash_balance = crash_balance - %s
+        WHERE user_id=%s
+    """, (amount, user_id))
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True})
+
+
+@app_web.route("/api/crash/deposit", methods=["POST"])
+def api_crash_deposit():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    amount = float(data.get("amount", 0))
+
+    if user_id == 0 or amount <= 0:
+        return jsonify({"ok": False}), 400
+
+    stats = get_user_stats(user_id)
+    if not stats or stats["balance_usd"] < amount:
+        return jsonify({"ok": False, "error": "not_enough_balance"}), 200
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = balance_usd - %s,
+            crash_balance = crash_balance + %s
+        WHERE user_id=%s
+    """, (amount, amount, user_id))
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True})
 
 
 @app_web.route("/api/deposit", methods=["POST"])
