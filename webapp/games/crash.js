@@ -172,8 +172,12 @@ async function cashOut() {
     const js = await r.json();
     if (!js.ok) return show("❌ Backend error");
 
-    mainBalance = js.new_balance;
-    crashBalance += win;
+    // Backend-ը արդեն main balance-ին գումարը չի տալիս,
+    // մենք էլ ՉՊԵՏՔ Է դնենք այն այնտեղ:
+
+    crashBalance += win;      // շահումը գնում է crash balance ONLY
+    updateBalances();
+
 
     updateBalances();
     show("🟢 +" + win.toFixed(2) + " $");
