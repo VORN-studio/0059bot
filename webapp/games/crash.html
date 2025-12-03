@@ -11,7 +11,7 @@
 <body>
   <div class="page">
 
-    <!-- 🔙 Վերադարձ + բալանսներ -->
+    <!-- Վերադարձ + Բալանսներ -->
     <div class="top-bar">
       <button class="btn back" onclick="goBack()">← Վերադառնալ</button>
 
@@ -25,24 +25,21 @@
       </div>
     </div>
 
-    <!-- 🀄 Crash քարտ -->
+    <!-- Crash քարտ -->
     <div class="card">
       <h2 class="game-title">🀄 Domino Crash</h2>
 
-      <!-- Domino անիմացիա -->
+      <!-- Domino chain animation -->
       <div class="domino-scene">
-        <div id="domino-chain" class="domino-chain">
-        <!-- DOMINO tiles inserted dynamically by crash.js -->
-        </div>
+        <div id="domino-chain" class="domino-chain"></div>
       </div>
 
-
-      <!-- Մուլտիպլייער -->
+      <!-- Multiplier -->
       <div id="multiplier" class="multiplier">1.00x</div>
 
-      <!-- Bet input -->
+      <!-- Bet -->
       <div class="bet-row">
-        <input id="bet" type="number" placeholder="Գումարը ($)" inputmode="decimal" />
+        <input id="bet" type="number" placeholder="Գումարը ($)" />
       </div>
 
       <!-- Deposit / Withdraw -->
@@ -54,16 +51,14 @@
       <!-- Start / Claim -->
       <div class="actions-row">
         <button id="start-btn" class="btn primary" onclick="startCrash()">Start Game</button>
-        <button id="cashout-btn" class="btn success" onclick="cashOut()" style="display:none;">
-          💸 Claim
-        </button>
+        <button id="cashout-btn" class="btn success" onclick="cashOut()" style="display:none;">💸 Claim</button>
       </div>
 
-      <!-- Status -->
       <div id="status" class="status"></div>
     </div>
 
     <div class="footer">@doominobot</div>
+
   </div>
 
   <script src="crash.js"></script>
