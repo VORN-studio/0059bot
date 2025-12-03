@@ -852,3 +852,17 @@ body::after {
   font-size: 13px;
   color: #ef4444;
 }
+
+
+/* ========== SLOT REEL ANIMATION ========== */
+
+.reel.spinning {
+  animation: spin-blur 0.15s linear infinite;
+  filter: blur(2px);
+}
+
+@keyframes spin-blur {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}

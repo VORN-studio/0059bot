@@ -147,21 +147,35 @@ function determineResult() {
   return r > WIN_RATE; // true → user wins
 }
 
-function spinReel(reelId) {
+function spinReel(reelId, finalSymbol) {
   return new Promise((resolve) => {
     const reel = $(reelId);
-    let count = 0;
+
+    // 1) start animation
+    reel.classList.add("spinning");
+
+    // 2) show random fast spin 20–30 times
+    let steps = 0;
+    const maxSteps = 18 + Math.floor(Math.random() * 8); // random 18–26 loops
 
     const interval = setInterval(() => {
       reel.textContent = getRandomSymbol();
-      count++;
-      if (count >= 15) {
+      steps++;
+
+      if (steps >= maxSteps) {
         clearInterval(interval);
-        resolve();
+
+        // 3) stop spinning after tiny delay for smoothness
+        setTimeout(() => {
+          reel.classList.remove("spinning");
+          reel.textContent = finalSymbol;
+          resolve();
+        }, 120);
       }
-    }, 80);
+    }, 70);
   });
 }
+
 
 async function spin() {
   if (spinning) return;
@@ -184,9 +198,10 @@ async function spin() {
 
   const userWins = determineResult();
 
-  await spinReel("r1");
-  await spinReel("r2");
-  await spinReel("r3");
+    await spinReel("r1", resultSymbols[0]);
+    await spinReel("r2", resultSymbols[1]);
+    await spinReel("r3", resultSymbols[2]);
+
 
   let resultSymbols;
 
@@ -197,9 +212,6 @@ async function spin() {
     resultSymbols = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
   }
 
-  $("r1").textContent = resultSymbols[0];
-  $("r2").textContent = resultSymbols[1];
-  $("r3").textContent = resultSymbols[2];
 
   if (userWins) {
     const reward = bet * 3.4;
