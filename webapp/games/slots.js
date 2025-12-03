@@ -92,17 +92,20 @@ async function confirmDeposit() {
     });
 
     const js = await r.json();
-    if (!js.ok) return showStatus("❌ Backend error");
+
+    if (!js.ok) return showGameStatus("❌ Backend error");
 
     mainBalance = js.new_main;
     slotsBalance += amount;
 
     updateBalances();
-    showStatus(`➕ ${amount}$ փոխանցվեց Slots balance`);
+    showGameStatus(`➕ ${amount}$ փոխանցվեց Slots balance`);
+
   } catch (e) {
-    showStatus("❌ Սերվերի սխալ");
+    showGameStatus("❌ Սերվերի սխալ");
   }
 }
+
 
 
 async function withdrawFromSlots() {
