@@ -1,0 +1,299 @@
+const tg = window.Telegram && window.Telegram.WebApp;
+const API = window.location.origin;
+
+// GAME CONFIG — ԱՅՍՏԵՂ ԵՍ ԿԱՌԱՎԱՐՈՒՄ ՀԱՎԱՆԱԿԱՆՈՒԹՅՈՒՆԸ
+const DICE_CONFIG = {
+  // որքան բարձր է թիվը, այնքան ՀԱՂԹՈՒՄ է բոտը
+  // 0.7 նշանակում է ~70% ռաունդներում օգտատերը կպարտվի
+  BOT_WIN_RATE: 0.7,
+
+  // որքան է win-ի multiplier-ը (քանի անգամ է վերադառնում բեթը)
+  PAYOUT_MULTIPLIER: 2.6
+};
+
+let USER_ID = null;
+let mainBalance = 0;   // բազայից եկող հիմնական բալանս
+let diceBalance = 0;   // միայն Dice խաղի ներսում
+
+let roundRunning = false;
+let allowPick = false;
+let currentBet = 0;
+let plannedResult = null; // "win" կամ "lose"
+
+// ================= Helpers =================
+
+function getUidFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+  return Number(p.get("uid"));
+}
+
+function updateBalances() {
+  document.getElementById("main-balance").textContent = mainBalance.toFixed(2);
+  document.getElementById("dice-balance").textContent = diceBalance.toFixed(2);
+}
+
+function showStatus(msg, type = "") {
+  const el = document.getElementById("status");
+  el.textContent = msg;
+  el.classList.remove("win", "lose");
+  if (type) el.classList.add(type);
+}
+
+function buildCups() {
+  const container = document.getElementById("cups");
+  container.innerHTML = "";
+
+  for (let i = 0; i < 3; i++) {
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "relative";
+
+    const cup = document.createElement("div");
+    cup.className = "cup";
+    cup.dataset.index = i;
+    cup.addEventListener("click", () => onCupClick(i));
+
+    const shadow = document.createElement("div");
+    shadow.className = "cup-shadow";
+
+    wrapper.appendChild(cup);
+    wrapper.appendChild(shadow);
+    container.appendChild(wrapper);
+  }
+}
+
+function setCupsSelectable(flag) {
+  const cups = document.querySelectorAll(".cup");
+  cups.forEach((c) => {
+    c.classList.remove("can-pick", "selected", "reveal", "shuffle");
+    if (flag) c.classList.add("can-pick");
+  });
+}
+
+function startShuffleAnimation() {
+  const cups = document.querySelectorAll(".cup");
+  cups.forEach((c, idx) => {
+    c.classList.add("shuffle");
+    c.style.animationDelay = `${idx * 90}ms`;
+  });
+
+  // մոտ 2 վրկ հետո թույլ կտանք ընտրել
+  setTimeout(() => {
+    const cups2 = document.querySelectorAll(".cup");
+    cups2.forEach((c) => c.classList.remove("shuffle"));
+    allowPick = true;
+    setCupsSelectable(true);
+    showStatus("Ընտրի՛ր որ բաժակի տակ է զառը 👀");
+  }, 1900);
+}
+
+function revealDice(userIndex, didWin) {
+  const glow = document.getElementById("dice-glow");
+  glow.classList.remove("visible", "dice-pos-0", "dice-pos-1", "dice-pos-2");
+
+  let diceIndex;
+  if (didWin) {
+    diceIndex = userIndex;
+  } else {
+    const options = [0, 1, 2].filter((i) => i !== userIndex);
+    diceIndex = options[Math.floor(Math.random() * options.length)];
+  }
+
+  glow.classList.add(`dice-pos-${diceIndex}`, "visible");
+
+  const cups = document.querySelectorAll(".cup");
+  cups[userIndex].classList.add("selected", "reveal");
+}
+
+// ================= Load User =================
+
+async function loadUser() {
+  try {
+    const r = await fetch(`${API}/api/user/${USER_ID}`);
+    const js = await r.json();
+    if (js.ok) {
+      mainBalance = js.user.balance_usd;
+      updateBalances();
+    } else {
+      showStatus("❌ Չհաջողվեց բեռնել բալանսը");
+    }
+  } catch (e) {
+    console.log("loadUser error", e);
+    showStatus("❌ Սերվերի սխալ");
+  }
+}
+
+// ================= Deposit / Withdraw =================
+
+function openDepositModal() {
+  document.getElementById("deposit-input").value = "";
+  document.getElementById("deposit-error").textContent = "";
+  document.getElementById("deposit-modal").classList.remove("hidden");
+}
+
+function closeDepositModal() {
+  document.getElementById("deposit-modal").classList.add("hidden");
+}
+
+async function confirmDeposit() {
+  const amount = Number(document.getElementById("deposit-input").value);
+
+  if (!amount || amount <= 0) {
+    document.getElementById("deposit-error").textContent = "Գրիր ճիշտ գումար";
+    return;
+  }
+
+  if (amount > mainBalance) {
+    document.getElementById("deposit-error").textContent =
+      "Դուք չունեք այդքան գումար։";
+    return;
+  }
+
+  closeDepositModal();
+
+  try {
+    const r = await fetch(`${API}/api/dice/deposit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: USER_ID, amount })
+    });
+
+    const js = await r.json();
+    if (!js.ok) {
+      return showStatus("❌ Backend error");
+    }
+
+    mainBalance = js.new_main;
+    diceBalance += amount;
+
+    updateBalances();
+    showStatus(`➕ ${amount.toFixed(2)} $ տեղափոխվեց Dice balance-ը`);
+  } catch (e) {
+    console.log("deposit error", e);
+    showStatus("❌ Սերվերի սխալ");
+  }
+}
+
+async function withdrawFromDice() {
+  if (diceBalance <= 0) {
+    return showStatus("❌ Dice balance = 0");
+  }
+
+  const amount = diceBalance;
+
+  try {
+    const r = await fetch(`${API}/api/dice/withdraw`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: USER_ID,
+        amount: amount
+      })
+    });
+
+    const js = await r.json();
+    if (!js.ok) {
+      return showStatus("❌ Backend error");
+    }
+
+    mainBalance += amount;
+    diceBalance = 0;
+    updateBalances();
+
+    showStatus("⬅ Dice balance-ը վերադարձվեց հիմնական բալանսին");
+  } catch (e) {
+    console.log("withdraw error", e);
+    showStatus("❌ Սերվերի սխալ");
+  }
+}
+
+// ================= GAME FLOW =================
+
+function decideResult() {
+  // random թիվ 0–1; եթե փոքր է BOT_WIN_RATE-ից → բոտը հաղթեց
+  const r = Math.random();
+  return r < DICE_CONFIG.BOT_WIN_RATE ? "lose" : "win";
+}
+
+function startRound() {
+  if (roundRunning) return;
+
+  const bet = Number(document.getElementById("bet").value);
+  if (!bet || bet <= 0) {
+    return showStatus("❌ Գումարը գրի՛ր ճիշտ։");
+  }
+  if (bet > diceBalance) {
+    return showStatus("❌ Dice balance-ը չի հերիքում։");
+  }
+
+  // հանում ենք բեթը Dice balance-ից հենց սկզբում
+  currentBet = bet;
+  diceBalance -= currentBet;
+  if (diceBalance < 0) diceBalance = 0;
+  updateBalances();
+
+  roundRunning = true;
+  allowPick = false;
+  plannedResult = decideResult();
+
+  setCupsSelectable(false);
+  showStatus("♻️ Խառնում ենք բաժակները…");
+
+  startShuffleAnimation();
+}
+
+function cancelRound() {
+  if (!roundRunning || allowPick) return; // եթե արդեն ընտրում է, չեղարկում չունի իմաստ
+  // վերադարձնում ենք բեթը diceBalance-ին
+  diceBalance += currentBet;
+  currentBet = 0;
+  roundRunning = false;
+  setCupsSelectable(false);
+  updateBalances();
+  showStatus("Ռաունդը չեղարկվեց։");
+}
+
+function onCupClick(index) {
+  if (!roundRunning || !allowPick) return;
+
+  allowPick = false;
+
+  const didWin = plannedResult === "win";
+  revealDice(index, didWin);
+
+  if (didWin) {
+    const winAmount = currentBet * DICE_CONFIG.PAYOUT_MULTIPLIER;
+    diceBalance += winAmount;
+    showStatus(
+      `🟢 Հաղթեցիր! Բեթը ${currentBet.toFixed(
+        2
+      )}$ → ${winAmount.toFixed(2)}$`,
+      "win"
+    );
+  } else {
+    showStatus("💔 Կորցրիր բեթը… հաջորդը քոնը կլինի։", "lose");
+  }
+
+  updateBalances();
+  currentBet = 0;
+  roundRunning = false;
+}
+
+// ================= BACK =================
+
+async function goBack() {
+  // եթե Dice balance-ում փող կա՝ նախ վերադարձնենք հիմնական բալանսին
+  if (diceBalance > 0) {
+    await withdrawFromDice();
+  }
+
+  // հետո գնում ենք հիմնական app
+  window.location.href = `${window.location.origin}/app?uid=${USER_ID}&t=${Date.now()}`;
+}
+
+// ================= INIT =================
+
+window.onload = () => {
+  USER_ID = tg?.initDataUnsafe?.user?.id || getUidFromUrl();
+  buildCups();
+  loadUser();
+};

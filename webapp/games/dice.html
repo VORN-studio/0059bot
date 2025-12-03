@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+  <meta charset="UTF-8" />
+  <title>Domino Dice</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="dice.css" />
+</head>
+<body>
+  <div class="page">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <button class="btn back" onclick="goBack()">← Վերադառնալ</button>
+
+      <div class="balances">
+        <div class="badge">
+          💼 Հիմնական՝ <span id="main-balance">0.00</span> $
+        </div>
+        <div class="badge dice">
+          🎲 Dice՝ <span id="dice-balance">0.00</span> $
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="card">
+
+      <h2 class="game-title">🩸 Domino Dice</h2>
+      <p class="game-subtitle">
+        Էջմիածնի <span>3 բաժակ + 1 զառ</span> խաղը․ գտի՛ր, թե որ բաժակի տակ է զառը։
+      </p>
+
+      <!-- cups scene -->
+      <div class="dice-scene">
+        <div id="cups" class="cups">
+          <!-- JS-ը կլցնի 3 բաժակ -->
+        </div>
+        <div id="dice-glow" class="dice-glow"></div>
+      </div>
+
+      <!-- bet + controls -->
+      <div class="bet-row">
+        <input id="bet" type="number" placeholder="Գումարը ($)" />
+      </div>
+
+      <div class="round-row">
+        <button id="start-btn" class="btn primary" onclick="startRound()">Սկսել ռաունդը</button>
+        <button id="cancel-round-btn" class="btn ghost" onclick="cancelRound()">Չեղարկել ռաունդը</button>
+      </div>
+
+      <p class="hint-text">
+        Քայլ 1․ գրի՛ր գումարը → Քայլ 2․ Սեղմի՛ր «Սկսել ռաունդը» → Քայլ 3․
+        սպասի՛ր խառնմանը ու ընտրի՛ր բաժակը։
+      </p>
+
+      <div class="transfer-row">
+        <button class="btn mini" onclick="openDepositModal()">➕ Դեպոզիտ Dice</button>
+        <button class="btn mini ghost" onclick="withdrawFromDice()">⬅ Վերադարձնել հիմնական բալանս</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </div>
+
+    <div class="footer">@doominobot</div>
+  </div>
+
+  <!-- DEPOSIT MODAL -->
+  <div id="deposit-modal" class="modal hidden">
+    <div class="modal-box">
+      <h3 class="modal-title">Դեպոզիտ Dice-ում</h3>
+      <div class="modal-underline"></div>
+
+      <input
+        id="deposit-input"
+        type="number"
+        class="modal-input"
+        placeholder="Գումարը ($), որ ուզում ես խաղալ Dice-ում"
+      />
+
+      <div id="deposit-error" class="modal-error"></div>
+
+      <div class="modal-actions">
+        <button class="btn modal-btn modal-cancel" onclick="closeDepositModal()">Չեղարկել</button>
+        <button class="btn modal-btn modal-ok" onclick="confirmDeposit()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="dice.js"></script>
+</body>
+</html>
