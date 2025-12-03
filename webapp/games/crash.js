@@ -11,6 +11,7 @@ let running = false;
 let crashed = false;
 let timer = null;
 let currentBet = 0;
+let STOP_FALL = false;
 
 // ================= CONFIG =================
 
@@ -18,11 +19,11 @@ let currentBet = 0;
 const CRASH_CONFIG = {
     // multiplier-ի աճի արագություն (որքան արագ է բարձրանում x-ը)
     GROWTH_MIN: 0.040,   // ամեն քայլի +1.5% նվազագույն
-    GROWTH_MAX: 0.065,   // ամեն քայլի +3.0% առավելագույն
+    GROWTH_MAX: 0.050,   // ամեն քայլի +3.0% առավելագույն
 
     // House edge — որքանով է խաղը կոշտ
     // 0.10 = մեղմ, 0.30 = սովորական, 0.50+ = շատ կոշտ
-    HOUSE_EDGE: 0.50,
+    HOUSE_EDGE: 0.40,
 
     // Մաքսիմալ multiplier, որից բարձր երբեք չի գնա
     MAX_MULTIPLIER: 10.0,
@@ -106,9 +107,12 @@ function fallEffect() {
     const pieces = document.querySelectorAll(".domino");
     pieces.forEach((p, i) => {
         setTimeout(() => {
-            p.classList.add("fall");
-        }, i * 80);   // domino effect, մեկը մյուսի հետևից
+            if (!STOP_FALL) {  
+                p.classList.add("fall");
+            }
+        }, i * 80);
     });
+
 }
 
 function crashEffect() {
@@ -203,6 +207,8 @@ async function withdrawFromCrash() {
 // ================= GAME =================
 
 function startCrash() {
+    STOP_FALL = false;
+
     const bet = Number(document.getElementById("bet").value);
 
     if (!bet || bet <= 0) return show("❌ Գումարը գրիր ճիշտ");
@@ -258,18 +264,17 @@ function crashNow() {
 
     running = false;
     crashed = true;
+    STOP_FALL = true;       // ⬅️ ԱՅՍԷ ԳԼԽԱՎՈՐԸ
     clearInterval(timer);
 
-    // ❌ Այստեղ այլևս ոչ մի fetch /api/crash/lose չկա
-    // պարտվելիս փողը արդեն հանված է crashBalance-ից startCrash-ում
-
-    crashEffect();  // վերջին դոմինոն կողքի
+    crashEffect();
 
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
 
     show("💥 Crash! Չհասցրեցիր Claim անել");
 }
+
 
 
 
