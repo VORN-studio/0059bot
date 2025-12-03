@@ -82,7 +82,7 @@ async function confirmDeposit() {
   closeDepositModal();
 
   try {
-    const r = await fetch(`${API}/api/dice/deposit`, { // same logic
+    const r = await fetch(`${API}/api/slots/deposit`, { // same logic
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: USER_ID, amount })
@@ -106,7 +106,7 @@ async function withdrawFromSlots() {
   const amount = slotsBalance;
 
   try {
-    const r = await fetch(`${API}/api/dice/withdraw`, { // same logic
+    const r = await fetch(`${API}/api/slots/withdraw`, { // same logic
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: USER_ID, amount })
