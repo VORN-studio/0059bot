@@ -160,11 +160,21 @@ function startCrash() {
 }
 
 function crashNow() {
-    if (!running) return;
+    if (!running) return;  // ⬅️ նախ ստուգում ենք, որ խաղը իսկապես ակտիվ է
 
     running = false;
     crashed = true;
     clearInterval(timer);
+
+    // 🟥 հիմա արդեն 100% անվտանգ է lose-ին գրանցելը
+    fetch(`${API}/api/crash/lose`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: USER_ID,
+            amount: currentBet
+        })
+    });
 
     crashEffect();  // վերջին դոմինոն կողքի
 
@@ -173,6 +183,7 @@ function crashNow() {
 
     show("💥 Crash! Չհասցրեցիր Claim անել");
 }
+
 
 
 
