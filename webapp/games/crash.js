@@ -193,38 +193,39 @@ async function cashOut() {
 
     show("💸 Հաշվում ենք…");
 
-    let js;
+    // 1) Ուղարկում ենք backend-ին, որ շահած գումարը գրի բազայում
     try {
-        const r = await fetch(`${API}/api/game/bet`, {
+        const r = await fetch(`${API}/api/crash/claim`, {
             method: "POST",
-            headers: { "Content-Type": "application/json"},
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 user_id: USER_ID,
-                amount: currentBet,
-                game: "crash",
-                choice: multiplier
+                win: win
             })
         });
-        js = await r.json();
+
+        const js = await r.json();
+
+        if (!js.ok) {
+            return show("❌ Backend error");
+        }
     } catch (e) {
-        console.log("bet error", e);
+        console.log("claim error", e);
         return show("❌ Սերվերի սխալ");
     }
 
-    if (!js.ok) {
-        return show("❌ Backend error");
-    }
-
-    // ❗ Backend-ը main balance-ը այս պահին չպետք է փոփոխի crash-ի համար
-    // շահումը գնում է միայն Crash balance-ի վրա
+    // 2) Crash balance-ի վրա ավելացնում ենք win-ը
     crashBalance += win;
     updateBalances();
 
+    // 3) Ցուցադրում ենք շահումը
     show("🟢 +" + win.toFixed(2) + " $");
 
+    // 4) Կոճակները վերականգնում ենք
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
 }
+
 
 // ================= BACK =================
 
