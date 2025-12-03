@@ -170,24 +170,6 @@ function crashNow() {
     show("💥 Crash! Չհասցրեցիր Claim անել");
 }
 
-async function depositToCrash() {
-    const raw = prompt("Գումարը ($):");
-    const amount = Number(raw);
-
-    if (!amount || amount <= 0) return show("❌ Սխալ գումար");
-
-    const r = await fetch(`${API}/api/crash/deposit`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ user_id: USER_ID, amount })
-    });
-
-    const js = await r.json();
-    if (!js.ok) return show("❌ Բավարար չէ");
-
-    loadUser(); // refresh all balances from backend
-    show("➕ Crash deposit OK");
-}
 
 
 // ================= CLAIM =================

@@ -147,9 +147,8 @@ def release_db(conn):
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS crash_balance NUMERIC(18,2) DEFAULT 0;"
-
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0"
+    
 ]
 
 def init_db():
@@ -305,7 +304,6 @@ def get_user_stats(user_id: int):
         "ref_count": int(ref_count),
         "active_refs": int(active_refs),
         "team_deposit_usd": float(team_dep),
-        "crash_balance": float(crash_balance),
     }
 
 
@@ -372,7 +370,6 @@ def api_user(user_id):
         return jsonify({"ok": False, "error": "user_not_found"}), 404
 
     return jsonify({"ok": True, "user": stats})
-
 
 
 @app_web.route("/api/deposit", methods=["POST"])
