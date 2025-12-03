@@ -110,7 +110,7 @@ function fallEffect() {
             if (!STOP_FALL) {  
                 p.classList.add("fall");
             }
-        }, i * 80);
+        }, i * 120);
     });
 
 }
@@ -290,8 +290,10 @@ function crashNow() {
     STOP_FALL = true;       // ⬅️ ԱՅՍԷ ԳԼԽԱՎՈՐԸ
     clearInterval(timer);
 
-    crashEffect();
+    document.querySelector(".domino-chain").style.animation = "none";
 
+    crashEffect();
+    
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
 

@@ -109,7 +109,7 @@ body {
   gap: 6px;
   align-items: flex-end;
   width: max-content;
-  animation: moveScene 4s linear infinite; /* ← ԱՅՍ Է ՖԻՇԿԱ */
+  animation: moveScene 2.4s linear infinite; 
 }
 
 /* Շարժվող տեսարանի անիմացիա */
