@@ -78,6 +78,14 @@ body::after {
   gap: 8px;
 }
 
+.balances-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+
 /* ===== BUTTONS ===== */
 .btn {
   padding: 9px 16px;
