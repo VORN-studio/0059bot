@@ -10,20 +10,51 @@
 </head>
 
 <body>
-
 <div class="page">
 
+    <!-- TOP BAR -->
     <div class="top-bar">
-        <button class="btn" id="backBtn">← Վերադառնալ</button>
+        <button class="btn" id="backBtn">← Վերադառնալ Slots</button>
         <div class="title">📖 Book of Domino</div>
     </div>
 
-    <div class="loading-screen">
+    <!-- GAME AREA -->
+    <div id="game-area" class="hide">
+
+        <!-- REELS -->
+        <div class="reels">
+            <div class="reel" id="reel1"></div>
+            <div class="reel" id="reel2"></div>
+            <div class="reel" id="reel3"></div>
+            <div class="reel" id="reel4"></div>
+            <div class="reel" id="reel5"></div>
+        </div>
+
+        <!-- BET INPUT -->
+        <div class="bet-box">
+            <input id="betInput" type="number" placeholder="Գումար ($)" />
+        </div>
+
+        <!-- SPIN BUTTON -->
+        <button id="spinBtn" class="spin-btn">🎰 Պտտել</button>
+
+        <!-- CONTROL BUTTONS -->
+        <div class="bottom-controls">
+            <button class="btn small" id="depositBtn">➕ Դեպոզիտ</button>
+            <button class="btn small" id="withdrawBtn">⬅ Վերադարձնել բալանսը</button>
+            <button class="btn small" id="infoBtn">ℹ Տեղեկատվություն</button>
+        </div>
+
+        <p id="status" class="status"></p>
+
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div class="loading-screen" id="loader">
         <div class="loader"></div>
         <p>Բացվում է խաղը...</p>
     </div>
 
 </div>
-
 </body>
 </html>
