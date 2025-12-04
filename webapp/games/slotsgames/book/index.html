@@ -10,11 +10,11 @@
 <body>
 <div class="page">
 
-  <!-- TOP BAR -->
+  <!-- ՎԵՐԵՎԻ ՄԱՍԸ -->
   <div class="top-bar">
     <button class="btn back" onclick="goBack()">← Վերադառնալ Slots</button>
 
-    <div class="balances balances-column">
+    <div class="balances">
       <div class="badge">
         💼 Հիմնական՝ <span id="main-balance">0.00</span> $
       </div>
@@ -22,25 +22,53 @@
         🎰 Slots՝ <span id="slots-balance">0.00</span> $
       </div>
     </div>
-
   </div>
 
-  <!-- GAME HEADER -->
+  <!-- ՎԵՐՆԱԳԻՐ -->
   <h2 class="game-title">📖 Book of Domino</h2>
   <p class="subtitle">
-    Պտտի՛ր հինգ ռեելները, բացի՛ր «Գիրքը» և փորձի՛ր հավաքել կոմբոներ
+    Պտտի՛ր հինգ ռեելները և փորձի՛ր հավաքել կոմբոներ
   </p>
 
-  <!-- 5x1 REELS VIEW (հետո կդարձնենք լիարժեք 5x3) -->
+  <!-- ✅ ՆՈՐ 5×3 ԴԱՇՏ -->
   <div class="book-reels">
-    <div class="book-reel" id="reel-1">🔸</div>
-    <div class="book-reel" id="reel-2">🔸</div>
-    <div class="book-reel" id="reel-3">🔸</div>
-    <div class="book-reel" id="reel-4">🔸</div>
-    <div class="book-reel" id="reel-5">🔸</div>
+    <!-- Reel 1 -->
+    <div class="book-reel" data-col="0">
+      <div class="cell" data-row="0" data-col="0"></div>
+      <div class="cell" data-row="1" data-col="0"></div>
+      <div class="cell" data-row="2" data-col="0"></div>
+    </div>
+
+    <!-- Reel 2 -->
+    <div class="book-reel" data-col="1">
+      <div class="cell" data-row="0" data-col="1"></div>
+      <div class="cell" data-row="1" data-col="1"></div>
+      <div class="cell" data-row="2" data-col="1"></div>
+    </div>
+
+    <!-- Reel 3 -->
+    <div class="book-reel" data-col="2">
+      <div class="cell" data-row="0" data-col="2"></div>
+      <div class="cell" data-row="1" data-col="2"></div>
+      <div class="cell" data-row="2" data-col="2"></div>
+    </div>
+
+    <!-- Reel 4 -->
+    <div class="book-reel" data-col="3">
+      <div class="cell" data-row="0" data-col="3"></div>
+      <div class="cell" data-row="1" data-col="3"></div>
+      <div class="cell" data-row="2" data-col="3"></div>
+    </div>
+
+    <!-- Reel 5 -->
+    <div class="book-reel" data-col="4">
+      <div class="cell" data-row="0" data-col="4"></div>
+      <div class="cell" data-row="1" data-col="4"></div>
+      <div class="cell" data-row="2" data-col="4"></div>
+    </div>
   </div>
 
-  <!-- BET INPUT -->
+  <!-- ԴՐԱՎԿԱ -->
   <div class="bet-row">
     <input
       id="bet-input"
@@ -51,7 +79,7 @@
     />
   </div>
 
-  <!-- SPIN BUTTON -->
+  <!-- SPIN -->
   <button class="spin-btn" id="spin-btn" onclick="spin()">
     ✨ Պտտել բարը
   </button>
@@ -59,7 +87,7 @@
   <!-- STATUS -->
   <p id="status" class="status"></p>
 
-  <!-- TRANSFER ROW -->
+  <!-- ԴԵՊՈԶԻՏ / ՎԵՐԱԴԱՐՁ / ԻՆՖՈ -->
   <div class="transfer-row">
     <button class="btn mini" onclick="openDepositModal()">+ Դեպոզիտ Slots</button>
     <button class="btn mini" onclick="withdrawFromSlots()">⬅ Վերադարձնել հիմնական բալանս</button>
@@ -68,7 +96,7 @@
 
 </div>
 
-<!-- DEPOSIT MODAL -->
+<!-- ԴԵՊՈԶԻՏ ՄՈԴԱԼ -->
 <div id="slot-deposit-modal" class="modal hidden">
   <div class="modal-box">
     <h3 class="modal-title">Դեպոզիտ Slots-ում</h3>
@@ -95,18 +123,17 @@
   </div>
 </div>
 
-<!-- INFO MODAL -->
+<!-- ԻՆՖՈ ՄՈԴԱԼ -->
 <div id="info-modal" class="modal hidden">
   <div class="modal-box">
     <h3 class="modal-title">📖 Book of Domino</h3>
     <div class="modal-underline"></div>
 
     <p class="info-text">
-      Սա փորձարարական slot-խաղ է Domino բոտի ներսում․
-      խաղում ես DOMT / «խաղային միավորներով»։
+      Սա փորձարարական slot է Domino բոտի ներսում․ խաղում ես DOMT / խաղային միավորներով։
       <br><br>
-      Քո բալանսը կառավարում ես «Դեպոզիտ» և «Վերադարձնել հիմնական բալանս»
-      կոճակներով։ Հետո արդեն DOMT → crypto → ինչ կուզես 😉
+      Բալանսը կառավարում ես «Դեպոզիտ» և «Վերադարձնել հիմնական բալանս»
+      կոճակներով։
     </p>
 
     <div class="modal-actions">

@@ -495,3 +495,74 @@ body::after {
 }
 
 /* ===== END CSS ===== */
+
+
+/* ========== BOOK OF DOMINO — 5x3 GRID ========== */
+
+.book-reels {
+  margin: 18px auto 18px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.book-reel {
+  width: 68px;
+  height: 122px;
+  padding: 6px 0;
+
+  border-radius: 18px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08), transparent 55%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.65), transparent 70%),
+    linear-gradient(180deg, #182033, #0f1524 55%, #050811);
+
+  border: 1px solid rgba(180,195,255,0.22);
+
+  box-shadow:
+    inset 0 10px 24px rgba(0,0,0,0.65),
+    inset 0 -8px 18px rgba(0,0,0,0.55),
+    0 12px 28px rgba(0,0,0,0.65),
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 0 22px rgba(130,65,255,0.25);
+
+  backdrop-filter: blur(10px);
+}
+
+/* բջիջները (սիմվոլները) */
+.book-reel .cell {
+  width: 100%;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 28px;
+  font-weight: 700;
+  color: #f9fafb;
+
+  text-shadow:
+    0 0 10px rgba(0,0,0,0.7),
+    0 0 16px rgba(148, 163, 255, 0.45);
+}
+
+/* spinning effect */
+.book-reel.spinning {
+  animation: bookReelSpin 0.18s linear infinite;
+  filter: blur(1.1px) brightness(1.2);
+  opacity: 0.9;
+}
+
+@keyframes bookReelSpin {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}

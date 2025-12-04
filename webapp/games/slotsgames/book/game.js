@@ -6,10 +6,8 @@ let mainBalance = 0;
 let slotsBalance = 0;
 let spinning = false;
 
-// helpers
-function $(id) {
-  return document.getElementById(id);
-}
+// կարճ helper
+function $(id) { return document.getElementById(id); }
 
 function updateBalances() {
   $("main-balance").textContent = mainBalance.toFixed(2);
@@ -23,13 +21,13 @@ function setStatus(text, type = "") {
   if (type) el.classList.add(type);
 }
 
-// UID
+// uid
 function getUidFromUrl() {
   const p = new URLSearchParams(window.location.search);
   return Number(p.get("uid") || 0);
 }
 
-// load main balance from backend
+// բալանսի բեռնում backend-ից
 async function loadUser() {
   try {
     if (!USER_ID) return;
@@ -43,7 +41,8 @@ async function loadUser() {
   }
 }
 
-// ========== DEPOSIT MODAL ==========
+/* ========== ԴԵՊՈԶԻՏ / ՎԵՐԱԴԱՐՁ ========== */
+
 function openDepositModal() {
   $("slot-deposit-input").value = "";
   $("slot-deposit-error").textContent = "";
@@ -54,7 +53,6 @@ function closeDepositModal() {
   $("slot-deposit-modal").classList.add("hidden");
 }
 
-// confirm deposit -> backend /api/slots/deposit
 async function confirmDeposit() {
   const raw = $("slot-deposit-input").value;
   const amount = Number(raw);
@@ -63,7 +61,6 @@ async function confirmDeposit() {
     $("slot-deposit-error").textContent = "Գրիր ճիշտ գումար";
     return;
   }
-
   if (amount > mainBalance) {
     $("slot-deposit-error").textContent = "Չունես այդքան գումար";
     return;
@@ -94,7 +91,6 @@ async function confirmDeposit() {
   }
 }
 
-// withdraw all slots -> backend /api/slots/withdraw
 async function withdrawFromSlots(silent = false) {
   if (slotsBalance <= 0) {
     if (!silent) setStatus("Slots բալանսը = 0");
@@ -125,49 +121,73 @@ async function withdrawFromSlots(silent = false) {
   }
 }
 
-// ========== INFO MODAL ==========
-function openInfo() {
-  $("info-modal").classList.remove("hidden");
-}
-function closeInfo() {
-  $("info-modal").classList.add("hidden");
-}
+/* ========== ԻՆՖՈ ՄՈԴԱԼ ========== */
 
-// ========== GAME LOGIC (5 reels) ==========
+function openInfo() { $("info-modal").classList.remove("hidden"); }
+function closeInfo() { $("info-modal").classList.add("hidden"); }
 
-const SYMBOLS = ["10", "J", "Q", "K", "A", "📖"];
+/* ========== ԽԱՂԻ ՄԱՍ – 5×3 GRID ========== */
+
+const ROWS = 3;
+const COLS = 5;
+
+const SYMBOLS = ["10", "J", "Q", "K", "A", "BOOK"];
+
 const SYMBOL_EMOJI = {
   "10": "🔹",
-  "J": "🟦",
-  "Q": "💠",
-  "K": "🟨",
-  "A": "⭐",
-  "📖": "📖",
+  "J":  "🟦",
+  "Q":  "💠",
+  "K":  "🟨",
+  "A":  "⭐",
+  "BOOK": "📖",
 };
 
-// random symbol with քիչ ավելի հազվադեպ գրքույկ
+// «գիրքը» մի քիչ հազվադեպ
 function randomSymbol() {
-  const roll = Math.random();
-  if (roll < 0.08) return "📖";      // 8% «գիրք»
-  if (roll < 0.26) return "A";
-  if (roll < 0.46) return "K";
-  if (roll < 0.66) return "Q";
-  if (roll < 0.86) return "J";
+  const r = Math.random();
+  if (r < 0.08) return "BOOK";     // 8%
+  if (r < 0.26) return "A";
+  if (r < 0.46) return "K";
+  if (r < 0.66) return "Q";
+  if (r < 0.86) return "J";
   return "10";
 }
 
-function setReelSymbol(idx, symbol) {
-  const el = $(`reel-${idx}`);
-  if (!el) return;
-  el.textContent = SYMBOL_EMOJI[symbol] || symbol;
+// լցնում ենք դաշտը random սիմվոլներով և նկարում DOM-ի վրա
+function fillGrid() {
+  const grid = [];
+
+  for (let row = 0; row < ROWS; row++) {
+    grid[row] = [];
+    for (let col = 0; col < COLS; col++) {
+      const sym = randomSymbol();
+      grid[row][col] = sym;
+
+      const cell = document.querySelector(
+        `.cell[data-row="${row}"][data-col="${col}"]`
+      );
+      if (cell) cell.textContent = SYMBOL_EMOJI[sym] || sym;
+    }
+  }
+  return grid;
 }
 
-// main spin
+function startSpinAnimation() {
+  document.querySelectorAll(".book-reel").forEach((el, i) => {
+    setTimeout(() => el.classList.add("spinning"), i * 70);
+  });
+}
+
+function stopSpinAnimation() {
+  document.querySelectorAll(".book-reel").forEach((el) =>
+    el.classList.remove("spinning")
+  );
+}
+
 async function spin() {
   if (spinning) return;
 
-  const rawBet = $("bet-input").value;
-  const bet = Number(rawBet);
+  const bet = Number($("bet-input").value);
 
   if (!bet || bet <= 0) {
     setStatus("Գրիր ճիշտ գումար", "lose");
@@ -178,45 +198,32 @@ async function spin() {
     return;
   }
 
-  // take bet
   slotsBalance -= bet;
   updateBalances();
   setStatus("Պտտում ենք...", "");
 
   spinning = true;
   $("spin-btn").disabled = true;
+  startSpinAnimation();
 
-  const reels = [1, 2, 3, 4, 5];
-  const result = [];
+  // փոքր դիլեյ, որ ֆռալը երևա
+  await new Promise((res) => setTimeout(res, 650));
 
-  // visual spin
-  reels.forEach((i) => {
-    const el = $(`reel-${i}`);
-    if (el) el.classList.add("spinning");
-  });
+  const grid = fillGrid();
+  stopSpinAnimation();
 
-  for (let i = 0; i < reels.length; i++) {
-    await new Promise((res) => setTimeout(res, 220 + i * 130));
-    const symbol = randomSymbol();
-    result[i] = symbol;
-    setReelSymbol(reels[i], symbol);
-
-    const el = $(`reel-${reels[i]}`);
-    if (el) el.classList.remove("spinning");
-  }
-
-  // simple paytable
+  // 🔥 առայժմ հաշվում ենք ՄԻԱՅՆ ՄԻՋԱՆԿՅԱԼ ԳԾԸ (row = 1)
+  const middleRow = grid[1];
   let win = 0;
-  const allSame = result.every((s) => s === result[0]);
 
-  if (allSame && result[0] === "📖") {
-    // full screen book
+  const allSame = middleRow.every((s) => s === middleRow[0]);
+
+  if (allSame && middleRow[0] === "BOOK") {
     win = bet * 12;
   } else if (allSame) {
     win = bet * 6;
   } else {
-    // count books
-    const books = result.filter((s) => s === "📖").length;
+    const books = middleRow.filter((s) => s === "BOOK").length;
     if (books === 4) win = bet * 5;
     else if (books === 3) win = bet * 3;
     else if (books === 2) win = bet * 1.2;
@@ -234,17 +241,18 @@ async function spin() {
   $("spin-btn").disabled = false;
 }
 
-// ========== NAVIGATION ==========
+/* ========== ՎԵՐԱԴԱՌՆԱԼ ՍԼՈՏՍ ՄԵՆՅՈՒ ========== */
+
 async function goBack() {
   if (slotsBalance > 0) {
     await withdrawFromSlots(true);
   }
   window.location.href =
-    `${window.location.origin}/webapp/games/slots.html?uid=${USER_ID}`;
+    `${window.location.origin}/webapp/slots.html?uid=${USER_ID}`;
 }
 
+/* ========== INIT ========== */
 
-// ========== INIT ==========
 window.addEventListener("load", () => {
   USER_ID = tg?.initDataUnsafe?.user?.id || getUidFromUrl();
   if (!USER_ID) {
