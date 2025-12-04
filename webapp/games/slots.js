@@ -116,19 +116,101 @@ async function goBack() {
   window.location.href = `${window.location.origin}/app?uid=${USER_ID}`;
 }
 
-function forceMiniSlot777() {
-    const reels = ["mreel1","mreel2","mreel3"];
+// ==========================
+// MINI SLOT PREVIEW ENGINE
+// ==========================
 
-    reels.forEach((id) => {
-        const reel = document.getElementById(id);
-        reel.innerHTML = `
-            <div>7️⃣</div>
-            <div>7️⃣</div>
-            <div>7️⃣</div>
-            <div>7️⃣</div>
-            <div>7️⃣</div>
-        `;
+// slot symbols
+const previewSymbols = ["🍒", "⭐", "💎", "🔔", "7️⃣"];
+
+// reel spin duration (C — slow version)
+const SPIN_TIME = 1500; // 1.5 sec per reel
+const DELAY_BETWEEN_REELS = 300; // 0.3 sec
+const LOOP_DELAY = 1800; // wait before restarting sequence
+
+// Fill reel with random symbols scrolling effect
+function fillReelWithRandom(reel) {
+    reel.innerHTML = "";
+    for (let i = 0; i < 6; i++) {
+        const d = document.createElement("div");
+        d.textContent = previewSymbols[Math.floor(Math.random() * previewSymbols.length)];
+        reel.appendChild(d);
+    }
+}
+
+// Animate reel spin
+function spinMiniReel(reel) {
+    return new Promise((resolve) => {
+        let start = Date.now();
+
+        function animate() {
+            reel.style.transform = "translateY(-60px)";
+
+            setTimeout(() => {
+                fillReelWithRandom(reel);
+                reel.style.transform = "translateY(0px)";
+            }, 120);
+
+            if (Date.now() - start < SPIN_TIME) {
+                requestAnimationFrame(animate);
+            } else {
+                resolve();
+            }
+        }
+
+        animate();
     });
 }
 
-setInterval(forceMiniSlot777, 2000);
+// Stop on 7️⃣
+function stopMiniReelOnSeven(reel) {
+    reel.innerHTML = "";
+    for (let i = 0; i < 6; i++) {
+        const d = document.createElement("div");
+        d.textContent = i === 5 ? "7️⃣" : previewSymbols[Math.floor(Math.random() * previewSymbols.length)];
+        reel.appendChild(d);
+    }
+    reel.style.transform = "translateY(-300px)";
+
+    setTimeout(() => {
+        reel.style.transform = "translateY(0px)";
+    }, 50);
+}
+
+// Main loop
+async function miniSlotLoop() {
+    const r1 = document.getElementById("mreel1");
+    const r2 = document.getElementById("mreel2");
+    const r3 = document.getElementById("mreel3");
+
+    while (true) {
+        // initial random fill
+        fillReelWithRandom(r1);
+        fillReelWithRandom(r2);
+        fillReelWithRandom(r3);
+
+        // REEL 1
+        await spinMiniReel(r1);
+        stopMiniReelOnSeven(r1);
+
+        await new Promise(res => setTimeout(res, DELAY_BETWEEN_REELS));
+
+        // REEL 2
+        await spinMiniReel(r2);
+        stopMiniReelOnSeven(r2);
+
+        await new Promise(res => setTimeout(res, DELAY_BETWEEN_REELS));
+
+        // REEL 3
+        await spinMiniReel(r3);
+        stopMiniReelOnSeven(r3);
+
+        // pause before restart
+        await new Promise(res => setTimeout(res, LOOP_DELAY));
+    }
+}
+
+// Start animation automatically
+setTimeout(() => {
+    miniSlotLoop();
+}, 600);
