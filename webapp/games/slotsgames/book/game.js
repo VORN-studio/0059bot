@@ -131,27 +131,67 @@ function closeInfo() { $("info-modal").classList.add("hidden"); }
 const ROWS = 3;
 const COLS = 5;
 
-const SYMBOLS = ["10", "J", "Q", "K", "A", "BOOK"];
+// SYMBOL LIST
+const SYMBOLS = [
+  "book1", // scatter / wild
+  "book2",
+  "book3",
+  "book4",
+  "book5",
+  "book6",
+  "book7",
+  "book8",
+  "book9",
+  "book10",
+  "book11"
+];
 
-const SYMBOL_EMOJI = {
-  "10": "🔹",
-  "J":  "🟦",
-  "Q":  "💠",
-  "K":  "🟨",
-  "A":  "⭐",
-  "BOOK": "📖",
+// Image mapping
+const SYMBOL_IMAGES = {
+  "book1": "symbols/book1.png",
+  "book2": "symbols/book2.png",
+  "book3": "symbols/book3.png",
+  "book4": "symbols/book4.png",
+  "book5": "symbols/book5.png",
+  "book6": "symbols/book6.png",
+  "book7": "symbols/book7.png",
+  "book8": "symbols/book8.png",
+  "book9": "symbols/book9.png",
+  "book10": "symbols/book10.png",
+  "book11": "symbols/book11.png"
 };
 
-// «գիրքը» մի քիչ հազվադեպ
-function randomSymbol() {
-  const r = Math.random();
-  if (r < 0.08) return "BOOK";     // 8%
-  if (r < 0.26) return "A";
-  if (r < 0.46) return "K";
-  if (r < 0.66) return "Q";
-  if (r < 0.86) return "J";
-  return "10";
+const PAY_TABLE = {
+  "book1": {3: 20, 4: 50, 5: 200},   // Scatter / special
+  "book11": {3: 12, 4: 30, 5: 120},  // High
+  "book10": {3: 10, 4: 25, 5: 100},  // High
+  "book7": {3: 6, 4: 12, 5: 40},     // Mid
+  "book8": {3: 6, 4: 12, 5: 40},     // Mid
+  "book9": {3: 6, 4: 12, 5: 40},     // Mid
+  "book2": {3: 4, 4: 8, 5: 20},      // Low
+  "book3": {3: 4, 4: 8, 5: 20},
+  "book4": {3: 4, 4: 8, 5: 20},
+  "book5": {3: 4, 4: 8, 5: 20},
+  "book6": {3: 4, 4: 8, 5: 20}
+};
+
+function renderSymbol(reelId, symbolName) {
+  const el = document.getElementById(reelId);
+  el.innerHTML = `<img src="${SYMBOL_IMAGES[symbolName]}" class="symbol-img">`;
 }
+
+
+function randomSymbol() {
+  const roll = Math.random();
+
+  if (roll < 0.05) return "book1";     // Scatter 5%
+  if (roll < 0.15) return "book11";    // High symbol
+  if (roll < 0.30) return "book10";    // High symbol
+  if (roll < 0.50) return ["book7","book8","book9"][Math.floor(Math.random()*3)];
+  return ["book2","book3","book4","book5","book6"][Math.floor(Math.random()*5)];
+}
+
+
 
 // լցնում ենք դաշտը random սիմվոլներով և նկարում DOM-ի վրա
 function fillGrid() {
@@ -166,7 +206,11 @@ function fillGrid() {
       const cell = document.querySelector(
         `.cell[data-row="${row}"][data-col="${col}"]`
       );
-      if (cell) cell.textContent = SYMBOL_EMOJI[sym] || sym;
+       if (cell) {
+        cell.classList.remove("stop");
+        cell.textContent = SYMBOL_EMOJI[sym] || sym;
+        setTimeout(() => cell.classList.add("stop"), 20);
+      }
     }
   }
   return grid;
