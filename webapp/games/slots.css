@@ -929,41 +929,34 @@ body::after {
   opacity: 0.7;
 }
 
-.mini-slot-real {
-    width: 100%;
-    height: 120px;
+/* MINI 777 SLOT (realistic preview) */
+.mini-slot {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
+    padding: 10px;
     background: linear-gradient(180deg,#121826,#0a0f18);
     border-radius: 16px;
-    padding: 8px;
+    height: 110px;
+    box-shadow: inset 0 6px 12px rgba(0,0,0,0.45);
+}
+
+.mini-reel-box {
+    width: 70px;
+    height: 100px;
+    border-radius: 14px;
+    background: linear-gradient(180deg,#1b2336,#0d131f);
+    border: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
 }
 
 .mini-reel {
-    width: 60px;
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    font-size: 42px;
-    font-weight: 700;
-    animation: reelSpinLoop 1.6s infinite linear;
-}
-
-.mini-reel div {
-    height: 60px;
+    font-size: 46px;
+    transition: transform 0.16s ease-out;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-@keyframes reelSpinLoop {
-    0%   { transform: translateY(0); }
-    20%  { transform: translateY(-60px); }
-    40%  { transform: translateY(-120px); }
-    60%  { transform: translateY(-180px); }
-    80%  { transform: translateY(-240px); }
-    100% { transform: translateY(0); }
 }

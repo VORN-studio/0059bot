@@ -116,101 +116,29 @@ async function goBack() {
   window.location.href = `${window.location.origin}/app?uid=${USER_ID}`;
 }
 
-// ==========================
-// MINI SLOT PREVIEW ENGINE
-// ==========================
+const miniSymbols = ["🍒","⭐","🔔","💎","7️⃣"];
 
-// slot symbols
-const previewSymbols = ["🍒", "⭐", "💎", "🔔", "7️⃣"];
+function spinMiniReel(reelId, delay) {
+    const reel = document.getElementById(reelId);
+    let index = 0;
 
-// reel spin duration (C — slow version)
-const SPIN_TIME = 1500; // 1.5 sec per reel
-const DELAY_BETWEEN_REELS = 300; // 0.3 sec
-const LOOP_DELAY = 1800; // wait before restarting sequence
-
-// Fill reel with random symbols scrolling effect
-function fillReelWithRandom(reel) {
-    reel.innerHTML = "";
-    for (let i = 0; i < 6; i++) {
-        const d = document.createElement("div");
-        d.textContent = previewSymbols[Math.floor(Math.random() * previewSymbols.length)];
-        reel.appendChild(d);
-    }
-}
-
-// Animate reel spin
-function spinMiniReel(reel) {
-    return new Promise((resolve) => {
-        let start = Date.now();
-
-        function animate() {
-            reel.style.transform = "translateY(-60px)";
-
-            setTimeout(() => {
-                fillReelWithRandom(reel);
-                reel.style.transform = "translateY(0px)";
-            }, 120);
-
-            if (Date.now() - start < SPIN_TIME) {
-                requestAnimationFrame(animate);
-            } else {
-                resolve();
-            }
-        }
-
-        animate();
-    });
-}
-
-// Stop on 7️⃣
-function stopMiniReelOnSeven(reel) {
-    reel.innerHTML = "";
-    for (let i = 0; i < 6; i++) {
-        const d = document.createElement("div");
-        d.textContent = i === 5 ? "7️⃣" : previewSymbols[Math.floor(Math.random() * previewSymbols.length)];
-        reel.appendChild(d);
-    }
-    reel.style.transform = "translateY(-300px)";
+    let spin = setInterval(() => {
+        reel.textContent = miniSymbols[index % miniSymbols.length];
+        index++;
+    }, 80);
 
     setTimeout(() => {
-        reel.style.transform = "translateY(0px)";
-    }, 50);
+        clearInterval(spin);
+
+        // final result
+        reel.textContent = "7️⃣";
+    }, delay);
 }
 
-// Main loop
-async function miniSlotLoop() {
-    const r1 = document.getElementById("mreel1");
-    const r2 = document.getElementById("mreel2");
-    const r3 = document.getElementById("mreel3");
-
-    while (true) {
-        // initial random fill
-        fillReelWithRandom(r1);
-        fillReelWithRandom(r2);
-        fillReelWithRandom(r3);
-
-        // REEL 1
-        await spinMiniReel(r1);
-        stopMiniReelOnSeven(r1);
-
-        await new Promise(res => setTimeout(res, DELAY_BETWEEN_REELS));
-
-        // REEL 2
-        await spinMiniReel(r2);
-        stopMiniReelOnSeven(r2);
-
-        await new Promise(res => setTimeout(res, DELAY_BETWEEN_REELS));
-
-        // REEL 3
-        await spinMiniReel(r3);
-        stopMiniReelOnSeven(r3);
-
-        // pause before restart
-        await new Promise(res => setTimeout(res, LOOP_DELAY));
-    }
+function startMiniSlotSpin() {
+    spinMiniReel("miniR1", 600);
+    spinMiniReel("miniR2", 1000);
+    spinMiniReel("miniR3", 1400);
 }
 
-// Start animation automatically
-setTimeout(() => {
-    miniSlotLoop();
-}, 600);
+setInterval(startMiniSlotSpin, 2500);
