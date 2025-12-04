@@ -969,3 +969,48 @@ body::after {
   80% { transform: translateY(-104px); }
   100% { transform: translateY(0); }
 }
+
+
+/* Mini slot preview (lobby) */
+.mini-slot {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px;
+  background: linear-gradient(180deg,#121826,#0a0f18);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: inset 0 8px 16px rgba(0,0,0,0.5);
+}
+
+.mini-reel {
+  width: 60px;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-size: 42px;
+  font-weight: 700;
+  text-align: center;
+  animation: miniSpin 1.8s infinite ease-in-out;
+}
+
+.mini-reel div {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* REAL SLOT-STYLE ROLL ANIMATION */
+@keyframes miniSpin {
+  0%   { transform: translateY(0); }
+  35%  { transform: translateY(-60px); }
+  65%  { transform: translateY(-120px); }
+
+  /* Hold 7️⃣ at last frame */
+  80%  { transform: translateY(-120px); }
+  100% { transform: translateY(0); }
+}
