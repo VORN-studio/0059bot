@@ -506,3 +506,15 @@ body::after {
     padding: 6px 10px !important;
     margin-left: 6px;
 }
+
+.info-row {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.info-btn {
+  background: rgba(30, 41, 59, 0.9);
+  padding: 6px 14px;
+  font-size: 13px;
+}

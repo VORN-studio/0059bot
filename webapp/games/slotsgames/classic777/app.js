@@ -131,6 +131,47 @@ async function withdrawFromSlots() {
 const symbols  = ["🍒", "⭐", "7️⃣", "💎", "🔔"];
 const WIN_RATE = 0.65; // մոտ 65% դեպքերում user-ը ՊԱՐՏՎՈՒՄ ա (bot win)
 
+
+// ====== CONFIG — controlled win chances ======
+
+const multipliers = {
+  "7️⃣": 3.4,
+  "💎": 2.4,
+  "⭐": 1.8,
+  "🔔": 1.2,
+  "🍒": 0.8
+};
+
+// տոկոսները (պետք է միասին լինեն 100)
+const winChances = {
+  "7️⃣": 2,   // 2% шанс ընկնելու
+  "💎": 4,
+  "⭐": 6,
+  "🔔": 8,
+  "🍒": 10,
+  "LOSE": 70 // պարտություն
+};
+
+function chooseOutcome() {
+  const r = Math.random() * 100;
+  let acc = 0;
+
+  for (let key in winChances) {
+    acc += winChances[key];
+    if (r <= acc) return key;
+  }
+  return "LOSE";
+}
+
+
+function checkCombo(a, b, c, bet) {
+  if (a === b && b === c && multipliers[a]) {
+    return bet * multipliers[a];
+  }
+  return 0;
+}
+
+
 // random սիմվոլ
 function getRandomSymbol() {
   return symbols[Math.floor(Math.random() * symbols.length)];
@@ -200,35 +241,44 @@ async function spin() {
   slotsBalance -= bet;
   updateBalances();
 
-  const userWins = determineResult();
+  // STEP 1 — outcome ընտրել admin–ի տոկոսներով
+const outcome = chooseOutcome();
 
-  // 1) Ստեղծում ենք վերջնական արդյունքը
-  let resultSymbols;
-  if (userWins) {
-    // լիքը հաղթող կոմբո → երեք 7️⃣
-    resultSymbols = ["7️⃣", "7️⃣", "7️⃣"];
-  } else {
-    resultSymbols = [
-      getRandomSymbol(),
-      getRandomSymbol(),
-      getRandomSymbol()
-    ];
-  }
+// STEP 2 — build reels
+let resultSymbols;
+
+if (outcome === "LOSE") {
+  resultSymbols = [
+    getRandomSymbol(),
+    getRandomSymbol(),
+    getRandomSymbol()
+  ];
+} else {
+  resultSymbols = [outcome, outcome, outcome];
+}
+
+
 
   // 2) Պտտում ենք reels–ները
   await spinReel("r1", resultSymbols[0]);
   await spinReel("r2", resultSymbols[1]);
   await spinReel("r3", resultSymbols[2]);
 
-  // 3) Հաղթում/պարտություն
-  if (userWins) {
-    const reward = bet * 3.4;    // հաղթող multiplier
-    slotsBalance += reward;
-    updateBalances();
-    showStatus(`🟢 Հաղթեցիր ${reward.toFixed(2)}$`);
-  } else {
-    showStatus("💔 Պարտվեցիր");
-  }
+  // 3) Հաղթում / պարտություն
+let reward = 0;
+
+if (outcome !== "LOSE") {
+  reward = bet * multipliers[outcome];
+  slotsBalance += reward;
+  updateBalances();
+  showStatus(`🟢 Հաղթեցիր ${reward.toFixed(2)}$`);
+} else {
+  showStatus("💔 Պարտվեցիր");
+}
+
+updateBalances();
+
+
 
   spinning = false;
 }
