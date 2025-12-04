@@ -53,7 +53,16 @@ window.onload = () => {
 // ============ NAVIGATION ============
 function openSlot(name) {
   $("slot-lobby").classList.remove("active");
-  $("slot-game").classList.add("active");
+
+  if (name === "classic777") {
+    $("slot-game").classList.add("active");
+    $("slot-game-book").classList.remove("active");
+  }
+
+  if (name === "book") {
+    $("slot-game").classList.remove("active");
+    $("slot-game-book").classList.add("active");
+  }
 }
 
 // ============ DEPOSIT ============
@@ -174,6 +183,94 @@ function spinReel(reelId, finalSymbol) {
   });
 }
 
+// ============ BOOK OF DOMINO ENGINE ============
+
+const bookSymbols = ["A", "K", "Q", "J", "10", "📖"]; // 📖 Book = scatter/wild
+const BOOK_WIN_RATE = 0.55;
+
+function getBookSymbol() {
+  return bookSymbols[Math.floor(Math.random() * bookSymbols.length)];
+}
+
+function bookDetermineResult() {
+  return Math.random() > BOOK_WIN_RATE;
+}
+
+function spinBookReel(id, finalSym) {
+  return new Promise((resolve) => {
+    const reel = $(id);
+    reel.classList.add("spinning");
+
+    let ticks = 0;
+    let maxTicks = 20 + Math.floor(Math.random() * 10);
+
+    const timer = setInterval(() => {
+      reel.textContent = getBookSymbol();
+      ticks++;
+
+      if (ticks >= maxTicks) {
+        clearInterval(timer);
+
+        setTimeout(() => {
+          reel.classList.remove("spinning");
+          reel.textContent = finalSym;
+          resolve();
+        }, 150);
+      }
+    }, 80);
+  });
+}
+
+
+async function spinBook() {
+  if (spinning) return;
+  spinning = true;
+  $("book-status").textContent = "";
+
+  const bet = Number($("book-bet").value);
+
+  if (!bet || bet <= 0) {
+    spinning = false;
+    return $("book-status").textContent = "❌ Գրել ճիշտ գումար";
+  }
+
+  if (bet > slotsBalance) {
+    spinning = false;
+    return $("book-status").textContent = "❌ Slots balance չի հերիքում";
+  }
+
+  slotsBalance -= bet;
+  updateBalances();
+
+  const win = bookDetermineResult();
+
+  // Generate results
+  let final = [];
+  for (let i = 0; i < 5; i++) final.push(getBookSymbol());
+
+  if (win) {
+    // force 3 scatters
+    final = ["📖", "📖", "📖", getBookSymbol(), getBookSymbol()];
+  }
+
+  // Spin all 5 reels
+  await spinBookReel("b1", final[0]);
+  await spinBookReel("b2", final[1]);
+  await spinBookReel("b3", final[2]);
+  await spinBookReel("b4", final[3]);
+  await spinBookReel("b5", final[4]);
+
+  if (win) {
+    const reward = bet * 4.2;
+    slotsBalance += reward;
+    updateBalances();
+    $("book-status").textContent = `🟢 Հաղթեցիր ${reward.toFixed(2)}$`;
+  } else {
+    $("book-status").textContent = "💔 Պարտվեցիր";
+  }
+
+  spinning = false;
+}
 
 
 async function spin() {

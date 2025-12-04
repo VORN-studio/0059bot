@@ -38,7 +38,8 @@
         <div class="slot-name">777 Classic</div>
       </div>
 
-      <div class="slot-card disabled">
+      <div class="slot-card" onclick="openSlot('book')">
+
         <img src="https://i.imgur.com/Uh9pXhJ.png" class="slot-img" />
         <div class="slot-name">Book of Domino</div>
         <div class="soon">SOON</div>
@@ -105,6 +106,31 @@
   </div>
 
 </div>
+
+  <!-- GAME SCREEN — BOOK OF DOMINO -->
+<div id="slot-game-book" class="screen">
+
+  <h2 class="game-title">📖 Book of Domino</h2>
+
+  <!-- 5 REELS -->
+  <div class="book-reels">
+    <div class="book-reel" id="b1"></div>
+    <div class="book-reel" id="b2"></div>
+    <div class="book-reel" id="b3"></div>
+    <div class="book-reel" id="b4"></div>
+    <div class="book-reel" id="b5"></div>
+  </div>
+
+  <div class="bet-row">
+    <input id="book-bet" type="number" placeholder="Գումար ($)" />
+  </div>
+
+  <button class="btn primary spin-btn" onclick="spinBook()">🎡 Սկսել խաղը</button>
+
+  <p id="book-status" class="status"></p>
+
+</div>
+
 
 <script src="slots.js"></script>
 </body>

@@ -880,3 +880,51 @@ body::after {
   filter: blur(3px);
   opacity: 0.7;
 }
+
+
+/* ========== BOOK OF DOMINO (5-REEL SLOT) ========== */
+
+.book-reels {
+  margin: 0 auto 14px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.book-reel {
+  width: 72px;
+  height: 110px;
+
+  border-radius: 16px;
+  font-size: 42px;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #f8fafc;
+
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255,255,255,0.08), transparent 55%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.65), transparent 70%),
+    linear-gradient(180deg, #182033, #0f1524 55%, #0b0f19);
+
+  border: 1px solid rgba(180, 195, 255, 0.22);
+
+  box-shadow:
+    inset 0 12px 28px rgba(0,0,0,0.65),
+    inset 0 -8px 18px rgba(0,0,0,0.55),
+    0 12px 28px rgba(0,0,0,0.65),
+    0 0 0 1px rgba(255,255,255,0.05),
+    0 0 22px rgba(130, 65, 255, 0.25);
+
+  backdrop-filter: blur(10px);
+}
+
+.book-reel.spinning {
+  animation: spin-blur 0.15s linear infinite;
+  filter: blur(3px);
+  opacity: 0.7;
+}
