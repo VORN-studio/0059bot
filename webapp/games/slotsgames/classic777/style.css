@@ -472,3 +472,37 @@ body::after {
   font-size: 13px;
   color: #ef4444;
 }
+
+
+/* INFO MODAL STYLE */
+.info-box {
+    max-width: 90%;
+    text-align: left;
+}
+
+.info-text {
+    color: #e5e7eb;
+    font-size: 15px;
+    line-height: 1.45;
+    margin-bottom: 14px;
+}
+
+.info-text ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 10px 0 14px 0;
+}
+
+.info-text li {
+    background: rgba(255,255,255,0.05);
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.info-btn {
+    font-size: 13px !important;
+    padding: 6px 10px !important;
+    margin-left: 6px;
+}

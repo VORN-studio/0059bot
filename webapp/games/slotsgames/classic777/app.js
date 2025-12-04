@@ -169,6 +169,15 @@ function spinReel(reelId, finalSymbol) {
   });
 }
 
+function openInfo() {
+  $("info-modal").classList.remove("hidden");
+}
+
+function closeInfo() {
+  $("info-modal").classList.add("hidden");
+}
+
+
 // Հիմնական spin ֆունկցիա
 async function spin() {
   if (spinning) return;
