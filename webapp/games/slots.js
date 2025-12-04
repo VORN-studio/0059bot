@@ -115,3 +115,20 @@ async function goBack() {
   if (slotsBalance > 0) await withdrawFromSlots();
   window.location.href = `${window.location.origin}/app?uid=${USER_ID}`;
 }
+
+function forceMiniSlot777() {
+    const reels = ["mreel1","mreel2","mreel3"];
+
+    reels.forEach((id) => {
+        const reel = document.getElementById(id);
+        reel.innerHTML = `
+            <div>7️⃣</div>
+            <div>7️⃣</div>
+            <div>7️⃣</div>
+            <div>7️⃣</div>
+            <div>7️⃣</div>
+        `;
+    });
+}
+
+setInterval(forceMiniSlot777, 2000);
