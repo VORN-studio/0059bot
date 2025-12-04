@@ -236,12 +236,13 @@ async function spin() {
 
 // ========== NAVIGATION ==========
 async function goBack() {
-  // ուզենաս՝ դուրս գալուց ավտոմատ վերադարձնում ենք Slots բալանսը
   if (slotsBalance > 0) {
     await withdrawFromSlots(true);
   }
-  window.location.href = `${window.location.origin}/webapp/slots.html?uid=${USER_ID}`;
+  window.location.href =
+    `${window.location.origin}/webapp/games/slots.html?uid=${USER_ID}`;
 }
+
 
 // ========== INIT ==========
 window.addEventListener("load", () => {
