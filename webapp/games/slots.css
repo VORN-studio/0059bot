@@ -929,34 +929,95 @@ body::after {
   opacity: 0.7;
 }
 
-/* MINI 777 SLOT (realistic preview) */
+/* ===============================
+   ULTRA PREMIUM MINI SLOT PREVIEW
+   =============================== */
+
 .mini-slot {
     display: flex;
     justify-content: center;
-    gap: 12px;
-    padding: 10px;
-    background: linear-gradient(180deg,#121826,#0a0f18);
-    border-radius: 16px;
-    height: 110px;
-    box-shadow: inset 0 6px 12px rgba(0,0,0,0.45);
-}
+    gap: 14px;
+    padding: 14px;
+    border-radius: 20px;
 
-.mini-reel-box {
-    width: 70px;
-    height: 100px;
-    border-radius: 14px;
-    background: linear-gradient(180deg,#1b2336,#0d131f);
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06), transparent 60%),
+        linear-gradient(180deg,#141b28,#0c111b 60%,#070a12 100%);
+
+    box-shadow:
+        inset 0 4px 12px rgba(255,255,255,0.06),
+        inset 0 -8px 18px rgba(0,0,0,0.55),
+        0 10px 26px rgba(0,0,0,0.65),
+        0 0 32px rgba(120,60,255,0.25);
+
+    backdrop-filter: blur(8px);
     border: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+
+    transition: 0.3s ease;
 }
 
+/* Reel frame container */
+.mini-reel-box {
+    width: 68px;
+    height: 96px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    overflow: hidden;
+    border-radius: 16px;
+
+    background:
+        radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08), transparent 55%),
+        linear-gradient(180deg,#1c2436,#0f1524 55%,#0a0e18);
+
+    border: 1px solid rgba(180,195,255,0.18);
+
+    box-shadow:
+        inset 0 12px 28px rgba(0,0,0,0.6),
+        inset 0 -8px 18px rgba(0,0,0,0.5),
+        0 12px 28px rgba(0,0,0,0.6),
+        0 0 12px rgba(140,80,255,0.25);
+    
+    position: relative;
+}
+
+/* Gloss reflection on top */
+.mini-reel-box::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.25),
+        rgba(255,255,255,0.08),
+        transparent
+    );
+
+    pointer-events: none;
+    border-radius: inherit;
+
+    opacity: 0.35;
+}
+
+/* Reel symbol */
 .mini-reel {
-    font-size: 46px;
-    transition: transform 0.16s ease-out;
+    font-size: 48px;
+    transition: transform 0.14s ease-out, opacity 0.14s ease-out;
+
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* While spinning — blur + brightness */
+.mini-reel.spinning {
+    filter: blur(2px) brightness(1.4);
+    opacity: 0.65;
+    transform: scale(1.15);
 }

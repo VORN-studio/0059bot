@@ -122,6 +122,8 @@ function spinMiniReel(reelId, delay) {
     const reel = document.getElementById(reelId);
     let index = 0;
 
+    reel.classList.add("spinning");
+
     let spin = setInterval(() => {
         reel.textContent = miniSymbols[index % miniSymbols.length];
         index++;
@@ -130,10 +132,13 @@ function spinMiniReel(reelId, delay) {
     setTimeout(() => {
         clearInterval(spin);
 
-        // final result
+        // final result → 7
         reel.textContent = "7️⃣";
+
+        reel.classList.remove("spinning");
     }, delay);
 }
+
 
 function startMiniSlotSpin() {
     spinMiniReel("miniR1", 600);
