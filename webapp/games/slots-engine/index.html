@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Domino Slots Engine V1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- UI styles -->
+    <link rel="stylesheet" href="ui.css">
+
+    <!-- Engine (your DominoEngine v1) -->
+    <script defer src="engine.js"></script>
+
+    <!-- UI Controller (NEW FILE I WILL GIVE YOU BELOW) -->
+    <script defer src="engine-ui.js"></script>
+</head>
+
+<body>
+
+<div class="slot-machine">
+
+    <!-- Ambient Lights -->
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <!-- TOP BAR -->
+    <header class="top-bar">
+        <button class="back-button" onclick="UI.back()">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+        </button>
+
+        <div class="balance-container">
+            <div class="balance-item">
+                <span class="balance-label">Main Balance</span>
+                <span id="mainBalance" class="balance-value">$0</span>
+            </div>
+            <div class="balance-divider"></div>
+            <div class="balance-item">
+                <span class="balance-label">Slots Balance</span>
+                <span id="slotsBalance" class="balance-value slots-balance">$0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- REELS -->
+    <main class="reels-container">
+        <div class="reels-frame">
+
+            <div class="reels-inner-glow"></div>
+
+            <!-- Dynamic reels -->
+            <div id="reelsGrid" class="reels-grid"></div>
+
+            <div class="payline-indicator payline-indicator-top"></div>
+            <div class="payline-indicator payline-indicator-middle"></div>
+            <div class="payline-indicator payline-indicator-bottom"></div>
+        </div>
+    </main>
+
+    <!-- WIN BANNER -->
+    <div id="winBanner" class="win-banner">
+        <div class="win-banner-content">
+            <span class="win-label">YOU WON</span>
+            <span id="winAmount" class="win-amount">X0</span>
+
+            <div class="win-coins">
+                <div class="coin"></div>
+                <div class="coin"></div>
+                <div class="coin"></div>
+                <div class="coin"></div>
+                <div class="coin"></div>
+                <div class="coin"></div>
+                <div class="coin"></div>
+                <div class="coin"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <footer class="bottom-panel">
+        <div class="controls-row">
+
+            <!-- BET CONTROL -->
+            <div class="bet-control">
+                <span class="control-label">BET</span>
+                <div class="bet-input-group">
+                    <button onclick="UI.changeBet(-10)" class="bet-button">−</button>
+                    <div class="bet-display"><span id="betValue" class="bet-value">100</span></div>
+                    <button onclick="UI.changeBet(10)" class="bet-button">+</button>
+                </div>
+            </div>
+
+            <!-- SPIN -->
+            <button id="spinBtn" onclick="UI.spin()" class="spin-button">
+                <div class="spin-button-inner">
+                    <div class="spin-icon">
+                        <svg id="spinIcon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                    </div>
+                    <span class="spin-text">SPIN</span>
+                </div>
+            </button>
+
+            <!-- AUTO -->
+            <div class="autoplay-control">
+                <span class="control-label">AUTO</span>
+                <button onclick="UI.toggleAutoPlay()" id="autoBtn" class="autoplay-toggle">
+                    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                </button>
+            </div>
+
+        </div>
+
+        <div class="paylines-info">20 PAYLINES</div>
+    </footer>
+
+</div>
+
+</body>
+</html>
