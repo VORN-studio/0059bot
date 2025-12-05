@@ -40,7 +40,7 @@ window.onload = () => {
 // CLEAN openSlot()
 function openSlot(folderName){
   window.location.href =
-    `${window.location.origin}/webapp/games/slotsgames/${folderName}/index.html?uid=${USER_ID}`;
+    `${window.location.origin}/webapp/games/slots-engine/${folderName}/index.html?uid=${USER_ID}`;
 }
 
 // BACK BUTTON
