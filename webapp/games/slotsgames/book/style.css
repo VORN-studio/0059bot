@@ -195,15 +195,6 @@ body::after {
 }
 
 
-
-.book-reel.spinning {
-  filter: blur(2px) brightness(1.25);
-  transform: translateY(-4px) scale(1.03);
-  box-shadow:
-    0 18px 34px rgba(59, 130, 246, 0.45),
-    0 0 0 1px rgba(129, 140, 248, 0.9);
-}
-
 /* ===== BET INPUT ===== */
 .bet-row input {
   width: 100%;
@@ -453,47 +444,6 @@ body::after {
   line-height: 1.5;
 }
 
-/* ===== END CSS ===== */
-
-
-/* ========== BOOK OF DOMINO — 5x3 GRID ========== */
-
-.book-reels {
-  margin: 18px auto 18px;
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding: 6px 0;
-}
-
-/* spinning effect */
-.book-reel.spinning {
-  animation: bookReelSpin 0.18s linear infinite;
-  filter: blur(1.1px) brightness(1.2);
-  opacity: 0.9;
-}
-
-@keyframes bookReelSpin {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-4px); }
-  100% { transform: translateY(0); }
-}
-
-
-/* REAL SLOT FEEL */
-.book-reel.spinning {
-  animation: reelSpin 0.25s linear infinite;
-  filter: blur(1.3px) brightness(1.15);
-  transform: scale(1.02);
-  opacity: 0.95;
-}
-
-@keyframes reelSpin {
-  0%   { transform: translateY(0) scale(1.02); }
-  50%  { transform: translateY(-6px) scale(1.02); }
-  100% { transform: translateY(0) scale(1.02); }
-}
-
 .strip {
   transition: transform 0.8s cubic-bezier(0.15, 0.85, 0.35, 1.25);
 }
@@ -543,21 +493,47 @@ body::after {
 }
 
 
+/* --- SLOT LAYOUT (REAL ENGINE) --- */
+
 .slot-window {
   width: 100%;
-  height: 260px;
-
+  height: 360px;      /* 3 rows × 120px */
   display: flex;
   justify-content: center;
   gap: 12px;
-
-  padding: 10px 8px;
+  padding: 14px;
   border-radius: 24px;
 
-  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06), transparent 70%),
-              linear-gradient(180deg, #0b0f1a, #0c101b 60%, #090c16);
+  background: linear-gradient(180deg, #0a0f18, #111827 60%, #0a0d18);
   box-shadow:
-      inset 0 8px 18px rgba(0,0,0,0.6),
-      inset 0 -10px 26px rgba(0,0,0,0.7),
-      0 14px 30px rgba(0,0,0,0.75);
+    inset 0 8px 18px rgba(0,0,0,0.6),
+    inset 0 -10px 26px rgba(0,0,0,0.7),
+    0 14px 30px rgba(0,0,0,0.75);
 }
+
+.reel {
+  width: 120px;
+  height: 360px;      /* FIXED WINDOW — 3 symbols */
+  overflow: hidden;
+  position: relative;
+  border-radius: 18px;
+
+  background: #0c0f1a;
+  box-shadow:
+    inset 0 8px 18px rgba(0,0,0,0.6),
+    inset 0 -10px 26px rgba(0,0,0,0.7);
+}
+
+.strip {
+  position: absolute;
+  width: 100%;
+  transition: transform 0.8s cubic-bezier(0.15,0.85,0.35,1.25);
+}
+
+.strip img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  display: block;
+}
+
