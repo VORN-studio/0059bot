@@ -122,17 +122,12 @@ async function withdrawFromSlots(){
 
 const SLOT_LIST = [
   {
-    name: "Book of Domino",
-    folder: "book",
-    img: "https://i.ibb.co/02stX0d/bookofdomino.png"
-  },
-  {
-    name: "Black Beard",
-    folder: "blackbeard",
-    img: "games/slotsgames/blackbeard/img/preview.png"
-  },
-  // ADD MORE GAMES HERE
+    name: "Domino Slots v1",
+    folder: "domino_v1",
+    img: "/webapp/games/slots-engine/domino_v1/preview.png"
+  }
 ];
+
 
 function loadSlots(){
   const container = $("slots-container");
