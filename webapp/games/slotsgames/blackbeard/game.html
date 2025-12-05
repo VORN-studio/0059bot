@@ -8,6 +8,25 @@
         <link rel="stylesheet" href="css/ios_fullscreen.css" type="text/css">
         <link rel='shortcut icon' type='image/x-icon' href='./favicon.ico' />
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <script>
+    const API = window.location.origin;
+
+    let USER_ID = 0;
+    let REAL_BALANCE = 0;
+
+    async function loadRealBalance() {
+        const params = new URLSearchParams(window.location.search);
+        USER_ID = params.get("uid");
+
+        const r = await fetch(`${API}/api/user/${USER_ID}`);
+        const js = await r.json();
+
+        REAL_BALANCE = js.user.balance_usd;
+        window.TOTAL_MONEY = REAL_BALANCE; // override demo money
+    }
+
+    loadRealBalance();
+</script>
 
         <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui" />
 	<meta name="msapplication-tap-highlight" content="no"/>

@@ -75,7 +75,9 @@
 
   <script>
     document.getElementById('playBtn').addEventListener('click', function() {
-      window.location.href = 'game.html';
+      const params = new URLSearchParams(window.location.search);
+      const uid = params.get("uid") || 0;
+      window.location.href = 'game.html?uid=' + uid;
     });
   </script>
 </body>

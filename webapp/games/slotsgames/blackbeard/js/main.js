@@ -7025,3 +7025,32 @@
  function seekAndDestroy() {
     return !0
  };
+
+ // BACK TO OUR CASINO LOBBY
+function exitToLobby() {
+    const params = new URLSearchParams(window.location.search);
+    const uid = params.get("uid") || 0;
+
+    window.location.href = `${window.location.origin}/webapp/slots.html?uid=` + uid;
+}
+
+// ESCAPE KEY → RETURN TO LOBBY
+document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+        exitToLobby();
+    }
+});
+
+async function updateBackendBalance(newBalance) {
+    await fetch(`${window.location.origin}/api/slots/update_balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: USER_ID,
+            new_balance: newBalance
+        })
+    });
+}
+
+window.TOTAL_MONEY = newBalance;
+updateBackendBalance(newBalance);
