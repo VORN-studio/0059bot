@@ -10,27 +10,24 @@ window.UI = (function () {
     // GAME CONFIG (connect with engine)
     // -------------------------------
     const SYMBOLS = [
-        "A", "K", "Q", "J", "10", "9",
-        "CAT", "RING", "COIN", "SWORD",
-        "MASK", "CROWN",
-        "WILD", "SCATTER"
+        "9", "10", "bonus",
+        "book", "clover", "crystal", "gem",
+        "horseshoe", "K",
+        "star", "wild"
     ];
 
     const SYMBOL_IMAGES = {
-        "A": "symbols/A.png",
-        "K": "symbols/K.png",
-        "Q": "symbols/Q.png",
-        "J": "symbols/J.png",
-        "10": "symbols/10.png",
-        "9": "symbols/9.png",
-        "CAT": "symbols/cat.png",
-        "RING": "symbols/ring.png",
-        "COIN": "symbols/coin.png",
-        "SWORD": "symbols/sword.png",
-        "MASK": "symbols/mask.png",
-        "CROWN": "symbols/crown.png",
-        "WILD": "symbols/wild.png",
-        "SCATTER": "symbols/scatter.png",
+        "9": "symbols1/9.png",
+        "10": "symbols1/10.png",
+        "bonus": "symbols1/K.png",
+        "book": "symbols1/Q.png",
+        "clover": "symbols1/J.png",
+        "crystal": "symbols1/cat.png",
+        "gem": "symbols1/ring.png",
+        "horseshoe": "symbols1/coin.png",
+        "K": "symbols1/sword.png",
+        "star": "symbols1/mask.png",
+        "wild": "symbols1/crown.png",
     };
 
     // -------------------------------
@@ -52,8 +49,8 @@ window.UI = (function () {
     // -------------------------------
     DominoEngine.init({
         symbols: SYMBOLS,
-        wild: "WILD",
-        scatter: "SCATTER",
+        wild: "wild",
+        scatter: "bonus",
         baseWinChance: 0.35,
         scatterChance: 0.04,
         maxDailyPayout: 1500,
@@ -218,11 +215,10 @@ window.UI = (function () {
     // INITIAL EMPTY RENDER
     // -------------------------------
     renderReels([
-        ["A", "K", "Q"],
-        ["J", "10", "9"],
-        ["CAT", "RING", "COIN"],
-        ["MASK", "CROWN", "A"],
-        ["WILD", "SCATTER", "K"]
+        ["9", "10", "bonus"],
+        ["book", "clover", "crystal"],
+        ["gem", "horseshoe", "K"],
+        ["star", "wild"]
     ]);
 
     // -------------------------------
