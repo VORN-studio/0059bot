@@ -6,6 +6,114 @@ let mainBalance = 0;
 let slotsBalance = 0;
 let spinning = false;
 
+
+const ROWS = 3;
+const COLS = 5;
+const STRIP_LENGTH = 24; // 20-30 լավ է իրական slot-ի զգացողության համար
+
+// ստեղծում է սիմվոլների strip (երկար ցուցակ)
+function buildStrip() {
+  const arr = [];
+  for (let i = 0; i < STRIP_LENGTH; i++) {
+    arr.push(randomSymbol());
+  }
+  return arr;
+}
+
+// նկարում strip HTML-ը
+function renderStrip(col, stripArray) {
+  const container = document.querySelector(`.reel[data-col="${col}"] .strip`);
+  container.innerHTML = stripArray
+    .map(sym => `<img src="${SYMBOL_IMAGES[sym]}">`)
+    .join("");
+}
+
+// scroll անիմացիա
+function animateReel(col, stopRowSymbols, delay) {
+  const strip = document.querySelector(`.reel[data-col="${col}"] .strip`);
+
+  // random strip
+  const stripData = buildStrip();
+
+  // վերջում ավելացնում ենք 3 իրական հաղթող row-ի symbol–ները
+  stripData.push(stopRowSymbols[0]);
+  stripData.push(stopRowSymbols[1]);
+  stripData.push(stopRowSymbols[2]);
+
+  renderStrip(col, stripData);
+
+  // మొత్తం strip-ի բարձրությունը
+  const symbolHeight = 80; // img + margins
+  const totalHeight = symbolHeight * stripData.length;
+
+  // վերջի 3 row-ը middle window–ում դնելու համար հաշվարկում ենք offset
+  const visibleHeight = symbolHeight * ROWS;
+  const targetOffset = totalHeight - visibleHeight;
+
+  setTimeout(() => {
+    strip.style.transform = `translateY(-${targetOffset}px)`;
+  }, delay);
+}
+
+// full spin
+async function spin() {
+  if (spinning) return;
+
+  const bet = Number($("bet-input").value);
+  if (!bet || bet <= 0) return setStatus("Գրիր ճիշտ գումար", "lose");
+  if (bet > slotsBalance) return setStatus("Չունես այդքան բալանս", "lose");
+
+  spinning = true;
+  $("spin-btn").disabled = true;
+  setStatus("Պտտում ենք…");
+
+  slotsBalance -= bet;
+  updateBalances();
+
+  // >>> ստեղծում ենք 5×3 վերջնական grid
+  const finalGrid = [];
+  for (let row = 0; row < ROWS; row++) {
+    finalGrid[row] = [];
+    for (let col = 0; col < COLS; col++) {
+      finalGrid[row][col] = randomSymbol();
+    }
+  }
+
+  // >>> աշխատեցնում ենք 5 ռեելները հերթով scroll անիմացիայով
+  for (let col = 0; col < COLS; col++) {
+    const stopSymbols = [
+      finalGrid[0][col],
+      finalGrid[1][col],
+      finalGrid[2][col]
+    ];
+
+    animateReel(col, stopSymbols, col * 180); // sequential stopping
+  }
+
+  // animation wait + payout
+  await new Promise(r => setTimeout(r, 180 * COLS + 900));
+
+  // midfield calculation (այժմ՝ միայն 1 գիծ)
+  const mid = finalGrid[1];
+  let win = 0;
+
+  const same = mid.every(s => s === mid[0]);
+
+  if (same) win = bet * 8;  // placeholder logic
+
+  if (win > 0) {
+    slotsBalance += win;
+    updateBalances();
+    setStatus(`🏆 Հաղթեցիր ${win}`, "win");
+  } else {
+    setStatus("😕 Այս անգամ ոչինչ չկար", "lose");
+  }
+
+  spinning = false;
+  $("spin-btn").disabled = false;
+}
+
+
 // կարճ helper
 function $(id) { return document.getElementById(id); }
 
@@ -128,8 +236,7 @@ function closeInfo() { $("info-modal").classList.add("hidden"); }
 
 /* ========== ԽԱՂԻ ՄԱՍ – 5×3 GRID ========== */
 
-const ROWS = 3;
-const COLS = 5;
+
 
 // SYMBOL LIST
 const SYMBOLS = [
@@ -252,6 +359,7 @@ function drawGridAnimated(grid) {
     }
   }
 }
+
 
 
 async function spin() {
