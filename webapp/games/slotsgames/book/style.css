@@ -497,11 +497,12 @@ body::after {
 }
 
 .book-reel {
-  width: 68px;
-  height: 122px;
-  padding: 6px 0;
+  width: 82px;
+  height: 260px;
 
-  border-radius: 18px;
+  padding: 10px 0;
+
+  border-radius: 20px;
 
   display: flex;
   flex-direction: column;
@@ -509,37 +510,42 @@ body::after {
   align-items: center;
 
   background:
-    radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08), transparent 55%),
-    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.65), transparent 70%),
-    linear-gradient(180deg, #182033, #0f1524 55%, #050811);
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.09), transparent 60%),
+    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.5), transparent 70%),
+    linear-gradient(180deg, #0c0f1a, #131824 60%, #0a0d18);
 
-  border: 1px solid rgba(180,195,255,0.22);
+  border: 1px solid rgba(180,195,255,0.28);
 
   box-shadow:
-    inset 0 10px 24px rgba(0,0,0,0.65),
-    inset 0 -8px 18px rgba(0,0,0,0.55),
-    0 12px 28px rgba(0,0,0,0.65),
-    0 0 0 1px rgba(255,255,255,0.04),
-    0 0 22px rgba(130,65,255,0.25);
+    inset 0 8px 22px rgba(0,0,0,0.6),
+    inset 0 -10px 22px rgba(0,0,0,0.5),
+    0 10px 30px rgba(0,0,0,0.85),
+    0 0 22px rgba(120,60,255,0.25);
 
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
 }
+
 
 /* բջիջները (սիմվոլները) */
 .book-reel .cell {
   width: 100%;
-  height: 60px; /* 32px-ից դարձնում ենք 60px */
+  height: 78px; /* ⬅️ մեծացնում ենք, որ icon-ը լիովին տեղավորվի */
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  font-size: 28px;
-  font-weight: 700;
-  color: #f9fafb;
+  background: rgba(0,0,0,0.12);
+
+  border-radius: 12px;
 
   overflow: hidden;
+
+  box-shadow:
+    inset 0 0 12px rgba(0,0,0,0.35),
+    0 0 8px rgba(0,0,0,0.55);
 }
+
 
 
 /* spinning effect */
@@ -581,8 +587,12 @@ body::after {
 
 
 .symbol-img {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
-  filter: drop-shadow(0 0 6px rgba(0,0,0,0.6));
+
+  filter:
+    drop-shadow(0 3px 6px rgba(0,0,0,0.55))
+    drop-shadow(0 0 6px rgba(255,255,255,0.15));
 }
+
