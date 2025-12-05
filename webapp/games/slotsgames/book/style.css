@@ -596,3 +596,23 @@ body::after {
     drop-shadow(0 0 6px rgba(255,255,255,0.15));
 }
 
+.cell {
+  position: relative;
+  opacity: 1;
+  transform: translateY(0);
+  transition: transform 0.22s ease-out, opacity 0.22s ease-out;
+}
+
+.cell.fall {
+  opacity: 0;
+  transform: translateY(-40px);
+}
+
+.cell.land {
+  animation: landPop 0.18s ease-out;
+}
+
+@keyframes landPop {
+  0%   { transform: scale(1.25); opacity: 0.3; }
+  100% { transform: scale(1); opacity: 1; }
+}

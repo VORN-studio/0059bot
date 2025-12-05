@@ -218,6 +218,22 @@ function fillGrid() {
   return grid;
 }
 
+function animateCellDrop(row, col, symbolName, delay) {
+  const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+  if (!cell) return;
+
+  const img = `<img src="${SYMBOL_IMAGES[symbolName]}" class="symbol-img">`;
+
+  cell.classList.add("fall");       // սկսում ենք վերևից թռնել
+
+  setTimeout(() => {
+    cell.innerHTML = img;           // դնում ենք իրական սիմվոլը
+    cell.classList.remove("fall");
+    cell.classList.add("land");     // landing effect
+    setTimeout(() => cell.classList.remove("land"), 180);
+  }, delay);
+}
+
 
 function startSpinAnimation() {
   document.querySelectorAll(".book-reel").forEach((el, i) => {
@@ -225,11 +241,18 @@ function startSpinAnimation() {
   });
 }
 
-function stopSpinAnimation() {
-  document.querySelectorAll(".book-reel").forEach((el) =>
-    el.classList.remove("spinning")
-  );
+function drawGridAnimated(grid) {
+  for (let col = 0; col < COLS; col++) {
+    for (let row = 0; row < ROWS; row++) {
+
+      const symbol = grid[row][col];
+      const delay = col * 160 + row * 60; // ⬅️ Reel stagger + row fall offset
+
+      animateCellDrop(row, col, symbol, delay);
+    }
+  }
 }
+
 
 async function spin() {
   if (spinning) return;
@@ -257,7 +280,8 @@ async function spin() {
   await new Promise((res) => setTimeout(res, 650));
 
   const grid = fillGrid();
-  stopSpinAnimation();
+  drawGridAnimated(grid);
+
 
   // 🔥 առայժմ հաշվում ենք ՄԻԱՅՆ ՄԻՋԱՆԿՅԱԼ ԳԾԸ (row = 1)
   const middleRow = grid[1];
