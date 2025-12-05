@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SLOT BLACK BEARD - Free Play</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Локальный Bootstrap -->
+  <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+
+  <style>
+    html{
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+    }
+    body {
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      background-image:url("img/bg.jpg");
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+      color: #fff!important;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .card {
+      background-color: rgba(0, 0, 0, 0.8);
+      border: none;
+      color: #fff!important;
+      border-radius: 1rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+    }
+
+    .btn-play {
+      background: linear-gradient(135deg, #ffd700, #ffcc00);
+      color: #000!important;
+      font-weight: bold;
+      border: none;
+    }
+
+    .btn-play:hover{
+        background: linear-gradient(135deg, #ffcc00, #ffb700);
+        color: #000!important;
+    }
+
+    .gold-text {
+      color: #ffd700;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+        <div class="card p-4 text-center">
+          <h2 class="mb-4">🏴‍☠️ SLOT BLACK BEARD</h2>
+          <p class="mb-4">Welcome to the ultimate pirate slot adventure!</p>
+          <div class="mb-4">
+            <h4 class="gold-text">🎮 FREE TO PLAY</h4>
+            <p>Start with <span class="gold-text">1000 virtual credits</span></p>
+            <p>No registration required - just pure fun!</p>
+          </div>
+          <button id="playBtn" class="btn btn-play px-4 py-2 rounded-pill">
+            🎰 START PLAYING
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('playBtn').addEventListener('click', function() {
+      window.location.href = 'game.html';
+    });
+  </script>
+</body>
+</html>
