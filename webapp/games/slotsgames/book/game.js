@@ -199,22 +199,25 @@ function fillGrid() {
 
   for (let row = 0; row < ROWS; row++) {
     grid[row] = [];
+
     for (let col = 0; col < COLS; col++) {
+
       const sym = randomSymbol();
       grid[row][col] = sym;
 
-      const cell = document.querySelector(
-        `.cell[data-row="${row}"][data-col="${col}"]`
-      );
-       if (cell) {
-        cell.classList.remove("stop");
-        cell.textContent = SYMBOL_EMOJI[sym] || sym;
-        setTimeout(() => cell.classList.add("stop"), 20);
-      }
+      const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+      if (!cell) continue;
+
+      cell.innerHTML = `<img src="${SYMBOL_IMAGES[sym]}" class="symbol-img">`;
+
+      cell.classList.remove("stop");
+      setTimeout(() => cell.classList.add("stop"), 20);
     }
   }
+
   return grid;
 }
+
 
 function startSpinAnimation() {
   document.querySelectorAll(".book-reel").forEach((el, i) => {

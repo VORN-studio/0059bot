@@ -528,7 +528,7 @@ body::after {
 /* բջիջները (սիմվոլները) */
 .book-reel .cell {
   width: 100%;
-  height: 32px;
+  height: 60px; /* 32px-ից դարձնում ենք 60px */
 
   display: flex;
   align-items: center;
@@ -538,10 +538,9 @@ body::after {
   font-weight: 700;
   color: #f9fafb;
 
-  text-shadow:
-    0 0 10px rgba(0,0,0,0.7),
-    0 0 16px rgba(148, 163, 255, 0.45);
+  overflow: hidden;
 }
+
 
 /* spinning effect */
 .book-reel.spinning {
@@ -582,8 +581,8 @@ body::after {
 
 
 .symbol-img {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   filter: drop-shadow(0 0 6px rgba(0,0,0,0.6));
 }
