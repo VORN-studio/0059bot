@@ -559,14 +559,18 @@ body::after {
 
 .reel {
   width: 90px;
-  height: 240px;
+  height: 240px;    /* ⬅️ ԱՅՍ ԷՋՈՒՄ ԱՆՀՐԱԺԵՇՏ Է */
   overflow: hidden;
   border-radius: 22px;
+
   background: linear-gradient(180deg, #0c0f1a, #131824 60%, #0a0d18);
   border: 1px solid rgba(180,195,255,0.25);
+
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
+
 
 .strip {
   position: relative;
@@ -580,4 +584,11 @@ body::after {
   object-fit: contain;
   display: block;
   margin: 0 auto;
+}
+
+.strip img {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+  display: block;
 }
