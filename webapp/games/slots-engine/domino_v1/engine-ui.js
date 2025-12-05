@@ -19,15 +19,15 @@ window.UI = (function () {
     const SYMBOL_IMAGES = {
         "9": "symbols1/9.png",
         "10": "symbols1/10.png",
-        "bonus": "symbols1/K.png",
-        "book": "symbols1/Q.png",
-        "clover": "symbols1/J.png",
-        "crystal": "symbols1/cat.png",
-        "gem": "symbols1/ring.png",
-        "horseshoe": "symbols1/coin.png",
-        "K": "symbols1/sword.png",
-        "star": "symbols1/mask.png",
-        "wild": "symbols1/crown.png",
+        "bonus": "symbols1/bonus.png",
+        "book": "symbols1/book.png",
+        "clover": "symbols1/clover.png",
+        "crystal": "symbols1/crystal.png",
+        "gem": "symbols1/gem.png",
+        "horseshoe": "symbols1/horseshoe.png",
+        "K": "symbols1/K.png",
+        "star": "symbols1/star.png",
+        "wild": "symbols1/wild.png",
     };
 
     // -------------------------------
