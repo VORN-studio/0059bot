@@ -1,13 +1,23 @@
 // ==========================================
-// Domino Slots – UI Controller for Engine v1
+// Domino Slots – UI Controller (REAL BALANCE)
 // ==========================================
 
-console.log("🎮 engine-ui.js loaded");
+console.log("🎮 engine-ui.js REAL BALANCE loaded");
 
 window.UI = (function () {
 
+    const tg = window.Telegram && window.Telegram.WebApp;
+    const API = window.location.origin;
+
+    function getUid() {
+        const url = new URLSearchParams(window.location.search);
+        return tg?.initDataUnsafe?.user?.id || Number(url.get("uid"));
+    }
+
+    let USER_ID = getUid();
+
     // -------------------------------
-    // GAME CONFIG (connect with engine)
+    // GAME CONFIG (symbols from your folder)
     // -------------------------------
     const SYMBOLS = [
         "9", "10", "a1", "bonus",
@@ -35,10 +45,9 @@ window.UI = (function () {
     };
 
     // -------------------------------
-    // GAME STATE
+    // REAL BALANCE (from backend)
     // -------------------------------
-    let mainBalance = 10000;
-    let slotsBalance = 5000;
+    let mainBalance = 0;   // ← REAL MONEY USER BALANCE
     let bet = 100;
 
     let isSpinning = false;
@@ -49,28 +58,42 @@ window.UI = (function () {
     const spinBtn = document.getElementById("spinBtn");
 
     // -------------------------------
-    // INIT ENGINE
+    // LOAD USER BALANCE FROM BACKEND
+    // -------------------------------
+    async function loadBalance() {
+        try {
+            const r = await fetch(`${API}/api/user/${USER_ID}`);
+            const js = await r.json();
+            if (!js.ok) return alert("User not found!");
+
+            mainBalance = js.user.balance_usd;
+            updateUI();
+        } catch (e) {
+            console.log("Balance load error:", e);
+        }
+    }
+
+    // -------------------------------
+    // UPDATE UI
+    // -------------------------------
+    function updateUI() {
+        document.getElementById("mainBalance").innerText = "$" + mainBalance.toFixed(2);
+        document.getElementById("slotsBalance").innerText = "$" + mainBalance.toFixed(2);
+        document.getElementById("betValue").innerText = bet;
+    }
+
+    // -------------------------------
+    // INIT ENGINE (20 paylines already inside engine.js)
     // -------------------------------
     DominoEngine.init({
         symbols: SYMBOLS,
         wild: "wild",
         scatter: "bonus",
-        baseWinChance: 0.35,
+        baseWinChance: 0.36,
         scatterChance: 0.04,
-        maxDailyPayout: 1500,
+        maxDailyPayout: 2000,
         bigWinMultiplier: 30
     });
-
-    // -------------------------------
-    // UI UPDATE FUNCTIONS
-    // -------------------------------
-    function updateBalances() {
-        document.getElementById("mainBalance").innerText = "$" + mainBalance;
-        document.getElementById("slotsBalance").innerText = "$" + slotsBalance;
-        document.getElementById("betValue").innerText = bet;
-    }
-
-    updateBalances();
 
     // -------------------------------
     // RENDER REELS
@@ -111,16 +134,14 @@ window.UI = (function () {
     }
 
     // -------------------------------
-    // SPIN ANIMATION (FAKE UI SPIN)
+    // SPIN ANIMATIONS
     // -------------------------------
     function startSpinAnimation() {
-        const reels = document.querySelectorAll(".reel");
-        reels.forEach(r => r.classList.add("spinning"));
+        document.querySelectorAll(".reel").forEach(r => r.classList.add("spinning"));
     }
 
     function stopSpinAnimation() {
-        const reels = document.querySelectorAll(".reel");
-        reels.forEach(r => r.classList.remove("spinning"));
+        document.querySelectorAll(".reel").forEach(r => r.classList.remove("spinning"));
     }
 
     // -------------------------------
@@ -137,45 +158,43 @@ window.UI = (function () {
     }
 
     // -------------------------------
-    // MAIN SPIN BUTTON
+    // SPIN (WITH REAL BALANCE)
     // -------------------------------
-    function spin() {
+    async function spin() {
         if (isSpinning) return;
-        if (slotsBalance < bet) return alert("Not enough balance!");
+
+        if (bet > mainBalance)
+            return alert("Բավարար բալանս չկա!");
 
         isSpinning = true;
         spinBtn.classList.add("spinning");
-
         startSpinAnimation();
 
         const result = DominoEngine.spin(bet);
 
-        // Wait ~1.4 sec for animation
-        setTimeout(() => {
+        setTimeout(async () => {
             stopSpinAnimation();
             spinBtn.classList.remove("spinning");
             isSpinning = false;
 
-            // Render reels
+            // SHOW SYMBOLS
             renderReels(result.reels);
 
-            // Handle win
-            if (result.totalWin > 0) {
-                slotsBalance += result.totalWin;
-            } else {
-                slotsBalance -= bet;
-            }
+            // CALCULATE NET PROFIT
+            const win = result.totalWin;
+            const net = win - bet;
 
-            updateBalances();
+            mainBalance += net;
+            if (mainBalance < 0) mainBalance = 0;
 
-            // Win banner
+            updateUI();
+
             if (result.isWin) {
-                let multi = Math.floor(result.totalWin / bet);
-                showWin(multi);
+                let m = Math.floor(win / bet);
+                showWin(m);
             }
 
-            // Autoplay continue
-            if (autoPlay) {
+            if (autoPlay && mainBalance >= bet) {
                 autoPlayTimer = setTimeout(spin, 500);
             }
 
@@ -188,7 +207,7 @@ window.UI = (function () {
     function changeBet(amount) {
         bet += amount;
         if (bet < 10) bet = 10;
-        updateBalances();
+        updateUI();
     }
 
     // -------------------------------
@@ -209,15 +228,17 @@ window.UI = (function () {
     }
 
     // -------------------------------
-    // BACK
+    // BACK BUTTON
     // -------------------------------
     function back() {
-        alert("Back pressed. Connect to Telegram WebApp.");
+        window.location.href = `${window.location.origin}/webapp/games/slots.html?uid=${USER_ID}`;
     }
 
     // -------------------------------
-    // INITIAL EMPTY RENDER
+    // INITIAL REELS + BALANCE LOAD
     // -------------------------------
+    loadBalance();
+
     renderReels([
         ["9", "10", "a1"],
         ["bonus", "book", "clover"],
@@ -227,7 +248,7 @@ window.UI = (function () {
     ]);
 
     // -------------------------------
-    // EXPORT FUNCTIONS
+    // EXPORT PUBLIC METHODS
     // -------------------------------
     return {
         spin,
