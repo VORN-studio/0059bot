@@ -73,6 +73,16 @@ function animateReel(col, stopSymbols, delay) {
 
 /* ─────────── SPIN ─────────── */
 async function spin() {
+
+    // RESET SPIN POSITION
+    document.querySelectorAll(".strip").forEach(s => {
+      s.style.transition = "none";       // անջատում ենք անիմացիան
+      s.style.transform = "translateY(0)"; // վերադարձնում ենք վերև
+      void s.offsetWidth;                 // forced reflow (reset animation)
+      s.style.transition = "";            // նորից միացնում ենք անիմացիան
+    });
+
+
   if (spinning) return;
 
   const bet = Number(document.getElementById("bet-input").value);
