@@ -10,22 +10,26 @@ window.UI = (function () {
     // GAME CONFIG (connect with engine)
     // -------------------------------
     const SYMBOLS = [
-        "9", "10", "bonus",
-        "book", "clover", "crystal", "gem",
-        "horseshoe", "K",
-        "star", "wild"
+        "9", "10", "a1", "bonus",
+        "book", "clover", "crystal", "domino",
+        "gem", "horseshoe", "j1", "k1",
+        "q1", "star", "wild"
     ];
 
     const SYMBOL_IMAGES = {
         "9": "symbols1/9.png",
         "10": "symbols1/10.png",
+        "a1": "symbols1/a1.png",
         "bonus": "symbols1/bonus.png",
         "book": "symbols1/book.png",
         "clover": "symbols1/clover.png",
         "crystal": "symbols1/crystal.png",
+        "domino": "symbols1/domino.png",
         "gem": "symbols1/gem.png",
         "horseshoe": "symbols1/horseshoe.png",
-        "K": "symbols1/K.png",
+        "j1": "symbols1/j1.png",
+        "k1": "symbols1/k1.png",
+        "q1": "symbols1/q1.png",
         "star": "symbols1/star.png",
         "wild": "symbols1/wild.png",
     };
@@ -215,10 +219,11 @@ window.UI = (function () {
     // INITIAL EMPTY RENDER
     // -------------------------------
     renderReels([
-        ["9", "10", "bonus"],
-        ["book", "clover", "crystal"],
-        ["gem", "horseshoe", "K"],
-        ["star", "wild"]
+        ["9", "10", "a1"],
+        ["bonus", "book", "clover"],
+        ["crystal", "domino", "gem"],
+        ["horseshoe", "j1", "k1"],
+        ["q1", "star", "wild"]
     ]);
 
     // -------------------------------
