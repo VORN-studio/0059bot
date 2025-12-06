@@ -81,6 +81,7 @@ function openTasks() {
 }
 
 
+
 // ---------------- LOAD FROM TELEGRAM ----------------
 function initFromTelegram() {
   if (!tg) {
