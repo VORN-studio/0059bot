@@ -1119,6 +1119,9 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("task_add_invite", task_add_invite))
     application.add_handler(CommandHandler("task_add_game", task_add_game))
     application.add_handler(CommandHandler("task_add_special", task_add_special))
+    application.add_handler(CommandHandler("task_list", task_list))
+    application.add_handler(CommandHandler("task_delete", task_delete))
+    application.add_handler(CommandHandler("task_toggle", task_toggle))
 
     # initialize
     await application.initialize()
@@ -1146,6 +1149,74 @@ async def task_add_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def task_add_special(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await add_task_with_category(update, context, "special")
+
+async def task_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+
+    conn = db(); c = conn.cursor()
+    c.execute("SELECT id, title, category, reward, is_active FROM dom_tasks ORDER BY id DESC")
+    rows = c.fetchall()
+    release_db(conn)
+
+    if not rows:
+        await update.message.reply_text("📭 Տասկեր չկան։")
+        return
+
+    msg = "📋 **Տասկեր**\n\n"
+    for r in rows:
+        msg += f"ID: {r[0]} | {r[1]} | {r[2]} | 💰 {r[3]}$ | {'🟢 ON' if r[4] else '🔴 OFF'}\n"
+
+    await update.message.reply_text(msg)
+
+
+async def task_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+
+    if len(context.args) != 1:
+        await update.message.reply_text("Օգտագործում՝ /task_delete ID")
+        return
+
+    task_id = int(context.args[0])
+
+    conn = db(); c = conn.cursor()
+    c.execute("DELETE FROM dom_tasks WHERE id=%s", (task_id,))
+    conn.commit()
+    release_db(conn)
+
+    await update.message.reply_text(f"🗑 Տասկը ջնջված է (ID={task_id})")
+
+
+async def task_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ admin չես")
+        return
+
+    if len(context.args) != 1:
+        await update.message.reply_text("Օգտագործում՝ /task_toggle ID")
+        return
+
+    task_id = int(context.args[0])
+
+    conn = db(); c = conn.cursor()
+    c.execute("UPDATE dom_tasks SET is_active = NOT is_active WHERE id=%s RETURNING is_active", (task_id,))
+    row = c.fetchone()
+    conn.commit()
+    release_db(conn)
+
+    if not row:
+        await update.message.reply_text("❌ Տասկը չկա")
+        return
+
+    state = "🟢 Միացված" if row[0] else "🔴 Անջատված"
+    await update.message.reply_text(f"ID {task_id} → {state}")
+
 
 async def add_task_with_category(update, context, category):
     user_id = update.effective_user.id
