@@ -77,8 +77,10 @@ async function loadTonRate() {
 
 
 function openTasks() {
-    window.location.href = "tasks/index.html";
+  window.location.href = "/0059bot/webapp/tasks/index.html";
 }
+
+
 
 
 
