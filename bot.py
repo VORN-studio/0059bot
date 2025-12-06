@@ -236,6 +236,29 @@ def init_db():
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_tasks (
+            id SERIAL PRIMARY KEY,
+            title TEXT,
+            description TEXT,
+            url TEXT,
+            reward NUMERIC(10,2),
+            category TEXT,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at BIGINT
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_task_completions (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            task_id BIGINT,
+            completed_at BIGINT,
+            UNIQUE(user_id, task_id)
+        )
+    """)
+
 
     conn.commit()
     release_db(conn)
@@ -805,6 +828,80 @@ def mylead_postback():
     return "OK", 200
 
 
+@app_web.route("/api/tasks/<int:user_id>")
+def api_tasks(user_id):
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT id, title, description, url, reward, category, is_active
+        FROM dom_tasks
+        WHERE is_active = TRUE
+        ORDER BY id DESC
+    """)
+    rows = c.fetchall()
+    release_db(conn)
+
+    tasks = []
+    for r in rows:
+        tasks.append({
+            "id": r[0],
+            "title": r[1],
+            "description": r[2],
+            "url": r[3],
+            "reward": float(r[4]),
+            "category": r[5],
+            "is_active": r[6]
+        })
+
+    return jsonify({"ok": True, "tasks": tasks})
+
+
+@app_web.route("/api/task_complete", methods=["POST"])
+def api_task_complete():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    task_id = int(data.get("task_id", 0))
+
+    if not user_id or not task_id:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+
+    # check if exists
+    c.execute("SELECT reward FROM dom_tasks WHERE id=%s AND is_active=TRUE", (task_id,))
+    row = c.fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "task_not_found"}), 404
+
+    reward = float(row[0])
+
+    # check duplicate
+    c.execute("""
+        SELECT 1 FROM dom_task_completions
+        WHERE user_id=%s AND task_id=%s
+    """, (user_id, task_id))
+    if c.fetchone():
+        return jsonify({"ok": False, "error": "already_completed"}), 200
+
+    # save completion
+    c.execute("""
+        INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+        VALUES (%s, %s, %s)
+    """, (user_id, task_id, now))
+
+    # reward balance
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd,0) + %s
+        WHERE user_id=%s
+    """, (reward, user_id))
+
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True, "reward": reward})
+
+
 
 # =========================
 # Telegram Bot (Webhook Mode)
@@ -999,6 +1096,9 @@ async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"✔ {amount}$ ավելացվեց օգտատեր {target}-ի հաշվին։")
 
 
+
+
+
 async def start_bot_webhook():
     """
     Kարգավորում ենք Telegram–ը Webhook mode-ում,
@@ -1014,6 +1114,11 @@ async def start_bot_webhook():
     application.add_handler(CallbackQueryHandler(btn_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, block_text))
     application.add_handler(CommandHandler("admin_add", admin_add))
+    application.add_handler(CommandHandler("task_add_video", task_add_video))
+    application.add_handler(CommandHandler("task_add_follow", task_add_follow))
+    application.add_handler(CommandHandler("task_add_invite", task_add_invite))
+    application.add_handler(CommandHandler("task_add_game", task_add_game))
+    application.add_handler(CommandHandler("task_add_special", task_add_special))
 
     # initialize
     await application.initialize()
@@ -1026,6 +1131,53 @@ async def start_bot_webhook():
     await application.bot.set_webhook(url=webhook_url)
 
     print(f"✅ Webhook set to {webhook_url}")
+
+async def task_add_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await add_task_with_category(update, context, "video")
+
+async def task_add_follow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await add_task_with_category(update, context, "follow")
+
+async def task_add_invite(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await add_task_with_category(update, context, "invite")
+
+async def task_add_game(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await add_task_with_category(update, context, "game")
+
+async def task_add_special(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await add_task_with_category(update, context, "special")
+
+async def add_task_with_category(update, context, category):
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+
+    text = " ".join(context.args)
+    if "|" not in text:
+        await update.message.reply_text(
+            "Օգտագործում՝\n"
+            f"/task_add_{category} Title | Description | URL | Reward"
+        )
+        return
+
+    try:
+        title, desc, url, reward = [x.strip() for x in text.split("|")]
+        reward = float(reward)
+    except:
+        await update.message.reply_text("❌ Սխալ ձևաչափ։")
+        return
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        INSERT INTO dom_tasks (title, description, url, reward, category, is_active, created_at)
+        VALUES (%s, %s, %s, %s, %s, TRUE, %s)
+    """, (title, desc, url, reward, category, now))
+    conn.commit()
+    release_db(conn)
+
+    await update.message.reply_text(f"✔ Տասկը ավելացվեց `{category}` բաժնում։")
 
 
 @app_web.route("/webhook", methods=["POST"])
