@@ -32,3 +32,33 @@ body {
     border-radius: 18px;
     backdrop-filter: blur(12px);
 }
+
+.task-menu {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.task-btn {
+    background: #0ea5e9;
+    padding: 15px;
+    border-radius: 12px;
+    color: white;
+    font-size: 18px;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+}
+
+.screen {
+    display: none;
+    padding: 20px;
+}
+
+.task-card {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 12px;
+    margin-top: 10px;
+}

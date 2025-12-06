@@ -1,24 +1,55 @@
 <!DOCTYPE html>
 <html lang="hy">
 <head>
-<meta charset="UTF-8">
-<title>Domino Tasks</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Tasks</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<div class="topbar">
-    <button onclick="closeTasks()" class="backbtn">← Back</button>
+<div class="header">
+    <a href="../index.html" class="back">← Back</a>
     <h2>📝 Tasks</h2>
 </div>
 
-<div class="content">
-    <div class="task-card">
-        <h3>🔥 Task system coming soon…</h3>
-        <p>Կատարիր առաջադրանքներ և վաստակի՛ր գումար 💰</p>
-    </div>
+<div class="task-menu">
+
+    <button onclick="openCategory('video')" class="task-btn">🎬 Video Tasks</button>
+
+    <button onclick="openCategory('follow')" class="task-btn">🔔 Follow Tasks</button>
+
+    <button onclick="openCategory('invite')" class="task-btn">👥 Invite Friends</button>
+
+    <button onclick="openCategory('game')" class="task-btn">🎮 Game Tasks</button>
+
+    <button onclick="openCategory('special')" class="task-btn">⭐ Special Tasks</button>
+
+</div>
+
+<!-- CATEGORY SCREENS -->
+<div id="screen-video" class="screen">
+    <h3>🎬 Video Tasks</h3>
+    <div class="task-card">Task example: watch video</div>
+</div>
+
+<div id="screen-follow" class="screen">
+    <h3>🔔 Follow Tasks</h3>
+    <div class="task-card">Follow TikTok, Instagram, Telegram…</div>
+</div>
+
+<div id="screen-invite" class="screen">
+    <h3>👥 Invite Friends</h3>
+    <div class="task-card">Invite link tasks</div>
+</div>
+
+<div id="screen-game" class="screen">
+    <h3>🎮 Game Tasks</h3>
+    <div class="task-card">Play mini-games</div>
+</div>
+
+<div id="screen-special" class="screen">
+    <h3>⭐ Special Tasks</h3>
+    <div class="task-card">High reward tasks</div>
 </div>
 
 <script src="tasks.js"></script>
