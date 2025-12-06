@@ -211,6 +211,19 @@ def init_db():
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS conversions (
+            id SERIAL PRIMARY KEY,
+            conversion_id TEXT UNIQUE,
+            user_id BIGINT,
+            offer_id TEXT,
+            payout NUMERIC(18,2),
+            status TEXT,
+            created_at BIGINT DEFAULT EXTRACT(EPOCH FROM NOW())
+        )
+    """)
+
+
     conn.commit()
     release_db(conn)
     print("✅ Domino tables ready with applied patches!")
@@ -734,7 +747,7 @@ def mylead_postback():
 
     # 3) եթե approved → ավելացնում ենք balance
     if status.lower() == "approved":
-        c.execute("UPDATE users SET balance = balance + %s WHERE user_id = %s", (payout, user_id))
+        c.execute("UPDATE dom_users SET balance_usd = balance_usd + %s WHERE user_id = %s", (payout, user_id))
 
     # 4) պահում ենք conversion-ը
     c.execute("""
