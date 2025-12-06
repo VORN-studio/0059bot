@@ -103,7 +103,7 @@ def favicon():
     return send_from_directory(assets_dir, "favicon.ico")
 
 
-@app.route('/webapp/tasks/<path:filename>')
+@app_web.route('/webapp/tasks/<path:filename>')
 def webapp_tasks(filename):
     return send_from_directory('webapp/tasks', filename)
 
