@@ -223,6 +223,19 @@ def init_db():
         )
     """)
 
+        # ---------- CONVERSIONS (MyLead postbacks) ----------
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS conversions (
+            id SERIAL PRIMARY KEY,
+            conversion_id TEXT UNIQUE,
+            user_id BIGINT,
+            offer_id TEXT,
+            payout NUMERIC(18, 4),
+            status TEXT,
+            created_at BIGINT
+        )
+    """)
+
 
     conn.commit()
     release_db(conn)
@@ -727,38 +740,70 @@ def api_task_reward():
 
 @app_web.route("/mylead/postback", methods=["GET", "POST"])
 def mylead_postback():
-    # 1) վերցնում ենք բոլոր parameters-ը
-    user_id = request.args.get("s1")
-    status = request.args.get("status")
-    payout = request.args.get("payout")
+    """
+    MyLead → Domino Postback
+
+    Ակնկալում ենք, որ MyLead-ի tracking link-ի մեջ s1 պարամետրը հավասար է Telegram user_id-ին:
+    Postback-ն ուղարկվում է примерно այս տեսքով.
+
+    https://domino-backend-iavj.onrender.com/mylead/postback
+        ?s1={sub1}
+        &status={status}
+        &payout={payout}
+        &offer_id={program_id}
+        &transaction_id={transaction_id}
+    """
+
+    user_id_raw = request.args.get("s1")
+    status = (request.args.get("status") or "").lower()
+    payout_raw = request.args.get("payout")
     offer_id = request.args.get("offer_id")
     conversion_id = request.args.get("transaction_id")
 
-    if not user_id or not status:
+    # պարտադիր դաշտեր
+    if not user_id_raw or not status or not conversion_id:
         return "Missing parameters", 400
 
-    # 2) ստուգում ենք կրկնվող conversion չլինի
-    conn = db(); c = conn.cursor()
-    c.execute("SELECT 1 FROM conversions WHERE conversion_id = %s", (conversion_id,))
-    exists = c.fetchone()
+    try:
+        user_id = int(user_id_raw)
+    except Exception:
+        return "Bad user_id", 400
 
-    if exists:
+    try:
+        payout = float(payout_raw or 0)
+    except Exception:
+        payout = 0.0
+
+    now = int(time.time())
+
+    conn = db(); c = conn.cursor()
+
+    # 1) չկրկնել նույն conversion-ը
+    c.execute("SELECT 1 FROM conversions WHERE conversion_id = %s", (conversion_id,))
+    if c.fetchone():
+        release_db(conn)
         return "Already processed", 200
 
-    # 3) եթե approved → ավելացնում ենք balance
-    if status.lower() == "approved":
-        c.execute("UPDATE dom_users SET balance_usd = balance_usd + %s WHERE user_id = %s", (payout, user_id))
+    # 2) եթե approved → գումար ենք ավելացնում dom_users.balance_usd + total_deposit_usd
+    if status == "approved" and payout > 0:
+        c.execute("""
+            UPDATE dom_users
+               SET balance_usd       = COALESCE(balance_usd,0) + %s,
+                   total_deposit_usd = COALESCE(total_deposit_usd,0) + %s
+             WHERE user_id = %s
+        """, (payout, payout, user_id))
 
-    # 4) պահում ենք conversion-ը
+    # 3) պահում ենք conversion-ի log-ը
     c.execute("""
-        INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (conversion_id, user_id, offer_id, payout, status))
+        INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (conversion_id, user_id, offer_id, payout, status, now))
 
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return "OK", 200
+
 
 
 # =========================
