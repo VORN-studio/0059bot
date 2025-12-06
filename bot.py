@@ -102,6 +102,30 @@ def favicon():
     assets_dir = os.path.join(WEBAPP_DIR, "assets")
     return send_from_directory(assets_dir, "favicon.ico")
 
+@app_web.route("/api/slots/update_balance", methods=["POST"])
+def api_slots_update_balance():
+    data = request.get_json(force=True, silent=True) or {}
+
+    user_id = int(data.get("user_id", 0))
+    new_balance = float(data.get("new_balance", -1))
+
+    if user_id == 0 or new_balance < 0:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    conn = db()
+    c = conn.cursor()
+
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = %s
+        WHERE user_id = %s
+    """, (new_balance, user_id))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "updated": new_balance})
+
 
 # =========================
 # PostgreSQL Connection Pool

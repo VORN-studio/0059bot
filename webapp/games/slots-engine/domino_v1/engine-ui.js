@@ -161,6 +161,10 @@ window.UI = (function () {
     // SPIN (WITH REAL BALANCE)
     // -------------------------------
     async function spin() {
+        mainBalance += net;
+        updateUI();
+
+
         if (isSpinning) return;
 
         if (bet > mainBalance)
@@ -201,6 +205,8 @@ window.UI = (function () {
         }, 1400);
     }
 
+    
+
     // -------------------------------
     // BET CONTROL
     // -------------------------------
@@ -233,6 +239,28 @@ window.UI = (function () {
     function back() {
         window.location.href = `${window.location.origin}/webapp/games/slots.html?uid=${USER_ID}`;
     }
+
+    // update balance locally
+    mainBalance += net;
+    if (mainBalance < 0) mainBalance = 0;
+
+    updateUI();
+
+// update balance in backend
+    fetch(`${API}/api/slots/update_balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: USER_ID,
+            new_balance: mainBalance
+        })
+    })
+    .then(r => r.json())
+    .then(js => {
+        if (!js.ok) console.log("Balance update failed");
+    })
+    .catch(e => console.log("Update error:", e));
+
 
     // -------------------------------
     // INITIAL REELS + BALANCE LOAD
