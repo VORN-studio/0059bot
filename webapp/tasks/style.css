@@ -5,49 +5,186 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --bg-main: #040714;
-    --bg-alt: #050916;
-    --accent: #00d0ff;
-    --accent-soft: #39b6ff;
-    --accent-purple: #7b5cff;
-    --accent-green: #3af5c4;
+    /* ===== CORE COLORS ===== */
+    --bg-main: #03040d;
+    --bg-alt: #050918;
+    --bg-deep: #01020a;
+
+    --accent: #00e0ff;
+    --accent-soft: #3acaff;
+    --accent-purple: #8b5cff;
+    --accent-green: #35f2c4;
+    --accent-pink: #ff4fe2;
+    --accent-gold: #ffdd55;
 
     --text-main: #f5f7ff;
-    --text-soft: #bac4e6;
-    --text-dim: #7c86aa;
+    --text-soft: #c8d0f2;
+    --text-dim: #7f89a8;
 
-    --card-bg: rgba(10, 14, 32, 0.95);
+    /* ===== HOLOGRAM GRADIENTS ===== */
+    --grad-accent: linear-gradient(135deg, #00e0ff 0%, #3acaff 40%, #8b5cff 100%);
+    --grad-purple: linear-gradient(135deg, #3d1aff, #8b5cff);
+    --grad-cyan: linear-gradient(135deg, #00f0ff, #009dff);
+    --grad-green: linear-gradient(135deg, #35f2c4, #1ea88b);
+    --grad-gold: linear-gradient(135deg, #ffdd55, #f6b73c);
+
+    --holo-sheen: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.15) 45%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(255, 255, 255, 0.15) 55%,
+        transparent 100%
+    );
+
+    /* ===== GLASSMORPHISM ===== */
+    --glass-1: rgba(255, 255, 255, 0.02);
+    --glass-2: rgba(255, 255, 255, 0.06);
+    --glass-3: rgba(255, 255, 255, 0.10);
+    --glass-strong: rgba(0, 200, 255, 0.10);
+
+    /* ===== CARD SYSTEM ===== */
+    --card-bg: rgba(10, 14, 32, 0.92);
+    --card-glow: 0 0 24px rgba(0, 200, 255, 0.25);
     --card-border: rgba(122, 151, 255, 0.28);
     --card-inner: rgba(255, 255, 255, 0.04);
 
-    --radius-lg: 18px;
+    /* ===== BORDERS & RADII ===== */
+    --radius-lg: 20px;
     --radius-md: 14px;
+    --radius-sm: 10px;
+    --radius-round: 50px;
 
-    --shadow-main: 0 18px 45px rgba(0, 0, 0, 0.85);
-    --shadow-soft: 0 0 24px rgba(0, 200, 255, 0.45);
+    --border-holo: 1px solid rgba(0, 200, 255, 0.25);
+    --border-glow: 1px solid rgba(150, 200, 255, 0.35);
+
+    /* ===== SHADOW SYSTEM ===== */
+    --shadow-main: 0 18px 45px rgba(0, 0, 0, 0.75);
+    --shadow-soft: 0 0 28px rgba(0, 220, 255, 0.45);
+    --shadow-deep: 0 0 55px rgba(0, 120, 200, 0.25);
+    --shadow-purple: 0 0 38px rgba(140, 90, 255, 0.35);
+
+    /* ===== ELEVATION LEVELS ===== */
+    --elevation-1: 0 4px 12px rgba(0,0,0,0.35);
+    --elevation-2: 0 8px 22px rgba(0,0,0,0.55);
+    --elevation-3: 0 12px 32px rgba(0,0,0,0.75);
+    --elevation-holo: 0 0 30px rgba(0,200,255,0.40);
+
+    /* ===== ANIMATION SPEEDS ===== */
+    --speed-fast: 0.18s;
+    --speed-normal: 0.28s;
+    --speed-slow: 0.45s;
+
+    /* ===== RIPPLE & GLOWS ===== */
+    --ripple-color: rgba(0, 200, 255, 0.35);
+    --neon-aqua: 0 0 12px #00e0ff, 0 0 22px #00e0ff;
+    --neon-purple: 0 0 12px #8b5cff, 0 0 22px #8b5cff;
+
+    /* ===== FUTURE ANIMATED VARIABLES (for glowing cycles) ===== */
+    --glow-cycle-1: rgba(0, 200, 255, 0.4);
+    --glow-cycle-2: rgba(0, 150, 255, 0.45);
+    --glow-cycle-3: rgba(120, 90, 255, 0.50);
+
+    /* ===== GRID & PARTICLES ===== */
+    --grid-line: rgba(255, 255, 255, 0.04);
+    --particle-a: rgba(0, 200, 255, 0.65);
+    --particle-b: rgba(140, 90, 255, 0.55);
+    --particle-c: rgba(255, 255, 255, 0.25);
 }
+
 
 /* ===========================
    GLOBAL
    =========================== */
 
+/* ==========================================================
+   🔵 DOMINO WEB3 STRUCTURAL RESET – PREMIUM VERSION
+   Ensures perfect rendering, animation smoothness and
+   consistent behavior on all devices (iOS/Android/Web).
+   ========================================================== */
+
 *,
 *::before,
 *::after {
     box-sizing: border-box;
+
+    /* Prevents pixel glitches on neon/glow elements */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Smoother CSS transforms & GPU usage */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    /* Prevents small shaking on animated shadows */
+    transform-style: preserve-3d;
+
+    /* Ensures animations don't overflow unexpectedly */
+    overflow: visible;
+
+    /* Higher-quality rendering on mobile screens */
+    -webkit-tap-highlight-color: transparent;
 }
 
-html, body {
+
+html,
+body {
     margin: 0;
     padding: 0;
+
+    /* լիարժեք լայնություն/բարձրություն */
     width: 100%;
     min-height: 100%;
+    max-width: 100%;
+
+    /* թաքցնենք զոմ-սքրոլի բագերը */
+    overflow-x: hidden;
+
+    /* fallback ֆոն, եթե gradients-ը դեռ չեն լոդվել */
+    background: var(--bg-main, #040714);
+    color: var(--text-main, #f5f7ff);
+
+    /* պրեմիում տեքստի տեսք */
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+
+    /* հարթ սքրոլ, ավելի Web3-feel */
+    scroll-behavior: smooth;
+
+    /* iPhone / notch safe-area, Telegram WebApp-ի համար օգտակար */
+    padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* BODY – կառուցվածք Web3 dashboard-ի նման */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+
+    /* որ բոլոր լայթ/նեոն էֆեկտները լինեն ճիշտ շերտի վրա */
+    position: relative;
+    isolation: isolate;
+}
+
+
+/* ============================================================
+   🔵 DOMINO — WEB3 PREMIUM BODY LAYER
+   Futuristic neon depth • hologram motion • crypto safe feeling
+   ============================================================ */
 
 body {
     font-family: "Inter", sans-serif;
     color: var(--text-main);
-    background: radial-gradient(circle at 0% -20%, #213667, #060817 45%, #02030a 80%);
+
+    /* ✨ Deep-space Web3 gradient */
+    background:
+        radial-gradient(circle at 20% -20%, rgba(60, 110, 255, 0.25), transparent 60%),
+        radial-gradient(circle at 80% 20%, rgba(0, 220, 255, 0.22), transparent 55%),
+        radial-gradient(circle at 50% 110%, rgba(120, 60, 255, 0.16), transparent 70%),
+        #02030a;
+
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -55,635 +192,1421 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    min-height: 100vh;
+    isolation: isolate;
 
-    animation: bodyFade 0.6s ease-out;
+    animation: bodyFade 0.8s ease-out forwards;
 }
 
-/* ✨ Animated gradient glow behind everything */
+
+/* ============================================================
+   🔷 1) Animated Hologram Grid Background
+   ============================================================ */
 body::before {
     content: "";
-    position: fixed;
-    inset: -40%;
-    background:
-        radial-gradient(circle at 10% 0%, rgba(0, 200, 255, 0.35), transparent 55%),
-        radial-gradient(circle at 80% 20%, rgba(125, 88, 255, 0.35), transparent 60%),
-        radial-gradient(circle at 10% 90%, rgba(53, 255, 195, 0.3), transparent 60%);
-    opacity: 0.6;
-    filter: blur(18px);
-    z-index: -3;
-    animation: glowShift 12s ease-in-out infinite alternate;
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+
+    background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 38px 38px;
+    opacity: 0.18;
+
+    animation: gridFloat 24s linear infinite;
 }
 
-/* 🔒 cyber-grid feeling (subtle) */
+@keyframes gridFloat {
+    0% { transform: translateY(0) translateX(0); }
+    50% { transform: translateY(-40px) translateX(25px); }
+    100% { transform: translateY(0) translateX(0); }
+}
+
+
+/* ============================================================
+   🔷 2) Dynamic Web3 Particle Layer
+   ============================================================ */
 body::after {
     content: "";
-    position: fixed;
+    position: absolute;
     inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-    background-size: 40px 40px;
-    mix-blend-mode: soft-light;
-    opacity: 0.4;
-    pointer-events: none;
-    z-index: -2;
-    animation: gridDrift 22s linear infinite;
+    z-index: -1;
+
+    background:
+        radial-gradient(circle, var(--particle-a) 0%, transparent 70%) 15% 25%,
+        radial-gradient(circle, var(--particle-b) 0%, transparent 70%) 80% 40%,
+        radial-gradient(circle, var(--particle-c) 0%, transparent 70%) 40% 75%;
+
+    background-size: 180px 180px, 140px 140px, 160px 160px;
+    opacity: 0.26;
+
+    filter: blur(20px);
+    animation: particlesMove 18s ease-in-out infinite alternate;
 }
 
+@keyframes particlesMove {
+    0%   { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.25; }
+    50%  { transform: translateY(-30px) translateX(20px) scale(1.05); opacity: 0.4; }
+    100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.28; }
+}
+
+
+/* ============================================================
+   🔷 3) Body Fade Entrance
+   ============================================================ */
+@keyframes bodyFade {
+    0% {
+        opacity: 0;
+        transform: translateY(12px);
+        filter: blur(5px);
+    }
+    70% {
+        filter: blur(1px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+
 /* slight scanline overlay for Web3 vibe */
+/* ============================================================
+   🔷 MAIN HOLOGRAM SCAN OVERLAY — Web3 Ultra Edition
+   ============================================================ */
+
 .main-overlay-scan {
     position: fixed;
     inset: 0;
-    background-image: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.03) 1px,
-        transparent 1px
-    );
-    background-size: 100% 2px;
-    mix-blend-mode: soft-light;
-    opacity: 0.25;
+
+    /* Multi-layer hologram scan lines */
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            rgba(255,255,255,0.035) 0px,
+            rgba(255,255,255,0.015) 2px,
+            transparent 4px
+        ),
+        repeating-linear-gradient(
+            to right,
+            rgba(0, 200, 255, 0.03) 0px,
+            rgba(0, 200, 255, 0.015) 3px,
+            transparent 6px
+        );
+
+    mix-blend-mode: screen;
+    opacity: 0.22;
     pointer-events: none;
-    z-index: -1;
+    z-index: 1;
+
+    /* subtle hologram motion */
+    animation: hologramFloat 14s ease-in-out infinite alternate;
 }
 
+/* floating hologram movement */
+@keyframes hologramFloat {
+    0% {
+        opacity: 0.18;
+        transform: translateY(0px) translateX(0px);
+        filter: blur(0.4px);
+    }
+    50% {
+        opacity: 0.32;
+        transform: translateY(-16px) translateX(8px);
+        filter: blur(0.8px);
+    }
+    100% {
+        opacity: 0.22;
+        transform: translateY(0px) translateX(0px);
+        filter: blur(0.3px);
+    }
+}
+
+
+/* ============================================================
+   🔷 MOVING SCANNER BAR — gives "security scan" effect
+   ============================================================ */
+
+.main-overlay-scan::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 120px;
+
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 255, 255, 0.12),
+        rgba(0, 200, 255, 0.05),
+        transparent
+    );
+
+    mix-blend-mode: screen;
+    filter: blur(8px);
+
+    animation: scanBarMove 3.8s linear infinite;
+}
+
+@keyframes scanBarMove {
+    0% { top: -140px; opacity: 0; }
+    20% { opacity: 0.18; }
+    50% { top: 50%; opacity: 0.28; }
+    80% { opacity: 0.15; }
+    100% { top: 110%; opacity: 0; }
+}
+
+
 /* Container to center content on big screens (if Telegram opens wide) */
+/* ============================================================
+   🔷 PAGE WRAP — Web3 Hologram Container (Ultra Premium)
+   ============================================================ */
+
 .page-wrap {
     width: 100%;
-    max-width: 520px;
+    max-width: 540px; /* slight increase for better layout flow */
     margin: 0 auto;
+    padding: 0 18px;
+
+    position: relative;
+    z-index: 2;
+
+    /* Holographic glass depth */
+    background: rgba(8, 12, 28, 0.25);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+
+    border-radius: 22px;
+
+    /* Soft neon border */
+    border: 1px solid rgba(100, 150, 255, 0.22);
+
+    /* Inner glow to show safe Web3 zone */
+    box-shadow:
+        0 0 22px rgba(0, 200, 255, 0.18),
+        inset 0 0 18px rgba(255, 255, 255, 0.04),
+        0 18px 45px rgba(0, 0, 0, 0.6);
+
+    /* entrance animation */
+    animation: wrapAppear 0.65s cubic-bezier(0.16, 0.6, 0.4, 1);
 }
+
+/* Smooth animated appearance */
+@keyframes wrapAppear {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+        filter: blur(6px);
+    }
+    60% {
+        transform: translateY(8px) scale(0.985);
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+    }
+}
+
+
+/* Optional: subtle animated hologram shine across container */
+.page-wrap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+
+    background: linear-gradient(
+        115deg,
+        transparent 0%,
+        rgba(0, 200, 255, 0.08) 30%,
+        transparent 60%
+    );
+
+    pointer-events: none;
+    opacity: 0.25;
+
+    /* moving holographic sweep */
+    animation: holoSweep 4.5s ease-in-out infinite alternate;
+}
+
+@keyframes holoSweep {
+    0%   { transform: translateX(-20px); opacity: 0.12; }
+    100% { transform: translateX(20px); opacity: 0.25; }
+}
+
 
 /* ===========================
    HEADER
    =========================== */
 
+/* =======================================================
+    HEADER — Web3 Secure Panel (Ultra Premium Edition)
+   ======================================================= */
+
 .header {
-    padding: 18px 18px 10px 18px;
+    padding: 22px 20px 14px;
     position: relative;
-    z-index: 2;
+    z-index: 20;
 
+    /* Futuristic navy gradient */
     background: linear-gradient(
-        120deg,
-        rgba(8, 15, 38, 0.97),
-        rgba(9, 12, 32, 0.98)
+        135deg,
+        rgba(12, 18, 42, 0.96) 0%,
+        rgba(8, 12, 30, 0.98) 40%,
+        rgba(6, 10, 24, 0.99) 100%
     );
-    backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(160, 180, 255, 0.16);
 
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+
+    border-bottom: 1px solid rgba(120, 150, 255, 0.22);
+
+    /* Deep Web3 shadow */
     box-shadow:
-        0 14px 30px rgba(0, 0, 0, 0.75),
-        0 0 24px rgba(0, 210, 255, 0.2);
+        0 18px 38px rgba(0, 0, 0, 0.75),
+        0 0 28px rgba(0, 210, 255, 0.16),
+        inset 0 -2px 12px rgba(255, 255, 255, 0.04);
+
+    /* soft entrance animation */
+    animation: headerReveal 0.7s cubic-bezier(0.2, 0.6, 0.35, 1);
 }
 
-/* moving light “security line” */
+@keyframes headerReveal {
+    0% {
+        opacity: 0;
+        transform: translateY(-18px);
+        filter: blur(8px);
+    }
+    60% {
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+
+/* =======================================================
+      SECURITY LINE — animated blockchain scanner
+   ======================================================= */
+
 .header::after {
     content: "";
     position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: -1px;
-    height: 1px;
+    left: 14px;
+    right: 14px;
+    bottom: 0;
+    height: 2px;
+
     background: linear-gradient(
         90deg,
-        transparent,
-        rgba(0, 225, 255, 0.6),
-        rgba(90, 255, 215, 0.7),
-        transparent
+        transparent 0%,
+        rgba(0, 230, 255, 0.85) 40%,
+        rgba(90, 255, 210, 0.9) 60%,
+        transparent 100%
     );
-    opacity: 0.8;
-    transform-origin: left;
-    animation: securitySweep 3.5s linear infinite;
+
+    opacity: 0.75;
+
+    /* glowing effect */
+    filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.55));
+
+    animation: securitySweep 3.2s linear infinite;
 }
 
+@keyframes securitySweep {
+    0%   { transform: scaleX(0.0) translateX(0); opacity: 0.3; }
+    25%  { transform: scaleX(1.0) translateX(0); opacity: 0.8; }
+    50%  { transform: scaleX(1.1) translateX(4px); opacity: 1; }
+    100% { transform: scaleX(0.0) translateX(0); opacity: 0.3; }
+}
+
+
+/* =======================================================
+     HOLOGRAM CORNER LIGHTS — premium Web3 detail
+   ======================================================= */
+
+.header::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    right: 18px;
+    width: 36px;
+    height: 36px;
+
+    background: radial-gradient(
+        circle,
+        rgba(0, 200, 255, 0.35),
+        rgba(0, 120, 200, 0.0) 70%
+    );
+
+    pointer-events: none;
+    opacity: 0.28;
+
+    animation: cornerGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes cornerGlow {
+    0%   { transform: scale(0.85); opacity: 0.20; }
+    100% { transform: scale(1.25); opacity: 0.35; }
+}
+
+
 /* Back link */
+/* =============================================================
+      BACK BUTTON — Ultra Premium Web3 Holographic Button
+   ============================================================= */
+
 .back {
-    color: #9fb2ff;
+    color: #b8c7ff;
     text-decoration: none;
-    font-size: 15px;
+    font-size: 15.5px;
     font-weight: 500;
 
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 
-    padding: 6px 12px;
+    padding: 7px 15px;
     border-radius: 999px;
 
-    border: 1px solid rgba(120, 150, 255, 0.4);
-    background: radial-gradient(circle at 0% 0%, rgba(135, 170, 255, 0.22), transparent 65%);
-    backdrop-filter: blur(8px);
-
-    text-shadow: 0 0 8px rgba(152, 176, 255, 0.9);
-    box-shadow:
-        0 2px 10px rgba(0, 0, 0, 0.65),
-        0 0 15px rgba(90, 140, 255, 0.55);
-
     cursor: pointer;
-    opacity: 0.9;
+    opacity: 0.92;
 
-    transition: all 0.22s ease-out;
+    /* Crystal glass background */
+    background: linear-gradient(
+        135deg,
+        rgba(150, 180, 255, 0.24),
+        rgba(90, 120, 210, 0.08)
+    );
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+
+    /* Holographic border */
+    border: 1px solid rgba(140, 170, 255, 0.45);
+
+    /* Layered glow */
+    box-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.7),
+        0 0 18px rgba(110, 160, 255, 0.55),
+        inset 0 0 12px rgba(255, 255, 255, 0.05);
+
+    /* Text glow */
+    text-shadow:
+        0 0 8px rgba(160, 180, 255, 0.9),
+        0 0 16px rgba(140, 160, 255, 0.5);
+
+    /* Smooth animations */
+    transition:
+        transform 0.22s ease-out,
+        box-shadow 0.28s ease-out,
+        color 0.22s ease-out,
+        opacity 0.22s ease-out;
 }
 
+/* ◀ icon */
 .back::before {
     content: "◀";
-    font-size: 12px;
+    font-size: 13px;
+
+    /* floating animation */
+    animation: backArrowPulse 2.4s ease-in-out infinite;
     opacity: 0.9;
 }
 
+@keyframes backArrowPulse {
+    0%   { transform: translateX(0); opacity: 0.8; }
+    50%  { transform: translateX(-2px); opacity: 1; }
+    100% { transform: translateX(0); opacity: 0.8; }
+}
+
+/* Hover — hologram brightening */
 .back:hover {
     opacity: 1;
-    color: #dbe2ff;
-    transform: translateX(-2px);
+    color: #e8ecff;
+
+    transform: translateX(-3px);
 
     box-shadow:
-        0 3px 14px rgba(0, 0, 0, 0.75),
-        0 0 22px rgba(110, 160, 255, 0.8);
+        0 4px 18px rgba(0, 0, 0, 0.8),
+        0 0 26px rgba(130, 180, 255, 0.85),
+        inset 0 0 16px rgba(255, 255, 255, 0.07);
 }
 
+/* Tap — subtle compression */
 .back:active {
-    transform: translateX(-1px) scale(0.98);
+    transform: translateX(-1px) scale(0.97);
     opacity: 0.85;
+
+    box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.7),
+        0 0 16px rgba(110, 160, 255, 0.55),
+        inset 0 0 20px rgba(255, 255, 255, 0.09);
 }
+
 
 /* Title */
+/* ============================================================
+     WEB3 HOLOGRAPHIC TITLE — Ultra Premium / Animated
+   ============================================================ */
+
 h2 {
-    font-size: 28px;
-    margin: 10px 0 6px 0;
+    font-size: 30px;
+    margin: 12px 0 10px 0;
+
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 
-    letter-spacing: 0.35px;
-    line-height: 1.2;
+    letter-spacing: 0.45px;
+    line-height: 1.18;
 
-    background: linear-gradient(90deg, #f9fcff 0%, #cddbff 40%, #70e9ff 100%);
+    /* animated neon gradient */
+    background: linear-gradient(
+        90deg,
+        #f7fbff 0%,
+        #d4e4ff 25%,
+        #79f0ff 50%,
+        #4db4ff 75%,
+        #8ad0ff 100%
+    );
+    background-size: 250%;
+    animation: h2GradientShift 6s ease-in-out infinite;
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 
+    /* layered glow */
     text-shadow:
-        0 0 14px rgba(0, 200, 255, 0.7),
-        0 0 26px rgba(83, 119, 255, 0.55);
+        0 0 18px rgba(0, 215, 255, 0.65),
+        0 0 36px rgba(80, 130, 255, 0.45);
 
     position: relative;
 }
 
+/* gradient animation */
+@keyframes h2GradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+
+/* ========= HOLOGRAM BADGE (WEB3 TASKS) ========= */
+
 h2::after {
     content: "WEB3 TASKS";
-    font-size: 10px;
-    letter-spacing: 2.7px;
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: rgba(200, 220, 255, 0.95);
     text-transform: uppercase;
-    color: rgba(188, 200, 255, 0.9);
-    opacity: 0.9;
 
-    margin-left: auto;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 999px;
+    margin-left: auto;
 
-    border: 1px solid rgba(110, 140, 255, 0.6);
+    /* Layered glass panel */
     background: linear-gradient(
-        120deg,
-        rgba(15, 30, 70, 0.95),
-        rgba(18, 40, 90, 0.95)
+        135deg,
+        rgba(25, 40, 85, 0.95),
+        rgba(18, 32, 70, 0.9)
     );
+    border: 1px solid rgba(100, 140, 255, 0.55);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    /* Glows */
     box-shadow:
-        0 0 14px rgba(0, 200, 255, 0.55),
-        0 4px 12px rgba(0, 0, 0, 0.75);
+        0 0 15px rgba(0, 210, 255, 0.55),
+        inset 0 0 8px rgba(255, 255, 255, 0.08),
+        0 6px 18px rgba(0, 0, 0, 0.75);
+
+    /* HOLOGRAM flicker animation */
+    animation: badgeFlicker 3.8s ease-in-out infinite;
 }
+
+@keyframes badgeFlicker {
+    0%   { opacity: 0.78; transform: translateY(0); }
+    25%  { opacity: 0.92; }
+    50%  { opacity: 1; transform: translateY(-1px) scale(1.02); }
+    75%  { opacity: 0.88; }
+    100% { opacity: 0.80; transform: translateY(0); }
+}
+
 
 /* ===========================
    BALANCE (HOLOGRAM CHIP)
    =========================== */
 
+/* ============================================================
+      ULTRA-PREMIUM WEB3 BALANCE PANEL — LIVING HOLOGRAM
+   ============================================================ */
+
 .balance-box {
     margin-top: 14px;
-    padding: 14px 16px;
-    border-radius: 16px;
+    padding: 18px 20px;
+    border-radius: 20px;
 
-    background: radial-gradient(circle at 0% 0%, rgba(0, 210, 255, 0.15), transparent 70%),
-                linear-gradient(130deg, rgba(13, 21, 54, 0.96), rgba(7, 14, 30, 0.96));
+    /* multi-layer holographic background */
+    background:
+        radial-gradient(circle at 0% 0%, rgba(0, 255, 240, 0.20), transparent 70%),
+        radial-gradient(circle at 100% 100%, rgba(110, 80, 255, 0.20), transparent 60%),
+        linear-gradient(135deg, rgba(10, 18, 48, 0.96), rgba(4, 10, 25, 0.98));
 
-    border: 1px solid rgba(120, 150, 255, 0.55);
+    border: 1px solid rgba(135, 165, 255, 0.45);
 
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 14px;
 
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-main);
 
+    overflow: hidden;
+    position: relative;
+
+    /* WEB3 depth */
     box-shadow:
-        0 12px 26px rgba(0, 0, 0, 0.9),
-        0 0 26px rgba(0, 220, 255, 0.45),
+        0 18px 45px rgba(0, 0, 0, 0.9),
+        0 0 30px rgba(0, 255, 230, 0.35),
         inset 0 0 18px rgba(255, 255, 255, 0.06);
 
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    /* subtle floating animation */
+    animation: balanceFloat 6s ease-in-out infinite;
 }
 
-/* rotating subtle border light */
+/* floating heartbeat movement */
+@keyframes balanceFloat {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(-3px); }
+    100% { transform: translateY(0); }
+}
+
+
+/* ============================================================
+      HOLOGRAPHIC BORDER ORBIT
+   ============================================================ */
+
 .balance-box::before {
     content: "";
     position: absolute;
-    inset: -1px;
+    inset: -2px;
     border-radius: inherit;
+
     background: conic-gradient(
         from 0deg,
-        rgba(0, 220, 255, 0.0),
-        rgba(0, 220, 255, 0.5),
-        rgba(112, 82, 255, 0.5),
-        rgba(0, 220, 255, 0.0)
+        rgba(0, 255, 240, 0.0),
+        rgba(0, 255, 240, 0.6),
+        rgba(120, 80, 255, 0.55),
+        rgba(0, 255, 240, 0.0)
     );
-    opacity: 0.3;
+
+    opacity: 0.35;
     mix-blend-mode: screen;
-    animation: borderOrbit 6s linear infinite;
-    pointer-events: none;
+
+    animation: borderOrbitUltra 5.8s linear infinite;
 }
 
-/* inner moving light streak */
+@keyframes borderOrbitUltra {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+
+/* ============================================================
+      HOLO SWEEP (moving light beam across panel)
+   ============================================================ */
+
 .balance-box::after {
     content: "";
     position: absolute;
     top: -60%;
-    width: 40%;
+    left: -40%;
+    width: 60%;
     height: 220%;
-    right: 80%;
     background: linear-gradient(
-        120deg,
+        115deg,
         transparent,
-        rgba(255, 255, 255, 0.6),
+        rgba(255, 255, 255, 0.55),
         transparent
     );
-    opacity: 0.24;
+    opacity: 0.18;
     transform: skewX(-20deg);
-    animation: holoSweep 5.4s ease-in-out infinite;
+    animation: holoSweepUltra 4.8s ease-in-out infinite;
 }
+
+@keyframes holoSweepUltra {
+    0%   { transform: translateX(-40%) skewX(-20deg); opacity: 0.15; }
+    50%  { transform: translateX(180%) skewX(-20deg); opacity: 0.32; }
+    100% { transform: translateX(-40%) skewX(-20deg); opacity: 0.15; }
+}
+
+
+/* ============================================================
+      TEXT & VALUE
+   ============================================================ */
 
 .balance-box strong {
     font-weight: 700;
-    letter-spacing: 0.3px;
-    color: #e5ecff;
+    letter-spacing: 0.4px;
+    color: #f0f5ff;
+    text-shadow:
+        0 0 8px rgba(150, 170, 255, 0.6),
+        0 0 18px rgba(120, 150, 255, 0.45);
 }
 
 #tasks-balance {
-    font-size: 19px;
-    letter-spacing: 0.7px;
-    color: #aefaff;
+    font-size: 21px;
+    font-weight: 700;
+    color: #9efaff;
+
     text-shadow:
-        0 0 8px rgba(0, 255, 220, 0.75),
-        0 0 18px rgba(0, 255, 220, 0.5);
+        0 0 12px rgba(0, 255, 230, 0.85),
+        0 0 22px rgba(0, 255, 200, 0.55);
 }
 
-/* Little “secured” label */
+
+/* ============================================================
+      SECURED BADGE — Crypto-grade trust indicator
+   ============================================================ */
+
 .balance-box span::after {
     content: " SECURED";
-    font-size: 9px;
-    letter-spacing: 1.6px;
+    font-size: 10px;
+    letter-spacing: 1.8px;
     text-transform: uppercase;
     margin-left: 10px;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 999px;
-    border: 1px solid rgba(90, 255, 215, 0.7);
-    color: rgba(190, 255, 230, 0.98);
 
-    background: radial-gradient(circle at 0% 0%, rgba(0, 255, 200, 0.3), rgba(10, 30, 40, 0.95));
+    border: 1px solid rgba(70, 255, 210, 0.8);
+    color: rgba(150, 255, 220, 0.98);
+
+    background: radial-gradient(
+        circle at 0% 0%,
+        rgba(0, 255, 200, 0.45),
+        rgba(15, 30, 35, 0.98)
+    );
+
+    box-shadow:
+        0 0 14px rgba(0, 255, 200, 0.55),
+        inset 0 0 10px rgba(255, 255, 255, 0.08);
+
+    /* badge pulse */
+    animation: badgePulse 2.8s ease-in-out infinite;
 }
+
+@keyframes badgePulse {
+    0%   { opacity: 0.78; transform: scale(1); }
+    50%  { opacity: 1;   transform: scale(1.04); }
+    100% { opacity: 0.78; transform: scale(1); }
+}
+
 
 /* ===========================
    TASK MENU (CATEGORIES)
    =========================== */
 
+/* ============================================================
+      TASK MENU — HOLOGRAPHIC SECTION SPINE + ENERGY FLOW
+   ============================================================ */
+
 .task-menu {
     margin-top: 22px;
-    padding: 0 18px 18px 18px;
+    padding: 0 18px 22px 28px;
 
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 18px;
 
     position: relative;
+
+    /* glowing air aura on hover inside */
+    animation: menuSoftGlow 12s ease-in-out infinite;
 }
 
-/* vertical neon line on the left side (energy spine) */
+@keyframes menuSoftGlow {
+    0%   { filter: drop-shadow(0 0 2px rgba(0,255,255,0.15)); }
+    50%  { filter: drop-shadow(0 0 10px rgba(0,255,255,0.25)); }
+    100% { filter: drop-shadow(0 0 2px rgba(0,255,255,0.15)); }
+}
+
+
+/* ============================================================
+      ENERGY SPINE (vertical neon bar — animated)
+   ============================================================ */
+
 .task-menu::before {
     content: "";
     position: absolute;
-    top: -8px;
-    bottom: 12px;
-    left: 4px;
-    width: 2px;
+    top: -10px;
+    bottom: 10px;
+    left: 6px;
+    width: 3px;
+
     background: linear-gradient(
         to bottom,
         rgba(0, 230, 255, 0.0),
-        rgba(0, 230, 255, 0.9),
-        rgba(120, 90, 255, 0.7),
-        rgba(0, 230, 255, 0.0)
+        rgba(0, 255, 240, 0.9),
+        rgba(140, 90, 255, 0.8),
+        rgba(0, 255, 240, 0.0)
     );
-    opacity: 0.6;
-    filter: blur(0.5px);
-    animation: spinePulse 3s ease-in-out infinite;
+
+    border-radius: 10px;
+    filter: blur(1.2px);
+    opacity: 0.75;
+
+    animation: spinePulseUltra 2.8s ease-in-out infinite;
 }
 
-/* subtle category card */
+@keyframes spinePulseUltra {
+    0%   { opacity: 0.55; transform: translateY(0); }
+    50%  { opacity: 0.9;  transform: translateY(-4px); }
+    100% { opacity: 0.55; transform: translateY(0); }
+}
+
+
+/* ============================================================
+      TASK CATEGORY BUTTONS — WEB3 HOLOGRAM TILES
+   ============================================================ */
+
 .task-btn {
     position: relative;
     width: 100%;
 
-    background: radial-gradient(circle at 0% 0%, rgba(0, 210, 255, 0.35), transparent 55%),
-                linear-gradient(135deg, rgba(8, 18, 44, 0.98), rgba(9, 11, 32, 0.98));
+    padding: 18px 20px;
+
+    background:
+        radial-gradient(circle at 10% 0%, rgba(0, 230, 255, 0.38), transparent 60%),
+        radial-gradient(circle at 80% 120%, rgba(110, 80, 255, 0.22), transparent 65%),
+        linear-gradient(145deg, rgba(8,18,44,0.98), rgba(5,10,32,0.98));
+
+    border-radius: 20px;
+    border: 1px solid rgba(130, 160, 255, 0.55);
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
     color: #f2f6ff;
-
-    padding: 16px 18px;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 600;
-
-    border-radius: 18px;
-    border: 1px solid rgba(110, 150, 255, 0.55);
 
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
+    gap: 16px;
 
     cursor: pointer;
 
+    /* depth */
     box-shadow:
-        0 12px 24px rgba(0, 0, 0, 0.85),
-        0 0 18px rgba(0, 190, 255, 0.45);
-
-    backdrop-filter: blur(12px);
+        0 14px 26px rgba(0, 0, 0, 0.85),
+        0 0 22px rgba(0, 235, 255, 0.45),
+        inset 0 0 16px rgba(255, 255, 255, 0.04);
 
     transition:
-        transform 0.22s ease-out,
-        box-shadow 0.22s ease-out,
-        border-color 0.22s ease-out,
-        background 0.25s ease-out;
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.25s ease,
+        border-color 0.25s ease,
+        background-position 0.25s ease;
 }
 
-/* left block text */
+
+/* Left text block */
 .task-btn span {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
+    gap: 4px;
 }
 
-/* subtitle hint */
 .task-btn span small {
     font-size: 12px;
     color: var(--text-soft);
-    opacity: 0.9;
+    opacity: 0.85;
+    letter-spacing: 0.3px;
 }
 
-/* right arrow pill */
+
+/* ============================================================
+      ARROW PILL — "Navigation Physics"
+   ============================================================ */
+
 .task-btn::after {
     content: "⟶";
-    font-size: 18px;
-    color: #cfe7ff;
-    width: 34px;
-    height: 34px;
+    font-size: 20px;
+    font-weight: 700;
 
-    border-radius: 999px;
-    border: 1px solid rgba(150, 190, 255, 0.8);
+    width: 38px;
+    height: 38px;
 
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    background: radial-gradient(circle at 30% 0%, rgba(255, 255, 255, 0.4), rgba(25, 40, 80, 0.98));
-    box-shadow:
-        0 0 12px rgba(140, 180, 255, 0.9),
-        0 6px 14px rgba(0, 0, 0, 0.75);
+    border-radius: 999px;
+    border: 1px solid rgba(170, 200, 255, 0.9);
 
-    transform: translateX(0);
-    transition: transform 0.22s ease-out, box-shadow 0.22s ease-out;
+    background: radial-gradient(circle at 30% 0%, rgba(255,255,255,0.35), rgba(20,35,75,0.98));
+
+    box-shadow:
+        0 0 16px rgba(140, 170, 255, 1),
+        0 8px 18px rgba(0, 0, 0, 0.85);
+
+    transition:
+        transform 0.22s ease-out,
+        box-shadow 0.22s ease-out;
 }
 
-.task-btn:hover {
-    transform: translateY(-3px);
 
-    border-color: rgba(170, 230, 255, 0.9);
-    background: radial-gradient(circle at 0% 0%, rgba(0, 220, 255, 0.45), transparent 60%),
-                linear-gradient(135deg, rgba(10, 22, 54, 0.98), rgba(13, 18, 40, 0.98));
+/* ============================================================
+      HOVER EFFECT — Active Neon Interaction
+   ============================================================ */
+
+.task-btn:hover {
+    transform: translateY(-4px);
+
+    border-color: rgba(180, 255, 255, 0.95);
+
+    background:
+        radial-gradient(circle at 10% 0%, rgba(0, 240, 255, 0.55), transparent 65%),
+        radial-gradient(circle at 80% 120%, rgba(120, 90, 255, 0.32), transparent 70%),
+        linear-gradient(145deg, rgba(12, 28, 64, 0.98), rgba(9, 15, 36, 0.98));
 
     box-shadow:
-        0 14px 28px rgba(0, 0, 0, 0.9),
-        0 0 26px rgba(0, 245, 255, 0.6);
+        0 20px 38px rgba(0, 0, 0, 0.95),
+        0 0 40px rgba(0, 255, 255, 0.75),
+        inset 0 0 20px rgba(255,255,255,0.06);
 }
 
 .task-btn:hover::after {
-    transform: translateX(4px);
+    transform: translateX(6px);
     box-shadow:
-        0 0 16px rgba(170, 225, 255, 0.95),
-        0 8px 18px rgba(0, 0, 0, 0.85);
+        0 0 22px rgba(170, 230, 255, 1),
+        0 10px 22px rgba(0,0,0,0.85);
 }
 
+
+/* ============================================================
+      ACTIVE CLICK EFFECT — Haptic Feel
+   ============================================================ */
+
 .task-btn:active {
-    transform: scale(0.985) translateY(-1px);
+    transform: scale(0.97) translateY(-2px);
+
     box-shadow:
-        0 10px 22px rgba(0, 0, 0, 0.85),
-        0 0 18px rgba(0, 210, 255, 0.5);
+        0 12px 28px rgba(0, 0, 0, 0.85),
+        0 0 20px rgba(0, 210, 255, 0.5);
 }
+
 
 /* ===========================
    SCREENS + TASK CARDS
    =========================== */
 
+/* ============================================================
+      WEB3 SCREEN CONTAINER — FULL HOLOGRAPHIC SHELL
+   ============================================================ */
+
 .screen {
-    padding: 20px 18px 100px 18px;
+    padding: 26px 22px 120px 22px;
     display: none;
 
     position: relative;
-    z-index: 1;
+    z-index: 3;
 
-    animation: screenFade 0.32s ease-out;
+    border-radius: 22px 22px 0 0;
 
-    background: radial-gradient(circle at 0% 0%, rgba(0, 200, 255, 0.14), transparent 60%),
-                linear-gradient(145deg, rgba(6, 10, 28, 0.96), rgba(3, 6, 18, 0.98));
-    border-radius: 18px 18px 0 0;
+    /* Multi-layer holographic background */
+    background:
+        radial-gradient(circle at 15% -10%, rgba(0, 240, 255, 0.18), transparent 65%),
+        radial-gradient(circle at 100% 120%, rgba(130, 80, 255, 0.20), transparent 60%),
+        linear-gradient(155deg, rgba(6, 12, 32, 0.97), rgba(2, 4, 14, 0.98));
+
+    border-top: 1px solid rgba(130, 160, 255, 0.45);
 
     box-shadow:
-        0 -3px 18px rgba(0, 0, 0, 0.85),
-        0 0 22px rgba(0, 190, 255, 0.4),
-        inset 0 0 14px rgba(255, 255, 255, 0.05);
+        0 -6px 24px rgba(0, 0, 0, 0.88),
+        0 0 32px rgba(0, 255, 255, 0.35),
+        inset 0 0 20px rgba(255, 255, 255, 0.06),
+        inset 0 -14px 40px rgba(0, 0, 0, 0.75);
 
-    border-top: 1px solid rgba(120, 150, 255, 0.3);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    /* Holographic float animation */
+    animation:
+        screenFade 0.32s ease-out,
+        screenFloat 11s ease-in-out infinite;
 }
 
-/* small top bar (like mobile handle) */
+/* Smooth rising effect */
+@keyframes screenFloat {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(-2px); }
+    100% { transform: translateY(0); }
+}
+
+
+/* ============================================================
+      TOP HANDLE (premium variant)
+   ============================================================ */
+
 .screen::before {
     content: "";
     position: absolute;
-    top: 6px;
+    top: 10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    height: 4px;
+
+    width: 78px;
+    height: 5px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(180, 210, 255, 0.9), rgba(110, 170, 255, 0.9));
-    opacity: 0.85;
+
+    background: linear-gradient(
+        90deg,
+        rgba(185, 220, 255, 1),
+        rgba(110, 160, 255, 1),
+        rgba(185, 220, 255, 1)
+    );
+
+    opacity: 0.95;
+    box-shadow: 
+        0 0 12px rgba(140, 170, 255, 0.8),
+        0 4px 14px rgba(0, 0, 0, 0.85);
 }
 
-/* floating particles */
+
+/* ============================================================
+      BACKGROUND PARTICLES (deep-space holo field)
+   ============================================================ */
+
 .screen::after {
     content: "";
     position: absolute;
-    inset: -30px;
-    background-image:
-        radial-gradient(circle at 10% 20%, rgba(0, 240, 255, 0.35), transparent 60%),
-        radial-gradient(circle at 80% 70%, rgba(130, 85, 255, 0.25), transparent 60%);
-    mix-blend-mode: screen;
-    opacity: 0.5;
+    inset: -40px;
+
     pointer-events: none;
-    animation: particlesFloat 16s ease-in-out infinite alternate;
+    mix-blend-mode: screen;
+    opacity: 0.55;
+
+    background-image:
+        radial-gradient(circle at 15% 25%, rgba(0, 255, 240, 0.35), transparent 70%),
+        radial-gradient(circle at 85% 70%, rgba(150, 95, 255, 0.28), transparent 65%),
+        radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08), transparent 70%);
+
+    animation: particlesFloatUltra 20s ease-in-out infinite alternate;
 }
 
-.screen h3 {
-    font-size: 22px;
-    margin-bottom: 16px;
-    font-weight: 700;
-    letter-spacing: 0.45px;
+@keyframes particlesFloatUltra {
+    0%   { transform: translateX(0) translateY(0) scale(1);   opacity: 0.45; }
+    33%  { transform: translateX(-12px) translateY(6px) scale(1.05); opacity: 0.58; }
+    66%  { transform: translateX(10px) translateY(-8px) scale(1.02); opacity: 0.40; }
+    100% { transform: translateX(0) translateY(0) scale(1);   opacity: 0.55; }
+}
 
-    color: #e0e7ff;
+
+/* ============================================================
+      TITLES (h3) — Web3 HUD Headings
+   ============================================================ */
+
+.screen h3 {
+    font-size: 24px;
+    font-weight: 700;
+
+    margin-bottom: 18px;
+    letter-spacing: 0.55px;
+
+    color: #e4ecff;
+
+    background: linear-gradient(90deg, #dff2ff, #8fd8ff, #78b0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 
     text-shadow:
-        0 0 10px rgba(120, 150, 255, 0.6),
-        0 0 22px rgba(0, 210, 255, 0.46);
+        0 0 18px rgba(0, 210, 255, 0.55),
+        0 0 30px rgba(80, 130, 255, 0.35);
+
+    animation: h3Appear 0.45s ease-out;
+}
+
+@keyframes h3Appear {
+    0%   { opacity: 0; transform: translateY(6px) scale(0.98); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .screen h3::after {
-    content: "TASKS";
-    margin-left: 10px;
-    font-size: 10px;
-    letter-spacing: 1.4px;
-    color: rgba(186, 199, 255, 0.85);
+    content: " • WEB3";
+    margin-left: 8px;
+    font-size: 11px;
+    letter-spacing: 2px;
+
+    color: rgba(185, 210, 255, 0.9);
+    opacity: 0.8;
 }
+
 
 /* TASK CARD */
+/* ============================================================
+      TASK CARD — QUANTUM HOLOGRAM TILE (FULL UPGRADE)
+   ============================================================ */
+
 .task-card {
-    background: radial-gradient(circle at 0% 0%, rgba(0, 210, 255, 0.18), transparent 60%),
-                linear-gradient(130deg, rgba(12, 16, 40, 0.95), rgba(7, 10, 26, 0.98));
-
-    border-radius: 18px;
-    border: 1px solid rgba(130, 165, 255, 0.8);
-
-    padding: 16px 16px 14px 16px;
-    margin-bottom: 12px;
-
-    font-size: 15px;
-    font-weight: 500;
-    color: #e7edff;
-
-    box-shadow:
-        0 10px 26px rgba(0, 0, 0, 0.9),
-        0 0 24px rgba(0, 200, 255, 0.35),
-        inset 0 0 12px rgba(255, 255, 255, 0.04);
-
     position: relative;
+    width: 100%;
+
+    padding: 18px 20px 16px 20px;
+    margin-bottom: 16px;
+
+    border-radius: 22px;
+    border: 1px solid rgba(135, 170, 255, 0.65);
+
+    /* multi-layer hologram background */
+    background:
+        radial-gradient(circle at 0% 0%, rgba(0, 235, 255, 0.25), transparent 65%),
+        radial-gradient(circle at 100% 120%, rgba(120, 80, 255, 0.25), transparent 70%),
+        linear-gradient(145deg, rgba(12, 18, 48, 0.97), rgba(7, 10, 26, 0.98));
+
+    color: #eaf0ff;
+    font-size: 16px;
+    font-weight: 500;
+
+    border-radius: 20px;
     overflow: hidden;
 
-    backdrop-filter: blur(8px);
+    /* triple-depth shadow */
+    box-shadow:
+        0 16px 32px rgba(0, 0, 0, 0.88),
+        0 0 30px rgba(0, 255, 240, 0.38),
+        inset 0 0 16px rgba(255, 255, 255, 0.05);
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 
     transition:
-        transform 0.22s ease-out,
-        box-shadow 0.22s ease-out,
-        border-color 0.22s ease-out,
-        background 0.25s ease-out;
+        transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.25s ease,
+        border-color 0.25s ease,
+        background-position 0.25s ease-out;
 }
 
-/* left neon strip */
+
+/* ============================================================
+      NEON SPINE — animated vertical beam
+   ============================================================ */
+
 .task-card::before {
     content: "";
     position: absolute;
-    top: 16px;
-    bottom: 16px;
-    left: 4px;
-    width: 3px;
-    border-radius: 999px;
+    top: 18px;
+    bottom: 18px;
+    left: 6px;
+    width: 4px;
+
     background: linear-gradient(
         to bottom,
-        rgba(0, 240, 255, 0.0),
-        rgba(0, 240, 255, 1),
-        rgba(95, 255, 210, 0.9),
-        rgba(0, 240, 255, 0.0)
+        rgba(0, 255, 240, 0.0),
+        rgba(0, 255, 240, 1),
+        rgba(120, 255, 210, 0.95),
+        rgba(0, 255, 240, 0.0)
     );
+
+    border-radius: 999px;
+    filter: blur(1px);
     opacity: 0.9;
-    filter: blur(0.4px);
+
+    animation: spinePulseQuantum 2.8s ease-in-out infinite;
 }
 
-/* hologram stroke inside */
+@keyframes spinePulseQuantum {
+    0%   { opacity: 0.65; transform: scaleY(0.95); }
+    50%  { opacity: 1;    transform: scaleY(1.05); }
+    100% { opacity: 0.65; transform: scaleY(0.95); }
+}
+
+
+/* ============================================================
+      HOLOGRAPHIC INNER BORDER
+   ============================================================ */
+
 .task-card::after {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    border: 1px solid rgba(255, 255, 255, 0.06);
     mix-blend-mode: screen;
-    opacity: 0.18;
-    pointer-events: none;
+    opacity: 0.22;
+
+    animation: holoBorderGlow 6s ease-in-out infinite alternate;
 }
 
-/* special “coming soon” feel */
-.task-card.emphasis {
-    border-color: rgba(255, 215, 125, 0.9);
-    box-shadow:
-        0 0 25px rgba(255, 215, 120, 0.85),
-        0 12px 26px rgba(0, 0, 0, 0.9);
+@keyframes holoBorderGlow {
+    0%   { opacity: 0.12; }
+    100% { opacity: 0.25; }
 }
+
+
+/* ============================================================
+      PARTICLE SHIMMER LAYER (Futuristic Pulse)
+   ============================================================ */
+
+.task-card .particle-layer {
+    content: "";
+    position: absolute;
+    inset: -30px;
+
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(0,255,240,0.25), transparent 70%),
+        radial-gradient(circle at 80% 70%, rgba(120,90,255,0.25), transparent 70%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.07), transparent 80%);
+
+    mix-blend-mode: screen;
+    pointer-events: none;
+    opacity: 0.5;
+
+    animation: particleDrift 14s ease-in-out infinite alternate;
+}
+
+@keyframes particleDrift {
+    0%   { transform: translateX(0) translateY(0) scale(1);   opacity: 0.4; }
+    50%  { transform: translateX(-12px) translateY(6px) scale(1.05); opacity: 0.6; }
+    100% { transform: translateX(12px) translateY(-8px) scale(1.02); opacity: 0.45; }
+}
+
+
+/* ============================================================
+      HOVER — Quantum Lift
+   ============================================================ */
 
 .task-card:hover {
-    transform: translateY(-3px);
-    background: radial-gradient(circle at 0% 0%, rgba(0, 250, 255, 0.26), transparent 70%),
-                linear-gradient(130deg, rgba(13, 22, 52, 0.98), rgba(7, 11, 30, 0.98));
+    transform: translateY(-4px) scale(1.015);
 
-    border-color: rgba(190, 225, 255, 1);
+    border-color: rgba(200, 240, 255, 1);
+
+    background:
+        radial-gradient(circle at 0% 0%, rgba(0, 250, 255, 0.32), transparent 70%),
+        radial-gradient(circle at 100% 120%, rgba(130, 90, 255, 0.32), transparent 70%),
+        linear-gradient(145deg, rgba(14, 24, 58, 0.98), rgba(8, 12, 32, 0.98));
 
     box-shadow:
-        0 14px 30px rgba(0, 0, 0, 0.95),
-        0 0 30px rgba(0, 255, 230, 0.6);
+        0 20px 40px rgba(0, 0, 0, 0.95),
+        0 0 40px rgba(0, 255, 240, 0.8),
+        inset 0 0 24px rgba(255, 255, 255, 0.08);
 }
 
 .task-card:active {
-    transform: scale(0.985) translateY(-1px);
+    transform: scale(0.985) translateY(-2px);
     box-shadow:
-        0 12px 24px rgba(0, 0, 0, 0.9),
-        0 0 20px rgba(0, 210, 255, 0.5);
+        0 14px 28px rgba(0, 0, 0, 0.9),
+        0 0 28px rgba(0, 210, 255, 0.55);
+}
+
+
+/* ============================================================
+      SPECIAL EMPHASIS (e.g. COMING SOON)
+   ============================================================ */
+
+.task-card.emphasis {
+    border-color: rgba(255, 210, 120, 0.95);
+
+    box-shadow:
+        0 0 36px rgba(255, 215, 120, 0.9),
+        0 14px 32px rgba(0, 0, 0, 0.95),
+        inset 0 0 20px rgba(255, 255, 255, 0.08);
+
+    animation: emphasisGlow 3.5s ease-in-out infinite;
+}
+
+@keyframes emphasisGlow {
+    0%   { box-shadow: 0 0 22px rgba(255,210,120,0.5); }
+    50%  { box-shadow: 0 0 36px rgba(255,210,120,0.9); }
+    100% { box-shadow: 0 0 22px rgba(255,210,120,0.5); }
 }
 
 /* ===========================
    FOOTER TAG
    =========================== */
 
+/* ============================================================
+      WEB3 FOOTER — CRYPTO VERIFICATION SEAL (FULL UPGRADE)
+   ============================================================ */
+
 .footer-tag {
+    position: relative;
     text-align: center;
-    padding: 26px 0 22px 0;
+
+    padding: 32px 0 28px 0;
+    margin-top: 40px;
+
     font-size: 13px;
-    letter-spacing: 0.7px;
-    font-weight: 500;
-    color: rgba(187, 199, 235, 0.75);
+    font-weight: 600;
+    letter-spacing: 0.9px;
+    color: rgba(200, 215, 255, 0.85);
 
-    border-top: 1px solid rgba(160, 180, 255, 0.14);
-    margin-top: 32px;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 20, 40, 0.0),
+        rgba(0, 25, 60, 0.25)
+    );
 
+    border-top: 1px solid rgba(150, 180, 255, 0.22);
+
+    /* premium glow */
     text-shadow:
-        0 0 8px rgba(110, 140, 255, 0.35),
-        0 0 18px rgba(110, 140, 255, 0.18);
+        0 0 10px rgba(140, 170, 255, 0.5),
+        0 0 22px rgba(100, 160, 255, 0.35);
+
+    /* slight blur aura */
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    animation: footerReveal 0.8s ease-out;
 }
 
+@keyframes footerReveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ============================================================
+      MOVING SECURITY SCAN LINE ACROSS THE FOOTER
+   ============================================================ */
+
+.footer-tag::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+
+    background: linear-gradient(
+        90deg,
+        rgba(0, 255, 240, 0.0),
+        rgba(0, 255, 240, 0.7),
+        rgba(120, 90, 255, 0.7),
+        rgba(0, 255, 240, 0.0)
+    );
+
+    opacity: 0.65;
+    animation: footerScan 5s linear infinite;
+}
+
+@keyframes footerScan {
+    0%   { transform: translateX(-30%); }
+    100% { transform: translateX(30%); }
+}
+
+
+/* ============================================================
+      GLOW RING BEHIND THE TEXT (Hologram Aura)
+   ============================================================ */
+
+.footer-tag::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 220px;
+    height: 80px;
+
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+
+    background: radial-gradient(
+        circle,
+        rgba(0, 255, 230, 0.25),
+        rgba(0, 200, 255, 0.12),
+        transparent 70%
+    );
+
+    filter: blur(18px);
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+
+/* ============================================================
+      TEXT CONTENT
+   ============================================================ */
+
 .footer-tag span {
-    opacity: 0.9;
+    position: relative;
+    z-index: 2;
+    opacity: 1;
+    color: #e7edff;
+
+    text-shadow:
+        0 0 8px rgba(110, 255, 225, 0.55),
+        0 0 14px rgba(100, 140, 255, 0.35);
 }
 
 .footer-tag span::before {
-    content: "Powered by ";
-    font-size: 11px;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    margin-right: 4px;
+    content: "POWERED BY ";
+    font-size: 10px;
+    letter-spacing: 2.2px;
+    font-weight: 700;
+    opacity: 0.85;
+
+    color: rgba(150, 210, 255, 0.95);
+
+    margin-right: 6px;
+    text-shadow:
+        0 0 12px rgba(0, 245, 255, 0.6),
+        0 0 28px rgba(120, 160, 255, 0.4);
 }
+
+
+/* ============================================================
+   OPTIONAL: CERTIFICATION SEAL ICON (small glowing circle)
+   ============================================================ */
+
+.footer-tag .seal {
+    display: block;
+    margin: 10px auto 0 auto;
+
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+
+    background: radial-gradient(
+        circle at 40% 40%,
+        rgba(0, 255, 230, 0.8),
+        rgba(0, 190, 255, 0.7),
+        rgba(0, 120, 255, 0.1)
+    );
+
+    border: 1px solid rgba(0, 255, 240, 0.8);
+
+    box-shadow:
+        0 0 16px rgba(0, 255, 240, 0.9),
+        0 0 32px rgba(0, 150, 255, 0.5);
+
+    animation: sealPulse 3.8s ease-in-out infinite;
+}
+
+@keyframes sealPulse {
+    0%   { transform: scale(0.92); opacity: 0.8; }
+    50%  { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.92); opacity: 0.8; }
+}
+
 
 /* եթե չես ուզում HTML-ում div գրես, կարող ես թողնել body::footer, բայց ես առաջարկում եմ tasks index-ի վերջում ավելացնես:
 
@@ -695,96 +1618,263 @@ h2::after {
    ANIMATIONS
    =========================== */
 
+/* ============================================================
+      DOMINO WEB3 MOTION ENGINE — Advanced Animations
+   ============================================================ */
+
+/* Page entrance: soft hologram materialization */
 @keyframes bodyFade {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-        filter: blur(2px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-        filter: blur(0);
-    }
-}
-
-@keyframes glowShift {
-    0%   { transform: translate3d(-10px, 0, 0) scale(1); }
-    50%  { transform: translate3d(20px, 10px, 0) scale(1.05); }
-    100% { transform: translate3d(-20px, -10px, 0) scale(1.02); }
-}
-
-@keyframes gridDrift {
-    from { transform: translateY(0); }
-    to   { transform: translateY(20px); }
-}
-
-@keyframes securitySweep {
-    0%   { transform: translateX(-40%) scaleX(0.3); opacity: 0; }
-    25%  { opacity: 1; }
-    50%  { transform: translateX(40%) scaleX(1); opacity: 0.9; }
-    100% { transform: translateX(140%) scaleX(0.5); opacity: 0; }
-}
-
-@keyframes borderOrbit {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-
-@keyframes holoSweep {
-    0%   { transform: translateX(-160%) skewX(-20deg); opacity: 0; }
-    35%  { opacity: 0.35; }
-    60%  { opacity: 0.1; }
-    100% { transform: translateX(220%) skewX(-20deg); opacity: 0; }
-}
-
-@keyframes spinePulse {
-    0%   { opacity: 0.4; }
-    50%  { opacity: 0.9; }
-    100% { opacity: 0.45; }
-}
-
-@keyframes screenFade {
     0% {
         opacity: 0;
-        transform: translateY(12px) scale(0.99);
-        filter: blur(5px);
+        transform: translateY(14px) scale(0.985);
+        filter: blur(6px) brightness(0.7);
     }
-    60% {
-        filter: blur(1px);
+    40% {
+        filter: blur(2px) brightness(1.05);
     }
     100% {
         opacity: 1;
         transform: translateY(0) scale(1);
-        filter: blur(0);
+        filter: blur(0) brightness(1);
     }
 }
 
+
+/* Soft floating glow: simulates energy field drifting */
+@keyframes glowShift {
+    0%   { transform: translate3d(-12px, -4px, 0) scale(1); }
+    35%  { transform: translate3d(10px, 6px, 0) scale(1.04); }
+    70%  { transform: translate3d(18px, -2px, 0) scale(1.06); }
+    100% { transform: translate3d(-14px, 8px, 0) scale(1.02); }
+}
+
+
+/* Tech grid drift (background systems working) */
+@keyframes gridDrift {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(18px); opacity: 0.75; }
+    100% { transform: translateY(0); }
+}
+
+
+/* AI security line scan (advanced, more alive) */
+@keyframes securitySweep {
+    0%   { transform: translateX(-60%) scaleX(0.15); opacity: 0; }
+    20%  { opacity: 1; transform: translateX(-20%) scaleX(0.5); }
+    50%  { opacity: 0.95; transform: translateX(40%) scaleX(1.1); }
+    80%  { opacity: 0.4; transform: translateX(110%) scaleX(0.4); }
+    100% { opacity: 0; transform: translateX(160%) scaleX(0.2); }
+}
+
+
+/* Orbiting neon border: now with inertia physics */
+@keyframes borderOrbit {
+    0%   { transform: rotate(0deg); filter: brightness(1); }
+    40%  { filter: brightness(1.25); }
+    70%  { filter: brightness(0.9); }
+    100% { transform: rotate(360deg); filter: brightness(1); }
+}
+
+
+/* Hologram sweep: improved reflective scattering */
+@keyframes holoSweep {
+    0% {
+        transform: translateX(-180%) skewX(-20deg);
+        opacity: 0;
+        filter: blur(6px);
+    }
+    25% {
+        opacity: 0.45;
+        filter: blur(2px);
+    }
+    55% {
+        opacity: 0.15;
+        filter: blur(1px);
+    }
+    100% {
+        transform: translateX(240%) skewX(-18deg);
+        opacity: 0;
+        filter: blur(4px);
+    }
+}
+
+
+/* Neon spine breathing pulse */
+@keyframes spinePulse {
+    0%   { opacity: 0.35; filter: blur(0.2px); }
+    50%  { opacity: 1; filter: blur(0.8px); }
+    100% { opacity: 0.4; filter: blur(0.3px); }
+}
+
+
+/* Screen entrance: **quantum soft-material warp effect** */
+@keyframes screenFade {
+    0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+        filter: blur(7px) brightness(0.8);
+    }
+    40% {
+        filter: blur(3px) brightness(1.1);
+    }
+    80% {
+        transform: translateY(2px) scale(1.01);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0) brightness(1);
+    }
+}
+
+
+/* Floating particles with micro-jitter: looks alive */
 @keyframes particlesFloat {
     0%   { transform: translate3d(0, 0, 0) scale(1); }
-    50%  { transform: translate3d(-8px, 10px, 0) scale(1.03); }
-    100% { transform: translate3d(10px, -6px, 0) scale(1.02); }
+    25%  { transform: translate3d(-10px, 12px, 0) scale(1.03); }
+    50%  { transform: translate3d(8px, -10px, 0) scale(1.04); }
+    75%  { transform: translate3d(-6px, 6px, 0) scale(1.02); }
+    100% { transform: translate3d(12px, -4px, 0) scale(1.05); }
 }
+
+
+/* NEW — holographic flicker effect for premium UI */
+@keyframes holoFlicker {
+    0%, 100% { opacity: 1; filter: brightness(1); }
+    48%      { opacity: 0.97; }
+    50%      { opacity: 0.8; filter: brightness(1.3); }
+    52%      { opacity: 0.95; }
+    75%      { opacity: 0.88; }
+}
+
+
+/* NEW — crypto energy pulse, used for alerts or badges */
+@keyframes energyPulse {
+    0%   { transform: scale(1);     opacity: 0.5; }
+    50%  { transform: scale(1.08);  opacity: 1; }
+    100% { transform: scale(1);     opacity: 0.55; }
+}
+
+
+/* NEW — rotating quantum ring (can be used for icons) */
+@keyframes quantumRing {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
 
 /* ===========================
    SMALL SCREENS TUNING
    =========================== */
 
-@media (max-width: 380px) {
+/* =======================================================
+      DOMINO • WEB3 RESPONSIVE ENGINE (Mobile Optimized)
+   ======================================================= */
+
+@media (max-width: 420px) {
+
+    /* Header compaction */
     .header {
-        padding-inline: 14px;
+        padding: 14px 14px 8px 14px;
+        border-bottom-width: 0.8px;
+        backdrop-filter: blur(10px);
     }
+
+    /* Title scaling */
     h2 {
-        font-size: 24px;
+        font-size: 23px;
+        letter-spacing: 0.25px;
+        gap: 6px;
     }
+
+    /* Balance box reflow */
     .balance-box {
         font-size: 15px;
-        padding-inline: 12px;
+        padding: 12px 14px;
+        gap: 8px;
+
+        border-radius: 14px;
+        backdrop-filter: blur(8px);
     }
+
+    #tasks-balance {
+        font-size: 17px;
+    }
+
+    /* Category buttons */
     .task-btn {
         padding: 14px 14px;
+        font-size: 15px;
+        border-radius: 16px;
+
+        gap: 10px;
+        backdrop-filter: blur(10px);
     }
+
+    .task-btn::after {
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
+    }
+
+    /* Task screen */
     .screen {
-        padding-inline: 14px;
+        padding: 16px 14px 90px 14px;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .screen h3 {
+        font-size: 20px;
+        margin-bottom: 14px;
+    }
+
+    /* Task card resizing */
+    .task-card {
+        padding: 14px 14px 12px 14px;
+        font-size: 14px;
+        border-radius: 16px;
+
+        margin-bottom: 10px;
+    }
+
+    .task-card::before {
+        left: 3px;
+        width: 2px;
     }
 }
+
+
+/* Extra tiny phones — 360px and below */
+@media (max-width: 360px) {
+
+    h2 {
+        font-size: 21px;
+    }
+
+    .balance-box {
+        font-size: 14px;
+        padding: 10px 12px;
+    }
+
+    #tasks-balance {
+        font-size: 16px;
+    }
+
+    .task-btn {
+        padding: 12px 12px;
+        font-size: 14px;
+        border-radius: 15px;
+    }
+
+    .task-btn::after {
+        width: 28px;
+        height: 28px;
+        font-size: 15px;
+    }
+
+    .screen {
+        padding-inline: 12px;
+    }
+}
+
