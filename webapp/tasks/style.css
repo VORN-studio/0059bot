@@ -9,207 +9,420 @@ body {
     padding: 0;
     font-family: "Inter", sans-serif;
 
-    /* ✨ Premium deep-glow background */
+    /* ✨ Deep cosmic gradient */
     background: radial-gradient(
         circle at 50% -20%,
-        rgba(40, 60, 120, 0.35),
-        rgba(10, 20, 40, 0.95) 40%,
-        #02040a 80%
+        rgba(60, 110, 255, 0.18),
+        rgba(10, 20, 40, 0.95) 45%,
+        #010308 85%
     );
 
     color: #ffffff;
+    overflow-x: hidden;
 
     /* smoother visuals */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
-    /* elegant fade-in animation */
-    animation: fadeIn 0.7s ease-out;
+    /* fade-in entrance */
+    animation: fadeIn 0.6s ease-out forwards;
+    position: relative;
 }
 
+/* ✨ Subtle floating particles in background */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("https://www.transparenttextures.com/patterns/dark-matter.png");
+    opacity: 0.20;
+    animation: particles 35s linear infinite;
+}
+
+/* ✨ Soft moving spotlight */
+body::after {
+    content: "";
+    position: fixed;
+    width: 400px;
+    height: 400px;
+    left: 50%;
+    top: 20%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(80,130,255,0.25), transparent 70%);
+    filter: blur(40px);
+    pointer-events: none;
+    animation: glowMove 12s ease-in-out infinite alternate;
+}
+
+/* -------------------------------------------------- */
+/* animations */
+/* -------------------------------------------------- */
+
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* universal */
+@keyframes particles {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-300px, -300px); }
+}
+
+/* floating spotlight animation */
+@keyframes glowMove {
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.35; }
+    50%  { transform: translate(-45%, -45%) scale(1.15); opacity: 0.5; }
+    100% { transform: translate(-55%, -50%) scale(1.05); opacity: 0.3; }
+}
+
+/* universal improvement */
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
+
 
 
 .header {
-    padding: 22px 20px 8px 20px;
+    padding: 24px 22px 10px 22px;
 
-    /* subtle bottom separator light */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    /* premium glass effect */
+    background: rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
 
-    /* elegant glassy background */
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(120, 150, 255, 0.12);
 
-    /* soft glow border top */
-    box-shadow: 0 2px 22px rgba(0, 0, 0, 0.45);
+    /* deep shadow + glow */
+    box-shadow:
+        0 4px 28px rgba(0, 0, 0, 0.55),
+        inset 0 -1px 8px rgba(255, 255, 255, 0.05);
 
-    /* smooth fade-in */
-    animation: headerFade 0.6s ease-out;
+    position: relative;
+    overflow: hidden;
+
+    /* smooth entrance */
+    animation: headerFade 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
+/* ✨ moving light streak inside header */
+.header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120px;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(
+        80deg,
+        rgba(120, 150, 255, 0.0),
+        rgba(120, 150, 255, 0.25),
+        rgba(120, 150, 255, 0.0)
+    );
+    filter: blur(18px);
+
+    animation: headerShine 6s ease-in-out infinite;
+}
+
+/* ✨ gentle vertical glow bottom */
+.header::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        rgba(80, 110, 255, 0),
+        rgba(80, 110, 255, 0.18),
+        rgba(80, 110, 255, 0)
+    );
+}
+
+/* entrance animation */
 @keyframes headerFade {
-    from { opacity: 0; transform: translateY(-6px); }
+    from { opacity: 0; transform: translateY(-10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* sweeping shine movement */
+@keyframes headerShine {
+    0%   { transform: translateX(-150px); opacity: 0; }
+    40%  { opacity: 0.35; }
+    60%  { opacity: 0.18; }
+    100% { transform: translateX(350px); opacity: 0; }
+}
 
+
+
+/* ✨ ULTRA-PREMIUM BACK BUTTON */
 .back {
-    color: #92a7ff;
+    color: #9bb2ff;
     text-decoration: none;
     font-size: 16px;
     font-weight: 500;
 
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 
-    padding: 6px 10px;
-    border-radius: 8px;
+    padding: 8px 14px;
+    border-radius: 10px;
 
-    transition: all 0.25s ease;
+    /* glassy neon base */
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 
-    /* subtle glow */
-    text-shadow: 0 0 8px rgba(146, 167, 255, 0.6);
-    opacity: 0.85;
-}
+    /* subtle border glow */
+    border: 1px solid rgba(150, 170, 255, 0.18);
 
-.back:hover {
-    opacity: 1;
-    color: #b6c8ff;
-    transform: translateX(-3px);
+    /* initial glow */
+    text-shadow: 0 0 10px rgba(160, 180, 255, 0.55);
+    box-shadow:
+        0 0 12px rgba(120, 150, 255, 0.25),
+        inset 0 0 8px rgba(255, 255, 255, 0.02);
 
-    /* glowing hover effect */
-    text-shadow: 0 0 10px rgba(150, 170, 255, 0.75),
-                 0 0 18px rgba(150, 170, 255, 0.40);
-}
-
-.back:active {
-    transform: translateX(-1px) scale(0.97);
+    cursor: pointer;
     opacity: 0.9;
+    transition: all 0.28s ease;
+    position: relative;
+    overflow: hidden;
 }
 
+/* ✨ sweeping glow line */
+.back::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.25),
+        transparent
+    );
+    opacity: 0.4;
+    filter: blur(10px);
 
+    animation: backShine 4.5s ease-in-out infinite;
+}
+
+@keyframes backShine {
+    0%   { transform: translateX(0); opacity: 0; }
+    40%  { opacity: 0.35; }
+    100% { transform: translateX(300%); opacity: 0; }
+}
+
+/* ✨ hover — stronger neon + slight lift */
 .back:hover {
+    color: #d5e1ff;
     opacity: 1;
-    color: #c3d3ff;
 
-    /* hover movement */
     transform: translateX(-3px);
 
-    /* neon glow */
-    text-shadow: 
-        0 0 6px rgba(160, 180, 255, 0.7),
-        0 0 14px rgba(160, 180, 255, 0.45),
-        0 0 25px rgba(160, 180, 255, 0.25);
+    text-shadow:
+        0 0 8px rgba(180, 200, 255, 0.7),
+        0 0 16px rgba(180, 200, 255, 0.5),
+        0 0 28px rgba(180, 200, 255, 0.3);
 
-    transition: all 0.25s ease;
+    box-shadow:
+        0 0 18px rgba(150, 170, 255, 0.45),
+        inset 0 0 6px rgba(255, 255, 255, 0.04);
 }
+
+/* ✨ active — magnetic press effect */
+.back:active {
+    transform: translateX(-1px) scale(0.96);
+    opacity: 0.85;
+    box-shadow:
+        0 0 10px rgba(130, 150, 255, 0.3),
+        inset 0 0 10px rgba(255, 255, 255, 0.08);
+}
+
 
 
 h2 {
-    font-size: 32px;
-    margin-top: 8px;
-    margin-bottom: 12px;
+    font-size: 34px;
+    margin-top: 10px;
+    margin-bottom: 14px;
     font-weight: 700;
     display: flex;
     align-items: center;
-    column-gap: 10px;
+    gap: 10px;
 
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
 
-    /* Gradient text effect for premium feeling */
-    background: linear-gradient(90deg, #e2e8ff 0%, #b4c4ff 40%, #8aa0ff 100%);
+    /* ✨ Dynamic flowing gradient */
+    background: linear-gradient(
+        90deg,
+        #e9edff 0%,
+        #c6d2ff 30%,
+        #9fb5ff 55%,
+        #8aa0ff 100%
+    );
+    background-size: 200% 100%;
+    animation: titleFlow 6s ease-in-out infinite;
+
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 
-    /* Soft glow */
+    /* ✨ Soft neon halo */
     text-shadow:
-        0 0 6px rgba(170, 190, 255, 0.35),
-        0 0 16px rgba(120, 150, 255, 0.25);
+        0 0 10px rgba(160, 185, 255, 0.25),
+        0 0 20px rgba(140, 165, 255, 0.18),
+        0 0 28px rgba(120, 145, 255, 0.15);
 
-    /* Smooth animation for future hover or transitions */
-    transition: 0.25s ease;
+    /* entrance smoothness */
+    opacity: 0;
+    animation: titleFadeIn 0.8s cubic-bezier(0.16, 0.64, 0.44, 1) forwards;
+
+    transition: all 0.3s ease;
 }
+
+/* ✨ flowing gradient motion */
+@keyframes titleFlow {
+    0%   { background-position: 0% 0%; }
+    50%  { background-position: 100% 0%; }
+    100% { background-position: 0% 0%; }
+}
+
+/* ✨ fade & lift entrance */
+@keyframes titleFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* hover effect → elegant lift + pulse glow */
+h2:hover {
+    transform: translateY(-3px);
+    text-shadow:
+        0 0 12px rgba(170, 200, 255, 0.45),
+        0 0 26px rgba(150, 180, 255, 0.35),
+        0 0 38px rgba(120, 150, 255, 0.25);
+
+    cursor: default;
+}
+
 
 
 /* BALANCE BOX */
 .balance-box {
-    margin-top: 22px;
-    padding: 16px 20px;
+    margin-top: 26px;
+    padding: 18px 22px;
 
+    /* ✨ multi-layered premium glass gradient */
     background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.07) 0%,
-        rgba(255, 255, 255, 0.03) 100%
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(255, 255, 255, 0.04) 45%,
+        rgba(255, 255, 255, 0.02) 100%
     );
-    border-radius: 16px;
+    border-radius: 18px;
 
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 600;
 
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
 
-    /* premium glow */
+    /* ✨ deep glow + holographic rim */
     box-shadow:
-        0px 0px 12px rgba(120, 150, 255, 0.25),
-        0px 4px 22px rgba(0, 0, 0, 0.55),
-        inset 0px 0px 10px rgba(255, 255, 255, 0.05);
+        0 0 14px rgba(130, 160, 255, 0.22),
+        0 6px 26px rgba(0, 0, 0, 0.55),
+        inset 0 0 18px rgba(255, 255, 255, 0.05),
+        inset 0 0 8px rgba(130, 160, 255, 0.07);
 
-    /* inner spacing animation */
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+
+    transition: transform 0.28s ease, box-shadow 0.28s ease;
 }
 
+/* ✨ animated subtle shine sweep */
+.balance-box::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 70%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(200, 220, 255, 0.10),
+        rgba(200, 220, 255, 0.18),
+        transparent
+    );
+    filter: blur(20px);
+
+    animation: balanceShine 5s ease-in-out infinite;
+}
+
+@keyframes balanceShine {
+    0% { transform: translateX(0); opacity: 0; }
+    30% { opacity: 0.25; }
+    70% { opacity: 0.20; }
+    100% { transform: translateX(220%); opacity: 0; }
+}
+
+/* ✨ hover → elevation + brightened neon aura */
 .balance-box:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+
     box-shadow:
-        0px 0px 18px rgba(140, 170, 255, 0.35),
-        0px 6px 26px rgba(0, 0, 0, 0.65),
-        inset 0px 0px 14px rgba(255, 255, 255, 0.07);
+        0 0 20px rgba(160, 185, 255, 0.35),
+        0 8px 30px rgba(0, 0, 0, 0.65),
+        inset 0 0 22px rgba(255, 255, 255, 0.06),
+        inset 0 0 12px rgba(130, 160, 255, 0.12);
 }
 
-
+/* strong label */
 .balance-box strong {
-    margin-right: 8px;
+    margin-right: 10px;
     font-weight: 700;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
 
-    /* subtle light highlight for premium effect */
-    color: #cdd9ff;
-    text-shadow: 0 0 4px rgba(140, 170, 255, 0.4);
+    color: #d7e0ff;
+
+    /* luminous coating effect */
+    text-shadow:
+        0 0 6px rgba(160, 185, 255, 0.45),
+        0 0 12px rgba(130, 160, 255, 0.30);
 }
+
 
 
 /* MAIN MENU BUTTONS */
+/* ========================================================= */
+/*         ULTRA PREMIUM TASK MENU (MASTER EDITION)          */
+/* ========================================================= */
+
 .task-menu {
-    margin-top: 28px;
-    padding: 0 20px;
+    margin-top: 32px;
+    padding: 0 22px;
 
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
 
-    /* visual grouping effect */
     position: relative;
 }
 
+/* ✨ Top glow separator */
 .task-menu::before {
     content: "";
     position: absolute;
-    top: -10px;
+    top: -14px;
     left: 0;
     right: 0;
     height: 1px;
@@ -217,132 +430,216 @@ h2 {
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(150, 170, 255, 0.25),
+        rgba(140, 160, 255, 0.35),
         transparent
     );
 
-    /* adds subtle separation line to look premium */
+    opacity: 0;
+    animation: menuFade 0.8s ease-out forwards;
 }
 
+@keyframes menuFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================================= */
+/*                   THE LEGENDARY TASK BUTTON               */
+/* ========================================================= */
 
 .task-btn {
-    background: linear-gradient(
-        135deg,
-        rgba(0, 180, 255, 0.55),
-        rgba(0, 120, 220, 0.45)
-    );
-    color: #eaf4ff;
+    position: relative;
+    overflow: hidden;
 
-    padding: 18px 22px;
+    padding: 20px 24px;
+    border-radius: 20px;
+
     font-size: 20px;
     font-weight: 600;
+    letter-spacing: 0.4px;
 
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-radius: 20px;
+    color: #e9f6ff;
+    cursor: pointer;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    cursor: pointer;
+    /* ✨ Liquid neon gradient base */
+    background: linear-gradient(
+        135deg,
+        rgba(0, 180, 255, 0.65),
+        rgba(0, 120, 230, 0.5)
+    );
 
-    /* Premium animations */
-    transition: 
-        background 0.25s ease,
-        transform 0.25s ease,
-        box-shadow 0.3s ease;
+    /* ✨ Premium border + holography */
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px) saturate(180%);
+    -webkit-backdrop-filter: blur(10px) saturate(180%);
 
-    letter-spacing: 0.4px;
-
-    /* Premium glow + depth */
+    /* ✨ Deep multi-layered glow */
     box-shadow:
-        0 0 18px rgba(0, 140, 255, 0.35),
-        0 6px 20px rgba(0, 0, 0, 0.55),
+        0 0 20px rgba(0, 160, 255, 0.4),
+        0 8px 28px rgba(0, 0, 0, 0.55),
         inset 0 0 12px rgba(255, 255, 255, 0.05);
 
-    backdrop-filter: blur(6px);
+    transition: all 0.28s ease;
 }
 
+/* ✨ MOVING LIGHT STREAK INSIDE BUTTON (absolutely killer) */
+.task-btn::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -130%;
+    width: 60%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.22),
+        rgba(255, 255, 255, 0.27),
+        transparent
+    );
+    filter: blur(16px);
+    opacity: 0.2;
+
+    animation: taskShine 5.5s ease-in-out infinite;
+}
+
+@keyframes taskShine {
+    0%   { transform: translateX(0); opacity: 0; }
+    40%  { opacity: 0.30; }
+    80%  { opacity: 0.15; }
+    100% { transform: translateX(270%); opacity: 0; }
+}
+
+/* ========================================================= */
+/*                      HOVER STATE                          */
+/* ========================================================= */
+
 .task-btn:hover {
-    transform: translateY(-3px);
+    transform: translateY(-4px);
 
     background: linear-gradient(
         135deg,
-        rgba(0, 200, 255, 0.75),
-        rgba(0, 150, 255, 0.65)
+        rgba(0, 210, 255, 0.85),
+        rgba(0, 150, 255, 0.75)
     );
 
     box-shadow:
-        0 0 24px rgba(0, 170, 255, 0.45),
-        0 9px 26px rgba(0, 0, 0, 0.65),
-        inset 0 0 16px rgba(255, 255, 255, 0.07);
+        0 0 30px rgba(0, 190, 255, 0.5),
+        0 12px 32px rgba(0, 0, 0, 0.65),
+        inset 0 0 16px rgba(255, 255, 255, 0.08);
 }
 
-.task-btn:active {
-    transform: scale(0.97);
-    box-shadow:
-        0 0 12px rgba(0, 150, 255, 0.3),
-        0 3px 12px rgba(0, 0, 0, 0.55),
-        inset 0 0 20px rgba(255, 255, 255, 0.12);
-}
-
-
-.task-btn:hover {
-    transform: translateY(-3px);
-
-    /* stronger neon glow + deeper shadow */
-    box-shadow:
-        0 0 24px rgba(0, 170, 255, 0.45),
-        0 9px 26px rgba(0, 0, 0, 0.65),
-        inset 0 0 16px rgba(255, 255, 255, 0.07);
-
-    /* lighter glass tint on hover */
-    background: linear-gradient(
-        135deg,
-        rgba(0, 200, 255, 0.75),
-        rgba(0, 150, 255, 0.65)
-    );
-}
+/* ========================================================= */
+/*                      ACTIVE PRESS                         */
+/* ========================================================= */
 
 .task-btn:active {
     transform: scale(0.97);
 
-    /* pressed effect: inner glow increases */
     box-shadow:
-        0 0 12px rgba(0, 150, 255, 0.3),
-        0 3px 12px rgba(0, 0, 0, 0.55),
-        inset 0 0 20px rgba(255, 255, 255, 0.12);
+        0 0 14px rgba(0, 160, 255, 0.35),
+        0 4px 20px rgba(0, 0, 0, 0.55),
+        inset 0 0 22px rgba(255, 255, 255, 0.12);
 }
+
 
 
 /* CATEGORY SCREENS */
+/* ========================================================= */
+/*          ULTRA PREMIUM SCREEN PANEL (MASTER EDITION)       */
+/* ========================================================= */
+
 .screen {
-    padding: 22px;
+    padding: 24px;
     display: none;
+    position: relative;
+    overflow: hidden;
 
-    /* smoother, richer animation */
-    animation: screenFade 0.32s ease-out;
+    /* ✨ premium glass core */
+    background: rgba(255, 255, 255, 0.015);
+    border-radius: 18px;
 
-    /* premium look */
-    background: rgba(255, 255, 255, 0.01);
-    border-radius: 16px;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(12px) saturate(170%);
+    -webkit-backdrop-filter: blur(12px) saturate(170%);
 
+    border: 1px solid rgba(255, 255, 255, 0.07);
+
+    /* ✨ deep ambient shadow + internal hologram glow */
     box-shadow:
-        0 0 20px rgba(0, 0, 0, 0.35),
-        inset 0 0 12px rgba(255, 255, 255, 0.03);
+        0 0 22px rgba(0, 0, 0, 0.40),
+        inset 0 0 18px rgba(255, 255, 255, 0.03),
+        inset 0 0 28px rgba(120, 150, 255, 0.05);
 
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    /* cinematic entrance */
+    animation: screenEnter 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    transform-origin: top;
 }
 
+/* ✨ Animated light streak moving inside panel */
+.screen::before {
+    content: "";
+    position: absolute;
+    top: -40%;
+    left: -30%;
+    width: 160%;
+    height: 180%;
 
-@keyframes screenFade {
+    background: radial-gradient(
+        circle,
+        rgba(120, 150, 255, 0.08),
+        rgba(120, 150, 255, 0.02) 45%,
+        transparent 70%
+    );
+
+    filter: blur(40px);
+    opacity: 0.35;
+
+    animation: screenGlow 12s ease-in-out infinite alternate;
+}
+
+@keyframes screenGlow {
+    0%   { transform: translate(0%, 0%) scale(1); opacity: 0.30; }
+    50%  { transform: translate(6%, 4%) scale(1.05); opacity: 0.36; }
+    100% { transform: translate(-4%, -2%) scale(1.03); opacity: 0.28; }
+}
+
+/* ✨ subtle vertical shimmer */
+.screen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.03),
+        transparent
+    );
+    opacity: 0.12;
+
+    animation: shimmer 7s linear infinite;
+}
+
+@keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* ========================================================= */
+/*                 Cinematic entrance motion                 */
+/* ========================================================= */
+
+@keyframes screenEnter {
     0% {
         opacity: 0;
-        transform: translateY(10px) scale(0.985);
-        filter: blur(4px);
+        transform: translateY(12px) scale(0.985);
+        filter: blur(6px);
     }
-    60% {
+    50% {
         filter: blur(1px);
     }
     100% {
@@ -352,130 +649,246 @@ h2 {
     }
 }
 
+/* ========================================================= */
+/*                       TITLE — h3                          */
+/* ========================================================= */
 
 .screen h3 {
-    font-size: 26px;
-    margin-bottom: 18px;
+    font-size: 28px;
+    margin-bottom: 20px;
     font-weight: 700;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.45px;
 
-    /* premium accent color */
-    color: #d9e2ff;
+    /* dynamic gradient text */
+    background: linear-gradient(
+        90deg,
+        #eef2ff 0%,
+        #cdd7ff 35%,
+        #aabaff 70%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 
-    /* glow effect */
-    text-shadow:
-        0 0 8px rgba(120, 150, 255, 0.35),
-        0 0 18px rgba(90, 120, 255, 0.25);
-
-    /* smooth entrance animation */
-    animation: titleFade 0.45s ease-out;
+    animation:
+        titleFade 0.45s ease-out,
+        titleShift 6s ease-in-out infinite;
 }
 
+/* smooth appearance */
 @keyframes titleFade {
-    0% {
+    from {
         opacity: 0;
         transform: translateY(6px);
         letter-spacing: 1px;
     }
-    100% {
+    to {
         opacity: 1;
         transform: translateY(0);
-        letter-spacing: 0.4px;
+        letter-spacing: 0.45px;
     }
+}
+
+/* deluxe flowing gradient */
+@keyframes titleShift {
+    0%   { background-position: 0% 0%; }
+    50%  { background-position: 100% 0%; }
+    100% { background-position: 0% 0%; }
 }
 
 
 /* TASK CARD STYLE */
+/* ========================================================= */
+/*             PREMIUM TASK CARD (MASTER EDITION)            */
+/* ========================================================= */
+
 .task-card {
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.07),
-        rgba(255, 255, 255, 0.03)
-    );
+    position: relative;
+    overflow: hidden;
 
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 18px;
-
-    padding: 18px 20px;
-    margin-bottom: 14px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
 
     font-size: 18px;
     font-weight: 500;
-    color: #e8efff;
+    color: #eaf1ff;
 
-    /* depth */
+    /* ✨ premium liquid-glass base */
+    background: linear-gradient(
+        140deg,
+        rgba(255, 255, 255, 0.08),
+        rgba(255, 255, 255, 0.03)
+    );
+
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 20px;
+
+    backdrop-filter: blur(10px) saturate(160%);
+    -webkit-backdrop-filter: blur(10px) saturate(160%);
+
+    /* ✨ multi-layered glow depth */
     box-shadow:
-        0 0 16px rgba(0, 0, 0, 0.45),
-        inset 0 0 14px rgba(255, 255, 255, 0.04),
-        0 0 24px rgba(120, 150, 255, 0.15);
-
-    backdrop-filter: blur(8px);
+        0 0 18px rgba(0, 0, 0, 0.55),
+        inset 0 0 16px rgba(255, 255, 255, 0.05),
+        0 0 26px rgba(120, 150, 255, 0.18);
 
     transition:
-        transform 0.25s ease,
-        box-shadow 0.25s ease,
-        background 0.25s ease;
+        transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1),
+        box-shadow 0.28s ease,
+        background 0.28s ease;
 }
 
-.task-card:hover {
-    transform: translateY(-4px);
+/* ========================================================= */
+/*            Moving holographic diagonal shine              */
+/* ========================================================= */
+
+.task-card::before {
+    content: "";
+    position: absolute;
+    top: -140%;
+    left: -40%;
+    width: 180%;
+    height: 280%;
 
     background: linear-gradient(
         135deg,
-        rgba(255, 255, 255, 0.12),
-        rgba(255, 255, 255, 0.05)
+        rgba(255, 255, 255, 0.10),
+        rgba(255, 255, 255, 0.03),
+        transparent
+    );
+
+    filter: blur(40px);
+    opacity: 0.15;
+
+    animation: holoMove 11s ease-in-out infinite;
+}
+
+@keyframes holoMove {
+    0%   { transform: rotate(0deg) translateX(0);   opacity: 0.12; }
+    50%  { transform: rotate(5deg) translateX(3%); opacity: 0.18; }
+    100% { transform: rotate(0deg) translateX(0);   opacity: 0.12; }
+}
+
+/* ========================================================= */
+/*                     Hover elevation                       */
+/* ========================================================= */
+
+.task-card:hover {
+    transform: translateY(-5px) scale(1.015);
+
+    background: linear-gradient(
+        140deg,
+        rgba(255, 255, 255, 0.14),
+        rgba(255, 255, 255, 0.06)
     );
 
     box-shadow:
-        0 0 22px rgba(140, 170, 255, 0.35),
-        0 8px 24px rgba(0, 0, 0, 0.55),
-        inset 0 0 18px rgba(255, 255, 255, 0.06);
+        0 0 32px rgba(150, 180, 255, 0.38),
+        0 12px 28px rgba(0, 0, 0, 0.65),
+        inset 0 0 20px rgba(255, 255, 255, 0.07);
 }
+
+/* ========================================================= */
+/*                         Pressed                           */
+/* ========================================================= */
 
 .task-card:active {
     transform: scale(0.985);
 
     box-shadow:
-        0 0 14px rgba(120, 150, 255, 0.25),
-        0 3px 12px rgba(0, 0, 0, 0.55),
-        inset 0 0 20px rgba(255, 255, 255, 0.12);
+        0 0 16px rgba(130, 160, 255, 0.25),
+        0 4px 14px rgba(0, 0, 0, 0.55),
+        inset 0 0 22px rgba(255, 255, 255, 0.12);
 }
+
 
 
 /* FOOTER */
+/* ========================================================= */
+/*            LUXURY BRAND FOOTER SIGNATURE (MASTER)         */
+/* ========================================================= */
+
 body::after {
     content: "@doominobot";
+
     display: block;
+    width: 100%;
     text-align: center;
 
-    padding: 28px 0;
-    margin-top: 55px;
+    padding: 34px 0;
+    margin-top: 70px;
 
     font-size: 14px;
-    letter-spacing: 0.6px;
     font-weight: 500;
+    letter-spacing: 0.75px;
 
-    color: rgba(180, 195, 225, 0.55);
+    /* elegant brand tint */
+    color: rgba(190, 205, 235, 0.65);
 
-    /* smooth elegant fade */
-    opacity: 0.8;
-    transition: opacity 0.25s ease;
+    position: relative;
 
-    /* subtle glow */
+    /* soft fade */
+    opacity: 0;
+    animation: footerFade 1.4s ease forwards 0.4s;
+
+    /* soft neon glow */
     text-shadow:
-        0 0 6px rgba(110, 140, 255, 0.25),
-        0 0 14px rgba(110, 140, 255, 0.12);
+        0 0 8px rgba(120, 150, 255, 0.28),
+        0 0 16px rgba(120, 150, 255, 0.18);
 
-    /* separator line effect */
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    /* glass line separator */
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
 
-    backdrop-filter: blur(2px);
+    transition: opacity 0.25s ease, text-shadow 0.3s ease;
 }
 
+/* smooth fade appearance */
+@keyframes footerFade {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 0.9; transform: translateY(0); }
+}
+
+/* ✨ neon breathing animation */
 body::after:hover {
     opacity: 1;
+
     text-shadow:
-        0 0 8px rgba(160, 180, 255, 0.35),
-        0 0 18px rgba(110, 140, 255, 0.25);
+        0 0 10px rgba(150, 175, 255, 0.45),
+        0 0 24px rgba(150, 175, 255, 0.28),
+        0 0 40px rgba(120, 150, 255, 0.18);
 }
+
+/* ✨ subtle moving underglow light bar */
+body::after::after {
+    content: "";
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    width: 80px;
+    height: 2px;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(140, 165, 255, 0.6),
+        transparent
+    );
+
+    border-radius: 12px;
+    transform: translateX(-50%);
+
+    filter: blur(4px);
+    opacity: 0.55;
+
+    animation: underGlow 3.5s ease-in-out infinite;
+}
+
+@keyframes underGlow {
+    0%   { width: 40px; opacity: 0.35; }
+    50%  { width: 90px; opacity: 0.65; }
+    100% { width: 40px; opacity: 0.35; }
+}
+
 
