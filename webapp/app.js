@@ -76,6 +76,9 @@ async function loadTonRate() {
 }
 
 
+function openTasks() {
+    window.location.href = "tasks/index.html";
+}
 
 
 // ---------------- LOAD FROM TELEGRAM ----------------
