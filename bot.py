@@ -677,6 +677,41 @@ def api_slots_withdraw():
         "new_main": new_main
     })
 
+@app_web.route("/api/task_reward", methods=["POST"])
+def api_task_reward():
+    data = request.get_json(force=True, silent=True) or {}
+
+    user_id = int(data.get("user_id", 0))
+    amount = float(data.get("amount", 0))
+
+    if user_id == 0 or amount <= 0:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    conn = db()
+    c = conn.cursor()
+
+    # load current balance
+    c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
+    row = c.fetchone()
+    if not row:
+        return jsonify({"ok": False, "error": "user_not_found"}), 404
+
+    new_balance = float(row[0]) + amount
+
+    # update balance
+    c.execute(
+        "UPDATE dom_users SET balance_usd=%s WHERE user_id=%s",
+        (new_balance, user_id)
+    )
+
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({
+        "ok": True,
+        "new_balance": new_balance
+    })
+
 
 # =========================
 # Telegram Bot (Webhook Mode)

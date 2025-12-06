@@ -77,8 +77,9 @@ async function loadTonRate() {
 
 
 function openTasks() {
-    window.location.href = "/webapp/tasks/index.html";
+    window.location.href = "/webapp/tasks/index.html?uid=" + CURRENT_USER_ID;
 }
+
 
 
 
