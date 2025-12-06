@@ -1353,6 +1353,7 @@ h2::after {
     opacity: 0.22;
 
     animation: holoBorderGlow 6s ease-in-out infinite alternate;
+    pointer-events: none;
 }
 
 @keyframes holoBorderGlow {
@@ -1904,4 +1905,10 @@ h2::after {
 
 .task-card button:active {
     transform: scale(0.96);
+}
+
+.task-card button {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
 }
