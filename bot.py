@@ -712,6 +712,41 @@ def api_task_reward():
         "new_balance": new_balance
     })
 
+@app_web.route("/mylead/postback", methods=["GET", "POST"])
+def mylead_postback():
+    # 1) վերցնում ենք բոլոր parameters-ը
+    user_id = request.args.get("s1")
+    status = request.args.get("status")
+    payout = request.args.get("payout")
+    offer_id = request.args.get("offer_id")
+    conversion_id = request.args.get("transaction_id")
+
+    if not user_id or not status:
+        return "Missing parameters", 400
+
+    # 2) ստուգում ենք կրկնվող conversion չլինի
+    conn = db(); c = conn.cursor()
+    c.execute("SELECT 1 FROM conversions WHERE conversion_id = %s", (conversion_id,))
+    exists = c.fetchone()
+
+    if exists:
+        return "Already processed", 200
+
+    # 3) եթե approved → ավելացնում ենք balance
+    if status.lower() == "approved":
+        c.execute("UPDATE users SET balance = balance + %s WHERE user_id = %s", (payout, user_id))
+
+    # 4) պահում ենք conversion-ը
+    c.execute("""
+        INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (conversion_id, user_id, offer_id, payout, status))
+
+    conn.commit()
+    conn.close()
+
+    return "OK", 200
+
 
 # =========================
 # Telegram Bot (Webhook Mode)
