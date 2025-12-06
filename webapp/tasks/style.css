@@ -1878,3 +1878,30 @@ h2::after {
     }
 }
 
+.task-card button {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px 0;
+
+    background: linear-gradient(135deg, #00f2ff55, #7c4dff55);
+    border: 1px solid #00eaff99;
+
+    border-radius: 14px;
+    color: #e7fbff;
+    font-size: 16px;
+    font-weight: 600;
+
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 18px #00eaff44, inset 0 0 10px #ffffff22;
+
+    transition: 0.25s ease;
+}
+
+.task-card button:hover {
+    transform: scale(1.02);
+    background: linear-gradient(135deg, #00f2ffa0, #8b5fff80);
+}
+
+.task-card button:active {
+    transform: scale(0.96);
+}

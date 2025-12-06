@@ -59,6 +59,7 @@ async function addReward(amount) {
 
 async function loadTasks() {
     const uid = new URLSearchParams(window.location.search).get("uid");
+    window.ALL_TASKS = data.tasks;
 
     try {
         const res = await fetch(`${API_BASE}/api/tasks/${uid}`);
@@ -112,20 +113,22 @@ function renderTasks(tasks) {
 function performTask(taskId) {
     const uid = new URLSearchParams(window.location.search).get("uid");
 
+    // ✨ 1) ստանում ենք կոնկրետ տասկը window.ALL_TASKS–ից
+    const task = window.ALL_TASKS?.find(t => t.id === taskId);
+
+    // ✨ 2) բացում ենք URL-ը, եթե կա
+    if (task && task.url) {
+        window.open(task.url, "_blank");
+    }
+
+    // ✨ 3) ուղարկում ենք attempt_create backend-ին
     fetch(`${API_BASE}/api/task_attempt_create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: uid, task_id: taskId })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.ok) {
-            alert("Տասկը սկսված է, ստուգվում է…");
-        } else {
-            alert("Սխալ: " + data.error);
-        }
     });
 }
+
 
 
 // load tasks when page opens
