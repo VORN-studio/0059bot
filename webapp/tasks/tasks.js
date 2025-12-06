@@ -84,25 +84,49 @@ function renderTasks(tasks) {
         special: document.getElementById("screen-special")
     };
 
-    // clean each screen
+    // Clear old cards
     Object.values(categories).forEach(cat => {
         cat.querySelectorAll(".task-card").forEach(e => e.remove());
     });
 
     tasks.forEach(task => {
-        const el = document.createElement("div");
-        el.className = "task-card";
-        el.innerHTML = `
+        const card = document.createElement("div");
+        card.className = "task-card";
+
+        card.innerHTML = `
             <div><strong>${task.title}</strong></div>
             <div>${task.description}</div>
-            <button onclick="performTask(${task.id})">Perform</button>
+            <button onclick="performTask(${task.id})">
+                Կատարել → +${task.reward}
+            </button>
         `;
 
-        if (categories[task.type]) {
-            categories[task.type].appendChild(el);
+        const key = task.category || task.type; // ← ԱՅՍՏԵՂ լուծվում է type/category խնդիրը
+
+        if (categories[key]) {
+            categories[key].appendChild(card);
         }
     });
 }
+
+function performTask(taskId) {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+
+    fetch(`${API_BASE}/api/task_attempt_create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: uid, task_id: taskId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.ok) {
+            alert("Տասկը սկսված է, ստուգվում է…");
+        } else {
+            alert("Սխալ: " + data.error);
+        }
+    });
+}
+
 
 // load tasks when page opens
 loadTasks();
