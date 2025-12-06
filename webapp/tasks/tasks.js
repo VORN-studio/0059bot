@@ -36,30 +36,8 @@ async function loadBalance() {
     }
 }
 
-async function addReward(amount) {
-    const uid = new URLSearchParams(window.location.search).get("uid");
-
-    const res = await fetch(`${API_BASE}/api/task_reward`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: uid,
-            amount: amount
-        })
-    });
-
-    const data = await res.json();
-
-    if (data.ok) {
-        // update balance display
-        document.getElementById("tasks-balance").textContent =
-            data.new_balance.toFixed(2) + " $";
-    }
-}
-
 async function loadTasks() {
     const uid = new URLSearchParams(window.location.search).get("uid");
-    window.ALL_TASKS = data.tasks;
 
     try {
         const res = await fetch(`${API_BASE}/api/tasks/${uid}`);
@@ -69,12 +47,15 @@ async function loadTasks() {
 
         if (!data.ok || !data.tasks) return;
 
+        // ✔ այստեղ ենք պահում
+        window.ALL_TASKS = data.tasks;
+
         renderTasks(data.tasks);
+
     } catch (err) {
         console.error("TASK LOAD ERROR:", err);
     }
 }
-
 
 function renderTasks(tasks) {
     const categories = {
@@ -102,7 +83,7 @@ function renderTasks(tasks) {
             </button>
         `;
 
-        const key = task.category || task.type; // ← ԱՅՍՏԵՂ լուծվում է type/category խնդիրը
+        const key = task.category || task.type;
 
         if (categories[key]) {
             categories[key].appendChild(card);
@@ -113,15 +94,12 @@ function renderTasks(tasks) {
 function performTask(taskId) {
     const uid = new URLSearchParams(window.location.search).get("uid");
 
-    // ✨ 1) ստանում ենք կոնկրետ տասկը window.ALL_TASKS–ից
     const task = window.ALL_TASKS?.find(t => t.id === taskId);
 
-    // ✨ 2) բացում ենք URL-ը, եթե կա
     if (task && task.url) {
         window.open(task.url, "_blank");
     }
 
-    // ✨ 3) ուղարկում ենք attempt_create backend-ին
     fetch(`${API_BASE}/api/task_attempt_create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -129,13 +107,10 @@ function performTask(taskId) {
     });
 }
 
+// --------------------------------------
+// Start
+// --------------------------------------
 
-
-// load tasks when page opens
-loadTasks();
-
-
-addReward();
-loadBalance();
-// default
 hideAll();
+loadTasks();
+loadBalance();
