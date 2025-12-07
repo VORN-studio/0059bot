@@ -77,13 +77,17 @@ async function loadTonRate() {
 
 
 function openTasks() {
-    window.location.href = "/webapp/tasks/index.html?uid=" + CURRENT_USER_ID;
+    const url = "/webapp/tasks/index.html?uid=" + CURRENT_USER_ID;
+
+    // Եթե աշխատում է Telegram WebApp-ի ներսում — սա աշխատում է իդեալական
+    if (window.Telegram && Telegram.WebApp) {
+        window.location.href = url;  // ✔ բացում է ներսում
+        return;
+    }
+
+    // Եթե browser է (օրինակ Chrome-ով բացում են)
+    window.location.href = `https://domino-backend-iavj.onrender.com${url}`;
 }
-
-
-
-
-
 
 
 // ---------------- LOAD FROM TELEGRAM ----------------
