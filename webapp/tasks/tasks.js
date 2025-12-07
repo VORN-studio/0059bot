@@ -108,19 +108,6 @@ function performTask(taskId) {
         body: JSON.stringify({ user_id: uid, task_id: taskId })
     });
 
-    // **Reward credit**
-    fetch(`${API_BASE}/api/task_complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, task_id: taskId })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.ok) {
-            alert(`+${data.reward}$ հավելվեց!`);
-            loadBalance();
-        }
-    });
 }
 
 

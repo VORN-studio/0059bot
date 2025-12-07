@@ -223,18 +223,6 @@ def init_db():
         )
     """)
 
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS conversions (
-            id SERIAL PRIMARY KEY,
-            conversion_id TEXT UNIQUE,
-            user_id BIGINT,
-            offer_id TEXT,
-            payout NUMERIC(18,2),
-            status TEXT,
-            created_at BIGINT DEFAULT EXTRACT(EPOCH FROM NOW())
-        )
-    """)
-
         # ---------- CONVERSIONS (MyLead postbacks) ----------
     c.execute("""
         CREATE TABLE IF NOT EXISTS conversions (
@@ -776,14 +764,10 @@ def api_task_reward():
 
 @app_web.route("/timewall/postback", methods=["GET", "POST"])
 def timewall_postback():
-    # 🧪 DEBUG – տեսնենք ինչ ա գալիս
-    try:
-        print("🔔 TimeWall POSTBACK:", dict(request.args))
-    except Exception as e:
-        print("🔔 TimeWall POSTBACK log error:", e)
+    print("🔔 TimeWall POSTBACK:", dict(request.args))
 
-    # TimeWall–ից եկող պարամետրերը
-    user_id_raw = request.args.get("user_id") or request.args.get("userID")
+    user_id_raw = request.args.get("s1") or request.args.get("user_id")
+    task_id_raw = request.args.get("s2")
     tx_id       = request.args.get("tx") or request.args.get("transactionID")
     amount_raw  = request.args.get("amount") or request.args.get("currencyAmount")
     revenue_raw = request.args.get("revenue") or request.args.get("income")
@@ -793,49 +777,55 @@ def timewall_postback():
 
     try:
         user_id = int(user_id_raw)
-    except Exception:
+    except:
         return "Bad user_id", 400
 
     try:
-        amount = float(amount_raw)
-    except Exception:
-        amount = 0.0
+        task_id = int(task_id_raw)
+    except:
+        task_id = None
 
-    try:
-        revenue = float(revenue_raw or 0)
-    except Exception:
-        revenue = 0.0
+    amount = float(amount_raw)
+    revenue = float(revenue_raw or 0)
 
-    # Եթե գումար չկա, էլ ոչինչ չենք անում
     if amount <= 0:
         return "No amount", 200
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # 1) չկրկնել նույն conversion–ը
-    c.execute("SELECT 1 FROM conversions WHERE conversion_id = %s", (tx_id,))
+    # prevent duplicates
+    c.execute("SELECT 1 FROM conversions WHERE conversion_id=%s", (tx_id,))
     if c.fetchone():
         release_db(conn)
         return "Already processed", 200
 
-    # 2) գումար ենք ավելացնում user-ի balance_usd-ին
+    # add reward to user
     c.execute("""
         UPDATE dom_users
-           SET balance_usd = COALESCE(balance_usd, 0) + %s
-         WHERE user_id = %s
+        SET balance_usd = COALESCE(balance_usd,0) + %s
+        WHERE user_id = %s
     """, (amount, user_id))
 
-    # 3) պահում ենք conversion log
+    # mark task completed
+    if task_id:
+        c.execute("""
+            INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT DO NOTHING
+        """, (user_id, task_id, now))
+
+    # save conversion
     c.execute("""
         INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (tx_id, user_id, "TIMEWALL", revenue, "credited", now))
+        VALUES (%s, %s, 'TIMEWALL', %s, 'credited', %s)
+    """, (tx_id, user_id, revenue, now))
 
     conn.commit()
     release_db(conn)
 
     return "OK", 200
+
 
 
 
@@ -860,7 +850,8 @@ def mylead_postback():
         &transaction_id={transaction_id}
     """
 
-    user_id_raw = request.args.get("s1")
+    user_id_raw = request.args.get("subid1") or request.args.get("s1")
+    task_id_raw = request.args.get("subid2") or request.args.get("s2")
     status = (request.args.get("status") or "").lower()
     payout_raw = request.args.get("payout")
     offer_id = request.args.get("offer_id")
@@ -890,6 +881,7 @@ def mylead_postback():
         release_db(conn)
         return "Already processed", 200
 
+
     # 2) եթե approved → գումար ենք ավելացնում dom_users.balance_usd + total_deposit_usd
     if status == "approved" and payout > 0:
         c.execute("""
@@ -904,6 +896,14 @@ def mylead_postback():
         INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
         VALUES (%s, %s, %s, %s, %s, %s)
     """, (conversion_id, user_id, offer_id, payout, status, now))
+
+    if status == "approved" and payout > 0 and task_id:
+        c.execute("""
+            INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT DO NOTHING
+        """, (user_id, task_id, now))
+
 
     conn.commit()
     release_db(conn)
@@ -940,6 +940,9 @@ def api_tasks(user_id):
 
 @app_web.route("/api/task_complete", methods=["POST"])
 def api_task_complete():
+    # ⚠️ այս endpoint-ը այլևս *ոչ մի գումար չի տալիս*
+    # Reward ONLY via postback (TimeWall, MyLead, AdMaven...)
+
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
     task_id = int(data.get("task_id", 0))
@@ -950,39 +953,25 @@ def api_task_complete():
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # check if exists
-    c.execute("SELECT reward FROM dom_tasks WHERE id=%s AND is_active=TRUE", (task_id,))
-    row = c.fetchone()
-    if not row:
-        return jsonify({"ok": False, "error": "task_not_found"}), 404
-
-    reward = float(row[0])
-
     # check duplicate
     c.execute("""
         SELECT 1 FROM dom_task_completions
         WHERE user_id=%s AND task_id=%s
     """, (user_id, task_id))
     if c.fetchone():
+        release_db(conn)
         return jsonify({"ok": False, "error": "already_completed"}), 200
 
-    # save completion
+    # register completion WITHOUT reward
     c.execute("""
         INSERT INTO dom_task_completions (user_id, task_id, completed_at)
         VALUES (%s, %s, %s)
     """, (user_id, task_id, now))
 
-    # reward balance
-    c.execute("""
-        UPDATE dom_users
-        SET balance_usd = COALESCE(balance_usd,0) + %s
-        WHERE user_id=%s
-    """, (reward, user_id))
-
     conn.commit()
     release_db(conn)
+    return jsonify({"ok": True})
 
-    return jsonify({"ok": True, "reward": reward})
 
 
 
@@ -1329,13 +1318,15 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
     import urllib.parse
 
     parsed = urllib.parse.urlparse(url)
-    track_param = "s1"
 
-    # Եթե URL-ը արդեն պարունակում է query params
+# we always include two tracking params: s1=user_id, s2=task_id
+    params = "s1={user_id}&s2={task_id}&subid1={user_id}&subid2={task_id}"
+
     if parsed.query:
-        final_url = url + f"&{track_param}={{user_id}}"
+        final_url = url + "&" + params
     else:
-        final_url = url + f"?{track_param}={{user_id}}"
+        final_url = url + "?" + params
+
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
