@@ -77,12 +77,15 @@ async function loadTonRate() {
 
 
 function openTasks() {
-    if (tg) {
-        tg.openLink(`/webapp/tasks/index.html?uid=${CURRENT_USER_ID}`);
+    const url = `/webapp/tasks/index.html?uid=${CURRENT_USER_ID}`;
+
+    if (window.Telegram && window.Telegram.WebApp) {
+        Telegram.WebApp.openLink(url, { try_instant_view: false });
     } else {
-        window.location.href = `/webapp/tasks/index.html?uid=${CURRENT_USER_ID}`;
+        window.location.href = url;
     }
 }
+
 
 
 // ---------------- LOAD FROM TELEGRAM ----------------
