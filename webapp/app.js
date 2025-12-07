@@ -77,7 +77,7 @@ async function loadTonRate() {
 
 
 function openTasks() {
-    const url = `/webapp/tasks/index.html?uid=${CURRENT_USER_ID}`;
+    const url = `https://domino-backend-iavj.onrender.com/webapp/tasks/index.html?uid=${CURRENT_USER_ID}`;
 
     if (window.Telegram && window.Telegram.WebApp) {
         Telegram.WebApp.openLink(url, { try_instant_view: false });
@@ -85,6 +85,7 @@ function openTasks() {
         window.location.href = url;
     }
 }
+
 
 
 
