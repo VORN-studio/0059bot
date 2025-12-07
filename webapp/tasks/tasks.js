@@ -97,15 +97,33 @@ function performTask(taskId) {
     const task = window.ALL_TASKS?.find(t => t.id === taskId);
 
     if (task && task.url) {
-        window.open(task.url, "_blank");
+        const realUrl = task.url.replace("{user_id}", uid);
+        window.open(realUrl, "_blank");
     }
 
+    // Attempt register
     fetch(`${API_BASE}/api/task_attempt_create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: uid, task_id: taskId })
     });
+
+    // **Reward credit**
+    fetch(`${API_BASE}/api/task_complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: uid, task_id: taskId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            alert(`+${data.reward}$ հավելվեց!`);
+            loadBalance();
+        }
+    });
 }
+
+
 
 // --------------------------------------
 // Start

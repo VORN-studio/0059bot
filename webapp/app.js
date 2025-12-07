@@ -77,13 +77,12 @@ async function loadTonRate() {
 
 
 function openTasks() {
-    window.location.href = "/webapp/tasks/index.html?uid=" + CURRENT_USER_ID;
+    if (tg) {
+        tg.openLink(`/webapp/tasks/index.html?uid=${CURRENT_USER_ID}`);
+    } else {
+        window.location.href = `/webapp/tasks/index.html?uid=${CURRENT_USER_ID}`;
+    }
 }
-
-
-
-
-
 
 
 // ---------------- LOAD FROM TELEGRAM ----------------
