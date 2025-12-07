@@ -762,6 +762,8 @@ def api_task_reward():
         "new_balance": new_balance
     })
 
+
+
 @app_web.route("/mylead/postback", methods=["GET", "POST"])
 def mylead_postback():
     # 🧪 DEBUG — print all params to logs
@@ -769,10 +771,6 @@ def mylead_postback():
         print("🔔 MyLead POSTBACK:", dict(request.args))
     except Exception as e:
         print("🔔 MyLead POSTBACK: failed to print", e)
-
-
-@app_web.route("/mylead/postback", methods=["GET", "POST"])
-def mylead_postback():
     """
     MyLead → Domino Postback
 
