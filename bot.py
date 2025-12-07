@@ -774,6 +774,70 @@ def api_task_reward():
     })
 
 
+@app_web.route("/timewall/postback", methods=["GET", "POST"])
+def timewall_postback():
+    # 🧪 DEBUG – տեսնենք ինչ ա գալիս
+    try:
+        print("🔔 TimeWall POSTBACK:", dict(request.args))
+    except Exception as e:
+        print("🔔 TimeWall POSTBACK log error:", e)
+
+    # TimeWall–ից եկող պարամետրերը
+    user_id_raw = request.args.get("user_id") or request.args.get("userID")
+    tx_id       = request.args.get("tx") or request.args.get("transactionID")
+    amount_raw  = request.args.get("amount") or request.args.get("currencyAmount")
+    revenue_raw = request.args.get("revenue") or request.args.get("income")
+
+    if not user_id_raw or not tx_id or not amount_raw:
+        return "Missing params", 400
+
+    try:
+        user_id = int(user_id_raw)
+    except Exception:
+        return "Bad user_id", 400
+
+    try:
+        amount = float(amount_raw)
+    except Exception:
+        amount = 0.0
+
+    try:
+        revenue = float(revenue_raw or 0)
+    except Exception:
+        revenue = 0.0
+
+    # Եթե գումար չկա, էլ ոչինչ չենք անում
+    if amount <= 0:
+        return "No amount", 200
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+
+    # 1) չկրկնել նույն conversion–ը
+    c.execute("SELECT 1 FROM conversions WHERE conversion_id = %s", (tx_id,))
+    if c.fetchone():
+        release_db(conn)
+        return "Already processed", 200
+
+    # 2) գումար ենք ավելացնում user-ի balance_usd-ին
+    c.execute("""
+        UPDATE dom_users
+           SET balance_usd = COALESCE(balance_usd, 0) + %s
+         WHERE user_id = %s
+    """, (amount, user_id))
+
+    # 3) պահում ենք conversion log
+    c.execute("""
+        INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (tx_id, user_id, "TIMEWALL", revenue, "credited", now))
+
+    conn.commit()
+    release_db(conn)
+
+    return "OK", 200
+
+
 
 @app_web.route("/mylead/postback", methods=["GET", "POST"])
 def mylead_postback():
