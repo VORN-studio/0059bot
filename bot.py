@@ -108,6 +108,17 @@ def favicon():
 def webapp_tasks(filename):
     return send_from_directory('webapp/tasks', filename)
 
+@app_web.route("/admaven-verify")
+def admaven_verify():
+    return """
+    <html>
+    <head>
+        <meta name="admaven-placement" content="BdjwGqdYE">
+    </head>
+    <body>OK</body>
+    </html>
+    """
+
 
 # =========================
 # PostgreSQL Connection Pool
