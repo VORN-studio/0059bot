@@ -57,24 +57,6 @@ WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")  # այստեղ պիտի լինի 
 app_web = Flask(__name__, static_folder=None)
 CORS(app_web)
 
-# ---- AUTO-CONVERT URL TO TRACKING FORMAT ----
-# Անկախ որ հղում admin-ը գրի, մենք user_id tracking կփակցնենք WebApp-ի ժամանակ։
-
-import urllib.parse
-
-# Բռնում ենք domain-ը
-parsed = urllib.parse.urlparse(url)
-
-# Tracking parameter name (այստեղ s1, բայց կարող ենք փոխել)
-track_param = "s1"
-
-# Ստուգում՝ արդյո՞ք URL-ը արդեն պարունակում է ?
-if parsed.query:
-    # Եթե URL-ում արդեն կան query params → &s1={user_id}
-    url = url + f"&{track_param}={{user_id}}"
-else:
-    # Եթե query չկա → ?s1={user_id}
-    url = url + f"?{track_param}={{user_id}}"
 
 
 @app_web.route("/")
@@ -922,6 +904,7 @@ def api_task_complete():
 
 
 
+
 # =========================
 # Telegram Bot (Webhook Mode)
 # =========================
@@ -1237,8 +1220,7 @@ async def task_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"ID {task_id} → {state}")
 
 
-async def add_task_with_category(update, context, category):
-    title, desc, url, reward = [x.strip() for x in text.split("|")]
+async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
         await update.message.reply_text("❌ Դու admin չես։")
@@ -1259,16 +1241,31 @@ async def add_task_with_category(update, context, category):
         await update.message.reply_text("❌ Սխալ ձևաչափ։")
         return
 
+    # ---------------------------
+    # AUTO-TRACKING URL BUILDER
+    # ---------------------------
+    import urllib.parse
+
+    parsed = urllib.parse.urlparse(url)
+    track_param = "s1"
+
+    # Եթե URL-ը արդեն պարունակում է query params
+    if parsed.query:
+        final_url = url + f"&{track_param}={{user_id}}"
+    else:
+        final_url = url + f"?{track_param}={{user_id}}"
+
     now = int(time.time())
     conn = db(); c = conn.cursor()
     c.execute("""
         INSERT INTO dom_tasks (title, description, url, reward, category, is_active, created_at)
         VALUES (%s, %s, %s, %s, %s, TRUE, %s)
-    """, (title, desc, url, reward, category, now))
+    """, (title, desc, final_url, reward, category, now))
     conn.commit()
     release_db(conn)
 
     await update.message.reply_text(f"✔ Տասկը ավելացվեց `{category}` բաժնում։")
+
 
 
 @app_web.route("/webhook", methods=["POST"])
