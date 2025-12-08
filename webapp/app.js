@@ -309,8 +309,7 @@ function showScreen(name) {
 }
 
 function openMining() {
-    const url = "/webapp/mining/index.html?uid=" + CURRENT_USER_ID;
-    window.location.href = url;
+    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/mining/index.html?uid=" + CURRENT_USER_ID;
 }
 
 buttons.forEach((btn) => {
