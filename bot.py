@@ -898,6 +898,22 @@ def ogads_postback():
     return "OK", 200
 
 
+@app_web.route("/timewall/<int:user_id>")
+def timewall_page(user_id):
+    timewall_link = f"https://timewall.io/users/login?oid=799afa670a03c54a&uid={user_id}"
+    return f"""
+    <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>TimeWall</title>
+        </head>
+        <body style="margin:0; padding:0; overflow:hidden;">
+            <iframe src="{timewall_link}" style="width:100%; height:100%; border:none;"></iframe>
+        </body>
+    </html>
+    """
+
+
 
 
 @app_web.route("/mylead/postback", methods=["GET", "POST"])
