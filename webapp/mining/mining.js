@@ -22,12 +22,14 @@ function initUser() {
 document.getElementById("back-btn").onclick = () => {
     const url = API_BASE + "/app?uid=" + USER_ID;
 
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.openLink(url, { try_instant_view: false });
+    if (Telegram.WebApp) {
+        Telegram.WebApp.openTelegramLink(url); // ← սա տանում է հետ բոտի ներսում
     } else {
-        window.location.href = url; 
+        window.location.href = url;
     }
 };
+
+
 
 
 
@@ -98,7 +100,9 @@ async function loadState() {
     document.getElementById("active-earned").textContent = m.pending_domit.toFixed(3);
 
     // speed = total_pending_domit / hours => բայց backend արդեն տալիս է pending_domit ըստ վայրկյան
-    document.getElementById("header-speed").textContent = m.pending_domit.toFixed(3);
+    if (data.state) {
+        document.getElementById("header-speed").textContent = data.state.speed.toFixed(3);
+    }
 }
 
 
@@ -124,7 +128,10 @@ async function buyPlan(id) {
     tg.showPopup({ message: "✅ Փաթեթը ձեռք բերվեց" });
 
     userBalance = data.user.balance_usd;
-    document.getElementById("user-balance").textContent = userBalance.toFixed(2);
+    const domit = userBalance / 0.05;
+    document.getElementById("user-balance").textContent = domit.toFixed(2);
+    document.getElementById("header-balance").textContent = domit.toFixed(2);
+
 
     loadState();
 }
@@ -149,7 +156,10 @@ document.getElementById("claim-btn").addEventListener("click", async () => {
     tg.showPopup({ message: "💰 DOMIT հատվածը տեղափոխվեց բալանս" });
 
     userBalance = data.new_balance_usd;
-    document.getElementById("user-balance").textContent = userBalance.toFixed(2);
+    const domit = userBalance / 0.05;
+    document.getElementById("user-balance").textContent = domit.toFixed(2);
+    document.getElementById("header-balance").textContent = domit.toFixed(2);
+
 
     loadState();
 });
