@@ -1269,6 +1269,10 @@ def api_mining_state(user_id):
     })
 
 
+@app_web.route("/app/mining")
+def app_mining():
+    return send_from_directory("webapp/mining", "index.html")
+
 
 @app_web.route("/api/task_complete", methods=["POST"])
 def api_task_complete():

@@ -19,15 +19,11 @@ function initUser() {
     loadState();
 }
 
-document.getElementById("back-btn").onclick = () => {
-    const url = API_BASE + "/app?uid=" + USER_ID;
+tg.BackButton.show();
+tg.BackButton.onClick(() => {
+    window.location.href = `/app?uid=${USER_ID}`;
+});
 
-    if (tg) {
-        tg.openLink(url, { try_instant_view: false });
-    } else {
-        window.location.href = url;
-    }
-};
 
 
 
@@ -135,10 +131,11 @@ async function buyPlan(id) {
 
     tg.showPopup({ message: "✅ Փաթեթը ձեռք բերվեց" });
 
+    
     userBalance = data.user.balance_usd;
-    const domit = userBalance / 0.05;
-    document.getElementById("user-balance").textContent = domit.toFixed(2);
-    document.getElementById("header-balance").textContent = domit.toFixed(2);
+    document.getElementById("user-balance").textContent = userBalance.toFixed(2);
+    document.getElementById("header-balance").textContent = userBalance.toFixed(2);
+
 
 
     loadState();
@@ -164,9 +161,9 @@ document.getElementById("claim-btn").addEventListener("click", async () => {
     tg.showPopup({ message: "💰 DOMIT հատվածը տեղափոխվեց բալանս" });
 
     userBalance = data.new_balance_usd;
-    const domit = userBalance / 0.05;
-    document.getElementById("user-balance").textContent = domit.toFixed(2);
-    document.getElementById("header-balance").textContent = domit.toFixed(2);
+    document.getElementById("user-balance").textContent = userBalance.toFixed(2);
+    document.getElementById("header-balance").textContent = userBalance.toFixed(2);
+
 
 
     loadState();
