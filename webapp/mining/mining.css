@@ -50,3 +50,28 @@ body {
 .plan-card button {
     margin-top: 10px;
 }
+
+#top-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+#back-btn {
+    background: #334155;
+    color: #fff;
+    border: none;
+    font-size: 20px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#top-info {
+    font-size: 14px;
+    line-height: 1.4;
+}

@@ -19,6 +19,12 @@ function initUser() {
     loadState();
 }
 
+document.getElementById("back-btn").onclick = () => {
+    if (tg) tg.close(); 
+    else window.location.href = "/app"; 
+};
+
+
 // ---------------------------------------
 // LOAD USER
 // ---------------------------------------
@@ -28,9 +34,13 @@ async function loadUser() {
 
     if (data.ok) {
         userBalance = data.user.balance_usd;
-        document.getElementById("user-balance").textContent = userBalance.toFixed(2);
+        const domit = userBalance / 0.05; // 1 DOMIT = 0.05$
+
+        document.getElementById("user-balance").textContent = domit.toFixed(2);
+        document.getElementById("header-balance").textContent = domit.toFixed(2);
     }
 }
+
 
 // ---------------------------------------
 // LOAD MINING PLANS
@@ -70,15 +80,21 @@ async function loadState() {
 
     if (data.miners.length === 0) {
         document.getElementById("active-miner-box").style.display = "none";
+        document.getElementById("header-speed").textContent = "0.000";
         return;
     }
 
     const m = data.miners[0];
+
     document.getElementById("active-miner-box").style.display = "block";
     document.getElementById("active-tier").textContent = m.tier;
     document.getElementById("active-speed").textContent = m.pending_domit.toFixed(3);
     document.getElementById("active-earned").textContent = m.pending_domit.toFixed(3);
+
+    // speed = total_pending_domit / hours => բայց backend արդեն տալիս է pending_domit ըստ վայրկյան
+    document.getElementById("header-speed").textContent = m.pending_domit.toFixed(3);
 }
+
 
 // ---------------------------------------
 // BUY MINING PLAN
