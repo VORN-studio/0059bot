@@ -52,6 +52,7 @@
         <button class="btn" data-section="withdraw">💸 Withdraw</button>
         <button class="btn" data-section="referral">👥 Referral</button>
         <button class="btn tasks-btn" onclick="openTasks()">📝 Tasks</button>
+        <button class="btn" data-section="mining">⛏ Mining</button>
       </section>
 
       <section id="screen">
@@ -121,6 +122,22 @@
               <p>🔥 Task system coming soon…</p>
             </div>
           </div>
+
+          <div id="screen-mining" class="screen">
+          <h2>⛏ Mining</h2>
+
+          <div id="mining-active-box" class="mt-16" style="display:none;">
+            <h3>Քո ակտիվ փաթեթը</h3>
+            <p><strong>Tier:</strong> <span id="mining-active-tier">-</span></p>
+            <p><strong>DOMIT / ժամ:</strong> <span id="mining-active-speed">-</span></p>
+            <p><strong>Արտադրված DOMIT:</strong> <span id="mining-active-earned">-</span></p>
+            <button id="mining-claim-btn" class="btn primary mt-12">Փոխանցել բալանսին</button>
+          </div>
+
+          <h3 class="mt-20">⚡ Մայնինգ փաթեթներ</h3>
+          <div id="mining-plans-box" class="mt-12"></div>
+        </div>
+
 
       </section>
     </main>

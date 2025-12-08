@@ -39,6 +39,117 @@ function updateBalanceDisplay() {
   if (el) el.textContent = balance.toFixed(2) + " $";
 }
 
+async function loadMiningPlans() {
+    try {
+        const res = await fetch(`${API_BASE}/api/mining/plans`);
+        const data = await res.json();
+
+        if (!data.ok) return;
+
+        const box = document.getElementById("mining-plans-box");
+        box.innerHTML = "";
+
+        data.plans.forEach(plan => {
+            const el = document.createElement("div");
+            el.className = "plan-card";
+            el.innerHTML = `
+                <div class="plan-title">Tier ${plan.tier}</div>
+                <div class="plan-price">$${plan.price}</div>
+                <div class="plan-speed">${plan.speed} DOMIT/hr</div>
+                <button class="btn buy-btn" data-tier="${plan.tier}">
+                  Գնել
+                </button>
+            `;
+            box.appendChild(el);
+        });
+
+        document.querySelectorAll(".buy-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                buyMiningPlan(btn.getAttribute("data-tier"));
+            });
+        });
+    } catch (err) {
+        console.log("❌ loadMiningPlans error", err);
+    }
+}
+
+async function loadMiningState() {
+    if (!CURRENT_USER_ID) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/mining/state/${CURRENT_USER_ID}`);
+        const data = await res.json();
+
+        const box = document.getElementById("mining-active-box");
+
+        if (!data.ok || !data.state) {
+            box.style.display = "none";
+            return;
+        }
+
+        box.style.display = "block";
+
+        const st = data.state;
+        document.getElementById("mining-active-tier").textContent = st.tier;
+        document.getElementById("mining-active-speed").textContent = st.speed;
+        document.getElementById("mining-active-earned").textContent = st.earned.toFixed(2);
+    } catch (err) {
+        console.log("❌ loadMiningState error", err);
+    }
+}
+
+async function buyMiningPlan(tier) {
+    if (!CURRENT_USER_ID) return;
+
+    const res = await fetch(`${API_BASE}/api/mining/buy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: CURRENT_USER_ID,
+            tier: Number(tier)
+        })
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+        if (tg) tg.showPopup({ message: "❌ " + data.error });
+        return;
+    }
+
+    if (tg) tg.showPopup({ message: "✅ Փաթեթը ակտիվացված է" });
+
+    balance = data.user.balance_usd;
+    updateBalanceDisplay();
+
+    loadMiningState();
+}
+
+document.getElementById("mining-claim-btn")
+    .addEventListener("click", async () => {
+
+    const res = await fetch(`${API_BASE}/api/mining/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: CURRENT_USER_ID })
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+        if (tg) tg.showPopup({ message: "❌ " + data.error });
+        return;
+    }
+
+    balance = data.user.balance_usd;
+    updateBalanceDisplay();
+
+    if (tg) tg.showPopup({ message: "✅ DOMIT-ը փոխանցվեց ձեր բալանսին" });
+
+    loadMiningState();
+});
+
+
 async function loadTonRate() {
     try {
         const res = await fetch(`${API_BASE}/api/ton_rate`);
@@ -153,6 +264,11 @@ function showScreen(name) {
   screens.forEach((s) => s.classList.remove("active"));
   const screen = $("screen-" + name);
   if (screen) screen.classList.add("active");
+  if (name === "mining") {
+    loadMiningPlans();
+    loadMiningState();
+  }
+
 }
 
 buttons.forEach((btn) => {

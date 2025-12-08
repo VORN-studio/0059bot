@@ -1825,3 +1825,30 @@ input[readonly] {
       0 0 0 1px rgba(0, 132, 255, 1),
       inset 0 0 18px rgba(0, 199, 255, 0.75);
 }
+.plan-card {
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(14px);
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.plan-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.plan-price {
+    font-size: 16px;
+    margin-bottom: 6px;
+    color: #38bdf8;
+}
+
+.plan-speed {
+    font-size: 14px;
+    opacity: 0.8;
+    margin-bottom: 10px;
+}
