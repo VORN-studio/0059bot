@@ -284,6 +284,8 @@ async function loadUserFromBackend() {
   }
 }
 
+
+
 function openCrash() {
     window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/crash.html?uid=" + CURRENT_USER_ID;
 }
@@ -303,11 +305,12 @@ function showScreen(name) {
   screens.forEach((s) => s.classList.remove("active"));
   const screen = $("screen-" + name);
   if (screen) screen.classList.add("active");
-  if (name === "mining") {
-    loadMiningPlans();
-    loadMiningState();
-  }
 
+}
+
+function openMining() {
+    const url = "/webapp/mining/index.html?uid=" + CURRENT_USER_ID;
+    window.location.href = url;
 }
 
 buttons.forEach((btn) => {

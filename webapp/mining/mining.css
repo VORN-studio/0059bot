@@ -1,0 +1,52 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #0f172a;
+    color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+#mining-app {
+    padding: 18px;
+}
+
+.title {
+    text-align:center;
+    font-size: 26px;
+    margin-bottom: 20px;
+}
+
+.subtitle {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    width: 100%;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+.plan-card {
+    background: #1e293b;
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.plan-card button {
+    margin-top: 10px;
+}
