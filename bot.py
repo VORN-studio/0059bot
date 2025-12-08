@@ -827,6 +827,56 @@ def timewall_postback():
     return "OK", 200
 
 
+@app_web.route("/ogads/postback", methods=["GET", "POST"])
+def ogads_postback():
+    # Example: https://domino-backend/ogads/postback?s1={user}&amount={payout}&offer={offer_id}&tx={transaction_id}
+
+    user_id_raw = request.args.get("s1")
+    amount_raw = request.args.get("amount")
+    tx_id = request.args.get("tx") or request.args.get("transaction_id")
+    offer_id = request.args.get("offer")
+
+    print("🔔 OGADS POSTBACK:", dict(request.args))
+
+    if not user_id_raw or not amount_raw or not tx_id:
+        return "Missing params", 400
+
+    try:
+        user_id = int(user_id_raw)
+        amount = float(amount_raw)
+    except:
+        return "Bad params", 400
+
+    if amount <= 0:
+        return "No payout", 200
+
+    conn = db(); c = conn.cursor()
+
+    # prevent duplicate conversion
+    c.execute("SELECT 1 FROM conversions WHERE conversion_id=%s", (tx_id,))
+    if c.fetchone():
+        release_db(conn)
+        return "Already processed", 200
+
+    # credit user balance
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd, 0) + %s
+        WHERE user_id = %s
+    """, (amount, user_id))
+
+    # save log
+    now = int(time.time())
+    c.execute("""
+        INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
+        VALUES (%s, %s, %s, %s, 'credited', %s)
+    """, (tx_id, user_id, offer_id, amount, now))
+
+    conn.commit()
+    release_db(conn)
+
+    return "OK", 200
+
 
 
 @app_web.route("/mylead/postback", methods=["GET", "POST"])
