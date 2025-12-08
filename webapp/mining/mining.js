@@ -20,9 +20,15 @@ function initUser() {
 }
 
 document.getElementById("back-btn").onclick = () => {
-    if (tg) tg.close(); 
-    else window.location.href = "/app"; 
+    const url = API_BASE + "/app?uid=" + USER_ID;
+
+    if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.openLink(url, { try_instant_view: false });
+    } else {
+        window.location.href = url; 
+    }
 };
+
 
 
 // ---------------------------------------
