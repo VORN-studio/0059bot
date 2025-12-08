@@ -22,12 +22,13 @@ function initUser() {
 document.getElementById("back-btn").onclick = () => {
     const url = API_BASE + "/app?uid=" + USER_ID;
 
-    if (Telegram.WebApp) {
-        Telegram.WebApp.openTelegramLink(url); // ← սա տանում է հետ բոտի ներսում
+    if (tg) {
+        tg.openLink(url, { try_instant_view: false });
     } else {
         window.location.href = url;
     }
 };
+
 
 
 
@@ -96,13 +97,20 @@ async function loadState() {
 
     document.getElementById("active-miner-box").style.display = "block";
     document.getElementById("active-tier").textContent = m.tier;
-    document.getElementById("active-speed").textContent = m.pending_domit.toFixed(3);
+    document.getElementById("active-speed").textContent = data.state.speed.toFixed(3);
     document.getElementById("active-earned").textContent = m.pending_domit.toFixed(3);
 
     // speed = total_pending_domit / hours => բայց backend արդեն տալիս է pending_domit ըստ վայրկյան
     if (data.state) {
         document.getElementById("header-speed").textContent = data.state.speed.toFixed(3);
     }
+
+    // Update DOMIT balance after state refresh
+    const domitBalance = userBalance / 0.05;
+    document.getElementById("header-balance").textContent = domitBalance.toFixed(2);
+    document.getElementById("user-balance").textContent = domitBalance.toFixed(2);
+
+
 }
 
 
