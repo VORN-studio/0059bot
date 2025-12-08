@@ -44,19 +44,23 @@ async function loadMiningPlans() {
         const res = await fetch(`${API_BASE}/api/mining/plans`);
         const data = await res.json();
 
-        if (!data.ok) return;
+        if (!data.ok || !Array.isArray(data.plans)) return;
 
         const box = document.getElementById("mining-plans-box");
+        if (!box) return;
         box.innerHTML = "";
 
         data.plans.forEach(plan => {
+            const priceDomit = Number(plan.price_usd);          // հիմա DOMIT = USD
+            const speedDomitHr = Number(plan.domit_per_hour);   // backend-ից գալիս է
+
             const el = document.createElement("div");
             el.className = "plan-card";
             el.innerHTML = `
-                <div class="plan-title">Tier ${plan.tier}</div>
-                <div class="plan-price">$${plan.price}</div>
-                <div class="plan-speed">${plan.speed} DOMIT/hr</div>
-                <button class="btn buy-btn" data-tier="${plan.tier}">
+                <div class="plan-title">${plan.name}</div>
+                <div class="plan-price">${priceDomit.toFixed(2)} DOMIT</div>
+                <div class="plan-speed">${speedDomitHr.toFixed(2)} DOMIT/hr</div>
+                <button class="btn buy-btn" data-plan-id="${plan.id}">
                   Գնել
                 </button>
             `;
@@ -65,13 +69,16 @@ async function loadMiningPlans() {
 
         document.querySelectorAll(".buy-btn").forEach(btn => {
             btn.addEventListener("click", () => {
-                buyMiningPlan(btn.getAttribute("data-tier"));
+                const planId = btn.getAttribute("data-plan-id");
+                buyMiningPlan(planId);
             });
         });
     } catch (err) {
         console.log("❌ loadMiningPlans error", err);
     }
 }
+
+
 
 async function loadMiningState() {
     if (!CURRENT_USER_ID) return;
@@ -81,6 +88,7 @@ async function loadMiningState() {
         const data = await res.json();
 
         const box = document.getElementById("mining-active-box");
+        if (!box) return;
 
         if (!data.ok || !data.state) {
             box.style.display = "none";
@@ -91,62 +99,93 @@ async function loadMiningState() {
 
         const st = data.state;
         document.getElementById("mining-active-tier").textContent = st.tier;
-        document.getElementById("mining-active-speed").textContent = st.speed;
+        document.getElementById("mining-active-speed").textContent = st.speed.toFixed(2);
         document.getElementById("mining-active-earned").textContent = st.earned.toFixed(2);
     } catch (err) {
         console.log("❌ loadMiningState error", err);
     }
 }
 
-async function buyMiningPlan(tier) {
+
+
+async function buyMiningPlan(planId) {
     if (!CURRENT_USER_ID) return;
 
-    const res = await fetch(`${API_BASE}/api/mining/buy`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            user_id: CURRENT_USER_ID,
-            tier: Number(tier)
-        })
-    });
+    try {
+        const res = await fetch(`${API_BASE}/api/mining/buy`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: CURRENT_USER_ID,
+                plan_id: Number(planId)   // ⬅️ ԱՂԲՅՈւՐԸ plan_id է, ոչ թե tier
+            })
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!data.ok) {
-        if (tg) tg.showPopup({ message: "❌ " + data.error });
-        return;
+        if (!data.ok) {
+            if (tg) {
+                let msg = "❌ " + (data.error || "Սխալ առաջացավ");
+                if (data.error === "low_balance") {
+                    msg = "❌ Բավարար DOMIT չունես այս փաթեթի համար";
+                }
+                tg.showPopup({ message: msg });
+            }
+            return;
+        }
+
+        if (tg) tg.showPopup({ message: "✅ Փաթեթը ակտիվացված է" });
+
+        if (data.user) {
+            balance = data.user.balance_usd;
+            updateBalanceDisplay();
+        }
+
+        loadMiningState();
+    } catch (err) {
+        console.log("❌ buyMiningPlan error", err);
+        if (tg) tg.showPopup({ message: "❌ Սերվերի սխալ" });
     }
-
-    if (tg) tg.showPopup({ message: "✅ Փաթեթը ակտիվացված է" });
-
-    balance = data.user.balance_usd;
-    updateBalanceDisplay();
-
-    loadMiningState();
 }
 
 document.getElementById("mining-claim-btn")
     .addEventListener("click", async () => {
 
-    const res = await fetch(`${API_BASE}/api/mining/claim`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: CURRENT_USER_ID })
-    });
+    if (!CURRENT_USER_ID) return;
 
-    const data = await res.json();
+    try {
+        const res = await fetch(`${API_BASE}/api/mining/claim`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: CURRENT_USER_ID })
+        });
 
-    if (!data.ok) {
-        if (tg) tg.showPopup({ message: "❌ " + data.error });
-        return;
+        const data = await res.json();
+
+        if (!data.ok) {
+            if (tg) tg.showPopup({ message: "❌ " + data.error });
+            return;
+        }
+
+        if (data.user) {
+            balance = data.user.balance_usd;
+        } else if (typeof data.new_balance_usd === "number") {
+            balance = data.new_balance_usd;
+        }
+        updateBalanceDisplay();
+
+        const claimedDomit = data.claimed_domit || 0;
+        if (tg) {
+            tg.showPopup({
+                message: `✅ ${claimedDomit.toFixed(2)} DOMIT փոխանցվեց ձեր բալանսին`
+            });
+        }
+
+        loadMiningState();
+    } catch (err) {
+        console.log("❌ loadMiningState error", err);
+        if (tg) tg.showPopup({ message: "❌ Սերվերի սխալ" });
     }
-
-    balance = data.user.balance_usd;
-    updateBalanceDisplay();
-
-    if (tg) tg.showPopup({ message: "✅ DOMIT-ը փոխանցվեց ձեր բալանսին" });
-
-    loadMiningState();
 });
 
 

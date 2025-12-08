@@ -1213,14 +1213,17 @@ def api_mining_claim():
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
     reward_usd, miners_count, new_balance = claim_user_mining_rewards(user_id)
+    user = get_user_stats(user_id)
 
     return jsonify({
         "ok": True,
         "claimed_usd": reward_usd,
         "claimed_domit": reward_usd / DOMIT_PRICE_USD if reward_usd > 0 else 0.0,
         "miners_count": miners_count,
-        "new_balance_usd": new_balance
+        "new_balance_usd": new_balance,
+        "user": user  # որ front-ը կարողանա վերցնել balance_usd
     })
+
 
 @app_web.route("/api/mining/state/<int:user_id>")
 def api_mining_state(user_id):
@@ -1244,14 +1247,27 @@ def api_mining_state(user_id):
             "pending_domit": reward / DOMIT_PRICE_USD if reward > 0 else 0.0,
         })
 
+    # state → որ համատեղելի լինի քո ներկայիս JS-ի հետ
+    state = None
+    if miners_view:
+        first = miners_view[0]
+        speed_domit_hr = first["reward_per_second_usd"] * 3600.0 / DOMIT_PRICE_USD
+        state = {
+            "tier": first["tier"],
+            "speed": round(speed_domit_hr, 2),
+            "earned": total_pending / DOMIT_PRICE_USD if total_pending > 0 else 0.0,
+        }
+
     return jsonify({
         "ok": True,
         "user": stats,
         "plans": plans,
         "miners": miners_view,
         "total_pending_usd": total_pending,
-        "total_pending_domit": total_pending / DOMIT_PRICE_USD if total_pending > 0 else 0.0
+        "total_pending_domit": total_pending / DOMIT_PRICE_USD if total_pending > 0 else 0.0,
+        "state": state
     })
+
 
 
 @app_web.route("/api/task_complete", methods=["POST"])
