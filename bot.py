@@ -829,53 +829,74 @@ def timewall_postback():
 
 @app_web.route("/ogads/postback", methods=["GET", "POST"])
 def ogads_postback():
-    # Example: https://domino-backend/ogads/postback?s1={user}&amount={payout}&offer={offer_id}&tx={transaction_id}
+    try:
+        print("🔔 OGADS POSTBACK:", dict(request.args))
+    except:
+        pass
 
+    # Tracking parameters from your OGAds SmartLink
     user_id_raw = request.args.get("s1")
-    amount_raw = request.args.get("amount")
-    tx_id = request.args.get("tx") or request.args.get("transaction_id")
-    offer_id = request.args.get("offer")
+    task_id_raw = request.args.get("s2")
+    payout_raw = request.args.get("payout")
+    tx_id = request.args.get("transaction_id")
 
-    print("🔔 OGADS POSTBACK:", dict(request.args))
-
-    if not user_id_raw or not amount_raw or not tx_id:
+    if not user_id_raw or not payout_raw or not tx_id:
         return "Missing params", 400
 
     try:
         user_id = int(user_id_raw)
-        amount = float(amount_raw)
     except:
-        return "Bad params", 400
+        return "Bad user_id", 400
 
-    if amount <= 0:
+    try:
+        payout = float(payout_raw)
+    except:
+        payout = 0.0
+
+    if payout <= 0:
         return "No payout", 200
 
+    now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # prevent duplicate conversion
+    # Prevent duplicate conversion
     c.execute("SELECT 1 FROM conversions WHERE conversion_id=%s", (tx_id,))
     if c.fetchone():
         release_db(conn)
         return "Already processed", 200
 
-    # credit user balance
+    # User reward (you can change %)
+    user_reward = payout * 0.30   # ⬅️ 30% goes to user (change if you want)
+
     c.execute("""
         UPDATE dom_users
-        SET balance_usd = COALESCE(balance_usd, 0) + %s
-        WHERE user_id = %s
-    """, (amount, user_id))
+        SET balance_usd = COALESCE(balance_usd,0) + %s
+        WHERE user_id=%s
+    """, (user_reward, user_id))
 
-    # save log
-    now = int(time.time())
+    # Save conversion
     c.execute("""
         INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
-        VALUES (%s, %s, %s, %s, 'credited', %s)
-    """, (tx_id, user_id, offer_id, amount, now))
+        VALUES (%s, %s, 'OGADS', %s, 'approved', %s)
+    """, (tx_id, user_id, payout, now))
+
+    # Mark task completed if s2 (task id) present
+    if task_id_raw:
+        try:
+            task_id = int(task_id_raw)
+            c.execute("""
+                INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING
+            """, (user_id, task_id, now))
+        except:
+            pass
 
     conn.commit()
     release_db(conn)
 
     return "OK", 200
+
 
 
 
