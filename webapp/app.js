@@ -298,6 +298,9 @@ function openSlots() {
 function openCoinflip() {
     window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/coinflip.html?uid=" + CURRENT_USER_ID;
 }
+function openMining() {
+    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/mining/index.html?uid=" + CURRENT_USER_ID;
+}
 const buttons = document.querySelectorAll(".btn[data-section]");
 const screens = document.querySelectorAll(".screen");
 
@@ -308,9 +311,7 @@ function showScreen(name) {
 
 }
 
-function openMining() {
-    window.location.href = `${window.location.origin}/app/mining?uid=${USER_ID}`;
-}
+
 
 
 buttons.forEach((btn) => {
