@@ -1,6 +1,3 @@
-# bot.py — DOMINO (Telegram Bot + Flask WebApp)
-# Python 3.10+ | pip install flask flask-cors python-telegram-bot==20.3 psycopg2-binary requests
-
 import os
 import time
 import threading
@@ -28,41 +25,29 @@ from telegram.ext import (
     filters,
 )
 
-# =========================
-# CONFIG
-# =========================
-
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN env var is missing")
 
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").strip()
 if not PUBLIC_BASE_URL:
-    # քո տրամադրած հղումը
     PUBLIC_BASE_URL = "https://domino-backend-iavj.onrender.com"
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL env var is missing (PostgreSQL connection string)")
 
-ADMIN_IDS = {5274439601}  # փոխես, եթե պետք լինի
-
-# =========================
-# Flask Web Server
-# =========================
-
+ADMIN_IDS = {5274439601} 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")  # այստեղ պիտի լինի index.html, app.js, style.css, assets/
+WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
+DOMIT_PRICE_USD = 0.05  # 1 DOMIT = 0.05$
 
 app_web = Flask(__name__, static_folder=None)
 CORS(app_web)
 
-
-
 @app_web.route("/")
 def index():
     return "✅ Domino backend is online. Go to /app for WebApp.", 200
-
 
 @app_web.route("/app")
 def app_page():
@@ -72,7 +57,6 @@ def app_page():
     https://domino-backend-iavj.onrender.com/app?uid=XXXX
     """
     return send_from_directory(WEBAPP_DIR, "index.html")
-
 
 @app_web.route("/webapp/<path:filename>")
 def serve_webapp(filename):
@@ -96,13 +80,10 @@ def serve_games(filename):
     games_dir = os.path.join(WEBAPP_DIR, "games")
     return send_from_directory(games_dir, filename)
 
-
 @app_web.route("/favicon.ico")
 def favicon():
-    # եթե favicon չունես, կարող ես հեռացնել
     assets_dir = os.path.join(WEBAPP_DIR, "assets")
     return send_from_directory(assets_dir, "favicon.ico")
-
 
 @app_web.route('/webapp/tasks/<path:filename>')
 def webapp_tasks(filename):
@@ -119,13 +100,7 @@ def admaven_verify():
     </html>
     """
 
-
-# =========================
-# PostgreSQL Connection Pool
-# =========================
-
 _db_pool: Optional[pool.SimpleConnectionPool] = None
-
 
 def db():
     """
@@ -149,7 +124,6 @@ def db():
     conn.autocommit = True
     return conn
 
-
 def release_db(conn):
     global _db_pool
     try:
@@ -159,7 +133,6 @@ def release_db(conn):
             conn.close()
     except Exception as e:
         print("⚠️ release_db error:", e)
-
 
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
@@ -177,7 +150,6 @@ def init_db():
     conn = db()
     c = conn.cursor()
 
-    # ---------- BASE TABLE ----------
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_users (
             user_id BIGINT PRIMARY KEY,
@@ -191,7 +163,6 @@ def init_db():
         )
     """)
 
-    # ---------- APPLY ALTER PATCHES ----------
     for sql in alters:
         try:
             c.execute(sql)
@@ -199,7 +170,6 @@ def init_db():
         except Exception as e:
             print("Skip alter:", sql, "Reason:", e)
 
-    # ---------- DEPOSITS ----------
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_deposits (
             id SERIAL PRIMARY KEY,
@@ -211,7 +181,6 @@ def init_db():
         )
     """)
 
-    # ---------- WITHDRAWALS ----------
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_withdrawals (
             id SERIAL PRIMARY KEY,
@@ -223,7 +192,6 @@ def init_db():
         )
     """)
 
-        # ---------- CONVERSIONS (MyLead postbacks) ----------
     c.execute("""
         CREATE TABLE IF NOT EXISTS conversions (
             id SERIAL PRIMARY KEY,
@@ -259,15 +227,66 @@ def init_db():
         )
     """)
 
+        # --- DOMINO MINING TABLES ---
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_mining_plans (
+            id SERIAL PRIMARY KEY,
+            tier INT,
+            name TEXT,
+            price_usd NUMERIC(18,2),
+            duration_hours INT,
+            return_mult NUMERIC(10,4),
+            created_at BIGINT
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_user_miners (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            plan_id INT REFERENCES dom_mining_plans(id),
+            price_usd NUMERIC(18,2),
+            duration_hours INT,
+            return_mult NUMERIC(10,4),
+            reward_per_second_usd NUMERIC(18,10),
+            started_at BIGINT,
+            last_claim_at BIGINT,
+            ends_at BIGINT
+        )
+    """)
+
+    # Եթե պլանների աղյուսակը դատարկ է → լցնում ենք մեր 10 tier-երը
+    c.execute("SELECT COUNT(*) FROM dom_mining_plans")
+    count = c.fetchone()[0] or 0
+    if count == 0:
+        now = int(time.time())
+        plans = [
+            (1, "Tier 1", 25),
+            (2, "Tier 2", 50),
+            (3, "Tier 3", 100),
+            (4, "Tier 4", 250),
+            (5, "Tier 5", 500),
+            (6, "Tier 6", 1000),
+            (7, "Tier 7", 2500),
+            (8, "Tier 8", 5000),
+            (9, "Tier 9", 7500),
+            (10, "Tier 10", 10000),
+        ]
+        duration_hours = 60 * 24   # 60 օր = 1440 ժամ
+        return_mult = 1.5          # 1.5x
+
+        for tier, name, price in plans:
+            c.execute("""
+                INSERT INTO dom_mining_plans (tier, name, price_usd, duration_hours, return_mult, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (tier, name, price, duration_hours, return_mult, now))
+        print("💎 Mining plans initialized (10 tiers).")
+
 
     conn.commit()
     release_db(conn)
     print("✅ Domino tables ready with applied patches!")
-
-
-# =========================
-# DB Helpers
-# =========================
 
 def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int] = None):
     """
@@ -292,7 +311,6 @@ def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int]
     conn.commit()
     release_db(conn)
 
-
 def get_user_stats(user_id: int):
     """
     Վերադարձնում ենք օգտատիրոջ USD balance-ը, TON balance-ը (հաշվարկված),
@@ -301,7 +319,6 @@ def get_user_stats(user_id: int):
     conn = db()
     c = conn.cursor()
 
-    # Գլխավոր user row
     c.execute("""
         SELECT username,
                COALESCE(balance_usd,0),
@@ -320,17 +337,14 @@ def get_user_stats(user_id: int):
 
     username, balance_usd, total_dep, total_wd, ton_balance, last_rate = row
 
-    # հաշվում ենք TON-ը USD-ից
     if last_rate and last_rate > 0:
         ton_balance = balance_usd / last_rate
     else:
         ton_balance = 0
 
-    # referrals count
     c.execute("SELECT COUNT(*) FROM dom_users WHERE inviter_id=%s", (user_id,))
     ref_count = c.fetchone()[0] or 0
 
-    # active refs
     c.execute("""
         SELECT COUNT(*)
         FROM dom_users
@@ -338,7 +352,6 @@ def get_user_stats(user_id: int):
     """, (user_id,))
     active_refs = c.fetchone()[0] or 0
 
-    # team deposits
     c.execute("""
         SELECT COALESCE(SUM(total_deposit_usd),0)
         FROM dom_users
@@ -359,8 +372,6 @@ def get_user_stats(user_id: int):
         "active_refs": int(active_refs),
         "team_deposit_usd": float(team_dep),
     }
-
-
 
 def apply_deposit(user_id: int, amount: float):
     """
@@ -387,6 +398,152 @@ def apply_deposit(user_id: int, amount: float):
     conn.commit()
     release_db(conn)
 
+def get_mining_plans():
+    """
+    Վերադարձնում է բոլոր mining plan-ները, հաշված USD/hr և DOMIT/hr։
+    """
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT id, tier, name, price_usd, duration_hours, return_mult
+        FROM dom_mining_plans
+        ORDER BY tier ASC
+    """)
+    rows = c.fetchall()
+    release_db(conn)
+
+    plans = []
+    for row in rows:
+        pid, tier, name, price_usd, duration_hours, return_mult = row
+        price_usd = float(price_usd)
+        duration_hours = int(duration_hours)
+        return_mult = float(return_mult)
+
+        total_return_usd = price_usd * return_mult
+        usd_per_hour = total_return_usd / duration_hours
+        domit_per_hour = usd_per_hour / DOMIT_PRICE_USD
+
+        plans.append({
+            "id": pid,
+            "tier": tier,
+            "name": name,
+            "price_usd": price_usd,
+            "duration_hours": duration_hours,
+            "return_mult": return_mult,
+            "total_return_usd": total_return_usd,
+            "usd_per_hour": usd_per_hour,
+            "domit_per_hour": domit_per_hour,
+        })
+    return plans
+
+
+def get_user_miners(user_id: int):
+    """
+    Վերադարձնում է օգտատիրոջ բոլոր miners-ները։
+    """
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT m.id, m.plan_id, p.tier, p.name,
+               m.price_usd, m.duration_hours, m.return_mult,
+               m.reward_per_second_usd, m.started_at, m.last_claim_at, m.ends_at
+        FROM dom_user_miners m
+        JOIN dom_mining_plans p ON m.plan_id = p.id
+        WHERE m.user_id = %s
+        ORDER BY m.id ASC
+    """, (user_id,))
+    rows = c.fetchall()
+    release_db(conn)
+
+    miners = []
+    for r in rows:
+        (mid, plan_id, tier, name,
+         price_usd, duration_hours, return_mult,
+         rps, started_at, last_claim_at, ends_at) = r
+
+        miners.append({
+            "id": mid,
+            "plan_id": plan_id,
+            "tier": tier,
+            "name": name,
+            "price_usd": float(price_usd),
+            "duration_hours": int(duration_hours),
+            "return_mult": float(return_mult),
+            "reward_per_second_usd": float(rps),
+            "started_at": int(started_at),
+            "last_claim_at": int(last_claim_at) if last_claim_at else None,
+            "ends_at": int(ends_at),
+        })
+    return miners
+
+
+def calc_miner_pending(miner: dict, now: int):
+    """
+    Հաշվում է կոնկրետ miner-ի չվերցված reward-ը (մինչև now կամ մինչև ends_at)։
+    Վերադարձնում է (reward_usd, new_last_claim_at)
+    """
+    started = miner["started_at"]
+    ends_at = miner["ends_at"]
+    last_claim = miner["last_claim_at"] or started
+    rps = miner["reward_per_second_usd"]
+
+    if last_claim >= ends_at:
+        return 0.0, last_claim
+
+    effective_to = min(now, ends_at)
+    dt = max(0, effective_to - last_claim)
+    reward = dt * rps
+    new_last = effective_to
+    return reward, new_last
+
+
+def claim_user_mining_rewards(user_id: int):
+    """
+    Հավաքում է օգտատիրոջ բոլոր miners-ների pending reward-ը,
+    թարմացնում է last_claim_at-երը և գումարը ավելացնում balance_usd-ի վրա։
+    """
+    now = int(time.time())
+    miners = get_user_miners(user_id)
+    if not miners:
+        return 0.0, 0, 0.0  # reward, miners_count, new_balance
+
+    total_reward = 0.0
+    updated_ids = []
+
+    for m in miners:
+        reward, new_last = calc_miner_pending(m, now)
+        if reward > 0:
+            total_reward += reward
+            updated_ids.append((m["id"], new_last))
+
+    if total_reward <= 0:
+        # ոչինչ չկուտակվեց
+        stats = get_user_stats(user_id)
+        new_balance = stats["balance_usd"] if stats else 0.0
+        return 0.0, len(miners), new_balance
+
+    conn = db(); c = conn.cursor()
+
+    # Թարմացնում ենք last_claim_at-երը
+    for mid, new_last in updated_ids:
+        c.execute("""
+            UPDATE dom_user_miners
+               SET last_claim_at = %s
+             WHERE id = %s
+        """, (new_last, mid))
+
+    # Ավելացնում ենք օգուտը օգտատիրոջ USD balance-ի վրա
+    c.execute("""
+        UPDATE dom_users
+           SET balance_usd = COALESCE(balance_usd,0) + %s
+         WHERE user_id = %s
+        RETURNING balance_usd
+    """, (total_reward, user_id))
+    row = c.fetchone()
+    conn.commit()
+    release_db(conn)
+
+    new_balance = float(row[0]) if row else 0.0
+    return total_reward, len(miners), new_balance
+
 
 def create_withdraw_request(user_id: int, amount: float):
     """
@@ -412,11 +569,6 @@ def create_withdraw_request(user_id: int, amount: float):
     conn.commit()
     release_db(conn)
 
-
-# =========================
-# JSON API for WebApp
-# =========================
-
 @app_web.route("/api/user/<int:user_id>")
 def api_user(user_id):
     stats = get_user_stats(user_id)
@@ -424,7 +576,6 @@ def api_user(user_id):
         return jsonify({"ok": False, "error": "user_not_found"}), 404
 
     return jsonify({"ok": True, "user": stats})
-
 
 @app_web.route("/api/deposit", methods=["POST"])
 def api_deposit():
@@ -454,7 +605,6 @@ def api_deposit():
         "message": "Դեպոզիտի հարցումը գրանցվեց ✅ Գումարը հաշվվել է ձեր բալանսի վրա։",
         "user": new_stats
     })
-
 
 @app_web.route("/api/crash/deposit", methods=["POST"])
 def api_crash_deposit():
@@ -494,11 +644,7 @@ def api_crash_claim():
     if user_id == 0 or win <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
-    # 🟢 Այստեղ այլևս ոչ մի UPDATE չկա
-    # շահումը պահում ենք միայն frontend-ի crashBalance-ի մեջ
-
     return jsonify({"ok": True})
-
 
 @app_web.route("/api/crash/lose", methods=["POST"])
 def api_crash_lose():
@@ -508,9 +654,6 @@ def api_crash_lose():
 
     if user_id == 0 or amount <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
-
-    # ❗ Այստեղ էլ DB-ին չենք դիպչում
-    # Պարտությունը արդեն խաղում է միայն crashBalance-ի ներսում
 
     return jsonify({"ok": True})
 
@@ -523,7 +666,6 @@ def api_crash_withdraw():
     if user_id == 0 or amount <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
-    # վերադարձնում ենք crash balance-ը հիմնական բալանսին
     conn = db()
     c = conn.cursor()
     c.execute("""
@@ -535,8 +677,6 @@ def api_crash_withdraw():
     release_db(conn)
 
     return jsonify({"ok": True})
-
-
 
 @app_web.route("/api/withdraw_request", methods=["POST"])
 def api_withdraw_request():
@@ -565,7 +705,6 @@ def api_withdraw_request():
     active_refs = stats["active_refs"]
     team_dep = stats["team_deposit_usd"]
 
-    # 1) գումարը չի կարող գերազանցել բալանսը
     if amount > balance:
         return jsonify({
             "ok": False,
@@ -573,7 +712,6 @@ def api_withdraw_request():
             "message": "Ունեք բավարար բալանս կանխիկացման համար չէ։"
         }), 200
 
-    # 2) ընդհանուր հրավիրվածները < 10
     if ref_count < 10:
         return jsonify({
             "ok": False,
@@ -581,7 +719,6 @@ def api_withdraw_request():
             "message": "Կանխիկացնելու համար պետք է ունենաք առնվազն 10 հրավիրված ընկեր։"
         }), 200
 
-    # 3) թիմի դեպոզիտը < 200$
     if team_dep < 200.0:
         return jsonify({
             "ok": False,
@@ -589,7 +726,6 @@ def api_withdraw_request():
             "message": "Կանխիկացնելու համար ձեր հրավիրվածների ընդհանուր դեպոզիտը պետք է լինի առնվազն 200$։"
         }), 200
 
-    # ամեն ինչ OK → գրանցում ենք հայտը
     create_withdraw_request(user_id, amount)
     new_stats = get_user_stats(user_id)
 
@@ -598,7 +734,6 @@ def api_withdraw_request():
         "message": "Ձեր կանխիկացման հայտը ստացվել է ✅ Գումարը կփոխանցվի մինչև 24 ժամվա ընթացքում։",
         "user": new_stats
     })
-
 
 @app_web.route("/api/dice/deposit", methods=["POST"])
 def api_dice_deposit():
@@ -632,7 +767,6 @@ def api_dice_deposit():
 
     return jsonify({"ok": True, "new_main": stats["balance_usd"] - amount})
 
-
 @app_web.route("/api/dice/withdraw", methods=["POST"])
 def api_dice_withdraw():
     data = request.get_json(force=True, silent=True) or {}
@@ -657,9 +791,6 @@ def api_dice_withdraw():
 
     return jsonify({"ok": True})
 
-# =========================
-#      SLOTS DEPOSIT
-# =========================
 @app_web.route("/api/slots/deposit", methods=["POST"])
 def api_slots_deposit():
     data = request.get_json(force=True)
@@ -693,9 +824,6 @@ def api_slots_deposit():
         "new_main": new_main
     })
 
-# =========================
-#      SLOTS WITHDRAW
-# =========================
 @app_web.route("/api/slots/withdraw", methods=["POST"])
 def api_slots_withdraw():
     data = request.get_json(force=True)
@@ -739,7 +867,6 @@ def api_task_reward():
     conn = db()
     c = conn.cursor()
 
-    # load current balance
     c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
     row = c.fetchone()
     if not row:
@@ -747,7 +874,6 @@ def api_task_reward():
 
     new_balance = float(row[0]) + amount
 
-    # update balance
     c.execute(
         "UPDATE dom_users SET balance_usd=%s WHERE user_id=%s",
         (new_balance, user_id)
@@ -760,7 +886,6 @@ def api_task_reward():
         "ok": True,
         "new_balance": new_balance
     })
-
 
 @app_web.route("/timewall/postback", methods=["GET", "POST"])
 def timewall_postback():
@@ -794,20 +919,17 @@ def timewall_postback():
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # prevent duplicates
     c.execute("SELECT 1 FROM conversions WHERE conversion_id=%s", (tx_id,))
     if c.fetchone():
         release_db(conn)
         return "Already processed", 200
 
-    # add reward to user
     c.execute("""
         UPDATE dom_users
         SET balance_usd = COALESCE(balance_usd,0) + %s
         WHERE user_id = %s
     """, (amount, user_id))
 
-    # mark task completed
     if task_id:
         c.execute("""
             INSERT INTO dom_task_completions (user_id, task_id, completed_at)
@@ -815,7 +937,6 @@ def timewall_postback():
             ON CONFLICT DO NOTHING
         """, (user_id, task_id, now))
 
-    # save conversion
     c.execute("""
         INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
         VALUES (%s, %s, 'TIMEWALL', %s, 'credited', %s)
@@ -826,7 +947,6 @@ def timewall_postback():
 
     return "OK", 200
 
-
 @app_web.route("/ogads/postback", methods=["GET", "POST"])
 def ogads_postback():
     try:
@@ -834,7 +954,6 @@ def ogads_postback():
     except:
         pass
 
-    # Tracking parameters from your OGAds SmartLink
     user_id_raw = request.args.get("s1")
     task_id_raw = request.args.get("s2")
     payout_raw = request.args.get("payout")
@@ -859,14 +978,12 @@ def ogads_postback():
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # Prevent duplicate conversion
     c.execute("SELECT 1 FROM conversions WHERE conversion_id=%s", (tx_id,))
     if c.fetchone():
         release_db(conn)
         return "Already processed", 200
 
-    # User reward (you can change %)
-    user_reward = payout * 0.30   # ⬅️ 30% goes to user (change if you want)
+    user_reward = payout * 0.30  
 
     c.execute("""
         UPDATE dom_users
@@ -874,13 +991,11 @@ def ogads_postback():
         WHERE user_id=%s
     """, (user_reward, user_id))
 
-    # Save conversion
     c.execute("""
         INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
         VALUES (%s, %s, 'OGADS', %s, 'approved', %s)
     """, (tx_id, user_id, payout, now))
 
-    # Mark task completed if s2 (task id) present
     if task_id_raw:
         try:
             task_id = int(task_id_raw)
@@ -897,7 +1012,6 @@ def ogads_postback():
 
     return "OK", 200
 
-
 @app_web.route("/timewall/<int:user_id>")
 def timewall_page(user_id):
     timewall_link = f"https://timewall.io/users/login?oid=799afa670a03c54a&uid={user_id}"
@@ -913,12 +1027,8 @@ def timewall_page(user_id):
     </html>
     """
 
-
-
-
 @app_web.route("/mylead/postback", methods=["GET", "POST"])
 def mylead_postback():
-    # 🧪 DEBUG — print all params to logs
     try:
         print("🔔 MyLead POSTBACK:", dict(request.args))
     except Exception as e:
@@ -944,7 +1054,6 @@ def mylead_postback():
     offer_id = request.args.get("offer_id")
     conversion_id = request.args.get("transaction_id")
 
-    # պարտադիր դաշտեր
     if not user_id_raw or not status or not conversion_id:
         return "Missing parameters", 400
 
@@ -962,14 +1071,11 @@ def mylead_postback():
 
     conn = db(); c = conn.cursor()
 
-    # 1) չկրկնել նույն conversion-ը
     c.execute("SELECT 1 FROM conversions WHERE conversion_id = %s", (conversion_id,))
     if c.fetchone():
         release_db(conn)
         return "Already processed", 200
 
-
-    # 2) եթե approved → գումար ենք ավելացնում dom_users.balance_usd + total_deposit_usd
     if status == "approved" and payout > 0:
         c.execute("""
             UPDATE dom_users
@@ -978,7 +1084,6 @@ def mylead_postback():
              WHERE user_id = %s
         """, (payout, payout, user_id))
 
-    # 3) պահում ենք conversion-ի log-ը
     c.execute("""
         INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
         VALUES (%s, %s, %s, %s, %s, %s)
@@ -991,12 +1096,10 @@ def mylead_postback():
             ON CONFLICT DO NOTHING
         """, (user_id, task_id, now))
 
-
     conn.commit()
     release_db(conn)
 
     return "OK", 200
-
 
 @app_web.route("/api/tasks/<int:user_id>")
 def api_tasks(user_id):
@@ -1024,12 +1127,135 @@ def api_tasks(user_id):
 
     return jsonify({"ok": True, "tasks": tasks})
 
+@app_web.route("/api/mining/plans", methods=["GET"])
+def api_mining_plans():
+    plans = get_mining_plans()
+    return jsonify({"ok": True, "plans": plans})
+
+@app_web.route("/api/mining/buy", methods=["POST"])
+def api_mining_buy():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    plan_id = int(data.get("plan_id", 0))
+
+    if not user_id or not plan_id:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    # ստուգում ենք օգտատերը կա՞
+    stats = get_user_stats(user_id)
+    if not stats:
+        return jsonify({"ok": False, "error": "user_not_found"}), 404
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT id, tier, name, price_usd, duration_hours, return_mult
+        FROM dom_mining_plans
+        WHERE id = %s
+    """, (plan_id,))
+    row = c.fetchone()
+    if not row:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "plan_not_found"}), 404
+
+    pid, tier, name, price_usd, duration_hours, return_mult = row
+    price_usd = float(price_usd)
+    duration_hours = int(duration_hours)
+    return_mult = float(return_mult)
+
+    if stats["balance_usd"] < price_usd:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "low_balance"}), 200
+
+    total_return_usd = price_usd * return_mult
+    duration_sec = duration_hours * 3600
+    reward_per_second = total_return_usd / duration_sec
+
+    now = int(time.time())
+    ends_at = now + duration_sec
+
+    # հանում ենք գումարը հիմնական բալանսից
+    c.execute("""
+        UPDATE dom_users
+           SET balance_usd = COALESCE(balance_usd,0) - %s
+         WHERE user_id = %s
+    """, (price_usd, user_id))
+
+    # գրանցում ենք miner-ը
+    c.execute("""
+        INSERT INTO dom_user_miners (
+            user_id, plan_id, price_usd, duration_hours,
+            return_mult, reward_per_second_usd,
+            started_at, last_claim_at, ends_at
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, NULL, %s)
+        RETURNING id
+    """, (user_id, pid, price_usd, duration_hours, return_mult,
+          reward_per_second, now, ends_at))
+    miner_id = c.fetchone()[0]
+    conn.commit()
+    release_db(conn)
+
+    new_stats = get_user_stats(user_id)
+
+    return jsonify({
+        "ok": True,
+        "message": "Mining package purchased successfully ✅",
+        "miner_id": miner_id,
+        "user": new_stats
+    })
+
+@app_web.route("/api/mining/claim", methods=["POST"])
+def api_mining_claim():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+
+    if not user_id:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    reward_usd, miners_count, new_balance = claim_user_mining_rewards(user_id)
+
+    return jsonify({
+        "ok": True,
+        "claimed_usd": reward_usd,
+        "claimed_domit": reward_usd / DOMIT_PRICE_USD if reward_usd > 0 else 0.0,
+        "miners_count": miners_count,
+        "new_balance_usd": new_balance
+    })
+
+@app_web.route("/api/mining/state/<int:user_id>")
+def api_mining_state(user_id):
+    stats = get_user_stats(user_id)
+    if not stats:
+        return jsonify({"ok": False, "error": "user_not_found"}), 404
+
+    plans = get_mining_plans()
+    miners = get_user_miners(user_id)
+
+    now = int(time.time())
+    total_pending = 0.0
+    miners_view = []
+
+    for m in miners:
+        reward, _ = calc_miner_pending(m, now)
+        total_pending += reward
+        miners_view.append({
+            **m,
+            "pending_usd": reward,
+            "pending_domit": reward / DOMIT_PRICE_USD if reward > 0 else 0.0,
+        })
+
+    return jsonify({
+        "ok": True,
+        "user": stats,
+        "plans": plans,
+        "miners": miners_view,
+        "total_pending_usd": total_pending,
+        "total_pending_domit": total_pending / DOMIT_PRICE_USD if total_pending > 0 else 0.0
+    })
+
 
 @app_web.route("/api/task_complete", methods=["POST"])
 def api_task_complete():
-    # ⚠️ այս endpoint-ը այլևս *ոչ մի գումար չի տալիս*
-    # Reward ONLY via postback (TimeWall, MyLead, AdMaven...)
-
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
     task_id = int(data.get("task_id", 0))
@@ -1040,7 +1266,6 @@ def api_task_complete():
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # check duplicate
     c.execute("""
         SELECT 1 FROM dom_task_completions
         WHERE user_id=%s AND task_id=%s
@@ -1049,7 +1274,6 @@ def api_task_complete():
         release_db(conn)
         return jsonify({"ok": False, "error": "already_completed"}), 200
 
-    # register completion WITHOUT reward
     c.execute("""
         INSERT INTO dom_task_completions (user_id, task_id, completed_at)
         VALUES (%s, %s, %s)
@@ -1059,22 +1283,11 @@ def api_task_complete():
     release_db(conn)
     return jsonify({"ok": True})
 
-
-
-
-
-# =========================
-# Telegram Bot (Webhook Mode)
-# =========================
-
 import requests
 import time
 
 TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=TON&currencies=USD"
 
-# =========================================
-# KEEP-ALIVE PROTECTION (Render autosleep fix)
-# =========================================
 import requests
 
 def keep_alive():
@@ -1087,8 +1300,7 @@ def keep_alive():
         except Exception as e:
             print("❌ Keep-alive error:", e)
 
-        time.sleep(240)  # ping every 4 minutes
-
+        time.sleep(240)  
 
 def fetch_ton_rate():
     try:
@@ -1107,8 +1319,6 @@ def fetch_ton_rate():
         print("🔥 ERROR in fetch_ton_rate():", e)
         return None
 
-
-
 def ton_rate_updater():
     print("🔄 TON updater thread started")
 
@@ -1118,13 +1328,11 @@ def ton_rate_updater():
             rate = fetch_ton_rate()
             print("📥 fetch_ton_rate() returned:", rate)
 
-            # ❗ PROTECTION: NEVER write 0 or None
             if rate is None or rate <= 0:
                 print("⚠️ Invalid TON rate, skipping DB update")
                 time.sleep(15)
                 continue
 
-            # safe update
             conn = db()
             c = conn.cursor()
             c.execute("""
@@ -1140,11 +1348,8 @@ def ton_rate_updater():
 
         time.sleep(15)
 
-
-
-application = None  # global PTB application
-bot_loop = None     # main asyncio loop bot-ի համար
-
+application = None  
+bot_loop = None     
 
 def parse_start_payload(text: Optional[str]) -> Optional[int]:
     """
@@ -1163,7 +1368,6 @@ def parse_start_payload(text: Optional[str]) -> Optional[int]:
             return None
     return None
 
-
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if not user:
@@ -1179,7 +1383,6 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     base = (PUBLIC_BASE_URL or "").rstrip("/")
     wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
-
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]
@@ -1197,7 +1400,6 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         pass
 
-
 async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Որ չատը մաքուր մնա՝ ջնջում ենք ցանկացած տեքստային մեսիջ
@@ -1207,11 +1409,9 @@ async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         pass
 
-
 async def btn_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer("OK")
-
 
 async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -1255,20 +1455,15 @@ async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"✔ {amount}$ ավելացվեց օգտատեր {target}-ի հաշվին։")
 
-
-
-
-
 async def start_bot_webhook():
     """
-    Kարգավորում ենք Telegram–ը Webhook mode-ում,
+    Կարգավորում ենք Telegram–ը Webhook mode-ում,
     նույն լոգիկան, ինչ VORN բոտում։
     """
     global application
     print("🤖 Initializing Domino Telegram bot (Webhook Mode)...")
 
     application = ApplicationBuilder().token(BOT_TOKEN).build()
-
     application.add_handler(CommandHandler("start", start_cmd))
     application.add_handler(CommandHandler("stats", stats_cmd))
     application.add_handler(CallbackQueryHandler(btn_handler))
@@ -1283,10 +1478,8 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("task_delete", task_delete))
     application.add_handler(CommandHandler("task_toggle", task_toggle))
 
-    # initialize
     await application.initialize()
 
-    # Set webhook
     port = int(os.environ.get("PORT", "10000"))
     webhook_url = f"{PUBLIC_BASE_URL}/webhook"
 
@@ -1351,7 +1544,6 @@ async def task_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"🗑 Տասկը ջնջված է (ID={task_id})")
 
-
 async def task_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
@@ -1377,7 +1569,6 @@ async def task_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = "🟢 Միացված" if row[0] else "🔴 Անջատված"
     await update.message.reply_text(f"ID {task_id} → {state}")
 
-
 async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
@@ -1399,21 +1590,16 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
         await update.message.reply_text("❌ Սխալ ձևաչափ։")
         return
 
-    # ---------------------------
-    # AUTO-TRACKING URL BUILDER
-    # ---------------------------
     import urllib.parse
 
     parsed = urllib.parse.urlparse(url)
 
-# we always include two tracking params: s1=user_id, s2=task_id
     params = "s1={user_id}&s2={task_id}&subid1={user_id}&subid2={task_id}"
 
     if parsed.query:
         final_url = url + "&" + params
     else:
         final_url = url + "?" + params
-
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
@@ -1425,8 +1611,6 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
     release_db(conn)
 
     await update.message.reply_text(f"✔ Տասկը ավելացվեց `{category}` բաժնում։")
-
-
 
 @app_web.route("/webhook", methods=["POST"])
 def telegram_webhook():
@@ -1447,7 +1631,6 @@ def telegram_webhook():
 
     try:
         upd = Update.de_json(update_data, application.bot)
-        # Async–ով ուղարկում ենք հիմնական loop–ին
         asyncio.run_coroutine_threadsafe(application.process_update(upd), bot_loop)
         return jsonify({"ok": True}), 200
     except Exception as e:
@@ -1461,7 +1644,7 @@ def api_game_bet():
     user_id = int(data.get("user_id", 0))
     amount = float(data.get("amount", 0))
     game = data.get("game", "")
-    choice = data.get("choice")  # multiplier for crash
+    choice = data.get("choice")  
 
     if user_id == 0 or amount <= 0 or not game:
         return jsonify({"ok": False, "error": "bad_params"}), 400
@@ -1475,21 +1658,16 @@ def api_game_bet():
 
     import random
 
-    # ------------------- CRASH GAME -------------------
     if game == "crash":
-        # crash multiplier is client-side; we accept it and pay out
         result_multiplier = float(choice)
         win = True
         payout = amount * result_multiplier
 
-
-    # ------------------- DICE --------------------------
     elif game == "dice":
         result = random.randint(1, 6)
         win = (result == int(choice))
         payout = amount * 6 if win else 0
 
-    # ------------------- COINFLIP ----------------------
     elif game == "coinflip":
         result = random.choice(["heads", "tails"])
         win = (result == choice)
@@ -1498,7 +1676,6 @@ def api_game_bet():
     else:
         return jsonify({"ok": False, "error": "unknown_game"}), 400
 
-    # ------------------- UPDATE BALANCE ----------------
     conn = db()
     c = conn.cursor()
 
@@ -1520,8 +1697,6 @@ def api_game_bet():
         "new_balance": new_balance
     })
 
-
-
 @app_web.route("/api/ton_rate")
 def api_ton_rate():
     """
@@ -1537,7 +1712,6 @@ def api_ton_rate():
 
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
-
 
 @app_web.route("/api/task_attempt_create", methods=["POST"])
 def api_task_attempt_create():
@@ -1555,12 +1729,10 @@ def api_task_attempt_create():
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # verify task exists
     c.execute("SELECT id FROM dom_tasks WHERE id=%s", (task_id,))
     if not c.fetchone():
         return jsonify({"ok": False, "error": "task_not_found"}), 404
 
-    # Create attempt record
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_task_attempts (
             id SERIAL PRIMARY KEY,
@@ -1579,11 +1751,6 @@ def api_task_attempt_create():
     release_db(conn)
 
     return jsonify({"ok": True})
-
-
-# =========================
-# MAIN ENTRYPOINT (Render)
-# =========================
 
 if __name__ == "__main__":
     print("✅ Domino bot script loaded.")
@@ -1611,32 +1778,24 @@ if __name__ == "__main__":
             print("🤖 Starting Domino Telegram bot thread ...")
             bot_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(bot_loop)
-            # նախ webhook–ի կարգավորում
             bot_loop.run_until_complete(start_bot_webhook())
-            # հետո loop–ը թողնում ենք աշխատի անվերջ
             bot_loop.run_forever()
         except Exception as e:
             print("🔥 Telegram bot failed:", e)
 
-    # Flask-ը որպես հիմնական սերվեր
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
 
-    # Telegram bot-ը
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
 
-    # TON live rate updater
     ton_thread = threading.Thread(target=ton_rate_updater, daemon=True)
     ton_thread.start()
 
-    # Keep-alive thread (prevents Render autosleep)
     keepalive_thread = threading.Thread(target=keep_alive, daemon=True)
     keepalive_thread.start()
 
-
     print("🚀 Domino Flask + Telegram bot started.")
 
-    # պահում ենք main process–ը կենդանի
     while True:
         time.sleep(60)

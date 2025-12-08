@@ -1,48 +1,30 @@
-// ============ TON CONNECT INIT ============
-
-// TON Connect controller (SDK)
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
   manifestUrl: "https://vorn-studio.github.io/0059bot/webapp/tonconnect-manifest.json",
   buttonRootId: "ton-connect",
 });
 
-// TON wallet address
 let TON_WALLET = null;
 
-// When user connects wallet (popup)
 tonConnectUI.onStatusChange((walletInfo) => {
   if (walletInfo && walletInfo.account) {
     TON_WALLET = walletInfo.account.address;
     console.log("💎 TON Wallet Connected:", TON_WALLET);
 
-    // ցույց տանք user-ին
     const walletStatus = document.getElementById("wallet-status");
     if (walletStatus) {
       const short = TON_WALLET.slice(0, 6) + "..." + TON_WALLET.slice(-4);
       walletStatus.textContent = "Wallet connected: " + short;
     }
-
-    // OPTIONAL — կարող ենք ավտոմատ կցել backend-ին
-    // sendTonWalletToBackend(TON_WALLET);
   }
 });
 
 console.log("✅ Casino WebApp loaded");
-
-// ================== TELEGRAM INIT ==================
 const tg = window.Telegram && window.Telegram.WebApp;
-
-// Քո backend-ի հիմքը (Render-ում կփոխենք իրական հղումով)
 const API_BASE = "https://domino-backend-iavj.onrender.com"; // ← հետո կփոխենք
-
-// Օգտատիրոջ տվյալները կպահենք այստեղ
 let CURRENT_USER_ID = null;
 let CURRENT_USERNAME = null;
-
-// 💰 balance-ը սկզբում 0 է, backend-ից ենք բերելու
 let balance = 0.0;
 
-// ---------------- HELPERS ----------------
 function $(id) {
   return document.getElementById(id);
 }
@@ -65,7 +47,6 @@ async function loadTonRate() {
         if (data.ok) {
             const rate = data.ton_usd;
 
-            // ԱՅՍՏԵՂ — ԳՐՈՒՄ ԵՍ ՃԻՇՏ span-ի մեջ
             document.getElementById("ton-current").textContent = rate.toFixed(4);
         } else {
             document.getElementById("ton-current").textContent = "—";
@@ -78,19 +59,13 @@ async function loadTonRate() {
 
 function openTasks() {
     const url = "/webapp/tasks/index.html?uid=" + CURRENT_USER_ID;
-
-    // Եթե աշխատում է Telegram WebApp-ի ներսում — սա աշխատում է իդեալական
     if (window.Telegram && Telegram.WebApp) {
-        window.location.href = url;  // ✔ բացում է ներսում
+        window.location.href = url;  
         return;
     }
-
-    // Եթե browser է (օրինակ Chrome-ով բացում են)
     window.location.href = `https://domino-backend-iavj.onrender.com${url}`;
 }
 
-
-// ---------------- LOAD FROM TELEGRAM ----------------
 function initFromTelegram() {
   if (!tg) {
     console.log("⚠️ Telegram WebApp object չկա (բացված է բրաուզերում)");
@@ -115,12 +90,9 @@ function initFromTelegram() {
 
   updateUserHeader();
   updateBalanceDisplay();
-
-  // Այստեղ կարող ենք backend-ից բալանսը վերցնել
   loadUserFromBackend();
 }
 
-// ---------------- LOAD USER FROM BACKEND (STRUCTURE) ----------------
 async function loadUserFromBackend() {
   if (!CURRENT_USER_ID) {
     console.log("⛔ CURRENT_USER_ID չկա");
@@ -141,31 +113,17 @@ async function loadUserFromBackend() {
 
     const U = data.user;
 
-    // ---------------------
-    // 1) HEADER FIELDS
-    // ---------------------
-
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";
     $("user-balance").textContent = U.balance_usd.toFixed(2) + " $";
     balance = U.balance_usd;
     document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
 
-
-
-    // ---------------------
-    // 2) REFERRAL STATS
-    // ---------------------
-
     $("ref-total").textContent = U.ref_count;
     $("ref-active").textContent = U.active_refs;
     $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " $";
 
-
-    // ---------------------
-    // 3) GENERATE REF LINK
-    // ---------------------
-    const botUsername = "doominobot"; // փոխիր եթե բոտդ ուրիշ անուն ունի
+    const botUsername = "doominobot"; 
     $("ref-link").value =
       `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
 
@@ -188,9 +146,6 @@ function openSlots() {
 function openCoinflip() {
     window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/coinflip.html?uid=" + CURRENT_USER_ID;
 }
-
-
-// ---------------- NAVIGATION ----------------
 const buttons = document.querySelectorAll(".btn[data-section]");
 const screens = document.querySelectorAll(".screen");
 
@@ -207,7 +162,6 @@ buttons.forEach((btn) => {
   });
 });
 
-// ---------------- WALLET SAVE (STRUCTURE) ----------------
 const walletInput = $("wallet-input");
 const walletStatus = $("wallet-status");
 const walletSaveBtn = $("wallet-save-btn");
@@ -226,7 +180,6 @@ if (walletSaveBtn) {
 
     walletStatus.textContent = "Պահպանում ենք wallet-ը…";
 
-    // Backend save structure (երբ Render պատրաստ լինի)
     const url = `${API_BASE}/api/wallet_connect`;
     try {
       const res = await fetch(url, {
@@ -247,7 +200,6 @@ if (walletSaveBtn) {
       if (data.ok) {
         walletStatus.textContent =
           "Wallet-ը հաջողությամբ պահպանված է։ Բոնուսը կավելացվի backend-ում 💰";
-        // Թարմացնենք balance-ը, եթե backend-ը վերադարձնի նոր balance
         if (data.user && typeof data.user.balance === "number") {
           balance = data.user.balance;
           updateBalanceDisplay();
@@ -263,8 +215,6 @@ if (walletSaveBtn) {
     }
   });
 }
-
-// ---------------- DEPOSIT (դեռ ֆեյք, բայց պատրաստ կառուցվածքով) ----------------
 const depositInput = $("deposit-amount");
 const depositStatus = $("deposit-status");
 const depositBtn = $("deposit-btn");
@@ -285,27 +235,23 @@ if (depositBtn) {
 
     depositStatus.textContent = "Բացում ենք TON վճարման popup-ը…";
 
-    const RECEIVER_TON_ADDRESS = "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW"; // ← ԱՅՍՏԵՂ ԴՆԵՍ ՔՈ TON ՀԱՍՑԵՆ
+    const RECEIVER_TON_ADDRESS = "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW"; 
 
     try {
       const result = await tonConnectUI.sendTransaction({
-        validUntil: Math.floor(Date.now() / 1000) + 300, // 5 րոպե
+        validUntil: Math.floor(Date.now() / 1000) + 300, 
         messages: [
           {
             address: RECEIVER_TON_ADDRESS,
-            amount: (amount * 1e9).toString(), // TON → nanotons
+            amount: (amount * 1e9).toString(), 
           },
         ],
       });
 
-      // Եթե user-ը ուղարկեց TON
       console.log("TON Transaction:", result);
 
       depositStatus.textContent =
         "Դեպոզիտը ուղարկված է։ Tx hash: " + result.boc.slice(0, 10) + "...";
-
-      // Այստեղ հետո կուղարկենք backend-ին փաստաթուղթը
-      // sendDepositToBackend(result);
 
     } catch (err) {
       console.log("❌ TON popup error:", err);
@@ -314,8 +260,6 @@ if (depositBtn) {
   });
 }
 
-
-// ---------------- WITHDRAW (միայն կառուցվածք) ----------------
 const withdrawInput = $("withdraw-amount");
 const withdrawStatus = $("withdraw-status");
 const withdrawBtn = $("withdraw-btn");
@@ -325,25 +269,21 @@ if (withdrawBtn) {
 
     const amount = Number(withdrawInput.value);
 
-    // 1) Սխալ գումար
     if (!amount || amount <= 0) {
       withdrawStatus.textContent = "❌ Գումարը գրեք ճիշտ։";
       return;
     }
 
-    // 2) Telegram user ID չգտանք
     if (!CURRENT_USER_ID) {
       withdrawStatus.textContent = "❌ Բացեք WebApp-ը բոտի միջից, ոչ թե browser-ից։";
       return;
     }
 
-    // 3) Balance check
     if (amount > balance) {
       withdrawStatus.textContent = "❌ Ձեր գրած գումարը գերազանցում է ձեր բալանսը։";
       return;
     }
 
-    // 4) Referral conditions check
     const refActive = Number($("ref-active").textContent) || 0;
     const refDeposits = Number(
       ($("ref-deposits").textContent || "0").replace("$", "")
@@ -358,7 +298,6 @@ if (withdrawBtn) {
       return;
     }
 
-    // 5) Եթե ամեն ինչ OK է → success message
     withdrawStatus.textContent = "⏳ Ստուգում ենք…";
 
     fetch(`${API_BASE}/api/withdraw_request`, {
@@ -376,7 +315,6 @@ if (withdrawBtn) {
       } else {
         withdrawStatus.textContent = "✅ " + data.message;
 
-    // Balance update
         if (data.user) {
           balance = data.user.balance_usd;
           updateBalanceDisplay();
@@ -395,8 +333,6 @@ if (withdrawBtn) {
   });
 }
 
-
-// ---------------- REFERRAL LINK ----------------
 const refLinkInput = $("ref-link");
 const refCopyBtn = $("ref-copy-btn");
 
@@ -404,8 +340,7 @@ function initReferralLink() {
   if (!refLinkInput) return;
 
   if (CURRENT_USER_ID) {
-    // այստեղ դնում ես ՔՈ բոտի username-ը
-    const botUsername = "doominobot"; // ← փոխիր կոնկրետ քոնը, եթե ուրիշ է
+    const botUsername = "doominobot"; 
     const link = `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
     refLinkInput.value = link;
   } else {
@@ -423,12 +358,9 @@ if (refCopyBtn) {
   });
 }
 
-// ---------------- START ----------------
 initFromTelegram();
 initReferralLink();
 updateBalanceDisplay();
-//loadTonRate();
-//setInterval(loadTonRate, 60000);
 
 function loadTonChart() {
   new TradingView.widget({
@@ -446,5 +378,3 @@ function loadTonChart() {
 
 loadTonChart();
 
-//loadTonRate();
-//setInterval(loadTonRate, 15000); // ամեն 15 վրկ մեկ թարմացնի
