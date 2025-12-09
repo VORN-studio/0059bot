@@ -1950,112 +1950,131 @@ input[readonly] {
 }
 
 /* ============================
-   WEB3 PORTAL — ULTRA MINIMAL
-   ============================ */
-
-#portal-area {
+   BASE POSITIONING
+============================ */
+#portal-wrapper {
     position: fixed;
-    bottom: 26px;
+    bottom: 34px;          /* IDEAL placement */
     left: 50%;
     transform: translateX(-50%);
-    
-    width: auto;
-    height: auto;
+    width: 210px;
+    height: 105px;
 
     display: flex;
+    align-items: flex-end;
     justify-content: center;
-    align-items: center;
 
     z-index: 9999;
     pointer-events: auto;
 }
 
-/* ============= PORTAL BUTTON ============= */
+/* ============================
+   PORTAL PLATFORM (BOTTOM OVAL)
+============================ */
+#portal-platform {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 42px;
 
-#portal-button {
-    width: 62px;
-    height: 62px;
-    border-radius: 50%;
-
-    background: radial-gradient(circle at 50% 55%,
-        rgba(90,130,255,0.95) 0%,
-        rgba(50,80,200,0.55) 40%,
-        rgba(20,30,80,0.85) 100%
+    background: radial-gradient(ellipse at center,
+        rgba(0, 180, 255, 0.45),
+        rgba(0, 120, 255, 0.30),
+        rgba(0, 0, 0, 0) 70%
     );
 
-    /* premium security glow */
-    box-shadow:
-        0 0 12px rgba(120,180,255,0.55),
-        0 0 22px rgba(70,120,255,0.45),
-        inset 0 0 10px rgba(255,255,255,0.25);
-
-    position: relative;
-    cursor: pointer;
-
-    /* subtle breathing */
-    animation: buttonBreath 3.2s ease-in-out infinite;
+    filter: blur(10px);
+    border-radius: 50%;
+    animation: platformGlow 4s ease-in-out infinite;
 }
 
-/* breathing animation */
-@keyframes buttonBreath {
+@keyframes platformGlow {
+    0%   { opacity: 0.55; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.55; }
+}
+
+/* ============================
+   MAIN PORTAL BUTTON (SPHERE)
+============================ */
+#portal-button {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+
+    background: radial-gradient(circle at 50% 40%,
+        rgba(105,170,255,1),
+        rgba(70,120,255,0.95),
+        rgba(40,60,150,0.90)
+    );
+
+    box-shadow:
+        0 0 30px rgba(120,200,255,0.9),
+        0 0 60px rgba(80,150,255,0.7),
+        0 0 120px rgba(60,120,255,0.55),
+        inset 0 0 20px rgba(255,255,255,0.7);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+    position: relative;
+    animation: portalPulse 2.4s ease-in-out infinite;
+}
+
+/* breathing */
+@keyframes portalPulse {
     0%   { transform: scale(1); }
-    50%  { transform: scale(1.07); }
+    50%  { transform: scale(1.12); }
     100% { transform: scale(1); }
 }
 
-/* ============= INNER SECURITY RING ============= */
-
+/* ============================
+   INTERNAL ENERGY ROTATION
+============================ */
 #portal-button::before {
     content: "";
     position: absolute;
-    inset: 12px;
+    inset: -25%;
     border-radius: 50%;
-
-    border: 2px solid rgba(140,190,255,0.55);
-    box-shadow:
-        0 0 12px rgba(140,190,255,0.4),
-        inset 0 0 12px rgba(100,150,255,0.35);
-
-    opacity: 0.85;
-
-    animation: ringPulse 2.8s ease-in-out infinite;
-}
-
-@keyframes ringPulse {
-    0%   { transform: scale(1); opacity: .85; }
-    50%  { transform: scale(1.1); opacity: .55; }
-    100% { transform: scale(1); opacity: .85; }
-}
-
-/* ============= FAINT VORTEX (VERY SUBTLE) ============= */
-
-#portal-button::after {
-    content: "";
-    position: absolute;
-    inset: -20%;
-    border-radius: 50%;
-
     background: conic-gradient(
-        rgba(255,255,255,0.00),
-        rgba(255,255,255,0.08),
-        rgba(255,255,255,0.00)
+        rgba(255,255,255,0.0),
+        rgba(255,255,255,0.35),
+        rgba(255,255,255,0.0) 30%
     );
-
-    filter: blur(6px);
-    opacity: 0.35;
-    animation: vortexSpin 7s linear infinite;
+    filter: blur(8px);
+    animation: portalRotate 5s linear infinite;
 }
 
-@keyframes vortexSpin {
+@keyframes portalRotate {
     0%   { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-/* ============= CLICK FEEDBACK ============= */
+/* ============================
+   SPARKLE NOISE
+============================ */
+#portal-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%),
+        radial-gradient(circle, rgba(140,200,255,0.5) 0%, transparent 80%);
+    background-size: 8px 8px, 5px 5px;
+    background-position:
+        20% 35%,
+        60% 65%;
+    opacity: 0.7;
+    animation: sparklePulse 3.5s ease-in-out infinite;
+}
 
-#portal-button:active {
-    transform: scale(0.92);
-    transition: 0.13s ease;
+@keyframes sparklePulse {
+    0%   { opacity: 0.55; transform: scale(1); }
+    50%  { opacity: 1;    transform: scale(1.08); }
+    100% { opacity: 0.55; transform: scale(1); }
 }
 
 
