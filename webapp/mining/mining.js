@@ -83,58 +83,50 @@ async function loadState() {
 
     if (!data.ok) return;
 
-    // եթե մայներ չկա
+    // Եթե ընդհանրապես փաթեթ չկա
     if (!data.miners || data.miners.length === 0) {
         document.getElementById("active-miner-box").style.display = "none";
         document.getElementById("header-speed").textContent = "0.000";
         return;
     }
 
-    // ---- Ընդհանուր հաշվարկներ բոլոր փաթեթներից ----
-    let totalSpeed   = 0;
-    let totalPending = 0;
-    let maxTier      = 0;
+    let totalSpeed   = 0;   // բոլոր փաթեթների գումարով արտադրանք/ժամ
+    let totalPending = 0;   // բոլոր pending DOMIT-ի գումարը
+    let maxTier      = 0;   // ամենամեծ tier-ը
 
-    // 1) եթե backend-ը արդեն տվել է ընդհանուր speed
-    if (data.state && typeof data.state.speed === "number") {
-        totalSpeed = data.state.speed;
-    }
-
-    // 2) Կուտակում ենք pending-ը և Tier-ը
     data.miners.forEach(miner => {
+        // pending_domit – նույնը թողնում ենք
         totalPending += Number(miner.pending_domit || 0);
 
+        // փորձում ենք գտնել արտադրանք/ժամ տվյալ miner-ի համար
+        const minerSpeed = Number(
+            miner.speed ??
+            miner.domit_per_hour ??
+            (miner.plan && miner.plan.domit_per_hour) ??
+            0
+        );
+        totalSpeed += minerSpeed;
+
+        // Tier-ի համար վերցնենք ամենամեծը
         if (miner.tier && miner.tier > maxTier) {
             maxTier = miner.tier;
         }
-
-        // եթե data.state.speed չկար կամ 0 էր, փորձում ենք վերցնել speed-ը հենց miner-ից
-        if (!totalSpeed) {
-            const minerSpeed = Number(
-                miner.speed ??
-                miner.domit_per_hour ??
-                miner.hourly_domit ??
-                miner.rate ??
-                0
-            );
-            totalSpeed += minerSpeed;
-        }
     });
 
-    // ---- Ցույց ենք տալիս ակտիվ փաթեթների ինֆոն ----
+    // Ցույց ենք տալիս ակտիվ փաթեթների բլոկը
     document.getElementById("active-miner-box").style.display = "block";
 
-    // մեծագույն Tier
+    // Ամենաբարձր Tier
     document.getElementById("active-tier").textContent = maxTier;
 
-    // ընդհանուր մայնինգի արագություն (sum)
-    document.getElementById("active-speed").textContent  = totalSpeed.toFixed(3);
-    document.getElementById("header-speed").textContent  = totalSpeed.toFixed(3);
+    // Արտադրանք/ժամ — ԱՄԲՈՂՋ summa
+    document.getElementById("active-speed").textContent = totalSpeed.toFixed(3);
+    document.getElementById("header-speed").textContent = totalSpeed.toFixed(3);
 
-    // ընդհանուր կուտակված DOMIT (բոլոր փաթեթներից)
+    // Բոլոր փաթեթների կուտակված DOMIT
     document.getElementById("active-earned").textContent = totalPending.toFixed(3);
 
-    // balance-ը թողնում ենք userBalance-ից
+    // Բալանսը թողնում ենք userBalance-ից
     document.getElementById("header-balance").textContent = userBalance.toFixed(2);
     document.getElementById("user-balance").textContent   = userBalance.toFixed(2);
 }
