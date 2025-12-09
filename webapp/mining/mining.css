@@ -246,9 +246,9 @@ body::after + .parallax-stars {
 #top-bar {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
     margin-bottom: 22px;
-    padding: 14px 16px;
+    padding: 8px 10px;
 
     border-radius: 18px;
     background: linear-gradient(
@@ -361,13 +361,19 @@ body::after + .parallax-stars {
 
     /* Initial glow */
     box-shadow:
-        0 8px 24px rgba(56, 189, 248, 0.45),
-        0 0 22px rgba(56, 189, 248, 0.28),
-        inset 0 0 4px rgba(255,255,255,0.3);
+        0 4px 14px rgba(56, 189, 248, 0.35),
+        0 0 12px rgba(56, 189, 248, 0.25),
+        inset 0 0 3px rgba(255,255,255,0.25);
     
     position: relative;
     overflow: hidden;
 }
+
+#back-btn {
+    width: auto !important;
+    flex-shrink: 0 !important;
+}
+
 
 /* HOLOGRAPHIC RING EFFECT */
 #back-btn::before {
@@ -1657,7 +1663,7 @@ body::after + .parallax-stars {
     /* top bar adjustments */
     #top-bar {
         gap: 10px;
-        padding: 10px 12px;
+        padding: 8px 10px;
         border-radius: 14px;
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
