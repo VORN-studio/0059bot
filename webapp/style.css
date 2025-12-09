@@ -1860,7 +1860,7 @@ input[readonly] {
     left: 50%;
     transform: translateX(-50%);
     width: 92%;
-    height: 95px;
+    height: 78px;
 
     display: flex;
     justify-content: center;
@@ -1902,29 +1902,21 @@ input[readonly] {
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 60px;
+    height: 42px; /* ⬅ փոքրացրեցի 60px → 42px */
 
-    /* ✨ NEW — glassy holographic gradient */
     background: linear-gradient(
         180deg,
-        rgba(10, 25, 45, 0.55),
-        rgba(2, 8, 16, 0.85)
+        rgba(0,12,28,0.70),
+        rgba(0,8,20,0.90)
     );
-    border-radius: 22px;
 
-    /* ✨ NEW — deeper neon reflections */
+    border-radius: 20px;
+
     box-shadow:
-        inset 0 0 28px rgba(0, 195, 255, 0.22),
-        inset 0 0 12px rgba(0, 255, 255, 0.10),
-        0 0 28px rgba(0, 150, 255, 0.22),
-        0 -6px 18px rgba(40, 120, 255, 0.20);
-
-    /* ✨ NEW — Glass blur */
-    backdrop-filter: blur(14px) saturate(180%);
-
-    /* ✨ Soft breathing animation */
-    animation: barBgGlow 5.5s ease-in-out infinite alternate;
+        inset 0 0 14px rgba(0,180,255,0.22),
+        0 0 16px rgba(0,150,255,0.12);
 }
+
 
 @keyframes barBgGlow {
     0% {
@@ -1948,30 +1940,21 @@ input[readonly] {
 .u-mask {
     position: absolute;
     bottom: 0;
-    width: 150px;
-    height: 70px;
+    width: 110px;   /* ⬅ նախկինից փոքր */
+    height: 50px;   /* ⬅ 70px → 50px */
 
-    /* transparent base */
-    background: rgba(0, 0, 0, 0);
+    background: rgba(0,0,0,0);
 
-    /* curved lower mask */
-    border-bottom-left-radius: 80px;
-    border-bottom-right-radius: 80px;
+    border-bottom-left-radius: 70px;
+    border-bottom-right-radius: 70px;
 
-    /* ✨ NEW — deeper neon inner-light */
     box-shadow:
-        inset 0 0 32px rgba(0, 200, 255, 0.35),
-        inset 0 -14px 26px rgba(0, 120, 255, 0.28),
-        inset 0 0 8px rgba(0, 255, 255, 0.18),
-        0 0 22px rgba(0, 120, 255, 0.22);
+        inset 0 0 20px rgba(0,180,255,0.28),
+        inset 0 -6px 14px rgba(0,80,200,0.20);
 
-    /* ✨ subtle glass distortion */
-    backdrop-filter: blur(16px) saturate(180%);
-
-    /* NEW — slight holographic shimmer */
-    overflow: hidden;
-    animation: uMaskPulse 4.8s ease-in-out infinite alternate;
+    backdrop-filter: blur(10px);
 }
+
 
 /* ✨ Soft neon breathing animation */
 @keyframes uMaskPulse {
