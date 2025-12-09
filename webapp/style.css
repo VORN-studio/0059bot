@@ -1853,356 +1853,217 @@ input[readonly] {
     margin-bottom: 10px;
 }
 
-/* ===========================
-   PORTAL AREA — V3 (FULL ENERGY)
-   =========================== */
+/* -----------------------------------------------------------
+   LUXURY CRYPTO PORTAL (Web3 + Gold + Diamond Energy Edition)
+   ----------------------------------------------------------- */
 
-#portal-area {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 92%;
-    height: 56px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-
-    z-index: 9999;
-
-    /* ✨ Լույսի խորքային էֆեկտ */
-    background: radial-gradient(
-        circle at center,
-        rgba(0, 190, 255, 0.25) 0%,
-        rgba(0, 120, 255, 0.18) 40%,
-        rgba(0, 40, 120, 0.10) 70%,
-        transparent 100%
-    );
-
-    /* ✨ Հոսող (flow) էֆեկտ */
-    overflow: hidden;
-    backdrop-filter: blur(8px);
-    border-radius: 40px;
-
-    animation: portalGlow 3s infinite alternate ease-in-out;
-}
-
-/* ✨ պուլսացիոն փափուկ լույս */
-@keyframes portalGlow {
-    0% {
-        box-shadow:
-            0 0 18px rgba(0, 200, 255, 0.45),
-            0 0 35px rgba(0, 120, 255, 0.25);
-    }
-    100% {
-        box-shadow:
-            0 0 28px rgba(0, 240, 255, 0.70),
-            0 0 55px rgba(0, 160, 255, 0.45);
-    }
-}
-
-
-/* FULL ENERGY SIDE BARS */
-.portal-side {
-    flex: 1;
-    height: 16px;
-    position: relative;
-    border-radius: 20px;
-
-    /* ✨ Կենտրոնից դուրս եկող էներգիա */
-    background: linear-gradient(
-        90deg,
-        rgba(0, 240, 255, 0.00) 0%,
-        rgba(0, 240, 255, 0.20) 20%,
-        rgba(0, 240, 255, 0.55) 45%,
-        rgba(0, 240, 255, 0.80) 55%,
-        rgba(0, 240, 255, 0.55) 65%,
-        rgba(0, 240, 255, 0.20) 80%,
-        rgba(0, 240, 255, 0.00) 100%
-    );
-
-    filter: blur(4px) saturate(1.4);
-    opacity: 0.85;
-
-    /* ✨ Հոսող էներգիայի անիմացիա */
-    background-size: 200% 100%;
-    animation: portalBeam 3.2s ease-in-out infinite;
-}
-
-/* 🔥 Էներգիայի Հոսքի անիմացիա */
-@keyframes portalBeam {
-    0% {
-        background-position: 120% 0;
-        opacity: 0.70;
-    }
-    50% {
-        background-position: -20% 0;
-        opacity: 1;
-    }
-    100% {
-        background-position: 120% 0;
-        opacity: 0.70;
-    }
-}
-
-
-/* SMALLER + STRONGER PORTAL BUTTON */
-#portal-button {
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    position: relative;
-
-    /* ✨ Խորը պորտալ նեոն */
-    background: radial-gradient(circle at center,
-        rgba(150, 230, 255, 1) 0%,
-        rgba(90, 170, 255, 0.95) 35%,
-        rgba(50, 60, 160, 0.85) 60%,
-        rgba(20, 20, 60, 0.70) 100%
-    );
-
-    /* ✨ Արտաքին glow շերտեր */
-    box-shadow:
-        0 0 12px rgba(100, 220, 255, 0.9),
-        0 0 22px rgba(90, 160, 255, 0.8),
-        0 0 40px rgba(80, 140, 255, 0.7),
-        0 0 75px rgba(70, 120, 255, 0.55),
-        inset 0 0 18px rgba(255, 255, 255, 0.65);
-
-    animation: portalPulseUltra 2.6s ease-in-out infinite;
-    cursor: pointer;
-}
-
-
-/* ✨ Պորտալի մակերեսի փայլող շրջան */
-#portal-button::before {
-    content: "";
-    position: absolute;
-    inset: -8px;
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        rgba(120, 230, 255, 0.18),
-        rgba(80, 160, 255, 0.10),
-        rgba(0, 0, 0, 0)
-    );
-    filter: blur(12px);
-    animation: portalAura 4s ease-in-out infinite;
-}
-
-
-/* ✨ Պորտալի միջուկի պուլս */
-@keyframes portalPulseUltra {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.12); }
-    100% { transform: scale(1); }
-}
-
-/* ✨ Շարժվող էներգիայի ավրան */
-@keyframes portalAura {
-    0%   { opacity: 0.45; transform: scale(1);}
-    50%  { opacity: 0.9;  transform: scale(1.15);}
-    100% { opacity: 0.45; transform: scale(1);}
-}
-
-
-/* PORTAL AREA WRAPPER */
+/* PORTAL AREA — fixed bottom panel, perfectly centered */
 #portal-area {
     position: fixed;
     bottom: 22px;
     left: 50%;
     transform: translateX(-50%);
-    width: 92%;
-    height: 54px;
+    width: 94%;
+    height: 64px;
 
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 16px;
 
-    z-index: 9999;
+    pointer-events: auto;
+    z-index: 99999;
 
-    /* ✨ FUTURISTIC GLASS BAR */
-    background: rgba(15, 20, 35, 0.35);
-    backdrop-filter: blur(14px) saturate(180%);
-    -webkit-backdrop-filter: blur(14px) saturate(180%);
-    border-radius: 18px;
-
-    /* ✨ INNER GLOW */
-    box-shadow:
-        0 0 10px rgba(0, 180, 255, 0.25) inset,
-        0 0 18px rgba(0, 130, 255, 0.15) inset,
-        0 0 22px rgba(0, 150, 255, 0.30);
-
-    /* ✨ ENERGY EDGE LIGHTING */
-    border: 1px solid rgba(0, 200, 255, 0.25);
-    overflow: hidden;
-    position: relative;
+    /* soft ambient glow under whole bar */
+    filter: drop-shadow(0 0 12px rgba(255,220,160,0.25))
+            drop-shadow(0 0 25px rgba(255,200,80,0.15));
 }
 
-/* ⚡ Animated energy line across the bar */
-#portal-area::before {
+/* -----------------------------------------------------------
+   SIDE PANELS — Gold Energy Tunnels
+   ----------------------------------------------------------- */
+.portal-side {
+    flex: 1;
+    height: 38px;
+    border-radius: 22px;
+
+    background: linear-gradient(
+        90deg,
+        rgba(255,215,160,0.10) 0%,
+        rgba(255,190,90,0.30) 25%,
+        rgba(255,170,60,0.55) 50%,
+        rgba(255,190,90,0.30) 75%,
+        rgba(255,215,160,0.10) 100%
+    );
+
+    box-shadow:
+        inset 0 0 8px rgba(255,200,120,0.3),
+        inset 0 0 18px rgba(255,180,60,0.25),
+        0 0 14px rgba(255,210,130,0.18);
+
+    position: relative;
+    overflow: hidden;
+}
+
+/* flowing golden particles inside the sides */
+.portal-side::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255,230,180,0.10) 0px,
+        rgba(255,230,180,0.10) 4px,
+        rgba(255,255,255,0.25) 6px
+    );
+
+    opacity: 0.55;
+    animation: goldFlow 3.5s linear infinite;
+}
+
+@keyframes goldFlow {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Side shimmer light passing through */
+.portal-side::after {
     content: "";
     position: absolute;
     top: 0;
     left: -40%;
-    width: 30%;
+    width: 40%;
     height: 100%;
 
     background: linear-gradient(
         90deg,
         transparent,
-        rgba(0,200,255,0.55),
+        rgba(255,255,255,0.4),
         transparent
     );
 
-    filter: blur(10px);
-    animation: portalScan 3s linear infinite;
-    opacity: 0.55;
+    animation: sideShimmer 4s ease-in-out infinite;
 }
 
-/* ⚡ Energy line animation */
-@keyframes portalScan {
-    0%   { left: -40%; }
-    100% { left: 110%; }
+@keyframes sideShimmer {
+    0%   { transform: translateX(-120%); opacity: 0; }
+    50%  { transform: translateX(120%);  opacity: 1; }
+    100% { opacity: 0; }
 }
 
-
-/* SOLID GAME-STYLE SIDE PANELS */
-.portal-side {
-    flex: 1;
-    height: 32px;
-    border-radius: 20px;
-    position: relative;
-    overflow: hidden;
-
-    /* ✨ HOLOGRAPHIC ENERGY BACKGROUND */
-    background: linear-gradient(
-        90deg,
-        rgba(0,255,255,0.12) 0%,
-        rgba(0,180,255,0.28) 20%,
-        rgba(0,160,255,0.45) 50%,
-        rgba(0,180,255,0.28) 80%,
-        rgba(0,255,255,0.12) 100%
-    );
-
-    /* ✨ DEPTH + NEON */
-    box-shadow:
-        0 0 14px rgba(0,200,255,0.45),
-        0 0 22px rgba(0,180,255,0.25),
-        inset 0 0 14px rgba(0,255,255,0.25),
-        inset 0 0 25px rgba(0,180,255,0.35);
-}
-
-/* ⚡ MOVING INNER ENERGY WAVE */
-.portal-side::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -60%;
-    width: 50%;
-    height: 100%;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(0,255,255,0.55),
-        transparent
-    );
-
-    filter: blur(10px);
-    opacity: 0.6;
-
-    animation: portalSideWave 2.8s linear infinite;
-}
-
-/* ⚡ WAVE ANIMATION */
-@keyframes portalSideWave {
-    0%   { left: -60%; }
-    100% { left: 110%; }
-}
-
-
-/* CENTER PORTAL BUTTON */
+/* -----------------------------------------------------------
+   PORTAL BUTTON — Gold + Sapphire + Diamond Core
+   ----------------------------------------------------------- */
 #portal-button {
-    width: 48px;
-    height: 48px;
-
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
+
+    background: radial-gradient(circle at center,
+        rgba(255,240,200,1) 0%,
+        rgba(255,210,120,0.95) 35%,
+        rgba(60,110,255,0.85) 70%,
+        rgba(25,40,120,0.90) 100%
+    );
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
     position: relative;
     overflow: hidden;
 
-    background: radial-gradient(circle at 50% 55%,
-        rgba(160,230,255,1) 0%,
-        rgba(90,150,255,0.95) 40%,
-        rgba(60,50,160,0.90) 80%
-    );
-
-    /* OUTER AURA */
     box-shadow:
-        0 0 18px rgba(110,220,255,0.9),
-        0 0 34px rgba(80,120,255,0.85),
-        0 0 70px rgba(50,80,255,0.7),
-        inset 0 0 12px rgba(255,255,255,0.5);
+        0 0 22px rgba(255,220,140,0.6),
+        0 0 40px rgba(60,120,255,0.6),
+        inset 0 0 15px rgba(255,255,255,0.6),
+        inset 0 0 35px rgba(255,230,160,0.55);
 
-    animation: portalPulse 2.2s ease-in-out infinite;
-    cursor: pointer;
+    animation: portalBreath 3s ease-in-out infinite;
 }
 
-/* MOVING ENERGY INSIDE THE ORB */
-#portal-button::before {
-    content: "";
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 120%;
-    height: 120%;
-    border-radius: 50%;
-
-    background: radial-gradient(circle,
-        rgba(255,255,255,0.55),
-        rgba(255,255,255,0.18),
-        transparent 70%
-    );
-
-    filter: blur(12px);
-    opacity: 0.6;
-
-    animation: portalEnergy 3.4s infinite linear;
-}
-
-/* OUTER RING EFFECT */
-#portal-button::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 3px solid rgba(120,210,255,0.45);
-    filter: blur(3px);
-    opacity: 0.8;
-
-    animation: portalRing 3s infinite ease-in-out;
-}
-
-/* MAIN PULSE */
-@keyframes portalPulse {
+/* breathing scale */
+@keyframes portalBreath {
     0%   { transform: scale(1); }
-    50%  { transform: scale(1.11); }
+    50%  { transform: scale(1.10); }
     100% { transform: scale(1); }
 }
 
-/* MOVING INTERNAL ENERGY */
-@keyframes portalEnergy {
-    0%   { transform: rotate(0deg) scale(1); }
-    50%  { transform: rotate(180deg) scale(1.15); }
-    100% { transform: rotate(360deg) scale(1); }
+/* -----------------------------------------------------------
+   Internal Vortex Rotation (Web3 crypto style)
+   ----------------------------------------------------------- */
+#portal-button::before {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    border-radius: 50%;
+
+    background: conic-gradient(
+        rgba(255,255,255,0.00),
+        rgba(255,255,255,0.35),
+        rgba(255,255,255,0.00) 30%
+    );
+
+    filter: blur(6px);
+    animation: vortexSpin 6s linear infinite;
 }
 
-/* OUTER RING BREATHING */
-@keyframes portalRing {
-    0%   { opacity: 0.5; transform: scale(1); }
-    50%  { opacity: 1;   transform: scale(1.07); }
-    100% { opacity: 0.5; transform: scale(1); }
+@keyframes vortexSpin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
+
+/* -----------------------------------------------------------
+   Diamond Spark Particles
+   ----------------------------------------------------------- */
+#portal-button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%),
+        radial-gradient(circle, rgba(255,230,200,0.7) 0%, transparent 80%),
+        radial-gradient(circle, rgba(60,120,255,0.5) 0%, transparent 75%);
+
+    background-size: 8px 8px, 5px 5px, 6px 6px;
+    background-position:
+        10% 20%,
+        70% 60%,
+        50% 80%;
+
+    opacity: 0.7;
+    animation: crystalNoise 4s ease-in-out infinite;
+}
+
+@keyframes crystalNoise {
+    0%   { transform: scale(1);     opacity: 0.65; }
+    50%  { transform: scale(1.08);  opacity: 0.95; }
+    100% { transform: scale(1);     opacity: 0.65; }
+}
+
+/* -----------------------------------------------------------
+   CLICK EFFECT — shockwave pulse expanding
+   ----------------------------------------------------------- */
+#portal-button:active::before {
+    animation: shockPulse 0.5s ease-out;
+}
+
+@keyframes shockPulse {
+    0% { transform: scale(1); opacity: 0.9; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* -----------------------------------------------------------
+   Hover glow — if available
+   ----------------------------------------------------------- */
+#portal-button:hover {
+    box-shadow:
+        0 0 25px rgba(255,230,170,0.9),
+        0 0 60px rgba(90,140,255,0.9),
+        inset 0 0 18px rgba(255,255,255,0.7);
+}
+
 
