@@ -1926,3 +1926,68 @@ input[readonly] {
     50%  { opacity: 1;    filter: blur(3px); }
     100% { opacity: .55; filter: blur(2px); }
 }
+
+/* PORTAL AREA WRAPPER */
+#portal-area {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    z-index: 9999;
+}
+
+/* SOLID GAME-STYLE SIDE PANELS */
+.portal-side {
+    flex: 1;
+    height: 32px;
+    border-radius: 20px;
+
+    background: linear-gradient(
+        90deg,
+        rgba(0,255,255,0.15) 0%,
+        rgba(0,180,255,0.35) 25%,
+        rgba(0,160,255,0.55) 50%,
+        rgba(0,180,255,0.35) 75%,
+        rgba(0,255,255,0.15) 100%
+    );
+
+    box-shadow:
+        0 0 10px rgba(0,200,255,0.4),
+        inset 0 0 12px rgba(0,255,255,0.25);
+}
+
+/* CENTER PORTAL BUTTON */
+#portal-button {
+    width: 50px;
+    height: 50px;
+
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(140,220,255,1),
+        rgba(85,140,255,0.95),
+        rgba(60,50,160,0.90)
+    );
+
+    box-shadow:
+        0 0 15px rgba(100,200,255,0.8),
+        0 0 30px rgba(80,120,255,0.8),
+        0 0 60px rgba(50,80,255,0.7);
+
+    animation: portalPulse 2.3s ease-in-out infinite;
+    cursor: pointer;
+}
+
+/* PORTAL PULSE */
+@keyframes portalPulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.09); }
+    100% { transform: scale(1); }
+}
