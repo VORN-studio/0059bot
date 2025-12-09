@@ -86,17 +86,31 @@ async function loadState() {
         return;
     }
 
-    const m = data.miners[0];
+    // ---- Calculate total mining results from ALL plans ----
+    let totalSpeed = 0;
+    let totalPending = 0;
+    let maxTier = 0;
 
+    data.miners.forEach(miner => {
+        totalSpeed += miner.speed || 0;
+        totalPending += miner.pending_domit || 0;
+
+        if (miner.tier > maxTier) maxTier = miner.tier;
+    });
+
+    // ---- Show active miner box ----
     document.getElementById("active-miner-box").style.display = "block";
-    document.getElementById("active-tier").textContent = m.tier;
-    document.getElementById("active-speed").textContent = data.state.speed.toFixed(3);
-    document.getElementById("active-earned").textContent = m.pending_domit.toFixed(3);
 
-    // speed = total_pending_domit / hours => բայց backend արդեն տալիս է pending_domit ըստ վայրկյան
-    if (data.state) {
-        document.getElementById("header-speed").textContent = data.state.speed.toFixed(3);
-    }
+    // Show highest tier (optional, beautiful for UI)
+    document.getElementById("active-tier").textContent = maxTier;
+
+    // Show combined mining output
+    document.getElementById("active-speed").textContent = totalSpeed.toFixed(3);
+    document.getElementById("active-earned").textContent = totalPending.toFixed(3);
+
+    // header top info
+    document.getElementById("header-speed").textContent = totalSpeed.toFixed(3);
+
 
     // Update DOMIT balance after state refresh
     document.getElementById("header-balance").textContent = userBalance.toFixed(2);
