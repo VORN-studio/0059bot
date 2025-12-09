@@ -1908,25 +1908,20 @@ input[readonly] {
     max-width: 460px;
     height: 58px;
 
-    /* ✨ Նուրբ, խորը Web3 ստվերային ֆոն */
     background: linear-gradient(
         180deg,
-        rgba(8, 16, 35, 0.96),
-        rgba(3, 8, 22, 0.98)
+        rgba(10, 20, 40, 0.85),
+        rgba(5, 10, 25, 0.95)
     );
 
-    border-radius: 24px;
+    border-radius: 26px;
 
-    /* ✨ Ավելի մաքուր և խորը glow + ambient lighting */
     box-shadow:
-        0 4px 18px rgba(0, 0, 0, 0.55),
-        0 0 22px rgba(30, 60, 120, 0.35),
-        inset 0 0 18px rgba(0, 170, 255, 0.16),
-        inset 0 0 28px rgba(0, 220, 255, 0.10);
-    
-    /* անիմացիա */
-    animation: barBgGlow 3.4s ease-in-out infinite alternate;
+        0 8px 25px rgba(0, 0, 0, 0.45),
+        inset 0 0 25px rgba(80, 150, 255, 0.12),
+        inset 0 -10px 25px rgba(40, 80, 160, 0.18);
 }
+
 
 /* 🌌 Շնչող Portal-like ֆոնային էֆեկտ */
 @keyframes barBgGlow {
@@ -1954,40 +1949,35 @@ input[readonly] {
 /* U-shaped center cut */
 .u-mask {
     position: absolute;
-    bottom: 14px;
+    bottom: 12px;
     left: 50%;
     transform: translateX(-50%);
 
     width: 130px;
-    height: 76px;
+    height: 70px;
 
-    /* ✨ Խոր, մաքուր portal background */
     background: linear-gradient(
         180deg,
-        rgba(10, 22, 45, 0.95),
-        rgba(3, 10, 28, 0.98)
+        rgba(15, 25, 55, 0.90),
+        rgba(10, 18, 40, 0.96)
     );
 
-    /* ✔️ EXACT same shape — НЕ փոխվել */
     clip-path: polygon(
         20% 0%, 80% 0%,
-        100% 25%,
-        100% 75%,
+        100% 30%,
+        100% 70%,
         80% 100%, 20% 100%,
-        0% 75%,
-        0% 25%
+        0% 70%,
+        0% 30%
     );
 
-    /* ✨ MUCH cleaner 3D depth + inner shadows */
-    box-shadow:
-        0 0 22px rgba(56, 189, 248, 0.35),        /* արտաքին փափուկ փայլ */
-        0 0 40px rgba(30, 80, 160, 0.25),
-        inset 0 0 28px rgba(12, 20, 35, 0.85),    /* շատ խորը ներսի ստվեր */
-        inset 0 0 12px rgba(0, 160, 255, 0.18);   /* նուրբ սառը ներքին glow */
+    border-radius: 20px;
 
-    backdrop-filter: blur(2px);
-    animation: uMaskPulse 3.2s ease-in-out infinite alternate;
+    box-shadow:
+        0 0 22px rgba(90, 150, 255, 0.22),
+        inset 0 0 30px rgba(5, 10, 20, 0.9);
 }
+
 
 /* ✨ PREMIUM breathing effect — ոչ գռեհիկ, շատ նուրբ */
 @keyframes uMaskPulse {
@@ -2014,36 +2004,37 @@ input[readonly] {
 /* Portal sphere */
 #portal-core {
     position: absolute;
-    bottom: 26px;
+    bottom: 28px;
     left: 50%;
     transform: translateX(-50%);
 
-    width: 70px;
-    height: 70px;
+    width: 74px;
+    height: 74px;
     border-radius: 50%;
 
-    /* ✨ Much deeper, holographic gradient */
-    background: radial-gradient(circle at 50% 38%,
-        rgba(220, 240, 255, 1),
-        rgba(140, 190, 255, 0.97),
-        rgba(70, 120, 255, 0.90),
-        rgba(25, 40, 90, 1)
+    background: radial-gradient(circle at 50% 40%,
+        rgba(255, 255, 255, 0.9),
+        rgba(165, 205, 255, 0.85),
+        rgba(90, 150, 255, 0.70),
+        rgba(20, 40, 85, 0.95)
     );
 
-    /* ✨ True 3D light + inside bloom */
     box-shadow:
-        0 0 28px rgba(180, 220, 255, 0.95),     /* արտաքին մատչելի փայլ */
-        0 0 60px rgba(90, 150, 255, 0.85),
-        0 0 100px rgba(56, 189, 248, 0.55),     /* հեռու փափուկ aura */
-        inset 0 0 22px rgba(255,255,255,0.75), /* ներսի կրիստալ փայլ */
-        inset 0 -6px 14px rgba(70,130,255,0.45); /* ներքևի լուսի անդրադարձ */
+        0 0 18px rgba(180, 210, 255, 0.9),
+        0 0 40px rgba(120, 170, 255, 0.45),
+        0 0 70px rgba(80, 130, 255, 0.35),
+        inset 0 0 12px rgba(255, 255, 255, 0.8);
 
-    /* subtle reflection */
-    backdrop-filter: blur(4px);
-
-    animation: portalPulse 2.4s ease-in-out infinite;
+    animation: portalPulse 3.2s ease-in-out infinite;
     cursor: pointer;
 }
+
+@keyframes portalPulse {
+    0%   { transform: translateX(-50%) scale(1); }
+    50%  { transform: translateX(-50%) scale(1.045); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
 
 /* ✨ Softer, premium breathing effect */
 @keyframes portalPulse {
