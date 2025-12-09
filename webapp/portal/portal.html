@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domino Portal</title>
+    <link rel="stylesheet" href="portal.css?v=1">
+</head>
+<body>
+
+<div id="portal-root">
+
+    <!-- TOP BAR -->
+    <div class="portal-topbar">
+        <div class="portal-title">Domino Portal</div>
+        <div class="portal-user">
+            <img id="user-avatar" src="default.png">
+            <span id="username"></span>
+        </div>
+    </div>
+
+    <!-- PROFILE SECTION -->
+    <div class="portal-profile">
+        <div class="avatar-frame">
+            <img id="profile-avatar" src="default.png">
+        </div>
+        <div class="profile-info">
+            <div id="profile-name"></div>
+            <div id="profile-status"></div>
+            <button id="follow-btn">Follow</button>
+        </div>
+    </div>
+
+    <!-- MAIN TABS -->
+    <div class="portal-tabs">
+        <button class="tab-btn active" data-tab="feed">Feed</button>
+        <button class="tab-btn" data-tab="users">Users</button>
+        <button class="tab-btn" data-tab="messages">Messages</button>
+        <button class="tab-btn" data-tab="chat">Global Chat</button>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div id="portal-content">
+
+        <div id="feed" class="tab-page active">
+            <h3>Հոսիաֆիդ</h3>
+            <div id="feed-list"></div>
+        </div>
+
+        <div id="users" class="tab-page">
+            <h3>Օգտատերեր</h3>
+            <div id="users-list"></div>
+        </div>
+
+        <div id="messages" class="tab-page">
+            <h3>Նամակներ</h3>
+            <div id="pm-list"></div>
+        </div>
+
+        <div id="chat" class="tab-page">
+            <h3>Ընդհանուր Չատ</h3>
+            <div id="global-chat"></div>
+            <input id="chat-input" placeholder="Գրիր հաղորդագրություն…">
+        </div>
+
+    </div>
+
+</div>
+
+<script src="portal.js?v=1"></script>
+</body>
+</html>
