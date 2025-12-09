@@ -21,12 +21,9 @@ function initUser() {
 
 tg.BackButton.show();
 tg.BackButton.onClick(() => {
-    window.location.href = `/app?uid=${USER_ID}`;
+    const link = `https://t.me/doominobot/app?startapp=uid_${USER_ID}`;
+    tg.openTelegramLink(link);
 });
-
-
-
-
 
 
 
