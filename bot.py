@@ -40,7 +40,7 @@ if not DATABASE_URL:
 ADMIN_IDS = {5274439601} 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
-DOMIT_PRICE_USD = 0.05  # 1 DOMIT = 0.05$
+DOMIT_PRICE_USD = 1  # DOMIT հիմա նույնն է, ինչ $ (միայն տեքստով տարբեր)
 
 app_web = Flask(__name__, static_folder=None)
 CORS(app_web)
@@ -400,7 +400,8 @@ def apply_deposit(user_id: int, amount: float):
 
 def get_mining_plans():
     """
-    Վերադարձնում է բոլոր mining plan-ները, հաշված USD/hr և DOMIT/hr։
+    Վերադարձնում է բոլոր mining plan-ները, հաշված ՄԵԿԱՅՆ USD/hr-ով։
+    DOMIT-ը frontend-ում կարող ես ցույց տալ որպես նույն թիվը, պարզապես անվանափոխված։
     """
     conn = db(); c = conn.cursor()
     c.execute("""
@@ -418,9 +419,8 @@ def get_mining_plans():
         duration_hours = int(duration_hours)
         return_mult = float(return_mult)
 
-        total_return_usd = price_usd * return_mult
-        usd_per_hour = total_return_usd / duration_hours
-        domit_per_hour = usd_per_hour / DOMIT_PRICE_USD
+        total_return_usd = price_usd * return_mult      # ընդհանուր վերադարձ USD-ով
+        usd_per_hour = total_return_usd / duration_hours  # USD / ժամ
 
         plans.append({
             "id": pid,
@@ -431,9 +431,12 @@ def get_mining_plans():
             "return_mult": return_mult,
             "total_return_usd": total_return_usd,
             "usd_per_hour": usd_per_hour,
-            "domit_per_hour": domit_per_hour,
+            # Եթե mining.js-ում դեռ օգտագործում ես plan.domit_per_hour,
+            # կարող ես պահել որպես նույն թիվը.
+            "domit_per_hour": usd_per_hour,
         })
     return plans
+
 
 
 def get_user_miners(user_id: int):
@@ -1217,12 +1220,15 @@ def api_mining_claim():
 
     return jsonify({
         "ok": True,
+        # մայնինգից վերցրած գումարը՝ ՄԻԱՅՆ USD
         "claimed_usd": reward_usd,
-        "claimed_domit": reward_usd / DOMIT_PRICE_USD if reward_usd > 0 else 0.0,
+        # եթե front-ում դեռ սպասում ես այս դաշտին, կարող ես թողնել 1:1 նույն թիվը
+        # "claimed_domit": reward_usd,
         "miners_count": miners_count,
         "new_balance_usd": new_balance,
-        "user": user  # որ front-ը կարողանա վերցնել balance_usd
+        "user": user
     })
+
 
 
 @app_web.route("/api/mining/state/<int:user_id>")
@@ -1239,23 +1245,27 @@ def api_mining_state(user_id):
     miners_view = []
 
     for m in miners:
-        reward, _ = calc_miner_pending(m, now)
+        reward, _ = calc_miner_pending(m, now)  # reward = USD
         total_pending += reward
         miners_view.append({
             **m,
             "pending_usd": reward,
-            "pending_domit": reward / DOMIT_PRICE_USD if reward > 0 else 0.0,
+            # frontend-ը հիմա էլի կարող է օգտագործել pending_domit,
+            # բայց այստեղ դա նույնն է, ինչ pending_usd (1 = 1)
+            "pending_domit": reward,
         })
 
-    # state → որ համատեղելի լինի քո ներկայիս JS-ի հետ
     state = None
     if miners_view:
         first = miners_view[0]
-        speed_domit_hr = first["reward_per_second_usd"] * 3600.0 / DOMIT_PRICE_USD
+        # reward_per_second_usd → ուղիղ USD/վրկ, ուրեմն * 3600 = USD/ժամ
+        speed_per_hour = first["reward_per_second_usd"] * 3600.0
         state = {
             "tier": first["tier"],
-            "speed": round(speed_domit_hr, 2),
-            "earned": total_pending / DOMIT_PRICE_USD if total_pending > 0 else 0.0,
+            # speed – էլի USD/ժամ, եթե ուզում ես՝ frontend-ում կարող ես գրիլ "DOMIT/ժամ"
+            "speed": round(speed_per_hour, 2),
+            # ընդհանուր կուտակված USD, 1:1 նույնը կարող ես DOMIT համարել
+            "earned": total_pending,
         }
 
     return jsonify({
@@ -1264,9 +1274,11 @@ def api_mining_state(user_id):
         "plans": plans,
         "miners": miners_view,
         "total_pending_usd": total_pending,
-        "total_pending_domit": total_pending / DOMIT_PRICE_USD if total_pending > 0 else 0.0,
+        # եթե front-ում դեռ սպասում ես total_pending_domit դաշտին → պահում ենք նույն թիվը
+        "total_pending_domit": total_pending,
         "state": state
     })
+
 
 
 @app_web.route("/app/mining")
