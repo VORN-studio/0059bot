@@ -1857,142 +1857,109 @@ input[readonly] {
    LUXURY CRYPTO PORTAL (Web3 + Gold + Diamond Energy Edition)
    ----------------------------------------------------------- */
 
-/* PORTAL AREA — fixed bottom panel, perfectly centered */
+/* PORTAL AREA — clean, soft neon bar */
 #portal-area {
     position: fixed;
-    bottom: 22px;
+    bottom: 24px;
     left: 50%;
     transform: translateX(-50%);
-    width: 94%;
-    height: 64px;
+    width: 92%;
+    height: 50px;
 
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 14px;
 
+    z-index: 9999;
     pointer-events: auto;
-    z-index: 99999;
 
-    /* soft ambient glow under whole bar */
-    filter: drop-shadow(0 0 12px rgba(255,220,160,0.25))
-            drop-shadow(0 0 25px rgba(255,200,80,0.15));
+    /* subtle bottom ambient glow */
+    filter: drop-shadow(0 0 12px rgba(60,130,255,0.25))
+            drop-shadow(0 0 25px rgba(120,180,255,0.18));
 }
 
-/* -----------------------------------------------------------
-   SIDE PANELS — Gold Energy Tunnels
-   ----------------------------------------------------------- */
+/* SIDE PANELS — soft blue / purple tubes */
 .portal-side {
     flex: 1;
-    height: 38px;
-    border-radius: 22px;
+    height: 22px;
+    border-radius: 14px;
 
     background: linear-gradient(
         90deg,
-        rgba(255,215,160,0.10) 0%,
-        rgba(255,190,90,0.30) 25%,
-        rgba(255,170,60,0.55) 50%,
-        rgba(255,190,90,0.30) 75%,
-        rgba(255,215,160,0.10) 100%
+        rgba(90,140,255,0.08) 0%,
+        rgba(120,180,255,0.18) 30%,
+        rgba(160,120,255,0.28) 50%,
+        rgba(120,180,255,0.18) 70%,
+        rgba(90,140,255,0.08) 100%
     );
 
     box-shadow:
-        inset 0 0 8px rgba(255,200,120,0.3),
-        inset 0 0 18px rgba(255,180,60,0.25),
-        0 0 14px rgba(255,210,130,0.18);
+        inset 0 0 8px rgba(120,180,255,0.25),
+        inset 0 0 12px rgba(160,120,255,0.25),
+        0 0 8px rgba(80,120,255,0.20);
 
     position: relative;
     overflow: hidden;
 }
 
-/* flowing golden particles inside the sides */
+/* moving neon flow */
 .portal-side::before {
     content: "";
     position: absolute;
     inset: 0;
+
     background: repeating-linear-gradient(
         90deg,
-        rgba(255,230,180,0.10) 0px,
-        rgba(255,230,180,0.10) 4px,
-        rgba(255,255,255,0.25) 6px
+        rgba(160,200,255,0.08) 0,
+        rgba(160,200,255,0.08) 4px,
+        rgba(255,255,255,0.12) 6px
     );
 
-    opacity: 0.55;
-    animation: goldFlow 3.5s linear infinite;
+    opacity: .5;
+    animation: blueFlow 3.5s linear infinite;
 }
 
-@keyframes goldFlow {
+@keyframes blueFlow {
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
 }
 
-/* Side shimmer light passing through */
-.portal-side::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -40%;
-    width: 40%;
-    height: 100%;
-
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,0.4),
-        transparent
-    );
-
-    animation: sideShimmer 4s ease-in-out infinite;
-}
-
-@keyframes sideShimmer {
-    0%   { transform: translateX(-120%); opacity: 0; }
-    50%  { transform: translateX(120%);  opacity: 1; }
-    100% { opacity: 0; }
-}
-
-/* -----------------------------------------------------------
-   PORTAL BUTTON — Gold + Sapphire + Diamond Core
-   ----------------------------------------------------------- */
+/* PORTAL BUTTON — the new Domino core */
 #portal-button {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
 
-    background: radial-gradient(circle at center,
-        rgba(255,240,200,1) 0%,
-        rgba(255,210,120,0.95) 35%,
-        rgba(60,110,255,0.85) 70%,
-        rgba(25,40,120,0.90) 100%
+    background: radial-gradient(circle,
+        rgba(120,170,255,0.80) 0%,
+        rgba(80,110,255,0.90) 55%,
+        rgba(40,50,120,0.95) 100%
     );
+
+    box-shadow:
+        0 0 15px rgba(120,170,255,0.6),
+        0 0 35px rgba(80,110,255,0.6),
+        inset 0 0 12px rgba(255,255,255,0.45);
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    animation: portalPulse 2.6s ease-in-out infinite;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-
-    box-shadow:
-        0 0 22px rgba(255,220,140,0.6),
-        0 0 40px rgba(60,120,255,0.6),
-        inset 0 0 15px rgba(255,255,255,0.6),
-        inset 0 0 35px rgba(255,230,160,0.55);
-
-    animation: portalBreath 3s ease-in-out infinite;
 }
 
-/* breathing scale */
-@keyframes portalBreath {
+/* pulse animation */
+@keyframes portalPulse {
     0%   { transform: scale(1); }
-    50%  { transform: scale(1.10); }
+    50%  { transform: scale(1.07); }
     100% { transform: scale(1); }
 }
 
-/* -----------------------------------------------------------
-   Internal Vortex Rotation (Web3 crypto style)
-   ----------------------------------------------------------- */
+/* soft rotating inner ring */
 #portal-button::before {
     content: "";
     position: absolute;
@@ -2001,22 +1968,20 @@ input[readonly] {
 
     background: conic-gradient(
         rgba(255,255,255,0.00),
-        rgba(255,255,255,0.35),
-        rgba(255,255,255,0.00) 30%
+        rgba(255,255,255,0.25),
+        rgba(255,255,255,0.00) 40%
     );
 
     filter: blur(6px);
-    animation: vortexSpin 6s linear infinite;
+    animation: innerSpin 6s linear infinite;
 }
 
-@keyframes vortexSpin {
+@keyframes innerSpin {
     0%   { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-/* -----------------------------------------------------------
-   Diamond Spark Particles
-   ----------------------------------------------------------- */
+/* tiny sparkles */
 #portal-button::after {
     content: "";
     position: absolute;
@@ -2024,46 +1989,21 @@ input[readonly] {
     border-radius: 50%;
 
     background-image:
-        radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%),
-        radial-gradient(circle, rgba(255,230,200,0.7) 0%, transparent 80%),
-        radial-gradient(circle, rgba(60,120,255,0.5) 0%, transparent 75%);
+        radial-gradient(circle, rgba(255,255,255,0.5) 0%, transparent 70%),
+        radial-gradient(circle, rgba(160,200,255,0.45) 0%, transparent 80%),
+        radial-gradient(circle, rgba(80,120,255,0.45) 0%, transparent 75%);
 
-    background-size: 8px 8px, 5px 5px, 6px 6px;
-    background-position:
-        10% 20%,
-        70% 60%,
-        50% 80%;
+    background-size: 7px 7px, 5px 5px, 6px 6px;
+    background-position: 12% 22%, 65% 60%, 52% 78%;
+    opacity: 0.75;
 
-    opacity: 0.7;
-    animation: crystalNoise 4s ease-in-out infinite;
+    animation: sparklePulse 3.8s ease-in-out infinite;
 }
 
-@keyframes crystalNoise {
-    0%   { transform: scale(1);     opacity: 0.65; }
-    50%  { transform: scale(1.08);  opacity: 0.95; }
-    100% { transform: scale(1);     opacity: 0.65; }
-}
-
-/* -----------------------------------------------------------
-   CLICK EFFECT — shockwave pulse expanding
-   ----------------------------------------------------------- */
-#portal-button:active::before {
-    animation: shockPulse 0.5s ease-out;
-}
-
-@keyframes shockPulse {
-    0% { transform: scale(1); opacity: 0.9; }
-    100% { transform: scale(2.5); opacity: 0; }
-}
-
-/* -----------------------------------------------------------
-   Hover glow — if available
-   ------------------------------------------------------------ */
-#portal-button:hover {
-    box-shadow:
-        0 0 25px rgba(255,230,170,0.9),
-        0 0 60px rgba(90,140,255,0.9),
-        inset 0 0 18px rgba(255,255,255,0.7);
+@keyframes sparklePulse {
+    0%   { opacity: .65; transform: scale(1); }
+    50%  { opacity: .95; transform: scale(1.06); }
+    100% { opacity: .65; transform: scale(1); }
 }
 
 
