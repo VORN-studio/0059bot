@@ -1995,56 +1995,35 @@ input[readonly] {
 /* Portal sphere */
 #portal-core {
     position: absolute;
-    bottom: 18px;
+    bottom: 20px;
 
-    width: 92px;
-    height: 92px;
+    width: 74px;
+    height: 74px;
     border-radius: 50%;
 
-    /* ✨ Multi-layered plasma gradient */
-    background:
-        radial-gradient(circle at 50% 35%, rgba(180,235,255,1), rgba(90,160,255,0.85)),
-        radial-gradient(circle at 50% 70%, rgba(40,80,200,0.85), rgba(20,20,70,0.9));
+    /* Clean, premium Web3 gradient */
+    background: radial-gradient(circle at 50% 40%,
+        rgba(180,225,255,1),
+        rgba(110,150,255,0.85),
+        rgba(40,45,120,0.88)
+    );
 
-    /* ✨ HOLOGRAPHIC GLOW + INNER DEPTH */
+    /* Soft & elegant glow */
     box-shadow:
-        0 0 25px rgba(140,210,255,0.9),
-        0 0 60px rgba(80,140,255,0.65),
-        0 0 120px rgba(80,140,255,0.35),
-        inset 0 0 26px rgba(255,255,255,0.55),
-        inset 0 -10px 16px rgba(60,120,255,0.45);
+        0 0 16px rgba(140,200,255,0.55),
+        0 0 32px rgba(90,140,255,0.35),
+        inset 0 0 14px rgba(255,255,255,0.45);
 
-    backdrop-filter: blur(6px) saturate(180%);
-
-    /* ✨ Smooth floating blur effect */
-    animation:
-        portalPulse 3s ease-in-out infinite,
-        portalGlow 6s ease-in-out infinite alternate;
-
+    /* Smooth gentle breathing animation */
+    animation: portalMiniPulse 2.8s ease-in-out infinite;
     cursor: pointer;
-    z-index: 6;
+    z-index: 10;
 }
 
-/* Main breathing pulse */
-@keyframes portalPulse {
+@keyframes portalMiniPulse {
     0%   { transform: scale(1); filter: brightness(1); }
-    50%  { transform: scale(1.12); filter: brightness(1.15); }
+    50%  { transform: scale(1.07); filter: brightness(1.12); }
     100% { transform: scale(1); filter: brightness(1); }
 }
 
-/* ✨ Slow glow shift for holographic feel */
-@keyframes portalGlow {
-    0% {
-        box-shadow:
-            0 0 22px rgba(140,210,255,0.75),
-            0 0 55px rgba(80,140,255,0.55),
-            inset 0 0 20px rgba(255,255,255,0.45);
-    }
-    100% {
-        box-shadow:
-            0 0 32px rgba(160,240,255,0.9),
-            0 0 85px rgba(110,170,255,0.65),
-            inset 0 0 30px rgba(255,255,255,0.65);
-    }
-}
 
