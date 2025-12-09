@@ -1869,7 +1869,33 @@ input[readonly] {
     z-index: 99999;
     pointer-events: auto;
     overflow: visible;
+
+    /* ✨ NEW EFFECTS — depth, glow, soft neon */
+    backdrop-filter: blur(18px) saturate(180%);
+    background: linear-gradient(
+        180deg,
+        rgba(5, 12, 25, 0.35),
+        rgba(2, 6, 14, 0.55)
+    );
+
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+
+    box-shadow:
+        0 -8px 30px rgba(0, 200, 255, 0.18),
+        0 -12px 45px rgba(80, 140, 255, 0.25),
+        inset 0 0 18px rgba(255, 255, 255, 0.05);
+
+    /* soft breathing */
+    animation: portalBarBreath 6s ease-in-out infinite;
 }
+
+@keyframes portalBarBreath {
+    0%   { box-shadow: 0 -8px 30px rgba(0,200,255,0.18); }
+    50%  { box-shadow: 0 -12px 55px rgba(80,140,255,0.32); }
+    100% { box-shadow: 0 -8px 30px rgba(0,200,255,0.18); }
+}
+
 
 /* Background of the entire bar */
 .bar-bg {
@@ -1878,17 +1904,45 @@ input[readonly] {
     width: 100%;
     height: 60px;
 
+    /* ✨ NEW — glassy holographic gradient */
     background: linear-gradient(
         180deg,
-        rgba(0,10,25,0.85),
-        rgba(0,6,18,0.95)
+        rgba(10, 25, 45, 0.55),
+        rgba(2, 8, 16, 0.85)
     );
     border-radius: 22px;
 
+    /* ✨ NEW — deeper neon reflections */
     box-shadow:
-        inset 0 0 20px rgba(0,180,255,0.25),
-        0 0 20px rgba(0,150,255,0.15);
+        inset 0 0 28px rgba(0, 195, 255, 0.22),
+        inset 0 0 12px rgba(0, 255, 255, 0.10),
+        0 0 28px rgba(0, 150, 255, 0.22),
+        0 -6px 18px rgba(40, 120, 255, 0.20);
+
+    /* ✨ NEW — Glass blur */
+    backdrop-filter: blur(14px) saturate(180%);
+
+    /* ✨ Soft breathing animation */
+    animation: barBgGlow 5.5s ease-in-out infinite alternate;
 }
+
+@keyframes barBgGlow {
+    0% {
+        box-shadow:
+            inset 0 0 20px rgba(0,195,255,0.16),
+            inset 0 0 10px rgba(0,255,255,0.08),
+            0 0 18px rgba(0,150,255,0.14);
+        opacity: 0.92;
+    }
+    100% {
+        box-shadow:
+            inset 0 0 34px rgba(0,195,255,0.32),
+            inset 0 0 14px rgba(0,255,255,0.14),
+            0 0 34px rgba(0,150,255,0.28);
+        opacity: 1;
+    }
+}
+
 
 /* U-shaped center cut */
 .u-mask {
@@ -1897,43 +1951,100 @@ input[readonly] {
     width: 150px;
     height: 70px;
 
-    background: rgba(0,0,0,0);
+    /* transparent base */
+    background: rgba(0, 0, 0, 0);
+
+    /* curved lower mask */
     border-bottom-left-radius: 80px;
     border-bottom-right-radius: 80px;
 
+    /* ✨ NEW — deeper neon inner-light */
     box-shadow:
-        inset 0 0 25px rgba(0,180,255,0.35),
-        inset 0 -10px 20px rgba(0,80,200,0.25);
+        inset 0 0 32px rgba(0, 200, 255, 0.35),
+        inset 0 -14px 26px rgba(0, 120, 255, 0.28),
+        inset 0 0 8px rgba(0, 255, 255, 0.18),
+        0 0 22px rgba(0, 120, 255, 0.22);
 
-    backdrop-filter: blur(12px);
+    /* ✨ subtle glass distortion */
+    backdrop-filter: blur(16px) saturate(180%);
+
+    /* NEW — slight holographic shimmer */
+    overflow: hidden;
+    animation: uMaskPulse 4.8s ease-in-out infinite alternate;
 }
+
+/* ✨ Soft neon breathing animation */
+@keyframes uMaskPulse {
+    0% {
+        box-shadow:
+            inset 0 0 24px rgba(0,200,255,0.22),
+            inset 0 -12px 20px rgba(0,120,255,0.20),
+            0 0 14px rgba(0,120,255,0.16);
+        opacity: 0.85;
+    }
+    100% {
+        box-shadow:
+            inset 0 0 38px rgba(0,200,255,0.42),
+            inset 0 -18px 28px rgba(0,120,255,0.32),
+            0 0 26px rgba(0,150,255,0.25);
+        opacity: 1;
+    }
+}
+
 
 /* Portal sphere */
 #portal-core {
     position: absolute;
     bottom: 18px;
 
-    width: 90px;
-    height: 90px;
+    width: 92px;
+    height: 92px;
     border-radius: 50%;
 
-    background: radial-gradient(circle at 50% 40%,
-        rgba(140,200,255,1),
-        rgba(80,120,255,0.95),
-        rgba(40,40,150,0.9)
-    );
+    /* ✨ Multi-layered plasma gradient */
+    background:
+        radial-gradient(circle at 50% 35%, rgba(180,235,255,1), rgba(90,160,255,0.85)),
+        radial-gradient(circle at 50% 70%, rgba(40,80,200,0.85), rgba(20,20,70,0.9));
 
+    /* ✨ HOLOGRAPHIC GLOW + INNER DEPTH */
     box-shadow:
-        0 0 20px rgba(120,200,255,0.9),
-        0 0 45px rgba(90,140,255,0.75),
-        inset 0 0 20px rgba(255,255,255,0.6);
+        0 0 25px rgba(140,210,255,0.9),
+        0 0 60px rgba(80,140,255,0.65),
+        0 0 120px rgba(80,140,255,0.35),
+        inset 0 0 26px rgba(255,255,255,0.55),
+        inset 0 -10px 16px rgba(60,120,255,0.45);
 
-    animation: portalPulse 2.6s ease-in-out infinite;
+    backdrop-filter: blur(6px) saturate(180%);
+
+    /* ✨ Smooth floating blur effect */
+    animation:
+        portalPulse 3s ease-in-out infinite,
+        portalGlow 6s ease-in-out infinite alternate;
+
     cursor: pointer;
+    z-index: 6;
 }
 
+/* Main breathing pulse */
 @keyframes portalPulse {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.10); }
-    100% { transform: scale(1); }
+    0%   { transform: scale(1); filter: brightness(1); }
+    50%  { transform: scale(1.12); filter: brightness(1.15); }
+    100% { transform: scale(1); filter: brightness(1); }
 }
+
+/* ✨ Slow glow shift for holographic feel */
+@keyframes portalGlow {
+    0% {
+        box-shadow:
+            0 0 22px rgba(140,210,255,0.75),
+            0 0 55px rgba(80,140,255,0.55),
+            inset 0 0 20px rgba(255,255,255,0.45);
+    }
+    100% {
+        box-shadow:
+            0 0 32px rgba(160,240,255,0.9),
+            0 0 85px rgba(110,170,255,0.65),
+            inset 0 0 30px rgba(255,255,255,0.65);
+    }
+}
+
