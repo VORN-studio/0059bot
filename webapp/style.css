@@ -1955,3 +1955,100 @@ input[readonly] {
 
 
 
+/* ================================
+   FINAL PORTAL BAR (Web3 Version)
+================================ */
+
+#portal-container {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    height: 90px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+
+    z-index: 99999;
+    pointer-events: auto;
+}
+
+/* LEFT + RIGHT ARE FULL PANELS */
+.portal-side {
+    flex: 1;
+    height: 50px;
+
+    background: linear-gradient(
+        180deg,
+        rgba(0,15,30,0.92),
+        rgba(0,10,20,0.96)
+    );
+
+    border-radius: 18px;
+    box-shadow:
+        inset 0 0 15px rgba(0,180,255,0.3),
+        0 0 20px rgba(0,150,255,0.25);
+}
+
+/* CENTER BLOCK (U-shape + Sphere) */
+.portal-center {
+    position: relative;
+    width: 110px;
+    height: 90px;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+/* U-SHAPE CUT */
+.portal-cut {
+    position: absolute;
+    bottom: 0;
+    width: 110px;
+    height: 55px;
+
+    background: linear-gradient(
+        180deg,
+        rgba(0,15,30,0.92),
+        rgba(0,10,20,0.96)
+    );
+
+    border-radius: 35px;
+    box-shadow:
+        inset 0 0 15px rgba(0,200,255,0.22),
+        inset 0 0 30px rgba(0,100,255,0.15);
+}
+
+/* THE REAL SPHERE */
+.portal-sphere {
+    position: absolute;
+    top: -20px;
+
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+
+    background: radial-gradient(circle at 50% 35%,
+        rgba(110,180,255,1),
+        rgba(80,120,255,0.95),
+        rgba(40,40,150,0.90)
+    );
+
+    box-shadow:
+        0 0 25px rgba(120,200,255,0.85),
+        0 0 50px rgba(70,120,255,0.75),
+        inset 0 0 18px rgba(255,255,255,0.6);
+
+    animation: spherePulse 2.8s ease-in-out infinite;
+    cursor: pointer;
+}
+
+/* Breathing animation */
+@keyframes spherePulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.10); }
+    100% { transform: scale(1); }
+}
