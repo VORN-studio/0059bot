@@ -1857,169 +1857,113 @@ input[readonly] {
    LUXURY CRYPTO PORTAL (Web3 + Gold + Diamond Energy Edition)
    ----------------------------------------------------------- */
 
-/* ============================================================
-   PORTAL AREA — sits at bottom, clean holographic strip
-   ============================================================ */
+/* -----------------------------------------------------------
+   PORTAL AREA – clean, minimal, integrated with bottom UI
+----------------------------------------------------------- */
 #portal-area {
     position: fixed;
-    bottom: 18px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    width: 92%;
+    width: 88%;
     height: 58px;
 
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    gap: 20px;
 
-    z-index: 99999;
     pointer-events: auto;
+    z-index: 9999;
 }
 
-/* ============================================================
-   SIDE PANELS — smooth glass bars with neon streaks
-   ============================================================ */
-.portal-side {
+/* -----------------------------------------------------------
+   SIDE LINES – subtle holographic glass bars
+----------------------------------------------------------- */
+.portal-line {
     flex: 1;
-    height: 22px;
-    border-radius: 16px;
+    height: 4px;
+    border-radius: 6px;
 
-    background: rgba(40, 60, 120, 0.18);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-
-    box-shadow:
-        inset 0 0 8px rgba(90,160,255,0.20),
-        inset 0 0 14px rgba(160,120,255,0.15),
-        0 0 6px rgba(80,120,255,0.15);
-
-    overflow: hidden;
-    position: relative;
-}
-
-/* flowing neon lines */
-.portal-side::before {
-    content: "";
-    position: absolute;
-    inset: 0;
     background: linear-gradient(
         90deg,
-        transparent 0%,
-        rgba(120,180,255,0.28) 50%,
-        transparent 100%
+        rgba(255,255,255,0.00),
+        rgba(160,180,255,0.22),
+        rgba(255,255,255,0.00)
     );
 
-    opacity: .35;
-    transform: translateX(-100%);
-    animation: portalFlow 4s linear infinite;
+    opacity: 0.32;
+    filter: blur(1.4px);
 }
 
-@keyframes portalFlow {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-/* ============================================================
-   CENTRAL PORTAL BUTTON — glass orb + neon pulse
-   ============================================================ */
+/* -----------------------------------------------------------
+   PORTAL BUTTON — premium metal-glass orb
+----------------------------------------------------------- */
 #portal-button {
-    width: 56px;
-    height: 56px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
     position: relative;
     cursor: pointer;
     overflow: hidden;
 
-    background: rgba(60,80,160,0.25);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 
     box-shadow:
-        0 0 18px rgba(120,160,255,0.4),
-        0 0 35px rgba(80,120,255,0.35),
-        inset 0 0 12px rgba(255,255,255,0.25);
+        0 0 8px rgba(255,255,255,0.15),
+        0 0 18px rgba(120,160,255,0.22),
+        inset 0 0 8px rgba(255,255,255,0.15);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* glowing core inside the orb */
+/* Soft glow layer */
+.portal-glow {
+    position: absolute;
+    width: 110%;
+    height: 110%;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(120,180,255,0.55),
+        transparent 70%
+    );
+    filter: blur(18px);
+    animation: portalFade 3s ease-in-out infinite;
+    opacity: 0.55;
+}
+
+@keyframes portalFade {
+    0%   { opacity: 0.50; transform: scale(1); }
+    50%  { opacity: 0.80; transform: scale(1.15); }
+    100% { opacity: 0.50; transform: scale(1); }
+}
+
+/* central refined core */
 .portal-core {
-    width: 70%;
-    height: 70%;
+    width: 58%;
+    height: 58%;
     border-radius: 50%;
 
     background: radial-gradient(circle,
-        rgba(120,200,255,1) 0%,
-        rgba(80,120,255,0.85) 50%,
-        rgba(40,60,160,0.85) 100%
+        rgba(180,200,255,1) 0%,
+        rgba(120,140,255,0.9) 50%,
+        rgba(40,60,140,0.9) 100%
     );
 
     box-shadow:
-        0 0 16px rgba(120,190,255,0.9),
-        0 0 26px rgba(80,110,255,0.9);
-
-    animation: portalPulse 2.4s ease-in-out infinite;
+        inset 0 0 14px rgba(255,255,255,0.7),
+        0 0 18px rgba(120,160,255,0.55);
 }
 
-/* breathing pulse */
-@keyframes portalPulse {
-    0%   { transform: scale(1); }
-    50%  { transform: scale(1.18); }
-    100% { transform: scale(1); }
-}
-
-/* rotating luminous halo */
-#portal-button::before {
-    content: "";
-    position: absolute;
-    inset: -35%;
-    border-radius: 50%;
-
-    background: conic-gradient(
-        rgba(255,255,255,0.00),
-        rgba(255,255,255,0.18),
-        rgba(255,255,255,0.00) 40%
-    );
-
-    filter: blur(8px);
-    animation: haloSpin 7s linear infinite;
-}
-
-@keyframes haloSpin {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* sparkles */
-#portal-button::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-
-    background-image:
-        radial-gradient(circle, rgba(255,255,255,0.55) 0%, transparent 70%),
-        radial-gradient(circle, rgba(150,180,255,0.45) 0%, transparent 75%),
-        radial-gradient(circle, rgba(90,120,255,0.55) 0%, transparent 80%);
-
-    background-size: 8px 8px, 6px 6px, 7px 7px;
-    background-position:
-        18% 25%,
-        70% 60%,
-        45% 78%;
-
-    opacity: 0.75;
-    animation: sparklePulse 3.5s ease-in-out infinite;
-}
-
-@keyframes sparklePulse {
-    0%   { opacity: .55; transform: scale(1); }
-    50%  { opacity: .90; transform: scale(1.08); }
-    100% { opacity: .55; transform: scale(1); }
+/* tap feedback */
+#portal-button:active .portal-core {
+    transform: scale(0.92);
+    transition: 0.1s;
 }
 
 
