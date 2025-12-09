@@ -1889,5 +1889,19 @@ input[readonly] {
 #portal-orb::after {
     content: "👾";
     position: absolute;
-    font-size: 28px;
+    top: -70px;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+
+    background: conic-gradient(
+      from 170deg,
+      #22c55e,
+      #0ea5e9,
+      #6366f1,
+      #22c55e
+    );
 }
