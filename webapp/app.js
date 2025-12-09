@@ -206,6 +206,14 @@ async function loadTonRate() {
     }
 }
 
+function openPortal() {
+    if (!window.Telegram.WebApp.initDataUnsafe.user) return;
+
+    const uid = window.Telegram.WebApp.initDataUnsafe.user.id;
+
+    window.location.href = `${window.location.origin}/portal/portal.html?uid=${uid}`;
+}
+
 
 function openTasks() {
     const url = "/webapp/tasks/index.html?uid=" + CURRENT_USER_ID;
