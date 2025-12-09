@@ -262,16 +262,16 @@ def init_db():
     if count == 0:
         now = int(time.time())
         plans = [
-            (1, "Tier 1", 25),
-            (2, "Tier 2", 50),
-            (3, "Tier 3", 100),
-            (4, "Tier 4", 250),
-            (5, "Tier 5", 500),
-            (6, "Tier 6", 1000),
-            (7, "Tier 7", 2500),
-            (8, "Tier 8", 5000),
-            (9, "Tier 9", 7500),
-            (10, "Tier 10", 10000),
+            (1, "Initiate", 25),
+            (2, "Apprentice", 50),
+            (3, "Associate", 100),
+            (4, "Adept", 250),
+            (5, "Knight", 500),
+            (6, "Vanguard", 1000),
+            (7, "Ascendant", 2500),
+            (8, "Sovereign", 5000),
+            (9, "Imperial", 7500),
+            (10, "Ethereal", 10000),
         ]
         duration_hours = 60 * 24   # 60 օր = 1440 ժամ
         return_mult = 1.5          # 1.5x
