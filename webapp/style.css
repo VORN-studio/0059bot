@@ -586,7 +586,7 @@ body::after {
     100% { opacity: 0; transform: scaleX(0.2); }
 }
 
-#portal-orb {
+.portal-orb {
     position: relative;
     font-size: 32px;
     font-weight: 900;
@@ -607,7 +607,7 @@ body::after {
     100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-#portal-orb::after {
+.portal-orb::after {
     content: "👾";
     position: absolute;
     top: -70px;
