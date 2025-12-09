@@ -117,7 +117,12 @@ async function loadState() {
     document.getElementById("active-miner-box").style.display = "block";
 
     // Ամենաբարձր Tier
-    document.getElementById("active-tier").textContent = maxTier;
+    // Քանի մայնինգ փաթեթ կա ընդհանուր
+    const totalMiners = data.miners.length;
+
+    // Tier դաշտում ցույց տանք և՛ ամենաբարձր tier-ը, և՛ փաթեթների քանակը
+    document.getElementById("active-tier").textContent =
+    totalMiners > 1 ? `${maxTier} (x${totalMiners})` : `${maxTier}`;
 
     // Արտադրանք/ժամ — ԱՄԲՈՂՋ summa
     document.getElementById("active-speed").textContent = totalSpeed.toFixed(3);
