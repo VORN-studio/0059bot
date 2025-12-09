@@ -74,49 +74,71 @@ async function loadPlans() {
 // ---------------------------------------
 // LOAD CURRENT MINING STATE
 // ---------------------------------------
+// ---------------------------------------
+// LOAD CURRENT MINING STATE
+// ---------------------------------------
 async function loadState() {
     const res = await fetch(`${API_BASE}/api/mining/state/${USER_ID}`);
     const data = await res.json();
 
     if (!data.ok) return;
 
-    if (data.miners.length === 0) {
+    // եթե մայներ չկա
+    if (!data.miners || data.miners.length === 0) {
         document.getElementById("active-miner-box").style.display = "none";
         document.getElementById("header-speed").textContent = "0.000";
         return;
     }
 
-    // ---- Calculate total mining results from ALL plans ----
-    let totalSpeed = 0;
+    // ---- Ընդհանուր հաշվարկներ բոլոր փաթեթներից ----
+    let totalSpeed   = 0;
     let totalPending = 0;
-    let maxTier = 0;
+    let maxTier      = 0;
 
+    // 1) եթե backend-ը արդեն տվել է ընդհանուր speed
+    if (data.state && typeof data.state.speed === "number") {
+        totalSpeed = data.state.speed;
+    }
+
+    // 2) Կուտակում ենք pending-ը և Tier-ը
     data.miners.forEach(miner => {
-        totalSpeed += miner.speed || 0;
-        totalPending += miner.pending_domit || 0;
+        totalPending += Number(miner.pending_domit || 0);
 
-        if (miner.tier > maxTier) maxTier = miner.tier;
+        if (miner.tier && miner.tier > maxTier) {
+            maxTier = miner.tier;
+        }
+
+        // եթե data.state.speed չկար կամ 0 էր, փորձում ենք վերցնել speed-ը հենց miner-ից
+        if (!totalSpeed) {
+            const minerSpeed = Number(
+                miner.speed ??
+                miner.domit_per_hour ??
+                miner.hourly_domit ??
+                miner.rate ??
+                0
+            );
+            totalSpeed += minerSpeed;
+        }
     });
 
-    // ---- Show active miner box ----
+    // ---- Ցույց ենք տալիս ակտիվ փաթեթների ինֆոն ----
     document.getElementById("active-miner-box").style.display = "block";
 
-    // Show highest tier (optional, beautiful for UI)
+    // մեծագույն Tier
     document.getElementById("active-tier").textContent = maxTier;
 
-    // Show combined mining output
-    document.getElementById("active-speed").textContent = totalSpeed.toFixed(3);
+    // ընդհանուր մայնինգի արագություն (sum)
+    document.getElementById("active-speed").textContent  = totalSpeed.toFixed(3);
+    document.getElementById("header-speed").textContent  = totalSpeed.toFixed(3);
+
+    // ընդհանուր կուտակված DOMIT (բոլոր փաթեթներից)
     document.getElementById("active-earned").textContent = totalPending.toFixed(3);
 
-    // header top info
-    document.getElementById("header-speed").textContent = totalSpeed.toFixed(3);
-
-
-    // Update DOMIT balance after state refresh
+    // balance-ը թողնում ենք userBalance-ից
     document.getElementById("header-balance").textContent = userBalance.toFixed(2);
-    document.getElementById("user-balance").textContent = userBalance.toFixed(2);
-
+    document.getElementById("user-balance").textContent   = userBalance.toFixed(2);
 }
+
 
 
 // ---------------------------------------
