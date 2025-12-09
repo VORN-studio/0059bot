@@ -1,5 +1,17 @@
 const tg = window.Telegram && window.Telegram.WebApp;
 const API_BASE = "https://domino-backend-iavj.onrender.com";
+const TIER_NAMES = {
+    1: "Initiate",
+    2: "Apprentice",
+    3: "Associate",
+    4: "Adept",
+    5: "Knight",
+    6: "Vanguard",
+    7: "Ascendant",
+    8: "Sovereign",
+    9: "Imperial",
+    10: "Ethereal",
+};
 
 let USER_ID = null;
 let userBalance = 0;
@@ -121,8 +133,12 @@ async function loadState() {
     const totalMiners = data.miners.length;
 
     // Tier դաշտում ցույց տանք և՛ ամենաբարձր tier-ը, և՛ փաթեթների քանակը
+    // Ամենաբարձր tier-ի անունը
+    const tierName = TIER_NAMES[maxTier] || `Tier ${maxTier}`;
+
+    // Tier field → Elite name + count
     document.getElementById("active-tier").textContent =
-    totalMiners > 1 ? `${maxTier} (x${totalMiners})` : `${maxTier}`;
+    totalMiners > 1 ? `${tierName} (x${totalMiners})` : tierName;
 
     // Արտադրանք/ժամ — ԱՄԲՈՂՋ summa
     document.getElementById("active-speed").textContent = totalSpeed.toFixed(3);
