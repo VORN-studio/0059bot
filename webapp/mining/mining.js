@@ -35,12 +35,13 @@ async function loadUser() {
 
     if (data.ok) {
         userBalance = data.user.balance_usd;
-        const domit = userBalance / 0.05; // 1 DOMIT = 0.05$
 
-        document.getElementById("user-balance").textContent = domit.toFixed(2);
-        document.getElementById("header-balance").textContent = domit.toFixed(2);
+        // ❗ Այստեղ այլևս division, DOMIT calculation չկան
+        document.getElementById("user-balance").textContent = userBalance.toFixed(2);
+        document.getElementById("header-balance").textContent = userBalance.toFixed(2);
     }
 }
+
 
 
 // ---------------------------------------
@@ -98,10 +99,8 @@ async function loadState() {
     }
 
     // Update DOMIT balance after state refresh
-    const domitBalance = userBalance / 0.05;
-    document.getElementById("header-balance").textContent = domitBalance.toFixed(2);
-    document.getElementById("user-balance").textContent = domitBalance.toFixed(2);
-
+    document.getElementById("header-balance").textContent = userBalance.toFixed(2);
+    document.getElementById("user-balance").textContent = userBalance.toFixed(2);
 
 }
 
