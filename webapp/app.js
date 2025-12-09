@@ -251,6 +251,13 @@ function initFromTelegram() {
   loadUserFromBackend();
 }
 
+document.querySelector(".top h1").addEventListener("click", () => {
+    if (!CURRENT_USER_ID) return;
+    window.location.href =
+      `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}`;
+});
+
+
 async function loadUserFromBackend() {
   if (!CURRENT_USER_ID) {
     console.log("⛔ CURRENT_USER_ID չկա");
