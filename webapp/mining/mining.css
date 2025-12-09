@@ -1,187 +1,619 @@
-/* ===============================
-      GLOBAL
-=============================== */
+/* =========================================================
+   DOMINO MINING — ELITE ANIMATED CSS
+   Author: ChatGPT x Нарек 059
+   ========================================================= */
+
+/* ---------- ROOT & GLOBAL ---------- */
+
+:root {
+    --bg-main: #020617;
+    --bg-secondary: #020617;
+    --bg-card: rgba(15, 23, 42, 0.92);
+    --bg-card-soft: rgba(15, 23, 42, 0.85);
+    --accent: #38bdf8;
+    --accent-2: #a855f7;
+    --accent-3: #22c55e;
+    --danger: #f97373;
+    --text-main: #e5e7eb;
+    --text-soft: #9ca3af;
+    --border-soft: rgba(148, 163, 184, 0.2);
+    --shadow-strong: 0 20px 60px rgba(15, 23, 42, 0.85);
+    --radius-lg: 18px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+    --blur-strong: 26px;
+    --blur-soft: 14px;
+}
+
+/* Global background with moving gradient + stars */
 
 body {
     margin: 0;
     padding: 0;
-    background: #0b0f19;
-    color: #e2e8f0;
-    font-family: "Inter", Arial, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text-main);
+    background: radial-gradient(circle at 0% 0%, #1d4ed8 0, transparent 45%),
+                radial-gradient(circle at 100% 0%, #0f766e 0, transparent 50%),
+                radial-gradient(circle at 50% 100%, #6d28d9 0, transparent 50%),
+                #020617;
+    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    position: relative;
 }
+
+/* animated nebula overlay */
+body::before {
+    content: "";
+    position: fixed;
+    inset: -40%;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(56,189,248,0.12) 0, transparent 55%),
+        radial-gradient(circle at 90% 10%, rgba(168,85,247,0.14) 0, transparent 50%),
+        radial-gradient(circle at 50% 90%, rgba(34,197,94,0.16) 0, transparent 55%);
+    opacity: 0.9;
+    mix-blend-mode: screen;
+    filter: blur(22px);
+    pointer-events: none;
+    animation: nebulaMove 38s linear infinite alternate;
+    z-index: -2;
+}
+
+/* tiny moving stars */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,0.45) 0, transparent 55%),
+        radial-gradient(circle, rgba(255,255,255,0.35) 0, transparent 60%),
+        radial-gradient(circle, rgba(255,255,255,0.25) 0, transparent 60%);
+    background-size: 2px 2px, 3px 3px, 1px 1px;
+    background-repeat: repeat;
+    opacity: 0.12;
+    mix-blend-mode: screen;
+    animation: starsDrift 80s linear infinite;
+    z-index: -3;
+}
+
+@keyframes nebulaMove {
+    from { transform: translate3d(-2%, -2%, 0) scale(1); }
+    to   { transform: translate3d(2%, 4%, 0) scale(1.1); }
+}
+
+@keyframes starsDrift {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-120px, -80px, 0); }
+}
+
+/* Container for the app */
 
 #mining-app {
-    padding: 18px;
-    animation: fadeIn 0.4s ease;
+    position: relative;
+    padding: 18px 16px 32px;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+/* subtle glossy overlay inside app container */
+#mining-app::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(148,163,184,0.06), transparent 60%);
+    pointer-events: none;
+    z-index: -1;
 }
 
-/* ===============================
-      TITLES
-=============================== */
-
-.title {
-    text-align: center;
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 18px;
-    background: linear-gradient(to right, #3b82f6, #06b6d4);
-    -webkit-background-clip: text;
-    color: transparent;
-    letter-spacing: 0.5px;
-}
-
-.subtitle {
-    margin-top: 25px;
-    font-size: 20px;
-    font-weight: 600;
-    color: #94a3b8;
-}
-
-/* ===============================
-      TOP BAR
-=============================== */
+/* ---------- TOP BAR ---------- */
 
 #top-bar {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-bottom: 20px;
-    background: #111827;
-    padding: 12px 15px;
-    border-radius: 12px;
-    box-shadow: 0 0 18px rgba(59, 130, 246, 0.15);
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.85));
+    border: 1px solid rgba(148,163,184,0.35);
+    box-shadow:
+        0 14px 40px rgba(15, 23, 42, 1),
+        0 0 0 1px rgba(15,23,42,0.8);
+    position: relative;
+    overflow: hidden;
 }
 
+/* glowing edge */
+#top-bar::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: conic-gradient(
+        from 120deg,
+        rgba(56,189,248,0.0),
+        rgba(56,189,248,0.7),
+        rgba(168,85,247,0.7),
+        rgba(34,197,94,0.7),
+        rgba(56,189,248,0.0)
+    );
+    opacity: 0.8;
+    mix-blend-mode: screen;
+    filter: blur(15px);
+    z-index: -1;
+    animation: borderGlow 18s linear infinite;
+}
+
+@keyframes borderGlow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* BACK BUTTON */
+
 #back-btn {
-    background: #1e293b;
-    color: #dbeafe;
-    border: 1px solid #334155;
+    background: radial-gradient(circle at 30% 20%, #38bdf8, #1d4ed8);
+    color: #e5f2ff;
+    border: none;
     font-size: 18px;
-    padding: 6px 12px;
-    border-radius: 10px;
+    padding: 7px 13px;
+    border-radius: 999px;
     cursor: pointer;
-    transition: 0.25s;
+    box-shadow: 0 8px 18px rgba(37,99,235,0.6);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(0);
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.18s ease,
+        background 0.25s ease;
 }
 
 #back-btn:hover {
-    background: #3b82f6;
-    color: #fff;
-    border-color: #3b82f6;
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 12px 30px rgba(37,99,235,0.8);
+    filter: brightness(1.05);
 }
+
+#back-btn:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: 0 4px 16px rgba(15,23,42,0.7);
+}
+
+/* INFO TEXT IN TOP BAR */
 
 #top-info {
-    font-size: 14px;
-    line-height: 1.4;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-soft);
 }
 
-/* ===============================
-      CARDS
-=============================== */
-
-.card,
-.plan-card {
-    background: #111827;
-    padding: 16px;
-    border-radius: 14px;
-    margin-bottom: 18px;
-    border: 1px solid rgba(255,255,255,0.05);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-    transition: transform 0.25s, box-shadow 0.25s;
+#top-info div {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
 }
 
-.card:hover,
-.plan-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 22px rgba(0,0,0,0.35);
-}
-
-/* ===============================
-      BUTTONS
-=============================== */
-
-.btn {
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
-    color: white;
-    border: none;
-    padding: 12px 16px;
-    width: 100%;
-    border-radius: 10px;
-    margin-top: 12px;
-    font-size: 16px;
+#top-info span {
+    color: #e5e7eb;
     font-weight: 600;
-    cursor: pointer;
-    transition: 0.25s;
 }
 
-.btn:hover {
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
-    box-shadow: 0px 0px 12px rgba(37, 99, 235, 0.4);
+/* animated small mining icon near speed */
+
+#top-info div:nth-child(2)::before {
+    content: "⛏";
+    font-size: 14px;
+    margin-right: 4px;
+    display: inline-block;
+    animation: pickaxeSwing 1.5s ease-in-out infinite;
+    transform-origin: bottom center;
 }
 
-/* ===============================
-      BALANCE BOX
-=============================== */
+@keyframes pickaxeSwing {
+    0%   { transform: rotate(0deg); }
+    30%  { transform: rotate(16deg); }
+    60%  { transform: rotate(-12deg); }
+    100% { transform: rotate(0deg); }
+}
+
+/* ---------- TITLES ---------- */
+
+.title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 800;
+    margin: 6px 0 12px;
+    letter-spacing: 0.4px;
+    background: linear-gradient(120deg, #38bdf8, #a855f7, #22c55e);
+    -webkit-background-clip: text;
+    color: transparent;
+    position: relative;
+}
+
+/* small glow behind title */
+.title::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 110px;
+    height: 2px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.8), transparent);
+    box-shadow: 0 0 18px rgba(56,189,248,0.8);
+    opacity: 0.9;
+}
+
+/* subtitle */
+
+.subtitle {
+    margin-top: 22px;
+    margin-bottom: 10px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* small lightning icon for subtitle */
+.subtitle::before {
+    content: "⚡";
+    font-size: 16px;
+    filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.9));
+}
+
+/* ---------- BALANCE BOX ---------- */
 
 #user-balance-box {
-    background: #1e293b;
-    padding: 14px;
-    border-radius: 12px;
-    font-size: 18px;
+    position: relative;
+    margin: 10px 0 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background: radial-gradient(circle at 0% 0%, rgba(56,189,248,0.25) 0, transparent 45%),
+                radial-gradient(circle at 100% 0%, rgba(168,85,247,0.28) 0, transparent 50%),
+                rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(148,163,184,0.4);
+    box-shadow:
+        0 18px 42px rgba(15, 23, 42, 1),
+        0 0 0 1px rgba(15,23,42,0.9);
     text-align: center;
-    font-weight: 600;
-    border: 1px solid rgba(255,255,255,0.07);
-    margin-bottom: 18px;
-    box-shadow: 0 0 14px rgba(59,130,246,0.12);
+    font-size: 15px;
+    font-weight: 500;
+    overflow: hidden;
 }
 
-/* ===============================
-      Active Miner Section
-=============================== */
+/* moving shimmer line across balance card */
+#user-balance-box::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: linear-gradient(120deg,
+        transparent,
+        rgba(255,255,255,0.28),
+        transparent
+    );
+    transform: translateX(-100%);
+    animation: balanceShine 4s ease-in-out infinite;
+    mix-blend-mode: screen;
+    opacity: 0.7;
+}
+
+@keyframes balanceShine {
+    0%   { transform: translateX(-120%) rotate(8deg); }
+    45%  { transform: translateX(130%) rotate(8deg); }
+    100% { transform: translateX(130%) rotate(8deg); }
+}
+
+#user-balance-box span {
+    font-size: 21px;
+    font-weight: 800;
+    color: #f9fafb;
+    letter-spacing: 0.5px;
+    text-shadow:
+        0 0 10px rgba(56,189,248,0.75),
+        0 0 20px rgba(56,189,248,0.5);
+}
+
+/* pulse animation for balance number */
+#user-balance {
+    animation: balancePulse 2.8s ease-in-out infinite;
+}
+
+@keyframes balancePulse {
+    0%   { transform: scale(1); filter: drop-shadow(0 0 0 rgba(56,189,248,0.0)); }
+    40%  { transform: scale(1.03); filter: drop-shadow(0 0 14px rgba(56,189,248,0.55)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(56,189,248,0.0)); }
+}
+
+/* ---------- CARD BASE ---------- */
+
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 16px 16px 14px;
+    border: 1px solid rgba(148,163,184,0.35);
+    box-shadow: var(--shadow-strong);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+    backdrop-filter: blur(var(--blur-soft));
+    -webkit-backdrop-filter: blur(var(--blur-soft));
+    transform: translateY(0);
+    transition:
+        transform 0.22s ease,
+        box-shadow 0.22s ease,
+        border-color 0.22s ease,
+        background 0.22s ease;
+}
+
+/* subtle hover float */
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 60px rgba(15,23,42,0.95);
+    border-color: rgba(148,163,184,0.65);
+}
+
+/* glossy highlight at top of card */
+.card::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: radial-gradient(circle at 0% 0%, rgba(255,255,255,0.14), transparent 55%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ---------- ACTIVE MINER CARD ---------- */
+
+#active-miner-box h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #e5e7eb;
+}
 
 #active-miner-box p {
-    margin: 6px 0;
-    font-size: 15px;
+    margin: 5px 0;
+    font-size: 14px;
+    color: var(--text-soft);
 }
 
 #active-miner-box strong {
-    color: #60a5fa;
+    color: #38bdf8;
 }
 
-/* ===============================
-      PLAN CARDS
-=============================== */
+/* small pill for Tier label inside active miner card (optional if used) */
+#active-tier {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    margin-left: 4px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: radial-gradient(circle at 0 0, #22c55e, #16a34a);
+    color: #ecfdf5;
+}
+
+/* ---------- PLAN CARDS ---------- */
+
+.plan-card {
+    background: var(--bg-card-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 14px 12px;
+    border: 1px solid rgba(148,163,184,0.35);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transform: translateY(0);
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
+}
+
+/* neon border effect on hover */
+.plan-card::before {
+    content: "";
+    position: absolute;
+    inset: -60%;
+    background:
+        radial-gradient(circle at 0% 0%, rgba(56,189,248,0.28), transparent 60%),
+        radial-gradient(circle at 100% 0%, rgba(168,85,247,0.26), transparent 60%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.plan-card:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 22px 60px rgba(15,23,42,1);
+    border-color: rgba(56,189,248,0.85);
+    background: radial-gradient(circle at 0% 0%, rgba(15,23,42,0.9), rgba(15,23,42,0.96));
+}
+
+.plan-card:hover::before {
+    opacity: 1;
+}
 
 .plan-card h3 {
     margin: 0 0 6px;
-    font-size: 18px;
-    color: #93c5fd;
+    font-size: 17px;
+    font-weight: 700;
+    color: #e0f2fe;
 }
 
 .plan-card p {
-    margin: 4px 0;
-    color: #cbd5e1;
-    font-size: 14px;
+    margin: 3px 0;
+    font-size: 13px;
+    color: #9ca3af;
 }
 
-/* ===============================
-      Scrollbar (iOS/Android WebApp)
-=============================== */
+/* highlight price text */
+.plan-card p:nth-child(2) {
+    color: #fef3c7;
+    font-weight: 600;
+}
+
+/* ---------- BUTTONS ---------- */
+
+.btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #f9fafb;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    box-shadow:
+        0 14px 32px rgba(16,185,129,0.8),
+        0 0 0 1px rgba(22,163,74,0.85);
+    position: relative;
+    overflow: hidden;
+    transform: translateY(0);
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.2s ease,
+        background 0.25s ease;
+}
+
+/* moving glossy line on button */
+.btn::before {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.35),
+        transparent
+    );
+    transform: translateX(-130%);
+    mix-blend-mode: screen;
+    opacity: 0.85;
+    animation: buttonShimmer 3.5s ease-in-out infinite;
+}
+
+@keyframes buttonShimmer {
+    0%   { transform: translateX(-140%) rotate(12deg); }
+    60%  { transform: translateX(140%) rotate(12deg); }
+    100% { transform: translateX(140%) rotate(12deg); }
+}
+
+.btn:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow:
+        0 18px 40px rgba(16,185,129,1),
+        0 0 18px rgba(74,222,128,0.85);
+    filter: brightness(1.03);
+}
+
+.btn:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow:
+        0 8px 22px rgba(15,23,42,0.9),
+        0 0 0 1px rgba(15,23,42,1);
+}
+
+/* ---------- CLAIM BUTTON INSIDE ACTIVE MINER ---------- */
+
+#claim-btn {
+    margin-top: 12px;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    box-shadow:
+        0 14px 30px rgba(56,189,248,0.9),
+        0 0 0 1px rgba(56,189,248,0.85);
+}
+
+/* ---------- HEADER NUMBERS PULSE (TOP BAR) ---------- */
+
+#header-balance,
+#header-speed {
+    font-weight: 700;
+    color: #e5f2ff;
+    text-shadow: 0 0 10px rgba(56,189,248,0.7);
+}
+
+/* tiny breathing animation for speed value */
+#header-speed {
+    animation: speedBreath 3.2s ease-in-out infinite;
+}
+
+@keyframes speedBreath {
+    0%   { transform: scale(1); opacity: 0.9; }
+    40%  { transform: scale(1.04); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.9; }
+}
+
+/* ---------- SCROLLBAR ---------- */
 
 ::-webkit-scrollbar {
     width: 6px;
 }
 
+::-webkit-scrollbar-track {
+    background: #020617;
+}
+
 ::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 50px;
+    background: #1f2937;
+    border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: #4b5563;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 480px) {
+    #mining-app {
+        padding: 16px 12px 28px;
+    }
+
+    #top-bar {
+        gap: 10px;
+        padding: 10px 12px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    #user-balance-box {
+        font-size: 14px;
+    }
+
+    #user-balance-box span {
+        font-size: 19px;
+    }
+
+    .subtitle {
+        font-size: 16px;
+    }
+
+    .card,
+    .plan-card {
+        padding: 13px 12px 12px;
+        border-radius: 14px;
+    }
+
+    .btn {
+        font-size: 14px;
+        padding: 10px 12px;
+    }
 }
