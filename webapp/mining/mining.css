@@ -340,16 +340,16 @@ body::after + .parallax-stars {
     background: radial-gradient(circle at 30% 20%, #38bdf8, #1d4ed8 70%, #0f172a 100%);
     color: #e5f2ff;
     border: none;
-
-    font-size: 18px;
-    padding: 7px 13px;
-    border-radius: 999px;
+    
+    font-size: 16px;
+    padding: 5px 10px;
+    border-radius: 12px;
     cursor: pointer;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
+    
     /* 3D physics */
     transform: translateY(0) scale(1);
     transition:
