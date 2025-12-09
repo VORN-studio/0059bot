@@ -1863,7 +1863,7 @@ input[readonly] {
     left: 50%;
     transform: translateX(-50%);
     width: 92%;
-    height: 52px;
+    height: 56px;
 
     display: flex;
     align-items: center;
@@ -1871,61 +1871,141 @@ input[readonly] {
     gap: 10px;
 
     z-index: 9999;
+
+    /* ✨ Լույսի խորքային էֆեկտ */
+    background: radial-gradient(
+        circle at center,
+        rgba(0, 190, 255, 0.25) 0%,
+        rgba(0, 120, 255, 0.18) 40%,
+        rgba(0, 40, 120, 0.10) 70%,
+        transparent 100%
+    );
+
+    /* ✨ Հոսող (flow) էֆեկտ */
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    border-radius: 40px;
+
+    animation: portalGlow 3s infinite alternate ease-in-out;
 }
+
+/* ✨ պուլսացիոն փափուկ լույս */
+@keyframes portalGlow {
+    0% {
+        box-shadow:
+            0 0 18px rgba(0, 200, 255, 0.45),
+            0 0 35px rgba(0, 120, 255, 0.25);
+    }
+    100% {
+        box-shadow:
+            0 0 28px rgba(0, 240, 255, 0.70),
+            0 0 55px rgba(0, 160, 255, 0.45);
+    }
+}
+
 
 /* FULL ENERGY SIDE BARS */
 .portal-side {
     flex: 1;
-    height: 18px;
-    border-radius: 18px;
+    height: 16px;
+    position: relative;
+    border-radius: 20px;
 
-    background: linear-gradient(90deg,
-        rgba(0,255,255,0.10),
-        rgba(0,255,255,0.60),
-        rgba(0,255,255,0.90),
-        rgba(0,255,255,0.60),
-        rgba(0,255,255,0.10)
+    /* ✨ Կենտրոնից դուրս եկող էներգիա */
+    background: linear-gradient(
+        90deg,
+        rgba(0, 240, 255, 0.00) 0%,
+        rgba(0, 240, 255, 0.20) 20%,
+        rgba(0, 240, 255, 0.55) 45%,
+        rgba(0, 240, 255, 0.80) 55%,
+        rgba(0, 240, 255, 0.55) 65%,
+        rgba(0, 240, 255, 0.20) 80%,
+        rgba(0, 240, 255, 0.00) 100%
     );
 
-    filter: blur(2px) brightness(1.7);
-    animation: sideEnergy 2s ease-in-out infinite;
+    filter: blur(4px) saturate(1.4);
+    opacity: 0.85;
+
+    /* ✨ Հոսող էներգիայի անիմացիա */
+    background-size: 200% 100%;
+    animation: portalBeam 3.2s ease-in-out infinite;
 }
+
+/* 🔥 Էներգիայի Հոսքի անիմացիա */
+@keyframes portalBeam {
+    0% {
+        background-position: 120% 0;
+        opacity: 0.70;
+    }
+    50% {
+        background-position: -20% 0;
+        opacity: 1;
+    }
+    100% {
+        background-position: 120% 0;
+        opacity: 0.70;
+    }
+}
+
 
 /* SMALLER + STRONGER PORTAL BUTTON */
 #portal-button {
-    width: 50px;
-    height: 50px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
+    position: relative;
 
-    background: radial-gradient(circle,
-        rgba(120,215,255,1),
-        rgba(75,120,255,0.95),
-        rgba(50,40,140,0.90)
+    /* ✨ Խորը պորտալ նեոն */
+    background: radial-gradient(circle at center,
+        rgba(150, 230, 255, 1) 0%,
+        rgba(90, 170, 255, 0.95) 35%,
+        rgba(50, 60, 160, 0.85) 60%,
+        rgba(20, 20, 60, 0.70) 100%
     );
 
+    /* ✨ Արտաքին glow շերտեր */
     box-shadow:
-        0 0 15px #6edbff,
-        0 0 25px #5271ff,
-        0 0 55px rgba(70,140,255,0.80),
-        inset 0 0 12px rgba(255,255,255,0.6);
+        0 0 12px rgba(100, 220, 255, 0.9),
+        0 0 22px rgba(90, 160, 255, 0.8),
+        0 0 40px rgba(80, 140, 255, 0.7),
+        0 0 75px rgba(70, 120, 255, 0.55),
+        inset 0 0 18px rgba(255, 255, 255, 0.65);
 
-    animation: portalPulse 2.3s ease-in-out infinite;
+    animation: portalPulseUltra 2.6s ease-in-out infinite;
     cursor: pointer;
 }
 
-/* PULSE */
-@keyframes portalPulse {
+
+/* ✨ Պորտալի մակերեսի փայլող շրջան */
+#portal-button::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(120, 230, 255, 0.18),
+        rgba(80, 160, 255, 0.10),
+        rgba(0, 0, 0, 0)
+    );
+    filter: blur(12px);
+    animation: portalAura 4s ease-in-out infinite;
+}
+
+
+/* ✨ Պորտալի միջուկի պուլս */
+@keyframes portalPulseUltra {
     0%   { transform: scale(1); }
-    50%  { transform: scale(1.08); }
+    50%  { transform: scale(1.12); }
     100% { transform: scale(1); }
 }
 
-/* ENERGY BAR ANIMATION */
-@keyframes sideEnergy {
-    0%   { opacity: .55; filter: blur(2px); }
-    50%  { opacity: 1;    filter: blur(3px); }
-    100% { opacity: .55; filter: blur(2px); }
+/* ✨ Շարժվող էներգիայի ավրան */
+@keyframes portalAura {
+    0%   { opacity: 0.45; transform: scale(1);}
+    50%  { opacity: 0.9;  transform: scale(1.15);}
+    100% { opacity: 0.45; transform: scale(1);}
 }
+
 
 /* PORTAL AREA WRAPPER */
 #portal-area {
@@ -1942,52 +2022,187 @@ input[readonly] {
     gap: 12px;
 
     z-index: 9999;
+
+    /* ✨ FUTURISTIC GLASS BAR */
+    background: rgba(15, 20, 35, 0.35);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    border-radius: 18px;
+
+    /* ✨ INNER GLOW */
+    box-shadow:
+        0 0 10px rgba(0, 180, 255, 0.25) inset,
+        0 0 18px rgba(0, 130, 255, 0.15) inset,
+        0 0 22px rgba(0, 150, 255, 0.30);
+
+    /* ✨ ENERGY EDGE LIGHTING */
+    border: 1px solid rgba(0, 200, 255, 0.25);
+    overflow: hidden;
+    position: relative;
 }
+
+/* ⚡ Animated energy line across the bar */
+#portal-area::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 30%;
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0,200,255,0.55),
+        transparent
+    );
+
+    filter: blur(10px);
+    animation: portalScan 3s linear infinite;
+    opacity: 0.55;
+}
+
+/* ⚡ Energy line animation */
+@keyframes portalScan {
+    0%   { left: -40%; }
+    100% { left: 110%; }
+}
+
 
 /* SOLID GAME-STYLE SIDE PANELS */
 .portal-side {
     flex: 1;
     height: 32px;
     border-radius: 20px;
+    position: relative;
+    overflow: hidden;
+
+    /* ✨ HOLOGRAPHIC ENERGY BACKGROUND */
+    background: linear-gradient(
+        90deg,
+        rgba(0,255,255,0.12) 0%,
+        rgba(0,180,255,0.28) 20%,
+        rgba(0,160,255,0.45) 50%,
+        rgba(0,180,255,0.28) 80%,
+        rgba(0,255,255,0.12) 100%
+    );
+
+    /* ✨ DEPTH + NEON */
+    box-shadow:
+        0 0 14px rgba(0,200,255,0.45),
+        0 0 22px rgba(0,180,255,0.25),
+        inset 0 0 14px rgba(0,255,255,0.25),
+        inset 0 0 25px rgba(0,180,255,0.35);
+}
+
+/* ⚡ MOVING INNER ENERGY WAVE */
+.portal-side::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 50%;
+    height: 100%;
 
     background: linear-gradient(
         90deg,
-        rgba(0,255,255,0.15) 0%,
-        rgba(0,180,255,0.35) 25%,
-        rgba(0,160,255,0.55) 50%,
-        rgba(0,180,255,0.35) 75%,
-        rgba(0,255,255,0.15) 100%
+        transparent,
+        rgba(0,255,255,0.55),
+        transparent
     );
 
-    box-shadow:
-        0 0 10px rgba(0,200,255,0.4),
-        inset 0 0 12px rgba(0,255,255,0.25);
+    filter: blur(10px);
+    opacity: 0.6;
+
+    animation: portalSideWave 2.8s linear infinite;
 }
+
+/* ⚡ WAVE ANIMATION */
+@keyframes portalSideWave {
+    0%   { left: -60%; }
+    100% { left: 110%; }
+}
+
 
 /* CENTER PORTAL BUTTON */
 #portal-button {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
 
     border-radius: 50%;
-    background: radial-gradient(circle,
-        rgba(140,220,255,1),
-        rgba(85,140,255,0.95),
-        rgba(60,50,160,0.90)
+    position: relative;
+    overflow: hidden;
+
+    background: radial-gradient(circle at 50% 55%,
+        rgba(160,230,255,1) 0%,
+        rgba(90,150,255,0.95) 40%,
+        rgba(60,50,160,0.90) 80%
     );
 
+    /* OUTER AURA */
     box-shadow:
-        0 0 15px rgba(100,200,255,0.8),
-        0 0 30px rgba(80,120,255,0.8),
-        0 0 60px rgba(50,80,255,0.7);
+        0 0 18px rgba(110,220,255,0.9),
+        0 0 34px rgba(80,120,255,0.85),
+        0 0 70px rgba(50,80,255,0.7),
+        inset 0 0 12px rgba(255,255,255,0.5);
 
-    animation: portalPulse 2.3s ease-in-out infinite;
+    animation: portalPulse 2.2s ease-in-out infinite;
     cursor: pointer;
 }
 
-/* PORTAL PULSE */
+/* MOVING ENERGY INSIDE THE ORB */
+#portal-button::before {
+    content: "";
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
+    border-radius: 50%;
+
+    background: radial-gradient(circle,
+        rgba(255,255,255,0.55),
+        rgba(255,255,255,0.18),
+        transparent 70%
+    );
+
+    filter: blur(12px);
+    opacity: 0.6;
+
+    animation: portalEnergy 3.4s infinite linear;
+}
+
+/* OUTER RING EFFECT */
+#portal-button::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 3px solid rgba(120,210,255,0.45);
+    filter: blur(3px);
+    opacity: 0.8;
+
+    animation: portalRing 3s infinite ease-in-out;
+}
+
+/* MAIN PULSE */
 @keyframes portalPulse {
     0%   { transform: scale(1); }
-    50%  { transform: scale(1.09); }
+    50%  { transform: scale(1.11); }
     100% { transform: scale(1); }
 }
+
+/* MOVING INTERNAL ENERGY */
+@keyframes portalEnergy {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.15); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+/* OUTER RING BREATHING */
+@keyframes portalRing {
+    0%   { opacity: 0.5; transform: scale(1); }
+    50%  { opacity: 1;   transform: scale(1.07); }
+    100% { opacity: 0.5; transform: scale(1); }
+}
+
