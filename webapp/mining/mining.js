@@ -19,10 +19,9 @@ function initUser() {
     loadState();
 }
 
-tg.BackButton.show();
-tg.BackButton.onClick(() => {
-    window.location.href = `${window.location.origin}/app?uid=${USER_ID}`;
-});
+async function goBack(){
+  window.location.href = `${window.location.origin}/app?uid=${USER_ID}`;
+}
 
 
 
