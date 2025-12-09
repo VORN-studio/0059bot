@@ -2011,6 +2011,121 @@ input[readonly] {
     100% { transform: translateX(-50%) scale(0.97); }
 }
 
+/* ===============================================
+    ULTRA PREMIUM PORTAL ENTRANCE
+    Secure Gateway • Deep Glass • Minimal Web3
+================================================ */
+
+/* OUTER FRAME */
+#portal-bar {
+    position: relative;
+    width: 100%;
+    height: 120px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 20px;
+
+    /* dark secure glass */
+    background: linear-gradient(180deg,
+        rgba(8, 12, 22, 0.80) 0%,
+        rgba(5, 10, 18, 0.92) 100%
+    );
+    backdrop-filter: blur(22px) saturate(160%);
+    border-radius: 30px;
+
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.45),
+        inset 0 0 18px rgba(255, 255, 255, 0.03);
+
+    overflow: visible;
+}
+
+/* BASE ARCH — the gate foundation */
+.portal-base {
+    position: absolute;
+    bottom: 0;
+    width: 86%;
+    height: 58px;
+
+    background: linear-gradient(180deg,
+        rgba(14, 22, 40, 0.90),
+        rgba(10, 18, 32, 0.98)
+    );
+    border-radius: 24px;
+
+    box-shadow:
+        inset 0 0 22px rgba(0, 0, 0, 0.6),
+        inset 0 -8px 18px rgba(70, 130, 255, 0.12);
+}
+
+/* GATE OPENING */
+.portal-gate {
+    position: absolute;
+    bottom: 12px;
+    width: 140px;
+    height: 75px;
+
+    border-radius: 22px;
+
+    background: linear-gradient(180deg,
+        rgba(20, 32, 60, 0.95),
+        rgba(12, 20, 40, 0.97)
+    );
+
+    clip-path: polygon(
+        24% 0%, 76% 0%,
+        100% 30%, 100% 70%,
+        76% 100%, 24% 100%,
+        0% 70%, 0% 30%
+    );
+
+    box-shadow:
+        inset 0 0 30px rgba(4, 10, 20, 0.95),
+        0 0 22px rgba(100, 140, 255, 0.20);
+
+    animation: gatePulse 6s ease-in-out infinite;
+}
+
+@keyframes gatePulse {
+    0% { opacity: 0.94; }
+    100% { opacity: 1; }
+}
+
+/* CORE ENERGY ORB — secure calm feel */
+.portal-core {
+    position: absolute;
+    bottom: 34px;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    cursor: pointer;
+
+    background: radial-gradient(circle at 50% 28%,
+        rgba(255, 255, 255, 0.95),
+        rgba(210, 230, 255, 0.85),
+        rgba(130, 170, 240, 0.72),
+        rgba(60, 110, 210, 0.62),
+        rgba(22, 40, 80, 0.98)
+    );
+
+    box-shadow:
+        0 0 20px rgba(180, 210, 255, 0.85),
+        0 0 55px rgba(120, 170, 255, 0.45),
+        0 0 90px rgba(80, 140, 255, 0.38),
+        inset 0 0 22px rgba(255, 255, 255, 0.75);
+
+    animation: orbPulse 4.6s ease-in-out infinite;
+}
+
+@keyframes orbPulse {
+    0% { transform: scale(0.96); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(0.96); }
+}
+
 
 
 
