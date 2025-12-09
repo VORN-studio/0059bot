@@ -77,6 +77,9 @@ async function loadPlans() {
 // ---------------------------------------
 // LOAD CURRENT MINING STATE
 // ---------------------------------------
+// ---------------------------------------
+// LOAD CURRENT MINING STATE
+// ---------------------------------------
 async function loadState() {
     const res = await fetch(`${API_BASE}/api/mining/state/${USER_ID}`);
     const data = await res.json();
@@ -90,21 +93,18 @@ async function loadState() {
         return;
     }
 
-    let totalSpeed   = 0;   // բոլոր փաթեթների գումարով արտադրանք/ժամ
-    let totalPending = 0;   // բոլոր pending DOMIT-ի գումարը
-    let maxTier      = 0;   // ամենամեծ tier-ը
+    let totalSpeed   = 0; // բոլոր փաթեթների գումարով արտադրանք/ժամ
+    let totalPending = 0; // բոլոր pending DOMIT-ի գումարը
+    let maxTier      = 0; // ամենամեծ tier-ը
 
     data.miners.forEach(miner => {
         // pending_domit – նույնը թողնում ենք
         totalPending += Number(miner.pending_domit || 0);
 
-        // փորձում ենք գտնել արտադրանք/ժամ տվյալ miner-ի համար
-        const minerSpeed = Number(
-            miner.speed ??
-            miner.domit_per_hour ??
-            (miner.plan && miner.plan.domit_per_hour) ??
-            0
-        );
+        // ⚡ speed-ը հաշվում ենք reward_per_second_usd-ից
+        // reward_per_second_usd → DOMIT/վայրկյան, ուրեմն *3600 → DOMIT/ժամ
+        const rps = Number(miner.reward_per_second_usd || 0);
+        const minerSpeed = rps * 3600;
         totalSpeed += minerSpeed;
 
         // Tier-ի համար վերցնենք ամենամեծը
@@ -130,6 +130,7 @@ async function loadState() {
     document.getElementById("header-balance").textContent = userBalance.toFixed(2);
     document.getElementById("user-balance").textContent   = userBalance.toFixed(2);
 }
+
 
 
 
