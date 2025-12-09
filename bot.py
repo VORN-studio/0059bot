@@ -283,6 +283,25 @@ def init_db():
             """, (tier, name, price, duration_hours, return_mult, now))
         print("💎 Mining plans initialized (10 tiers).")
 
+        # --- ALWAYS update plan names by tier (rename existing rows as well) ---
+    name_map = {
+        1: "Initiate",
+        2: "Apprentice",
+        3: "Associate",
+        4: "Adept",
+        5: "Knight",
+        6: "Vanguard",
+        7: "Ascendant",
+        8: "Sovereign",
+        9: "Imperial",
+        10: "Ethereal",
+    }
+    for tier, name in name_map.items():
+        c.execute(
+            "UPDATE dom_mining_plans SET name = %s WHERE tier = %s",
+            (name, tier)
+        )
+
 
     conn.commit()
     release_db(conn)
