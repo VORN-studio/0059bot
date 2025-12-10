@@ -61,6 +61,19 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.classList.add("active");
             const tabId = btn.dataset.tab;
             document.getElementById(tabId).classList.add("active");
+
+            if (tab === "Messages") {
+                document.getElementById("dm-chat").style.display = "flex";
+                document.getElementById("global-chat").style.display = "none";
+            }
+
+            if (tab === "GlobalChat") {
+                document.getElementById("global-chat").style.display = "flex";
+                document.getElementById("dm-chat").style.display = "none";
+                loadGlobalChat();
+            }
+
+
         });
     });
 
@@ -109,6 +122,108 @@ async function loadProfile() {
         console.error("loadProfile error:", e);
     }
 }
+
+
+async function loadGlobalChat() {
+    const res = await fetch(`/api/global/history`);
+    const data = await res.json();
+
+    if (!data.ok) return;
+
+    const box = document.getElementById("global-messages");
+    box.innerHTML = "";
+
+    data.messages.forEach(msg => {
+        const div = document.createElement("div");
+        div.innerHTML = `<b>${msg.sender}</b>: ${msg.text}`;
+        div.style.marginBottom = "6px";
+        box.appendChild(div);
+    });
+
+    box.scrollTop = box.scrollHeight;
+}
+
+async function sendGlobalMessage() {
+    const input = document.getElementById("global-input");
+    const text = input.value.trim();
+    if (text === "") return;
+
+    await fetch(`/api/global/send`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            sender: CURRENT_UID,
+            text
+        })
+    });
+
+    input.value = "";
+    loadGlobalChat();
+}
+
+document.getElementById("global-send").onclick = sendGlobalMessage;
+
+document.getElementById("global-input").addEventListener("keypress", function(e){
+    if (e.key === "Enter") sendGlobalMessage();
+});
+
+let CURRENT_DM_TARGET = null;
+
+async function openDM(targetId) {
+    CURRENT_DM_TARGET = targetId;
+
+    document.getElementById("dm-chat").style.display = "flex";
+    document.getElementById("global-chat").style.display = "none";
+
+    loadDM();
+}
+
+async function loadDM() {
+    if (!CURRENT_DM_TARGET) return;
+
+    const res = await fetch(`/api/message/history?u1=${CURRENT_UID}&u2=${CURRENT_DM_TARGET}`);
+    const data = await res.json();
+
+    if (!data.ok) return;
+
+    const box = document.getElementById("dm-messages");
+    box.innerHTML = "";
+
+    data.messages.forEach(m => {
+        const div = document.createElement("div");
+        div.innerHTML = `<b>${m.sender == CURRENT_UID ? "You" : m.sender}</b>: ${m.text}`;
+        div.style.marginBottom = "6px";
+        box.appendChild(div);
+    });
+
+    box.scrollTop = box.scrollHeight;
+}
+
+async function sendDM() {
+    const input = document.getElementById("dm-input");
+    const text = input.value.trim();
+    if (text === "") return;
+
+    await fetch(`/api/message/send`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            sender: CURRENT_UID,
+            receiver: CURRENT_DM_TARGET,
+            text
+        })
+    });
+
+    input.value = "";
+    loadDM();
+}
+
+document.getElementById("dm-send").onclick = sendDM;
+
+document.getElementById("dm-input").addEventListener("keypress", function(e){
+    if (e.key === "Enter") sendDM();
+});
+
 
 
 // ===============================
