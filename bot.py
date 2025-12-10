@@ -87,21 +87,20 @@ def upload_avatar():
     if not uid or not file:
         return jsonify({"ok": False, "error": "missing"}), 400
 
-    # save file
-    folder = os.path.join(WEBAPP_DIR, "portal", "avatars")
-    os.makedirs(folder, exist_ok=True)
+    import base64
+    data = base64.b64encode(file.read()).decode('utf-8')
 
-    filepath = f"{folder}/{uid}.png"
-    file.save(filepath)
-
-    # store path in users table
     conn = db(); c = conn.cursor()
-    c.execute("UPDATE dom_users SET avatar = %s WHERE user_id = %s",
-              (f"/portal/avatars/{uid}.png", uid))
+    c.execute("""
+        UPDATE dom_users
+        SET avatar_data = %s
+        WHERE user_id = %s
+    """, (data, uid))
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
+
 
 @app_web.route("/api/search_users")
 def api_search_users():
@@ -755,6 +754,11 @@ def create_withdraw_request(user_id: int, amount: float):
 @app_web.route("/api/user/<int:user_id>")
 def api_user(user_id):
     stats = get_user_stats(user_id)
+    if stats.get("avatar_data"):
+        stats["avatar"] = f"data:image/png;base64,{stats['avatar_data']}"
+    else:
+        stats["avatar"] = "/portal/default.png"
+
     if not stats:
         return jsonify({"ok": False, "error": "user_not_found"}), 404
 
