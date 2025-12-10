@@ -509,12 +509,13 @@ def get_user_stats(user_id: int):
 
     c.execute("""
         SELECT username,
-           avatar,
-           COALESCE(balance_usd,0),
-           COALESCE(total_deposit_usd,0),
-           COALESCE(total_withdraw_usd,0),
-           COALESCE(ton_balance,0),
-           COALESCE(last_rate,0)
+               avatar,
+               avatar_data,
+               COALESCE(balance_usd,0),
+               COALESCE(total_deposit_usd,0),
+               COALESCE(total_withdraw_usd,0),
+               COALESCE(ton_balance,0),
+               COALESCE(last_rate,0)
         FROM dom_users
         WHERE user_id=%s
     """, (user_id,))
@@ -524,7 +525,7 @@ def get_user_stats(user_id: int):
         release_db(conn)
         return None
 
-    username, avatar, balance_usd, total_dep, total_wd, ton_balance, last_rate = row
+    (username, avatar, avatar_data, balance_usd, total_dep, total_wd, ton_balance, last_rate) = row
 
 
     if last_rate and last_rate > 0:
@@ -555,6 +556,7 @@ def get_user_stats(user_id: int):
         "user_id": user_id,
         "username": username,
         "avatar": avatar,
+        "avatar_data": avatar_data,
         "balance_usd": float(balance_usd),
         "ton_balance": float(ton_balance),
         "total_deposit_usd": float(total_dep),
@@ -766,13 +768,13 @@ def create_withdraw_request(user_id: int, amount: float):
 @app_web.route("/api/user/<int:user_id>")
 def api_user(user_id):
     stats = get_user_stats(user_id)
-    if stats.get("avatar_data"):
-        stats["avatar"] = f"data:image/png;base64,{stats['avatar_data']}"
-    else:
-        stats["avatar"] = "/portal/default.png"
-
     if not stats:
         return jsonify({"ok": False, "error": "user_not_found"}), 404
+
+    if stats.get("avatar_data"):
+        stats["avatar"] = stats["avatar_data"]
+    else:
+        stats["avatar"] = "/portal/default.png"
 
     return jsonify({"ok": True, "user": stats})
 
