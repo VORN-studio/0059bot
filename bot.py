@@ -79,6 +79,105 @@ def serve_webapp(filename):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
+@app_web.route("/api/message/send", methods=["POST"])
+def api_message_send():
+    data = request.get_json(force=True, silent=True) or {}
+    sender = int(data.get("sender", 0))
+    receiver = int(data.get("receiver", 0))
+    text = data.get("text", "").strip()
+
+    if sender == 0 or receiver == 0 or text == "":
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        INSERT INTO dom_messages (sender, receiver, text, created_at)
+        VALUES (%s, %s, %s, %s)
+    """, (sender, receiver, text, now))
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True})
+
+@app_web.route("/api/message/history")
+def api_message_history():
+    u1 = int(request.args.get("u1", 0))
+    u2 = int(request.args.get("u2", 0))
+
+    if u1 == 0 or u2 == 0:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT sender, receiver, text, created_at
+        FROM dom_messages
+        WHERE (sender=%s AND receiver=%s) OR (sender=%s AND receiver=%s)
+        ORDER BY id DESC
+        LIMIT 50
+    """, (u1, u2, u2, u1))
+
+    rows = c.fetchall()
+    release_db(conn)
+
+    messages = []
+    for r in rows:
+        messages.append({
+            "sender": r[0],
+            "receiver": r[1],
+            "text": r[2],
+            "time": r[3]
+        })
+
+    messages.reverse()  # նամակները cronological կարգով
+
+    return jsonify({"ok": True, "messages": messages})
+
+@app_web.route("/api/global/send", methods=["POST"])
+def api_global_send():
+    data = request.get_json(force=True, silent=True) or {}
+    sender = int(data.get("sender", 0))
+    text = data.get("text", "").strip()
+
+    if sender == 0 or text == "":
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        INSERT INTO dom_global_chat (sender, text, created_at)
+        VALUES (%s, %s, %s)
+    """, (sender, text, now))
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True})
+
+@app_web.route("/api/global/history")
+def api_global_history():
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT sender, text, created_at
+        FROM dom_global_chat
+        ORDER BY id DESC
+        LIMIT 100
+    """)
+
+    rows = c.fetchall()
+    release_db(conn)
+
+    messages = []
+    for r in rows:
+        messages.append({
+            "sender": r[0],
+            "text": r[1],
+            "time": r[2]
+        })
+
+    messages.reverse()
+    return jsonify({"ok": True, "messages": messages})
+
+
 @app_web.route("/api/upload_avatar", methods=["POST"])
 def upload_avatar():
     uid = request.form.get("uid")
@@ -378,6 +477,15 @@ def init_db():
     """)
 
     c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_global_chat (
+            id SERIAL PRIMARY KEY,
+            sender BIGINT,
+            text TEXT,
+            created_at BIGINT
+        )
+    """)
+
+    c.execute("""
         CREATE TABLE IF NOT EXISTS dom_task_completions (
             id SERIAL PRIMARY KEY,
             user_id BIGINT,
@@ -413,6 +521,16 @@ def init_db():
             started_at BIGINT,
             last_claim_at BIGINT,
             ends_at BIGINT
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_messages (
+            id SERIAL PRIMARY KEY,
+            sender BIGINT,
+            receiver BIGINT,
+            text TEXT,
+            created_at BIGINT
         )
     """)
 
