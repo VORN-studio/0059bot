@@ -185,6 +185,7 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0"
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar TEXT"
     
 ]
 
@@ -387,11 +388,12 @@ def get_user_stats(user_id: int):
 
     c.execute("""
         SELECT username,
-               COALESCE(balance_usd,0),
-               COALESCE(total_deposit_usd,0),
-               COALESCE(total_withdraw_usd,0),
-               COALESCE(ton_balance,0),
-               COALESCE(last_rate,0)
+           avatar,
+           COALESCE(balance_usd,0),
+           COALESCE(total_deposit_usd,0),
+           COALESCE(total_withdraw_usd,0),
+           COALESCE(ton_balance,0),
+           COALESCE(last_rate,0)
         FROM dom_users
         WHERE user_id=%s
     """, (user_id,))
@@ -401,7 +403,8 @@ def get_user_stats(user_id: int):
         release_db(conn)
         return None
 
-    username, balance_usd, total_dep, total_wd, ton_balance, last_rate = row
+    username, avatar, balance_usd, total_dep, total_wd, ton_balance, last_rate = row
+
 
     if last_rate and last_rate > 0:
         ton_balance = balance_usd / last_rate
@@ -430,6 +433,7 @@ def get_user_stats(user_id: int):
     return {
         "user_id": user_id,
         "username": username,
+        "avatar": avatar,
         "balance_usd": float(balance_usd),
         "ton_balance": float(ton_balance),
         "total_deposit_usd": float(total_dep),
