@@ -135,6 +135,40 @@ def api_set_username():
 
     return jsonify({"ok": True})
 
+@app_web.route("/api/follow", methods=["POST"])
+def api_follow():
+    data = request.get_json()
+    follower = int(data.get("follower"))
+    target = int(data.get("target"))
+
+    if follower == target:
+        return jsonify({"ok": False, "error": "cannot_follow_self"}), 200
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        INSERT INTO dom_follows (follower, target)
+        VALUES (%s, %s)
+        ON CONFLICT DO NOTHING
+    """, (follower, target))
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True})
+
+@app_web.route("/api/follow_stats/<int:user_id>")
+def api_follow_stats(user_id):
+    conn = db(); c = conn.cursor()
+
+    c.execute("SELECT COUNT(*) FROM dom_follows WHERE target=%s", (user_id,))
+    followers = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM dom_follows WHERE follower=%s", (user_id,))
+    following = c.fetchone()[0]
+
+    release_db(conn)
+
+    return jsonify({"ok": True, "followers": followers, "following": following})
+
 
 @app_web.route("/admaven-verify")
 def admaven_verify():
@@ -301,6 +335,15 @@ def init_db():
             started_at BIGINT,
             last_claim_at BIGINT,
             ends_at BIGINT
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_follows (
+            id SERIAL PRIMARY KEY,
+            follower BIGINT,
+            target BIGINT,
+            UNIQUE(follower, target)
         )
     """)
 

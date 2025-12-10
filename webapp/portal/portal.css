@@ -248,3 +248,9 @@ body {
     border-radius: 10px;
     cursor: pointer;
 }
+
+.follow-stats {
+    margin-top: 6px;
+    font-size: 12px;
+    opacity: 0.8;
+}

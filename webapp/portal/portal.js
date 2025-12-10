@@ -36,6 +36,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         setUsername(user.username || "");
+        // ---- HIDE FOLLOW BUTTON IF PROFILE OWNER ----
+        const followBtn = document.getElementById("follow-btn");
+        if (followBtn) {
+            if (telegramUser && telegramUser.id == uid) {
+                // դա իմ պրոֆիլն է → follow չպիտի լինի
+                followBtn.style.display = "none";
+            } else {
+                followBtn.style.display = "inline-block";
+            }
+        }
+
     }
 
     // ===============================
@@ -180,3 +191,19 @@ document.addEventListener("DOMContentLoaded", () => {
     checkUsername();
     loadProfile();
 });
+
+// ---- LOAD FOLLOW STATS ----
+async function loadFollowStats() {
+    const res = await fetch(`/api/follow_stats/${uid}`);
+    const data = await res.json();
+
+    if (!data.ok) return;
+
+    document.getElementById("followers-count").innerText =
+        data.followers + " Followers";
+
+    document.getElementById("following-count").innerText =
+        data.following + " Following";
+}
+
+loadFollowStats();
