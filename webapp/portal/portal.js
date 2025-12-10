@@ -312,8 +312,15 @@ async function loadUsers(search = "") {
 //      VIEWER TOP PANEL
 // ===============================
 function loadViewerPanel() {
+    
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
+    if (topAvatar) {
+        topAvatar.style.cursor = "pointer";
+        topAvatar.onclick = () => {
+            window.location.href = `/portal/portal.html?uid=${viewerId}&viewer=${viewerId}`;
+        };
+    }
     if (!topAvatar || !topUsername) return;
 
     // Viewer-ը վերցնում ենք տվյալների բազայից viewerId-ով
