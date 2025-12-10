@@ -84,7 +84,7 @@ def upload_avatar():
         return jsonify({"ok": False, "error": "missing"}), 400
 
     # save file
-    folder = "webapp/portal/avatars"
+    folder = os.path.join(WEBAPP_DIR, "portal", "avatars")
     os.makedirs(folder, exist_ok=True)
 
     filepath = f"{folder}/{uid}.png"
@@ -184,7 +184,7 @@ def release_db(conn):
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0"
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar TEXT"
     
 ]
