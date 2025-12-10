@@ -6,8 +6,19 @@ const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
 const viewerId = viewerFromUrl || profileId;
 const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
+
+// քո ID-ն այս պորտալում
 const CURRENT_UID = viewerId;
 
+// Current active tab (feed | users | messages | chat)
+let CURRENT_TAB = "feed";
+
+// DM՝ ում հետ ենք հիմա խոսում
+let CURRENT_DM_TARGET = null;
+
+// ===============================
+//      STARTUP
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
     loadViewerPanel();
     checkUsername();
@@ -24,6 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     initSettingsPanel();
     initFollowButton();
+    initAvatarUpload();
+    initTabs();
+    initChatEvents();
 
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
@@ -32,66 +46,89 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = `/app?uid=${backUid}`;
         });
     }
+});
 
+// ===============================
+//      TABS LOGIC
+// ===============================
+function initTabs() {
     document.querySelectorAll(".tab-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
 
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+            btn.classList.add("active");
+            const tabId = btn.dataset.tab;
+            CURRENT_TAB = tabId;
 
-        btn.classList.add("active");
-        const tabId = btn.dataset.tab;
-        document.getElementById(tabId).classList.add("active");
+            const page = document.getElementById(tabId);
+            if (page) page.classList.add("active");
 
-        if (tabId === "chat") {
-            document.getElementById("global-chat").style.display = "flex";
-            loadGlobalChat();
-        } else {
-            document.getElementById("global-chat").style.display = "none";
-        }
+            const globalBox = document.getElementById("global-chat");
+            const dmBox = document.getElementById("dm-chat");
 
-        if (tabId === "messages") {
-            document.getElementById("dm-chat").style.display = "none";
-            loadDMList(); // ← ֆոլոու արած մարդկանց ցուցակը
-        }else {
-            document.getElementById("dm-chat").style.display = "none";
-        }
+            if (tabId === "chat") {
+                if (globalBox) globalBox.style.display = "flex";
+                if (dmBox) dmBox.style.display = "none";
+                loadGlobalChat();
+            } else {
+                if (globalBox) globalBox.style.display = "none";
+            }
+
+            if (tabId === "messages") {
+                if (dmBox) dmBox.style.display = "none"; // բացվում է միայն openDM()-ով
+                loadDMList(); // ֆոլոու արածների լիստ
+            } else {
+                if (dmBox) dmBox.style.display = "none";
+            }
+        });
     });
-});
+}
 
-        const globalSend = document.getElementById("global-send");
-        if (globalSend) {
-            globalSend.addEventListener("click", sendGlobalMessage);
-        }
+// ===============================
+//      CHAT EVENTS
+// ===============================
+function initChatEvents() {
+    // GLOBAL CHAT
+    const globalSend = document.getElementById("global-send");
+    if (globalSend) {
+        globalSend.addEventListener("click", sendGlobalMessage);
+    }
 
-        const globalInput = document.getElementById("global-input");
-        if (globalInput) {
-            globalInput.addEventListener("keypress", e => {
-                if (e.key === "Enter") sendGlobalMessage();
-            });
-        }
+    const globalInput = document.getElementById("global-input");
+    if (globalInput) {
+        globalInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") sendGlobalMessage();
+        });
+    }
 
-        const dmSend = document.getElementById("dm-send");
-        if (dmSend) {
-            dmSend.addEventListener("click", sendDM);
-        }
+    // DM CHAT
+    const dmSend = document.getElementById("dm-send");
+    if (dmSend) {
+        dmSend.addEventListener("click", sendDM);
+    }
 
-        const dmInput = document.getElementById("dm-input");
-        if (dmInput) {
-            dmInput.addEventListener("keypress", e => {
-                if (e.key === "Enter") sendDM();
-            });
-        }
+    const dmInput = document.getElementById("dm-input");
+    if (dmInput) {
+        dmInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") sendDM();
+        });
+    }
+}
 
-    initAvatarUpload();
-});
-
+// ===============================
+//        DM LIST
+// ===============================
 async function loadDMList() {
+    if (!viewerId) return;
+
     const res = await fetch(`/api/follows/list?uid=${viewerId}`);
     const data = await res.json();
     if (!data.ok) return;
 
     const box = document.getElementById("pm-list");
+    if (!box) return;
+
     box.innerHTML = "";
 
     data.list.forEach(u => {
@@ -117,6 +154,9 @@ async function loadDMList() {
     });
 }
 
+// ===============================
+//        LOAD PROFILE
+// ===============================
 async function loadProfile() {
     if (!profileId) return;
 
@@ -130,14 +170,11 @@ async function loadProfile() {
 
         const profileAvatar = document.getElementById("profile-avatar");
         if (profileAvatar) {
-
             let avatarUrl = "/portal/default.png";
 
             if (user.avatar_data && user.avatar_data !== "") {
                 avatarUrl = user.avatar_data;
-            }
-
-            else if (user.avatar && user.avatar !== "") {
+            } else if (user.avatar && user.avatar !== "") {
                 avatarUrl = user.avatar;
             }
 
@@ -145,112 +182,139 @@ async function loadProfile() {
         }
 
         setUsername(user.username || "");
-
     } catch (e) {
         console.error("loadProfile error:", e);
     }
 }
 
+// ===============================
+//        GLOBAL CHAT
+// ===============================
 async function loadGlobalChat() {
-    const res = await fetch(`/api/global/history`);
-    const data = await res.json();
+    // եթե Global Chat tab-ում չենք, անիմաստ է ամեն անգամ թարմացնել
+    if (CURRENT_TAB !== "chat") return;
 
-    if (!data.ok) return;
+    try {
+        const res = await fetch(`/api/global/history`);
+        const data = await res.json();
 
-    const box = document.getElementById("global-messages");
-    box.innerHTML = "";
+        if (!data.ok) return;
 
-    data.messages.forEach(msg => {
-        const div = document.createElement("div");
-        div.innerHTML = `<b>${msg.sender}</b>: ${msg.text}`;
-        div.style.marginBottom = "6px";
-        box.appendChild(div);
-    });
+        const box = document.getElementById("global-messages");
+        if (!box) return;
 
-    box.scrollTop = box.scrollHeight;
+        box.innerHTML = "";
+
+        data.messages.forEach(msg => {
+            const div = document.createElement("div");
+            const who = (String(msg.sender) === String(CURRENT_UID)) ? "You" : msg.sender;
+            div.innerHTML = `<b>${who}</b>: ${msg.text}`;
+            div.style.marginBottom = "6px";
+            box.appendChild(div);
+        });
+
+        box.scrollTop = box.scrollHeight;
+    } catch (e) {
+        console.error("loadGlobalChat error:", e);
+    }
 }
 
 async function sendGlobalMessage() {
     const input = document.getElementById("global-input");
+    if (!input) return;
+
     const text = input.value.trim();
-    if (text === "") return;
+    if (text === "" || !CURRENT_UID) return;
 
-    await fetch(`/api/global/send`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            sender: CURRENT_UID,
-            text
-        })
-    });
+    try {
+        await fetch(`/api/global/send`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                sender: CURRENT_UID,
+                text
+            })
+        });
 
-    input.value = "";
-    loadGlobalChat();
+        input.value = "";
+        await loadGlobalChat();
+    } catch (e) {
+        console.error("sendGlobalMessage error:", e);
+    }
 }
 
-document.getElementById("global-send").onclick = sendGlobalMessage;
-
-document.getElementById("global-input").addEventListener("keypress", function(e){
-    if (e.key === "Enter") sendGlobalMessage();
-});
-
-let CURRENT_DM_TARGET = null;
-
+// ===============================
+//        DM CHAT
+// ===============================
 async function openDM(targetId) {
+    if (!targetId) return;
     CURRENT_DM_TARGET = targetId;
 
-    document.getElementById("dm-chat").style.display = "flex";
-    document.getElementById("global-chat").style.display = "none";
+    const dmBox = document.getElementById("dm-chat");
+    const globalBox = document.getElementById("global-chat");
 
-    loadDM();
+    if (dmBox) dmBox.style.display = "flex";
+    if (globalBox) globalBox.style.display = "none";
+
+    await loadDM();
 }
 
 async function loadDM() {
-    if (!CURRENT_DM_TARGET) return;
+    if (!CURRENT_DM_TARGET || !CURRENT_UID) return;
 
-    const res = await fetch(`/api/message/history?u1=${CURRENT_UID}&u2=${CURRENT_DM_TARGET}`);
-    const data = await res.json();
+    try {
+        const res = await fetch(`/api/message/history?u1=${CURRENT_UID}&u2=${CURRENT_DM_TARGET}`);
+        const data = await res.json();
 
-    if (!data.ok) return;
+        if (!data.ok) return;
 
-    const box = document.getElementById("dm-messages");
-    box.innerHTML = "";
+        const box = document.getElementById("dm-messages");
+        if (!box) return;
 
-    data.messages.forEach(m => {
-        const div = document.createElement("div");
-        div.innerHTML = `<b>${m.sender == CURRENT_UID ? "You" : m.sender}</b>: ${m.text}`;
-        div.style.marginBottom = "6px";
-        box.appendChild(div);
-    });
+        box.innerHTML = "";
 
-    box.scrollTop = box.scrollHeight;
+        data.messages.forEach(m => {
+            const div = document.createElement("div");
+            const who = (String(m.sender) === String(CURRENT_UID)) ? "You" : m.sender;
+            div.innerHTML = `<b>${who}</b>: ${m.text}`;
+            div.style.marginBottom = "6px";
+            box.appendChild(div);
+        });
+
+        box.scrollTop = box.scrollHeight;
+    } catch (e) {
+        console.error("loadDM error:", e);
+    }
 }
 
 async function sendDM() {
     const input = document.getElementById("dm-input");
+    if (!input) return;
+
     const text = input.value.trim();
-    if (text === "") return;
+    if (text === "" || !CURRENT_UID || !CURRENT_DM_TARGET) return;
 
-    await fetch(`/api/message/send`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            sender: CURRENT_UID,
-            receiver: CURRENT_DM_TARGET,
-            text
-        })
-    });
+    try {
+        await fetch(`/api/message/send`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                sender: CURRENT_UID,
+                receiver: CURRENT_DM_TARGET,
+                text
+            })
+        });
 
-    input.value = "";
-    loadDM();
+        input.value = "";
+        await loadDM();
+    } catch (e) {
+        console.error("sendDM error:", e);
+    }
 }
 
-document.getElementById("dm-send").onclick = sendDM;
-
-document.getElementById("dm-input").addEventListener("keypress", function(e){
-    if (e.key === "Enter") sendDM();
-});
-
+// ===============================
+//        USERNAME LOGIC
+// ===============================
 async function checkUsername() {
     if (!profileId) return;
 
@@ -260,7 +324,7 @@ async function checkUsername() {
         if (!data.ok || !data.user) return;
 
         const savedName = data.user.username;
-        const teleName = telegramUser?.username || null;
+        const teleName = typeof telegramUser !== "undefined" ? (telegramUser?.username || null) : null;
 
         if (savedName && savedName.trim() !== "") {
             setUsername(savedName);
@@ -288,7 +352,7 @@ function setUsername(name) {
 }
 
 async function saveUsername(name) {
-    if (!viewerId) return; // username-ը պահում ենք OWNER-ի համար
+    if (!viewerId) return;
     await fetch(`/api/set_username`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -320,6 +384,9 @@ function showUsernamePopup() {
     };
 }
 
+// ===============================
+//          AVATAR LOGIC
+// ===============================
 function initAvatarUpload() {
     const avatarInput = document.getElementById("avatar-input");
     const avatarTop = document.getElementById("user-avatar");
@@ -364,6 +431,9 @@ function initAvatarUpload() {
     }
 }
 
+// ===============================
+//      SETTINGS PANEL LOGIC
+// ===============================
 function initSettingsPanel() {
     const settingsBtn = document.getElementById("settings-btn");
     const settingsPanel = document.getElementById("settings-panel");
@@ -395,6 +465,9 @@ function initSettingsPanel() {
     }
 }
 
+// ===============================
+//        LOAD USERS LIST
+// ===============================
 async function loadUsers(search = "") {
     try {
         const q = encodeURIComponent(search);
@@ -435,7 +508,6 @@ async function loadUsers(search = "") {
                 window.location.href = `/portal/portal.html?uid=${u.user_id}&viewer=${viewerId}`;
             };
 
-
             box.appendChild(div);
         });
     } catch (e) {
@@ -443,6 +515,9 @@ async function loadUsers(search = "") {
     }
 }
 
+// ===============================
+//      VIEWER TOP PANEL
+// ===============================
 function loadViewerPanel() {
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
@@ -489,6 +564,9 @@ function loadViewerPanel() {
         });
 }
 
+// ===============================
+//      FOLLOW STATS + BUTTON
+// ===============================
 async function loadFollowStats() {
     if (!profileId) return;
 
