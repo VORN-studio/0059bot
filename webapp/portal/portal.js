@@ -1,5 +1,7 @@
 const urlParams = new URLSearchParams(window.location.search);
 const uid = urlParams.get("uid");
+const tg = window.Telegram.WebApp;
+const telegramUser = tg.initDataUnsafe?.user || null;
 
 /* LOAD PROFILE DATA */
 async function loadProfile() {
@@ -25,37 +27,52 @@ async function checkUsername() {
     const res = await fetch(`/api/user/${uid}`);
     const data = await res.json();
 
-    if (data.username && data.username.trim() !== "") {
-        // username exists → continue normal flow
-        document.getElementById("username").innerText = data.username;
-        document.getElementById("profile-name").innerText = data.username;
+    let savedName = data.username;
+    let teleName = telegramUser?.username || null;
+
+    // 1) Եթե DB already has username → օգտագործում ենք
+    if (savedName && savedName.trim() !== "") {
+        setUsername(savedName);
         return;
     }
 
-    // No username → show popup
-    document.getElementById("username-popup").classList.remove("hidden");
+    // 2) Եթե Telegram username կա → պահպանում ենք DB-ում
+    if (teleName && teleName.trim() !== "") {
+        await saveUsername(teleName);
+        setUsername(teleName);
+        return;
+    }
 
-    document.getElementById("username-save").addEventListener("click", async () => {
-        const newName = document.getElementById("username-input").value.trim();
+    // 3) Եթե username չկա → բացում ենք popup (միայն առաջին անգամ)
+    showUsernamePopup();
+}
 
-        if (newName.length < 3) {
-            alert("Username-ը պետք է լինի նվազագույնը 3 սիմվոլ։");
-            return;
-        }
 
-        // save username to DB
-        await fetch(`/api/set_username`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid: uid, username: newName })
-        });
+function setUsername(name) {
+    document.getElementById("username").innerText = name;
+    document.getElementById("profile-name").innerText = name;
+}
 
-        document.getElementById("username-popup").classList.add("hidden");
-        document.getElementById("username").innerText = newName;
-        document.getElementById("profile-name").innerText = newName;
+async function saveUsername(name) {
+    await fetch(`/api/set_username`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: uid, username: name })
     });
 }
 
+function showUsernamePopup() {
+    document.getElementById("username-popup").classList.remove("hidden");
+
+    document.getElementById("username-save").onclick = async () => {
+        let newName = document.getElementById("username-input").value.trim();
+        if (newName.length < 3) return alert("Username-ը պետք է >= 3 սիմվոլ լինի");
+
+        await saveUsername(newName);
+        setUsername(newName);
+        document.getElementById("username-popup").classList.add("hidden");
+    };
+}
 
 
 document.getElementById("back-btn").addEventListener("click", () => {
