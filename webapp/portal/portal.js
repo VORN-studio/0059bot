@@ -101,12 +101,26 @@ function initTabs() {
 }
 
 
-function startGlobalRefresh() {
-    // already active?
-    if (window.GLOBAL_REFRESH_INTERVAL) return;
+async function sendGlobalMessage() {
+    const input = document.getElementById("global-input");
+    const text = input.value.trim();
+    if (text === "") return;
 
-    window.GLOBAL_REFRESH_INTERVAL = setInterval(loadGlobalChat, 1500);
+    await fetch(`/api/global/send`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            sender: CURRENT_UID,
+            text
+        })
+    });
+
+    input.value = "";
+
+    loadGlobalChat();   // ← անմիջապես ցուցադրում ենք
+    startGlobalRefresh();  // ← ապահովում ենք auto refresh
 }
+
 
 function stopGlobalRefresh() {
     if (window.GLOBAL_REFRESH_INTERVAL) {
