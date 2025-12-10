@@ -312,24 +312,27 @@ async function loadUsers(search = "") {
 //      VIEWER TOP PANEL
 // ===============================
 function loadViewerPanel() {
-    
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
+
+    // enable click → always return to my profile
     if (topAvatar) {
         topAvatar.style.cursor = "pointer";
         topAvatar.onclick = () => {
             window.location.href = `/portal/portal.html?uid=${viewerId}&viewer=${viewerId}`;
         };
     }
+
     if (!topAvatar || !topUsername) return;
 
-    // Viewer-ը վերցնում ենք տվյալների բազայից viewerId-ով
+    // viewerId must exist
     if (!viewerId) {
         topAvatar.src = "/portal/default.png";
         topUsername.innerText = "Unknown";
         return;
     }
 
+    // 🔥 ALWAYS LOAD VIEWER FROM DATABASE (NOT TELEGRAM)
     fetch(`/api/user/${viewerId}`)
         .then(r => r.json())
         .then(d => {
@@ -338,8 +341,18 @@ function loadViewerPanel() {
                 topUsername.innerText = "Unknown";
                 return;
             }
+
             const user = d.user;
-            topAvatar.src = user.avatar || "/portal/default.png";
+
+            // 🔥 Correct avatar logic: avatar_data → avatar → default
+            if (user.avatar_data && user.avatar_data !== "") {
+                topAvatar.src = user.avatar_data;
+            } else if (user.avatar && user.avatar !== "") {
+                topAvatar.src = user.avatar;
+            } else {
+                topAvatar.src = "/portal/default.png";
+            }
+
             topUsername.innerText = user.username || "Unknown";
         })
         .catch(() => {
@@ -347,6 +360,7 @@ function loadViewerPanel() {
             topUsername.innerText = "Unknown";
         });
 }
+
 
 
 // ===============================
