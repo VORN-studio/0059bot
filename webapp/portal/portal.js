@@ -19,58 +19,20 @@ const viewerId = telegramUser?.id ? String(telegramUser.id) : profileId;
 // արդյո՞ք սա իմ սեփական պրոֆիլն է
 const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
 
+// ===============================
+//   STARTUP
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
-
-    document.addEventListener("DOMContentLoaded", () => {
-
-    // ======== LOAD VIEWER PANEL (TOP BAR) ========
+    // վերևի panel — ՄԻԱՅՆ viewer-ի մասին
     loadViewerPanel();
 
-    // ======== USER PROFILE (profileId) ========
+    // պրոֆիլ, որին մտել ենք (profileId)
     checkUsername();
     loadProfile();
     loadFollowStats();
     loadUsers("");
-});
 
-
-
-    // ===============================
-    //        LOAD USER PROFILE
-    // ===============================
-    async function loadProfile() {
-        if (!profileId) return;
-
-        const res = await fetch(`/api/user/${profileId}`);
-        const data = await res.json();
-
-        if (!data.ok || !data.user) return;
-
-        const user = data.user;
-
-        // avatar in profile card
-        const profileAvatar = document.getElementById("profile-avatar");
-        if (user.avatar && profileAvatar) {
-            profileAvatar.src = user.avatar;
-        }
-
-        setUsername(user.username || "");
-
-        // ---- FOLLOW BUTTON visibility ----
-        const followBtn = document.getElementById("follow-btn");
-        if (followBtn) {
-            if (!profileId || isOwner) {
-                // իմ սեփական պրոֆիլն է կամ uid չկա → follow կոճակ պետք չի
-                followBtn.style.display = "none";
-            } else {
-                followBtn.style.display = "inline-block";
-            }
-        }
-    }
-
-    // ===============================
-    //        SEARCH USERS
-    // ===============================
+    // search input listener
     const search = document.getElementById("user-search");
     if (search) {
         search.addEventListener("input", () => {
@@ -78,12 +40,74 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ===============================
-    //        USERNAME LOGIC
-    // ===============================
-    async function checkUsername() {
-        if (!profileId) return;
+    // settings panel
+    initSettingsPanel();
 
+    // follow կոճակ
+    initFollowButton();
+
+    // back կոճակ
+    const backBtn = document.getElementById("back-btn");
+    if (backBtn) {
+        backBtn.addEventListener("click", () => {
+            const backUid = viewerId || profileId || "";
+            window.location.href = `/app?uid=${backUid}`;
+        });
+    }
+
+    // tabs
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+
+            btn.classList.add("active");
+            const tabId = btn.dataset.tab;
+            document.getElementById(tabId).classList.add("active");
+        });
+    });
+
+    // avatar upload
+    initAvatarUpload();
+});
+
+// ===============================
+//        LOAD USER PROFILE
+// ===============================
+async function loadProfile() {
+    if (!profileId) return;
+
+    try {
+        const res = await fetch(`/api/user/${profileId}`);
+        const data = await res.json();
+
+        if (!data.ok || !data.user) return;
+
+        const user = data.user;
+
+        // avatar in profile card (մեծ կլոր նկարը)
+        const profileAvatar = document.getElementById("profile-avatar");
+        if (profileAvatar) {
+            const avatarUrl = user.avatar && user.avatar !== ""
+                ? user.avatar
+                : "/portal/default.png";
+            profileAvatar.src = avatarUrl;
+        }
+
+        // profile name (մեծ անունը)
+        setUsername(user.username || "");
+    } catch (e) {
+        console.error("loadProfile error:", e);
+    }
+}
+
+// ===============================
+//        USERNAME LOGIC
+// ===============================
+async function checkUsername() {
+    if (!profileId) return;
+
+    try {
         const res = await fetch(`/api/user/${profileId}`);
         const data = await res.json();
         if (!data.ok || !data.user) return;
@@ -111,66 +135,68 @@ document.addEventListener("DOMContentLoaded", () => {
             // օտար պրոֆիլ է, անուն չունի → պարզապես թողնում ենք դատարկ
             setUsername("");
         }
+    } catch (e) {
+        console.error("checkUsername error:", e);
     }
-
-
-    function setUsername(name) {
-        // Միայն պրոֆիլի անունը ենք փոխում
-        const profileName = document.getElementById("profile-name");
-        if (profileName) profileName.innerText = name;
 }
 
+// ❗ Այստեղ ԱԼԵՎԵՍ ՉԵՆՔ ԴԻՊՉՈՒՄ ՎԵՐԵՎԻ USERNAME-ին
+function setUsername(name) {
+    const profileName = document.getElementById("profile-name");
+    if (profileName) profileName.innerText = name;
+}
 
-    async function saveUsername(name) {
-        // username-ը պահպանվում է ՄԻԱՅՆ viewer-ի համար
-        if (!viewerId) return;
-        await fetch(`/api/set_username`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid: viewerId, username: name })
-        });
-    }
+async function saveUsername(name) {
+    if (!viewerId) return; // username-ը պահում ենք OWNER-ի համար
+    await fetch(`/api/set_username`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: viewerId, username: name })
+    });
+}
 
-    function showUsernamePopup() {
-        if (!isOwner) return; // ապահովության համար
+function showUsernamePopup() {
+    if (!isOwner) return;
 
-        const popup = document.getElementById("username-popup");
-        const input = document.getElementById("username-input");
-        const btn = document.getElementById("username-save");
+    const popup = document.getElementById("username-popup");
+    const input = document.getElementById("username-input");
+    const btn = document.getElementById("username-save");
 
-        popup.classList.remove("hidden");
+    if (!popup || !input || !btn) return;
 
-        btn.onclick = async () => {
-            let name = input.value.trim();
-            if (name.length < 3) {
-                alert("Username-ը պետք է >= 3 սիմվոլ լինի");
-                return;
-            }
+    popup.classList.remove("hidden");
 
-            await saveUsername(name);
-            setUsername(name);
-            popup.classList.add("hidden");
-        };
-    }
+    btn.onclick = async () => {
+        let name = input.value.trim();
+        if (name.length < 3) {
+            alert("Username-ը պետք է >= 3 սիմվոլ լինի");
+            return;
+        }
 
-    // ===============================
-    //          AVATAR LOGIC
-    // ===============================
+        await saveUsername(name);
+        setUsername(name);
+        popup.classList.add("hidden");
+    };
+}
+
+// ===============================
+//          AVATAR LOGIC
+// ===============================
+function initAvatarUpload() {
     const avatarInput = document.getElementById("avatar-input");
     const avatarTop = document.getElementById("user-avatar");
     const avatarProfile = document.getElementById("profile-avatar");
-
-    // settings → change avatar click
     const changeAvatarBtn = document.getElementById("change-avatar-open");
-    if (changeAvatarBtn) {
+
+    if (changeAvatarBtn && avatarInput) {
         changeAvatarBtn.addEventListener("click", () => {
-            if (!isOwner) return; // այլոց avatar-ը չենք թողնում փոխել
+            if (!isOwner) return;
             avatarInput.click();
-            document.getElementById("settings-panel").classList.add("hidden");
+            const panel = document.getElementById("settings-panel");
+            if (panel) panel.classList.add("hidden");
         });
     }
 
-    // file selected
     if (avatarInput) {
         avatarInput.addEventListener("change", async function () {
             if (!isOwner) {
@@ -190,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const formData = new FormData();
             formData.append("avatar", file);
-            formData.append("uid", viewerId); // avatar-ը պահում ենք OWNER-ի համար
+            formData.append("uid", viewerId);
 
             await fetch("/api/upload_avatar", {
                 method: "POST",
@@ -198,18 +224,19 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
+}
 
-    // ===============================
-    //      SETTINGS PANEL LOGIC
-    // ===============================
+// ===============================
+//      SETTINGS PANEL LOGIC
+// ===============================
+function initSettingsPanel() {
     const settingsBtn = document.getElementById("settings-btn");
     const settingsPanel = document.getElementById("settings-panel");
     const settingsClose = document.getElementById("settings-close");
     const changeUsernameBtn = document.getElementById("change-username-open");
 
-    if (settingsBtn) {
+    if (settingsBtn && settingsPanel) {
         if (!isOwner) {
-            // եթե օտար պրոֆիլ է → settings չենք ցույց տալիս
             settingsBtn.style.display = "none";
         } else {
             settingsBtn.onclick = () => {
@@ -218,155 +245,114 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    if (settingsClose) {
+    if (settingsClose && settingsPanel) {
         settingsClose.onclick = () => {
             settingsPanel.classList.add("hidden");
         };
     }
 
-    if (changeUsernameBtn) {
+    if (changeUsernameBtn && settingsPanel) {
         changeUsernameBtn.addEventListener("click", () => {
             if (!isOwner) return;
             showUsernamePopup();
             settingsPanel.classList.add("hidden");
         });
     }
-
-    // ===============================
-    //            TABS
-    // ===============================
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
-
-            btn.classList.add("active");
-            const tabId = btn.dataset.tab;
-            document.getElementById(tabId).classList.add("active");
-        });
-    });
-
-    // ===============================
-    //         BACK BUTTON
-    // ===============================
-    const backBtn = document.getElementById("back-btn");
-    if (backBtn) {
-        backBtn.addEventListener("click", () => {
-            // վերադառնում ենք app մեր user-ի uid-ով, ոչ թե profile-ի
-            const backUid = viewerId || profileId || "";
-            window.location.href = `/app?uid=${backUid}`;
-        });
-    }
-
-    // ===============================
-    //       FOLLOW BUTTON LOGIC
-    // ===============================
-    const followBtn = document.getElementById("follow-btn");
-    if (followBtn) {
-        followBtn.addEventListener("click", async () => {
-            if (!viewerId || !profileId || isOwner) return;
-
-            try {
-                const res = await fetch("/api/follow", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        follower: viewerId,
-                        target: profileId
-                    })
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    followBtn.innerText = "Following";
-                    await loadFollowStats(); // թարմացնենք counters-ը
-                } else {
-                    alert("Չստացվեց follow անել");
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        });
-    }
-
-    // ===============================
-    //        STARTUP CALLS
-    // ===============================
-    checkUsername();
-    loadProfile();
-    loadFollowStats();
-    loadUsers("");
-});
+}
 
 // ===============================
 //        LOAD USERS LIST
 // ===============================
 async function loadUsers(search = "") {
-    const res = await fetch(`/api/search_users?q=${search}&viewer=${viewerId}`);
-    const data = await res.json();
+    try {
+        const q = encodeURIComponent(search);
+        const res = await fetch(`/api/search_users?q=${q}&viewer=${viewerId}`);
+        const data = await res.json();
 
-    if (!data.ok) return;
+        if (!data.ok) return;
 
-    const box = document.getElementById("users-list");
-    box.innerHTML = "";
+        const box = document.getElementById("users-list");
+        if (!box) return;
 
-    data.users.forEach(u => {
-        const div = document.createElement("div");
-        div.className = "user-row";
-        div.style.cssText = `
-            display:flex;
-            align-items:center;
-            padding:10px;
-            background:#1115;
-            border-radius:10px;
-            margin-bottom:8px;
-        `;
+        box.innerHTML = "";
 
-        div.innerHTML = `
-            <img src="${u.avatar}" style="width:40px;height:40px;border-radius:50%;margin-right:10px;">
-            <div style="flex-grow:1;font-size:16px;">${u.username}</div>
-            <button data-id="${u.user_id}"
-                style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
-                Բացել
-            </button>
-        `;
+        data.users.forEach(u => {
+            const div = document.createElement("div");
+            div.className = "user-row";
+            div.style.cssText = `
+                display:flex;
+                align-items:center;
+                padding:10px;
+                background:#1115;
+                border-radius:10px;
+                margin-bottom:8px;
+            `;
 
-        div.querySelector("button").onclick = () => {
-            window.location.href = `/portal/portal.html?uid=${u.user_id}`;
-        };
+            const avatarUrl = u.avatar && u.avatar !== "" ? u.avatar : "/portal/default.png";
 
-        box.appendChild(div);
-    });
+            div.innerHTML = `
+                <img src="${avatarUrl}" style="width:40px;height:40px;border-radius:50%;margin-right:10px;">
+                <div style="flex-grow:1;font-size:16px;">${u.username}</div>
+                <button data-id="${u.user_id}"
+                    style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
+                    Բացել
+                </button>
+            `;
+
+            div.querySelector("button").onclick = () => {
+                window.location.href = `/portal/portal.html?uid=${u.user_id}`;
+            };
+
+            box.appendChild(div);
+        });
+    } catch (e) {
+        console.error("loadUsers error:", e);
+    }
 }
 
-
+// ===============================
+//      VIEWER TOP PANEL
+// ===============================
 function loadViewerPanel() {
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
+    if (!topAvatar || !topUsername) return;
 
+    // Եթե Telegram-ից է բացվել WebApp-ը → օգտագործում ենք հենց Telegram user-ը
     if (telegramUser) {
         if (telegramUser.photo_url) {
             topAvatar.src = telegramUser.photo_url;
         } else {
             topAvatar.src = "/portal/default.png";
         }
-
         topUsername.innerText = telegramUser.username || "Unknown";
+        return;
+    }
+
+    // Եթե Telegram WebApp-ում չենք, viewerId-ից վերցնենք բազայից
+    if (!viewerId) {
+        topAvatar.src = "/portal/default.png";
+        topUsername.innerText = "Unknown";
         return;
     }
 
     fetch(`/api/user/${viewerId}`)
         .then(r => r.json())
         .then(d => {
-            if (!d.ok) return;
+            if (!d.ok || !d.user) {
+                topAvatar.src = "/portal/default.png";
+                topUsername.innerText = "Unknown";
+                return;
+            }
             const user = d.user;
-
             topAvatar.src = user.avatar || "/portal/default.png";
             topUsername.innerText = user.username || "Unknown";
+        })
+        .catch(() => {
+            topAvatar.src = "/portal/default.png";
+            topUsername.innerText = "Unknown";
         });
 }
-
-
-
 
 // ===============================
 //      FOLLOW STATS + STATE
@@ -375,7 +361,6 @@ async function loadFollowStats() {
     if (!profileId) return;
 
     try {
-        // followers/following counters
         const res = await fetch(`/api/follow_stats/${profileId}`);
         const data = await res.json();
         if (!data.ok) return;
@@ -390,7 +375,6 @@ async function loadFollowStats() {
             followingSpan.innerText = data.following + " Following";
         }
 
-        // եթե viewer կա և սա իր սեփական պրոֆիլը չի → ստուգենք follow state-ը
         const followBtn = document.getElementById("follow-btn");
         if (followBtn && viewerId && !isOwner) {
             const sRes = await fetch(`/api/is_following/${viewerId}/${profileId}`);
@@ -400,6 +384,38 @@ async function loadFollowStats() {
             }
         }
     } catch (e) {
-        console.error(e);
+        console.error("loadFollowStats error:", e);
     }
+}
+
+// ===============================
+//       FOLLOW BUTTON INIT
+// ===============================
+function initFollowButton() {
+    const followBtn = document.getElementById("follow-btn");
+    if (!followBtn) return;
+
+    followBtn.addEventListener("click", async () => {
+        if (!viewerId || !profileId || isOwner) return;
+
+        try {
+            const res = await fetch("/api/follow", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    follower: viewerId,
+                    target: profileId
+                })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                followBtn.innerText = "Following";
+                await loadFollowStats();
+            } else {
+                alert("Չստացվեց follow անել");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    });
 }
