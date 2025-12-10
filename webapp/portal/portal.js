@@ -1,12 +1,23 @@
 // portal.js
 
-// 🔹 UID from URL
+// -----------------------------
+//   URL / Telegram user
+// -----------------------------
 const urlParams = new URLSearchParams(window.location.search);
-const uid = urlParams.get("uid") || "";
 
-// 🔹 Safe Telegram object
+// ում պրոֆիլն ենք նայում (profile)
+const profileId = urlParams.get("uid") || "";
+
+// Telegram WebApp user (viewer)
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 const telegramUser = tg?.initDataUnsafe?.user || null;
+
+// ով է դիտողը (viewer) — եթե Telegram-ից է, վերցնում ենք իրեն,
+// եթե բացել են ուղղակի browser-ով, viewer-ը նույնն է, ինչ profile-ը
+const viewerId = telegramUser?.id ? String(telegramUser.id) : profileId;
+
+// արդյո՞ք սա իմ սեփական պրոֆիլն է
+const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -14,9 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
     //        LOAD USER PROFILE
     // ===============================
     async function loadProfile() {
-        if (!uid) return;
+        if (!profileId) return;
 
-        const res = await fetch(`/api/user/${uid}`);
+        const res = await fetch(`/api/user/${profileId}`);
         const data = await res.json();
 
         if (!data.ok || !data.user) return;
@@ -36,19 +47,22 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         setUsername(user.username || "");
-        // ---- HIDE FOLLOW BUTTON IF PROFILE OWNER ----
+
+        // ---- FOLLOW BUTTON visibility ----
         const followBtn = document.getElementById("follow-btn");
         if (followBtn) {
-            if (telegramUser && telegramUser.id == uid) {
-                // դա իմ պրոֆիլն է → follow չպիտի լինի
+            if (!profileId || isOwner) {
+                // իմ սեփական պրոֆիլն է կամ uid չկա → follow կոճակ պետք չի
                 followBtn.style.display = "none";
             } else {
                 followBtn.style.display = "inline-block";
             }
         }
-
     }
 
+    // ===============================
+    //        SEARCH USERS
+    // ===============================
     const search = document.getElementById("user-search");
     if (search) {
         search.addEventListener("input", () => {
@@ -56,32 +70,39 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     // ===============================
     //        USERNAME LOGIC
     // ===============================
     async function checkUsername() {
-        if (!uid) return;
+        if (!profileId) return;
 
-        const res = await fetch(`/api/user/${uid}`);
+        const res = await fetch(`/api/user/${profileId}`);
         const data = await res.json();
         if (!data.ok || !data.user) return;
 
         const savedName = data.user.username;
         const teleName = telegramUser?.username || null;
 
+        // եթե բազայում արդեն անուն կա → ուղղակի ցույց ենք տալիս
         if (savedName && savedName.trim() !== "") {
             setUsername(savedName);
             return;
         }
 
-        if (teleName && teleName.trim() !== "") {
-            await saveUsername(teleName);
-            setUsername(teleName);
-            return;
+        // եթե սա իմ սեփական պրոֆիլն է
+        if (isOwner) {
+            // եթե Telegram username ունեմ → ավտոմատ օգտագործում ենք
+            if (teleName && teleName.trim() !== "") {
+                await saveUsername(teleName);
+                setUsername(teleName);
+                return;
+            }
+            // այլապես բացում ենք popup, որ ինքդ գրես
+            showUsernamePopup();
+        } else {
+            // օտար պրոֆիլ է, անուն չունի → պարզապես թողնում ենք դատարկ
+            setUsername("");
         }
-
-        showUsernamePopup();
     }
 
     function setUsername(name) {
@@ -92,15 +113,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function saveUsername(name) {
-        if (!uid) return;
+        // username-ը պահպանվում է ՄԻԱՅՆ viewer-ի համար
+        if (!viewerId) return;
         await fetch(`/api/set_username`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid, username: name })
+            body: JSON.stringify({ uid: viewerId, username: name })
         });
     }
 
     function showUsernamePopup() {
+        if (!isOwner) return; // ապահովության համար
+
         const popup = document.getElementById("username-popup");
         const input = document.getElementById("username-input");
         const btn = document.getElementById("username-save");
@@ -131,43 +155,73 @@ document.addEventListener("DOMContentLoaded", () => {
     const changeAvatarBtn = document.getElementById("change-avatar-open");
     if (changeAvatarBtn) {
         changeAvatarBtn.addEventListener("click", () => {
+            if (!isOwner) return; // այլոց avatar-ը չենք թողնում փոխել
             avatarInput.click();
             document.getElementById("settings-panel").classList.add("hidden");
         });
     }
 
     // file selected
-    avatarInput.addEventListener("change", async function () {
-        const file = this.files[0];
-        if (!file) return;
+    if (avatarInput) {
+        avatarInput.addEventListener("change", async function () {
+            if (!isOwner) {
+                alert("Դու չես կարող փոխել այս պրոֆիլի avatar-ը");
+                return;
+            }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (avatarTop) avatarTop.src = e.target.result;
-            if (avatarProfile) avatarProfile.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+            const file = this.files[0];
+            if (!file) return;
 
-        const formData = new FormData();
-        formData.append("avatar", file);
-        formData.append("uid", uid);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (avatarTop) avatarTop.src = e.target.result;
+                if (avatarProfile) avatarProfile.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
 
-        await fetch("/api/upload_avatar", {
-            method: "POST",
-            body: formData
+            const formData = new FormData();
+            formData.append("avatar", file);
+            formData.append("uid", viewerId); // avatar-ը պահում ենք OWNER-ի համար
+
+            await fetch("/api/upload_avatar", {
+                method: "POST",
+                body: formData
+            });
         });
-    });
+    }
 
     // ===============================
     //      SETTINGS PANEL LOGIC
     // ===============================
-    document.getElementById("settings-btn").onclick = () => {
-        document.getElementById("settings-panel").classList.remove("hidden");
-    };
+    const settingsBtn = document.getElementById("settings-btn");
+    const settingsPanel = document.getElementById("settings-panel");
+    const settingsClose = document.getElementById("settings-close");
+    const changeUsernameBtn = document.getElementById("change-username-open");
 
-    document.getElementById("settings-close").onclick = () => {
-        document.getElementById("settings-panel").classList.add("hidden");
-    };
+    if (settingsBtn) {
+        if (!isOwner) {
+            // եթե օտար պրոֆիլ է → settings չենք ցույց տալիս
+            settingsBtn.style.display = "none";
+        } else {
+            settingsBtn.onclick = () => {
+                settingsPanel.classList.remove("hidden");
+            };
+        }
+    }
+
+    if (settingsClose) {
+        settingsClose.onclick = () => {
+            settingsPanel.classList.add("hidden");
+        };
+    }
+
+    if (changeUsernameBtn) {
+        changeUsernameBtn.addEventListener("click", () => {
+            if (!isOwner) return;
+            showUsernamePopup();
+            settingsPanel.classList.add("hidden");
+        });
+    }
 
     // ===============================
     //            TABS
@@ -189,17 +243,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
-            window.location.href = `/app?uid=${uid}`;
+            // վերադառնում ենք app մեր user-ի uid-ով, ոչ թե profile-ի
+            const backUid = viewerId || profileId || "";
+            window.location.href = `/app?uid=${backUid}`;
         });
     }
 
     // ===============================
-    //            START
+    //       FOLLOW BUTTON LOGIC
+    // ===============================
+    const followBtn = document.getElementById("follow-btn");
+    if (followBtn) {
+        followBtn.addEventListener("click", async () => {
+            if (!viewerId || !profileId || isOwner) return;
+
+            try {
+                const res = await fetch("/api/follow", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        follower: viewerId,
+                        target: profileId
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    followBtn.innerText = "Following";
+                    await loadFollowStats(); // թարմացնենք counters-ը
+                } else {
+                    alert("Չստացվեց follow անել");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    }
+
+    // ===============================
+    //        STARTUP CALLS
     // ===============================
     checkUsername();
     loadProfile();
+    loadFollowStats();
+    loadUsers("");
 });
 
+// ===============================
+//        LOAD USERS LIST
+// ===============================
 async function loadUsers(search = "") {
     const res = await fetch(`/api/search_users?q=${encodeURIComponent(search)}`);
     const data = await res.json();
@@ -231,6 +322,8 @@ async function loadUsers(search = "") {
         `;
 
         div.querySelector("button").onclick = () => {
+            // բացում ենք նրա պրոֆիլը որպես profileId,
+            // viewer-ը նոր էջում կրկին կվերցվի Telegram-ից
             window.location.href = `/portal/portal.html?uid=${u.user_id}`;
         };
 
@@ -238,20 +331,38 @@ async function loadUsers(search = "") {
     });
 }
 
-
-// ---- LOAD FOLLOW STATS ----
+// ===============================
+//      FOLLOW STATS + STATE
+// ===============================
 async function loadFollowStats() {
-    const res = await fetch(`/api/follow_stats/${uid}`);
-    const data = await res.json();
+    if (!profileId) return;
 
-    if (!data.ok) return;
+    try {
+        // followers/following counters
+        const res = await fetch(`/api/follow_stats/${profileId}`);
+        const data = await res.json();
+        if (!data.ok) return;
 
-    document.getElementById("followers-count").innerText =
-        data.followers + " Followers";
+        const followersSpan = document.getElementById("followers-count");
+        const followingSpan = document.getElementById("following-count");
 
-    document.getElementById("following-count").innerText =
-        data.following + " Following";
+        if (followersSpan) {
+            followersSpan.innerText = data.followers + " Followers";
+        }
+        if (followingSpan) {
+            followingSpan.innerText = data.following + " Following";
+        }
+
+        // եթե viewer կա և սա իր սեփական պրոֆիլը չի → ստուգենք follow state-ը
+        const followBtn = document.getElementById("follow-btn");
+        if (followBtn && viewerId && !isOwner) {
+            const sRes = await fetch(`/api/is_following/${viewerId}/${profileId}`);
+            const sData = await sRes.json();
+            if (sData.ok) {
+                followBtn.innerText = sData.is_following ? "Following" : "Follow";
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
 }
-
-loadFollowStats();
-loadUsers("");

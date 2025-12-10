@@ -209,6 +209,28 @@ def api_follow_stats(user_id):
 
     return jsonify({"ok": True, "followers": followers, "following": following})
 
+@app_web.route("/api/is_following/<int:follower>/<int:target>")
+def api_is_following(follower, target):
+    """
+    Ստուգում ենք՝ follower-ը follow արե՞լ է target-ին, թե ոչ։
+    """
+    if follower == 0 or target == 0:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT 1 FROM dom_follows
+        WHERE follower = %s AND target = %s
+    """, (follower, target))
+    row = c.fetchone()
+    release_db(conn)
+
+    return jsonify({
+        "ok": True,
+        "self": (follower == target),
+        "is_following": bool(row)
+    })
+
 
 @app_web.route("/admaven-verify")
 def admaven_verify():
