@@ -324,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 //        LOAD USERS LIST
 // ===============================
 async function loadUsers(search = "") {
-    const res = await fetch(`/api/search_users?q=${query}&viewer=${viewerId}`)
+    const res = await fetch(`/api/search_users?q=${search}&viewer=${viewerId}`);
     const data = await res.json();
 
     if (!data.ok) return;
@@ -354,8 +354,6 @@ async function loadUsers(search = "") {
         `;
 
         div.querySelector("button").onclick = () => {
-            // բացում ենք նրա պրոֆիլը որպես profileId,
-            // viewer-ը նոր էջում կրկին կվերցվի Telegram-ից
             window.location.href = `/portal/portal.html?uid=${u.user_id}`;
         };
 
@@ -363,22 +361,35 @@ async function loadUsers(search = "") {
     });
 }
 
+
 function loadViewerPanel() {
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
 
+    // Եթե Telegram-ից է բացվել WebApp-ը
     if (telegramUser) {
-        // avatar (եթե Telegram avatar կա)
         if (telegramUser.photo_url) {
             topAvatar.src = telegramUser.photo_url;
+        } else {
+            topAvatar.src = "/portal/default.png";
         }
 
-        // username
-        if (telegramUser.username) {
-            topUsername.innerText = telegramUser.username;
-        }
+        topUsername.innerText = telegramUser.username || "Unknown";
+        return;
     }
+
+    // Եթե Telegram WebApp-ում չենք, վերցնում ենք viewerId-ից տվյալները
+    fetch(`/api/user/${viewerId}`)
+        .then(r => r.json())
+        .then(d => {
+            if (!d.ok) return;
+            const user = d.user;
+
+            topAvatar.src = user.avatar || "/portal/default.png";
+            topUsername.innerText = user.username || "Unknown";
+        });
 }
+
 
 
 // ===============================
