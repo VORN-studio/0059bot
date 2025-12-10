@@ -113,29 +113,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function loadViewerPanel() {
-    const topAvatar = document.getElementById("user-avatar");
-    const topUsername = document.getElementById("username");
-    const avatarUrl = user.avatar && user.avatar !== "" 
-        ? user.avatar 
-        : "/portal/default.png";
-
-    profileAvatar.src = avatarUrl;
-    topAvatar.src = avatarUrl;
-
-    if (telegramUser) {
-        // Telegram avatar
-        if (telegramUser.photo_url) {
-            topAvatar.src = telegramUser.photo_url;
-        }
-
-        // Telegram username
-        if (telegramUser.username) {
-            topUsername.innerText = telegramUser.username;
-        }
-    }
-    }
-
 
     function setUsername(name) {
         const u1 = document.getElementById("username");
