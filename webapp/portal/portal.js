@@ -82,21 +82,34 @@ async function loadProfile() {
 
         const user = data.user;
 
-        // avatar in profile card (մեծ կլոր նկարը)
+        // ------------------------------
+        //   FIXED AVATAR LOGIC
+        // ------------------------------
         const profileAvatar = document.getElementById("profile-avatar");
         if (profileAvatar) {
-            const avatarUrl = user.avatar && user.avatar !== ""
-                ? user.avatar
-                : "/portal/default.png";
+
+            let avatarUrl = "/portal/default.png";
+
+            // 1) avatar_data → Base64 (ամենաուշադիր)
+            if (user.avatar_data && user.avatar_data !== "") {
+                avatarUrl = user.avatar_data;
+            }
+            // 2) avatar URL (Telegram)
+            else if (user.avatar && user.avatar !== "") {
+                avatarUrl = user.avatar;
+            }
+
             profileAvatar.src = avatarUrl;
         }
 
-        // profile name (մեծ անունը)
+        // username
         setUsername(user.username || "");
+
     } catch (e) {
         console.error("loadProfile error:", e);
     }
 }
+
 
 // ===============================
 //        USERNAME LOGIC
