@@ -41,6 +41,10 @@ ADMIN_IDS = {5274439601}
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
 DOMIT_PRICE_USD = 1  # DOMIT հիմա նույնն է, ինչ $ (միայն տեքստով տարբեր)
+PORTAL_DIR = os.path.join(WEBAPP_DIR, "portal")
+TASKS_DIR = os.path.join(WEBAPP_DIR, "tasks")
+GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
+
 
 app_web = Flask(__name__, static_folder=None)
 CORS(app_web)
@@ -112,11 +116,12 @@ def favicon():
 
 @app_web.route('/webapp/tasks/<path:filename>')
 def webapp_tasks(filename):
-    return send_from_directory('webapp/tasks', filename)
+    return send_from_directory(TASKS_DIR, filename)
 
 @app_web.route("/portal/<path:filename>")
 def serve_portal(filename):
-    return send_from_directory("webapp/portal", filename)
+    return send_from_directory(PORTAL_DIR, filename)
+
 
 @app_web.route("/api/set_username", methods=["POST"])
 def api_set_username():
