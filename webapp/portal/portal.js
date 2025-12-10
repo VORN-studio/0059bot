@@ -55,13 +55,12 @@ function initTabs() {
     document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
 
-            // --- reset visuals ---
+            // reset UI
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
 
             btn.classList.add("active");
             const tabId = btn.dataset.tab;
-            CURRENT_TAB = tabId;
 
             const page = document.getElementById(tabId);
             if (page) page.classList.add("active");
@@ -69,26 +68,27 @@ function initTabs() {
             const globalBox = document.getElementById("global-chat");
             const dmBox = document.getElementById("dm-chat");
 
-            // --- GLOBAL CHAT ---
+            // ========= GLOBAL CHAT =========
             if (tabId === "chat") {
                 if (globalBox) globalBox.style.display = "flex";
                 if (dmBox) dmBox.style.display = "none";
+
                 loadGlobalChat();
+                startGlobalRefresh();   // ← START refresh
             } else {
                 if (globalBox) globalBox.style.display = "none";
+                stopGlobalRefresh();    // ← STOP refresh
             }
 
-            // --- DM LIST ---
+            // ========= DM LIST =========
             if (tabId === "messages") {
-                if (dmBox) dmBox.style.display = "none"; // բացվում է միայն openDM()-ով
-                loadDMList(); 
+                if (dmBox) dmBox.style.display = "none";
+                loadDMList();
             } else {
                 if (dmBox) dmBox.style.display = "none";
             }
 
-            // --------------------------------------
-            // 🚨 STOP DM AUTO-REFRESH WHEN LEAVING
-            // --------------------------------------
+            // ========= STOP DM REFRESH WHEN LEAVING =========
             if (tabId !== "messages") {
                 if (window.DM_REFRESH_INTERVAL) {
                     clearInterval(window.DM_REFRESH_INTERVAL);
@@ -98,6 +98,21 @@ function initTabs() {
 
         });
     });
+}
+
+
+function startGlobalRefresh() {
+    // already active?
+    if (window.GLOBAL_REFRESH_INTERVAL) return;
+
+    window.GLOBAL_REFRESH_INTERVAL = setInterval(loadGlobalChat, 1500);
+}
+
+function stopGlobalRefresh() {
+    if (window.GLOBAL_REFRESH_INTERVAL) {
+        clearInterval(window.GLOBAL_REFRESH_INTERVAL);
+        window.GLOBAL_REFRESH_INTERVAL = null;
+    }
 }
 
 
