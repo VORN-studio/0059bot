@@ -54,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
 function initTabs() {
     document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
+
+            // --- reset visuals ---
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
 
@@ -67,6 +69,7 @@ function initTabs() {
             const globalBox = document.getElementById("global-chat");
             const dmBox = document.getElementById("dm-chat");
 
+            // --- GLOBAL CHAT ---
             if (tabId === "chat") {
                 if (globalBox) globalBox.style.display = "flex";
                 if (dmBox) dmBox.style.display = "none";
@@ -75,15 +78,28 @@ function initTabs() {
                 if (globalBox) globalBox.style.display = "none";
             }
 
+            // --- DM LIST ---
             if (tabId === "messages") {
                 if (dmBox) dmBox.style.display = "none"; // բացվում է միայն openDM()-ով
-                loadDMList(); // ֆոլոու արածների լիստ
+                loadDMList(); 
             } else {
                 if (dmBox) dmBox.style.display = "none";
             }
+
+            // --------------------------------------
+            // 🚨 STOP DM AUTO-REFRESH WHEN LEAVING
+            // --------------------------------------
+            if (tabId !== "messages") {
+                if (window.DM_REFRESH_INTERVAL) {
+                    clearInterval(window.DM_REFRESH_INTERVAL);
+                    window.DM_REFRESH_INTERVAL = null;
+                }
+            }
+
         });
     });
 }
+
 
 // ===============================
 //      CHAT EVENTS
@@ -257,6 +273,15 @@ async function openDM(targetId) {
     if (globalBox) globalBox.style.display = "none";
 
     await loadDM();
+
+    // =============================
+    //  🔥 Auto-refresh every 2 sec
+    // =============================
+    if (window.DM_REFRESH_INTERVAL) clearInterval(window.DM_REFRESH_INTERVAL);
+
+    window.DM_REFRESH_INTERVAL = setInterval(() => {
+        if (CURRENT_DM_TARGET) loadDM();
+    }, 2000);
 }
 
 async function loadDM() {
