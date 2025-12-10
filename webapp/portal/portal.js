@@ -115,11 +115,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     function setUsername(name) {
-        const u1 = document.getElementById("username");
-        const u2 = document.getElementById("profile-name");
-        if (u1) u1.innerText = name;
-        if (u2) u2.innerText = name;
-    }
+        // Միայն պրոֆիլի անունը ենք փոխում
+        const profileName = document.getElementById("profile-name");
+        if (profileName) profileName.innerText = name;
+}
+
 
     async function saveUsername(name) {
         // username-ը պահպանվում է ՄԻԱՅՆ viewer-ի համար
@@ -343,7 +343,6 @@ function loadViewerPanel() {
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
 
-    // Եթե Telegram-ից է բացվել WebApp-ը
     if (telegramUser) {
         if (telegramUser.photo_url) {
             topAvatar.src = telegramUser.photo_url;
@@ -355,7 +354,6 @@ function loadViewerPanel() {
         return;
     }
 
-    // Եթե Telegram WebApp-ում չենք, վերցնում ենք viewerId-ից տվյալները
     fetch(`/api/user/${viewerId}`)
         .then(r => r.json())
         .then(d => {
@@ -366,6 +364,7 @@ function loadViewerPanel() {
             topUsername.innerText = user.username || "Unknown";
         });
 }
+
 
 
 
