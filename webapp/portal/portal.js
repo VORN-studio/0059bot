@@ -4,12 +4,15 @@
 const urlParams = new URLSearchParams(window.location.search);
 const uid = urlParams.get("uid") || "";
 
-// 🔹 Safe Telegram object (որ local browser-ում չընկնի)
+// 🔹 Safe Telegram object
 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 const telegramUser = tg?.initDataUnsafe?.user || null;
 
 document.addEventListener("DOMContentLoaded", () => {
-    // ---------- AVATAR + USERNAME LOADING ----------
+
+    // ===============================
+    //        LOAD USER PROFILE
+    // ===============================
     async function loadProfile() {
         if (!uid) return;
 
@@ -20,15 +23,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const user = data.user;
 
-        // avatar DB-ից
-        if (user.avatar) {
-            const img = document.getElementById("user-avatar");
-            if (img) img.src = user.avatar;
+        // avatar in top bar
+        const topAvatar = document.getElementById("user-avatar");
+        if (user.avatar && topAvatar) {
+            topAvatar.src = user.avatar;
+        }
+
+        // avatar in profile card
+        const profileAvatar = document.getElementById("profile-avatar");
+        if (user.avatar && profileAvatar) {
+            profileAvatar.src = user.avatar;
         }
 
         setUsername(user.username || "");
     }
 
+    // ===============================
+    //        USERNAME LOGIC
+    // ===============================
     async function checkUsername() {
         if (!uid) return;
 
@@ -56,8 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function setUsername(name) {
         const u1 = document.getElementById("username");
         const u2 = document.getElementById("profile-name");
-        if (u1) u1.innerText = name || "";
-        if (u2) u2.innerText = name || "";
+        if (u1) u1.innerText = name;
+        if (u2) u2.innerText = name;
     }
 
     async function saveUsername(name) {
@@ -65,66 +77,71 @@ document.addEventListener("DOMContentLoaded", () => {
         await fetch(`/api/set_username`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid: uid, username: name })
+            body: JSON.stringify({ uid, username: name })
         });
     }
 
     function showUsernamePopup() {
         const popup = document.getElementById("username-popup");
         const input = document.getElementById("username-input");
-        const btnSave = document.getElementById("username-save");
-
-        if (!popup || !input || !btnSave) return;
+        const btn = document.getElementById("username-save");
 
         popup.classList.remove("hidden");
 
-        btnSave.onclick = async () => {
-            let newName = input.value.trim();
-            if (newName.length < 3) {
+        btn.onclick = async () => {
+            let name = input.value.trim();
+            if (name.length < 3) {
                 alert("Username-ը պետք է >= 3 սիմվոլ լինի");
                 return;
             }
 
-            await saveUsername(newName);
-            setUsername(newName);
+            await saveUsername(name);
+            setUsername(name);
             popup.classList.add("hidden");
         };
     }
 
-    // ---------- AVATAR UPLOAD ----------
-    const changeBtn = document.getElementById("change-avatar-btn");
+    // ===============================
+    //          AVATAR LOGIC
+    // ===============================
     const avatarInput = document.getElementById("avatar-input");
-    const avatarImg = document.getElementById("user-avatar");
+    const avatarTop = document.getElementById("user-avatar");
+    const avatarProfile = document.getElementById("profile-avatar");
 
-    if (changeBtn && avatarInput) {
-        changeBtn.addEventListener("click", () => {
+    // settings → change avatar click
+    const changeAvatarBtn = document.getElementById("change-avatar-open");
+    if (changeAvatarBtn) {
+        changeAvatarBtn.addEventListener("click", () => {
             avatarInput.click();
-        });
-
-        avatarInput.addEventListener("change", async function () {
-            const file = this.files[0];
-            if (!file) return;
-
-            // preview
-            if (avatarImg) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    avatarImg.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-
-            const formData = new FormData();
-            formData.append("avatar", file);
-            formData.append("uid", uid);
-
-            await fetch("/api/upload_avatar", {
-                method: "POST",
-                body: formData
-            });
+            document.getElementById("settings-panel").classList.add("hidden");
         });
     }
-        // SETTINGS OPEN/CLOSE
+
+    // file selected
+    avatarInput.addEventListener("change", async function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (avatarTop) avatarTop.src = e.target.result;
+            if (avatarProfile) avatarProfile.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append("avatar", file);
+        formData.append("uid", uid);
+
+        await fetch("/api/upload_avatar", {
+            method: "POST",
+            body: formData
+        });
+    });
+
+    // ===============================
+    //      SETTINGS PANEL LOGIC
+    // ===============================
     document.getElementById("settings-btn").onclick = () => {
         document.getElementById("settings-panel").classList.remove("hidden");
     };
@@ -133,13 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("settings-panel").classList.add("hidden");
     };
 
-    // OPEN AVATAR PICKER
-    document.getElementById("change-avatar-open").onclick = () => {
-        document.getElementById("avatar-input").click();
-        document.getElementById("settings-panel").classList.add("hidden");
-    };
-
-    // ---------- TABS ----------
+    // ===============================
+    //            TABS
+    // ===============================
     document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -147,22 +160,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
             btn.classList.add("active");
             const tabId = btn.dataset.tab;
-            if (tabId) {
-                const page = document.getElementById(tabId);
-                if (page) page.classList.add("active");
-            }
+            document.getElementById(tabId).classList.add("active");
         });
     });
 
-    // ---------- BACK BUTTON ----------
+    // ===============================
+    //         BACK BUTTON
+    // ===============================
     const backBtn = document.getElementById("back-btn");
-    if (backBtn && uid) {
+    if (backBtn) {
         backBtn.addEventListener("click", () => {
             window.location.href = `/app?uid=${uid}`;
         });
     }
 
-    // ---------- START ----------
+    // ===============================
+    //            START
+    // ===============================
     checkUsername();
     loadProfile();
 });
