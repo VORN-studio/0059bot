@@ -23,3 +23,10 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
 
 /* INIT */
 loadProfile();
+
+document.getElementById("back-btn").addEventListener("click", () => {
+    if (!uid) return;
+
+    // գլխավոր WebApp էջ
+    window.location.href = `/app?uid=${uid}`;
+});
