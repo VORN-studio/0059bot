@@ -21,8 +21,42 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
     });
 });
 
-/* INIT */
-loadProfile();
+async function checkUsername() {
+    const res = await fetch(`/api/user/${uid}`);
+    const data = await res.json();
+
+    if (data.username && data.username.trim() !== "") {
+        // username exists → continue normal flow
+        document.getElementById("username").innerText = data.username;
+        document.getElementById("profile-name").innerText = data.username;
+        return;
+    }
+
+    // No username → show popup
+    document.getElementById("username-popup").classList.remove("hidden");
+
+    document.getElementById("username-save").addEventListener("click", async () => {
+        const newName = document.getElementById("username-input").value.trim();
+
+        if (newName.length < 3) {
+            alert("Username-ը պետք է լինի նվազագույնը 3 սիմվոլ։");
+            return;
+        }
+
+        // save username to DB
+        await fetch(`/api/set_username`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ uid: uid, username: newName })
+        });
+
+        document.getElementById("username-popup").classList.add("hidden");
+        document.getElementById("username").innerText = newName;
+        document.getElementById("profile-name").innerText = newName;
+    });
+}
+
+
 
 document.getElementById("back-btn").addEventListener("click", () => {
     if (!uid) return;
@@ -30,3 +64,6 @@ document.getElementById("back-btn").addEventListener("click", () => {
     // գլխավոր WebApp էջ
     window.location.href = `/app?uid=${uid}`;
 });
+
+checkUsername();
+loadProfile();

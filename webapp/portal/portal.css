@@ -134,3 +134,48 @@ body {
 .back-btn:hover {
     background: rgba(255,255,255,0.12);
 }
+
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.popup.hidden {
+    display: none;
+}
+
+.popup-box {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 16px;
+    width: 80%;
+    text-align: center;
+    backdrop-filter: blur(12px);
+}
+
+#username-input {
+    width: 90%;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    margin-top: 10px;
+    margin-bottom: 14px;
+}
+
+#username-save {
+    width: 90%;
+    padding: 10px;
+    border: none;
+    border-radius: 12px;
+    background: #3a8bff;
+    color: white;
+    cursor: pointer;
+}

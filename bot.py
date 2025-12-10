@@ -93,6 +93,24 @@ def webapp_tasks(filename):
 def serve_portal(filename):
     return send_from_directory("webapp/portal", filename)
 
+@app_web.route("/api/set_username", methods=["POST"])
+def api_set_username():
+    data = request.get_json()
+    uid = data.get("uid")
+    username = data.get("username")
+
+    if not uid or not username:
+        return jsonify({"ok": False, "error": "Missing data"}), 400
+
+    conn = db()
+    c = conn.cursor()
+    c.execute("UPDATE dom_users SET username=%s WHERE user_id=%s", (username, uid))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
 @app_web.route("/admaven-verify")
 def admaven_verify():
     return """
