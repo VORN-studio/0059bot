@@ -87,19 +87,30 @@ def upload_avatar():
     if not uid or not file:
         return jsonify({"ok": False, "error": "missing"}), 400
 
-    import base64
-    data = base64.b64encode(file.read()).decode('utf-8')
+    # file type extract (png, jpg, jpeg)
+    content_type = file.mimetype  # e.g. "image/png", "image/jpeg"
 
-    conn = db(); c = conn.cursor()
+    # read file and convert to base64
+    import base64
+    raw = file.read()
+    b64 = base64.b64encode(raw).decode("utf-8")
+
+    # full "data:image/xxx;base64,...."
+    avatar_data = f"data:{content_type};base64,{b64}"
+
+    # save into database
+    conn = db(); 
+    c = conn.cursor()
     c.execute("""
         UPDATE dom_users
         SET avatar_data = %s
         WHERE user_id = %s
-    """, (data, uid))
+    """, (avatar_data, uid))
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
+
 
 
 @app_web.route("/api/search_users")
