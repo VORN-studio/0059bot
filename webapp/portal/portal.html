@@ -24,9 +24,19 @@
 
     <!-- PROFILE SECTION -->
     <div class="portal-profile">
-        <div class="avatar-frame">
-            <img id="profile-avatar" src="default.png">
-        </div>
+        <img id="user-avatar" src="data:image/svg+xml;utf8,
+        <svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>
+        <circle cx='100' cy='100' r='100' fill='%23445a78'/>
+        <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle'
+        fill='white' font-size='70' font-family='Arial'>?</text>
+        </svg>
+        ">
+        <input type="file" id="avatar-input" accept="image/*" style="display:none">
+
+        <button id="change-avatar-btn" class="change-avatar-btn">
+            Change Avatar
+        </button>
+
         <div class="profile-info">
             <div id="profile-name"></div>
             <div id="profile-status"></div>

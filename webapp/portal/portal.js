@@ -7,6 +7,9 @@ const telegramUser = tg.initDataUnsafe?.user || null;
 async function loadProfile() {
     const res = await fetch(`/api/user/${uid}`);
     const data = await res.json();
+    if (user.avatar) {
+        document.getElementById("user-avatar").src = user.avatar;
+    }
 
     if (!data.ok || !data.user) return;
 
@@ -15,6 +18,32 @@ async function loadProfile() {
     document.getElementById("username").innerText = user.username || "";
     document.getElementById("profile-name").innerText = user.username || "";
 }
+
+document.getElementById("change-avatar-btn").addEventListener("click", () => {
+    document.getElementById("avatar-input").click();
+});
+
+document.getElementById("avatar-input").addEventListener("change", async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    // preview immediately
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById("user-avatar").src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    // upload to backend
+    const formData = new FormData();
+    formData.append("avatar", file);
+    formData.append("uid", uid);
+
+    await fetch("/api/upload_avatar", {
+        method: "POST",
+        body: formData
+    });
+});
 
 
 /* TAB SWITCHING */

@@ -75,6 +75,31 @@ def serve_webapp(filename):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
+@app_web.route("/api/upload_avatar", methods=["POST"])
+def upload_avatar():
+    uid = request.form.get("uid")
+    file = request.files.get("avatar")
+
+    if not uid or not file:
+        return jsonify({"ok": False, "error": "missing"}), 400
+
+    # save file
+    folder = "webapp/portal/avatars"
+    os.makedirs(folder, exist_ok=True)
+
+    filepath = f"{folder}/{uid}.png"
+    file.save(filepath)
+
+    # store path in users table
+    conn = db(); c = conn.cursor()
+    c.execute("UPDATE dom_users SET avatar = %s WHERE user_id = %s",
+              (f"/portal/avatars/{uid}.png", uid))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
 @app_web.route("/webapp/games/<path:filename>")
 def serve_games(filename):
     games_dir = os.path.join(WEBAPP_DIR, "games")
