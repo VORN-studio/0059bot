@@ -285,7 +285,8 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar TEXT"
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar TEXT",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT"
     
 ]
 
