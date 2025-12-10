@@ -21,6 +21,20 @@ const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
 
 document.addEventListener("DOMContentLoaded", () => {
 
+    document.addEventListener("DOMContentLoaded", () => {
+
+    // ======== LOAD VIEWER PANEL (TOP BAR) ========
+    loadViewerPanel();
+
+    // ======== USER PROFILE (profileId) ========
+    checkUsername();
+    loadProfile();
+    loadFollowStats();
+    loadUsers("");
+});
+
+
+
     // ===============================
     //        LOAD USER PROFILE
     // ===============================
@@ -33,12 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!data.ok || !data.user) return;
 
         const user = data.user;
-
-        // avatar in top bar
-        const topAvatar = document.getElementById("user-avatar");
-        if (user.avatar && topAvatar) {
-            topAvatar.src = user.avatar;
-        }
 
         // avatar in profile card
         const profileAvatar = document.getElementById("profile-avatar");
@@ -104,6 +112,24 @@ document.addEventListener("DOMContentLoaded", () => {
             setUsername("");
         }
     }
+
+    function loadViewerPanel() {
+    const topAvatar = document.getElementById("user-avatar");
+    const topUsername = document.getElementById("username");
+
+    if (telegramUser) {
+        // Telegram avatar
+        if (telegramUser.photo_url) {
+            topAvatar.src = telegramUser.photo_url;
+        }
+
+        // Telegram username
+        if (telegramUser.username) {
+            topUsername.innerText = telegramUser.username;
+        }
+    }
+    }
+
 
     function setUsername(name) {
         const u1 = document.getElementById("username");
@@ -330,6 +356,24 @@ async function loadUsers(search = "") {
         box.appendChild(div);
     });
 }
+
+function loadViewerPanel() {
+    const topAvatar = document.getElementById("user-avatar");
+    const topUsername = document.getElementById("username");
+
+    if (telegramUser) {
+        // avatar (եթե Telegram avatar կա)
+        if (telegramUser.photo_url) {
+            topAvatar.src = telegramUser.photo_url;
+        }
+
+        // username
+        if (telegramUser.username) {
+            topUsername.innerText = telegramUser.username;
+        }
+    }
+}
+
 
 // ===============================
 //      FOLLOW STATS + STATE
