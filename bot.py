@@ -103,6 +103,41 @@ def upload_avatar():
 
     return jsonify({"ok": True})
 
+@app_web.route("/api/search_users")
+def api_search_users():
+    q = request.args.get("q", "").strip().lower()
+
+    conn = db(); c = conn.cursor()
+
+    if q == "":
+        c.execute("""
+            SELECT user_id, username, avatar
+            FROM dom_users
+            ORDER BY user_id DESC
+            LIMIT 50
+        """)
+    else:
+        c.execute("""
+            SELECT user_id, username, avatar
+            FROM dom_users
+            WHERE LOWER(username) LIKE %s
+            ORDER BY user_id DESC
+            LIMIT 50
+        """, (f"%{q}%",))
+
+    rows = c.fetchall()
+    release_db(conn)
+
+    users = []
+    for u in rows:
+        users.append({
+            "user_id": u[0],
+            "username": u[1] or "",
+            "avatar": u[2] or "/portal/default.png"
+        })
+
+    return jsonify({"ok": True, "users": users})
+
 
 @app_web.route("/webapp/games/<path:filename>")
 def serve_games(filename):

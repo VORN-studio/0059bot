@@ -49,6 +49,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
+    const search = document.getElementById("user-search");
+    if (search) {
+        search.addEventListener("input", () => {
+            loadUsers(search.value);
+        });
+    }
+
+
     // ===============================
     //        USERNAME LOGIC
     // ===============================
@@ -192,6 +200,45 @@ document.addEventListener("DOMContentLoaded", () => {
     loadProfile();
 });
 
+async function loadUsers(search = "") {
+    const res = await fetch(`/api/search_users?q=${encodeURIComponent(search)}`);
+    const data = await res.json();
+
+    if (!data.ok) return;
+
+    const box = document.getElementById("users-list");
+    box.innerHTML = "";
+
+    data.users.forEach(u => {
+        const div = document.createElement("div");
+        div.className = "user-row";
+        div.style.cssText = `
+            display:flex;
+            align-items:center;
+            padding:10px;
+            background:#1115;
+            border-radius:10px;
+            margin-bottom:8px;
+        `;
+
+        div.innerHTML = `
+            <img src="${u.avatar}" style="width:40px;height:40px;border-radius:50%;margin-right:10px;">
+            <div style="flex-grow:1;font-size:16px;">${u.username}</div>
+            <button data-id="${u.user_id}"
+                style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
+                Բացել
+            </button>
+        `;
+
+        div.querySelector("button").onclick = () => {
+            window.location.href = `/portal/portal.html?uid=${u.user_id}`;
+        };
+
+        box.appendChild(div);
+    });
+}
+
+
 // ---- LOAD FOLLOW STATS ----
 async function loadFollowStats() {
     const res = await fetch(`/api/follow_stats/${uid}`);
@@ -207,3 +254,4 @@ async function loadFollowStats() {
 }
 
 loadFollowStats();
+loadUsers("");
