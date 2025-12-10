@@ -89,6 +89,10 @@ def favicon():
 def webapp_tasks(filename):
     return send_from_directory('webapp/tasks', filename)
 
+@app_web.route("/portal/<path:filename>")
+def serve_portal(filename):
+    return send_from_directory("webapp/portal", filename)
+
 @app_web.route("/admaven-verify")
 def admaven_verify():
     return """
