@@ -52,30 +52,37 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // tabs
     document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+    btn.addEventListener("click", () => {
 
-            btn.classList.add("active");
-            const tabId = btn.dataset.tab;
-            document.getElementById(tabId).classList.add("active");
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
 
-            if (tab === "Messages") {
-                document.getElementById("dm-chat").style.display = "flex";
-                document.getElementById("global-chat").style.display = "none";
-            }
+        btn.classList.add("active");
+        const tabId = btn.dataset.tab;
+        document.getElementById(tabId).classList.add("active");
 
-            if (tab === "GlobalChat") {
-                document.getElementById("global-chat").style.display = "flex";
-                document.getElementById("dm-chat").style.display = "none";
-                loadGlobalChat();
-            }
+        // -----------------------------
+        // GLOBAL CHAT SWITCH
+        // -----------------------------
+        if (tabId === "chat") {
+            document.getElementById("global-chat").style.display = "flex";
+            loadGlobalChat();
+        } else {
+            document.getElementById("global-chat").style.display = "none";
+        }
 
-
-        });
+        // -----------------------------
+        // PERSONAL MESSAGES SWITCH
+        // -----------------------------
+        if (tabId === "messages") {
+            document.getElementById("dm-chat").style.display = "flex";
+        } else {
+            document.getElementById("dm-chat").style.display = "none";
+        }
     });
+});
+
 
     // avatar upload
     initAvatarUpload();
