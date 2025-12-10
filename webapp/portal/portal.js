@@ -8,9 +8,14 @@ async function loadProfile() {
     const res = await fetch(`/api/user/${uid}`);
     const data = await res.json();
 
-    document.getElementById("username").innerText = data.username;
-    document.getElementById("profile-name").innerText = data.username;
+    if (!data.ok || !data.user) return;
+
+    const user = data.user;
+
+    document.getElementById("username").innerText = user.username || "";
+    document.getElementById("profile-name").innerText = user.username || "";
 }
+
 
 /* TAB SWITCHING */
 document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -27,25 +32,28 @@ async function checkUsername() {
     const res = await fetch(`/api/user/${uid}`);
     const data = await res.json();
 
-    let savedName = data.username;
-    let teleName = telegramUser?.username || null;
+    if (!data.ok || !data.user) return;
 
-    // 1) Եթե DB already has username → օգտագործում ենք
+    const savedName = data.user.username;
+    const teleName = telegramUser?.username || null;
+
+    // If saved in DB → use it
     if (savedName && savedName.trim() !== "") {
         setUsername(savedName);
         return;
     }
 
-    // 2) Եթե Telegram username կա → պահպանում ենք DB-ում
+    // If Telegram username exists → save to DB
     if (teleName && teleName.trim() !== "") {
         await saveUsername(teleName);
         setUsername(teleName);
         return;
     }
 
-    // 3) Եթե username չկա → բացում ենք popup (միայն առաջին անգամ)
+    // Show popup only once if both are missing
     showUsernamePopup();
 }
+
 
 
 function setUsername(name) {
