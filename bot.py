@@ -128,8 +128,13 @@ def api_search_users():
     rows = c.fetchall()
     release_db(conn)
 
+    viewer = request.args.get("viewer")
+
     users = []
     for u in rows:
+        if viewer and str(u[0]) == str(viewer):
+            continue   # skip own profile
+
         users.append({
             "user_id": u[0],
             "username": u[1] or "",

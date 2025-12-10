@@ -116,6 +116,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function loadViewerPanel() {
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
+    const avatarUrl = user.avatar && user.avatar !== "" 
+        ? user.avatar 
+        : "/portal/default.png";
+
+    profileAvatar.src = avatarUrl;
+    topAvatar.src = avatarUrl;
 
     if (telegramUser) {
         // Telegram avatar
@@ -318,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 //        LOAD USERS LIST
 // ===============================
 async function loadUsers(search = "") {
-    const res = await fetch(`/api/search_users?q=${encodeURIComponent(search)}`);
+    const res = await fetch(`/api/search_users?q=${query}&viewer=${viewerId}`)
     const data = await res.json();
 
     if (!data.ok) return;
