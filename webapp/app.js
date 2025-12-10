@@ -254,7 +254,7 @@ function initFromTelegram() {
 document.querySelector(".top h1").addEventListener("click", () => {
     if (!CURRENT_USER_ID) return;
     window.location.href =
-      `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}`;
+      `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}&viewer=${CURRENT_USER_ID}`;
 });
 
 
@@ -554,5 +554,5 @@ loadTonChart();
 
 document.getElementById("portal-orb").addEventListener("click", () => {
     if (!CURRENT_USER_ID) return;
-    window.location.href = `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}`;
+    window.location.href = `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}&viewer=${CURRENT_USER_ID}`;
 });

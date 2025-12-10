@@ -1,23 +1,20 @@
-// portal.js
-
 // -----------------------------
-//   URL / Telegram user
+//   URL params
 // -----------------------------
 const urlParams = new URLSearchParams(window.location.search);
 
-// ում պրոֆիլն ենք նայում (profile)
+// ում պրոֆիլն ենք նայում
 const profileId = urlParams.get("uid") || "";
 
-// Telegram WebApp user (viewer)
-const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-const telegramUser = tg?.initDataUnsafe?.user || null;
+// ով է դիտողը (viewer) — հաստատ URL-ով ենք պահում
+const viewerFromUrl = urlParams.get("viewer") || "";
 
-// ով է դիտողը (viewer) — եթե Telegram-ից է, վերցնում ենք իրեն,
-// եթե բացել են ուղղակի browser-ով, viewer-ը նույնն է, ինչ profile-ը
-const viewerId = telegramUser?.id ? String(telegramUser.id) : profileId;
+// եթե viewer չկա URL-ում, fallback → profileId
+const viewerId = viewerFromUrl || profileId;
 
 // արդյո՞ք սա իմ սեփական պրոֆիլն է
 const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
+
 
 // ===============================
 //   STARTUP
@@ -300,8 +297,9 @@ async function loadUsers(search = "") {
             `;
 
             div.querySelector("button").onclick = () => {
-                window.location.href = `/portal/portal.html?uid=${u.user_id}`;
+                window.location.href = `/portal/portal.html?uid=${u.user_id}&viewer=${viewerId}`;
             };
+
 
             box.appendChild(div);
         });
@@ -318,18 +316,7 @@ function loadViewerPanel() {
     const topUsername = document.getElementById("username");
     if (!topAvatar || !topUsername) return;
 
-    // Եթե Telegram-ից է բացվել WebApp-ը → օգտագործում ենք հենց Telegram user-ը
-    if (telegramUser) {
-        if (telegramUser.photo_url) {
-            topAvatar.src = telegramUser.photo_url;
-        } else {
-            topAvatar.src = "/portal/default.png";
-        }
-        topUsername.innerText = telegramUser.username || "Unknown";
-        return;
-    }
-
-    // Եթե Telegram WebApp-ում չենք, viewerId-ից վերցնենք բազայից
+    // Viewer-ը վերցնում ենք տվյալների բազայից viewerId-ով
     if (!viewerId) {
         topAvatar.src = "/portal/default.png";
         topUsername.innerText = "Unknown";
@@ -353,6 +340,7 @@ function loadViewerPanel() {
             topUsername.innerText = "Unknown";
         });
 }
+
 
 // ===============================
 //      FOLLOW STATS + STATE
