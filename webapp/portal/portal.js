@@ -124,6 +124,20 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
+        // SETTINGS OPEN/CLOSE
+    document.getElementById("settings-btn").onclick = () => {
+        document.getElementById("settings-panel").classList.remove("hidden");
+    };
+
+    document.getElementById("settings-close").onclick = () => {
+        document.getElementById("settings-panel").classList.add("hidden");
+    };
+
+    // OPEN AVATAR PICKER
+    document.getElementById("change-avatar-open").onclick = () => {
+        document.getElementById("avatar-input").click();
+        document.getElementById("settings-panel").classList.add("hidden");
+    };
 
     // ---------- TABS ----------
     document.querySelectorAll(".tab-btn").forEach(btn => {

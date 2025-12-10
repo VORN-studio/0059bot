@@ -20,29 +20,8 @@
         <span id="username"></span>
     </div>
 </div>
+    <input type="file" id="avatar-input" accept="image/*" style="display:none">
 
-
-    <!-- PROFILE SECTION -->
-    <div class="portal-profile">
-        <img id="user-avatar" src="data:image/svg+xml;utf8,
-        <svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>
-        <circle cx='100' cy='100' r='100' fill='%23445a78'/>
-        <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle'
-        fill='white' font-size='70' font-family='Arial'>?</text>
-        </svg>
-        ">
-        <input type="file" id="avatar-input" accept="image/*" style="display:none">
-
-        <button id="change-avatar-btn" class="change-avatar-btn">
-            Change Avatar
-        </button>
-
-        <div class="profile-info">
-            <div id="profile-name"></div>
-            <div id="profile-status"></div>
-            <button id="follow-btn">Follow</button>
-        </div>
-    </div>
 
     <!-- MAIN TABS -->
     <div class="portal-tabs">
@@ -75,6 +54,7 @@
             <div id="global-chat"></div>
             <input id="chat-input" placeholder="Գրիր հաղորդագրություն…">
         </div>
+        <div id="settings-btn" class="settings-btn">⚙️ Կարգավորումներ</div>
 
     </div>
 
@@ -89,6 +69,21 @@
         <input id="username-input" type="text" placeholder="օրինակ՝ user1234">
 
         <button id="username-save">Պահպանել</button>
+    </div>
+</div>
+    <div id="settings-panel" class="settings-panel hidden">
+    <div class="settings-box">
+        <h2>Settings</h2>
+
+        <button class="settings-item" id="change-avatar-open">
+            Փոխել Avatar
+        </button>
+
+        <button class="settings-item" id="change-username-open">
+            Փոխել Username
+        </button>
+
+        <button class="settings-close" id="settings-close">Փակել</button>
     </div>
 </div>
 
