@@ -62,6 +62,9 @@ function initTabs() {
             btn.classList.add("active");
             const tabId = btn.dataset.tab;
 
+            // 🔥 ԱՅՍ ՏՈՂԸ ՊԱՐՏԱԴԻՐ Է
+            CURRENT_TAB = tabId;
+
             const page = document.getElementById(tabId);
             if (page) page.classList.add("active");
 
@@ -74,10 +77,10 @@ function initTabs() {
                 if (dmBox) dmBox.style.display = "none";
 
                 loadGlobalChat();
-                startGlobalRefresh();   // ← START refresh
+                startGlobalRefresh();   // ← ԱՅՍԸ ԱՐԴԵՆ ԿԱՄԱՎՈՐ ԱՇԽԱՏՈՒՄ Է
             } else {
                 if (globalBox) globalBox.style.display = "none";
-                stopGlobalRefresh();    // ← STOP refresh
+                stopGlobalRefresh();
             }
 
             // ========= DM LIST =========
@@ -88,16 +91,23 @@ function initTabs() {
                 if (dmBox) dmBox.style.display = "none";
             }
 
-            // ========= STOP DM REFRESH WHEN LEAVING =========
+            // ========= STOP DM REFRESH =========
             if (tabId !== "messages") {
                 if (window.DM_REFRESH_INTERVAL) {
                     clearInterval(window.DM_REFRESH_INTERVAL);
                     window.DM_REFRESH_INTERVAL = null;
                 }
             }
-
         });
     });
+}
+
+function startGlobalRefresh() {
+    if (window.GLOBAL_REFRESH_INTERVAL) return; // prevent double refresh
+
+    window.GLOBAL_REFRESH_INTERVAL = setInterval(() => {
+        loadGlobalChat();
+    }, 2000); // update every 2 sec
 }
 
 
