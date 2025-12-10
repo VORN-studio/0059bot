@@ -2,34 +2,19 @@
 //   URL params
 // -----------------------------
 const urlParams = new URLSearchParams(window.location.search);
-
-// ում պրոֆիլն ենք նայում
 const profileId = urlParams.get("uid") || "";
-
-// ով է դիտողը (viewer) — հաստատ URL-ով ենք պահում
 const viewerFromUrl = urlParams.get("viewer") || "";
-
-// եթե viewer չկա URL-ում, fallback → profileId
 const viewerId = viewerFromUrl || profileId;
-
-// արդյո՞ք սա իմ սեփական պրոֆիլն է
 const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
+const CURRENT_UID = viewerId;
 
-
-// ===============================
-//   STARTUP
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
-    // վերևի panel — ՄԻԱՅՆ viewer-ի մասին
     loadViewerPanel();
-
-    // պրոֆիլ, որին մտել ենք (profileId)
     checkUsername();
     loadProfile();
     loadFollowStats();
     loadUsers("");
 
-    // search input listener
     const search = document.getElementById("user-search");
     if (search) {
         search.addEventListener("input", () => {
@@ -37,13 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // settings panel
     initSettingsPanel();
-
-    // follow կոճակ
     initFollowButton();
 
-    // back կոճակ
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
@@ -62,9 +43,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const tabId = btn.dataset.tab;
         document.getElementById(tabId).classList.add("active");
 
-        // -----------------------------
-        // GLOBAL CHAT SWITCH
-        // -----------------------------
         if (tabId === "chat") {
             document.getElementById("global-chat").style.display = "flex";
             loadGlobalChat();
@@ -72,25 +50,73 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("global-chat").style.display = "none";
         }
 
-        // -----------------------------
-        // PERSONAL MESSAGES SWITCH
-        // -----------------------------
         if (tabId === "messages") {
-            document.getElementById("dm-chat").style.display = "flex";
-        } else {
+            document.getElementById("dm-chat").style.display = "none";
+            loadDMList(); // ← ֆոլոու արած մարդկանց ցուցակը
+        }else {
             document.getElementById("dm-chat").style.display = "none";
         }
     });
 });
 
+        const globalSend = document.getElementById("global-send");
+        if (globalSend) {
+            globalSend.addEventListener("click", sendGlobalMessage);
+        }
 
-    // avatar upload
+        const globalInput = document.getElementById("global-input");
+        if (globalInput) {
+            globalInput.addEventListener("keypress", e => {
+                if (e.key === "Enter") sendGlobalMessage();
+            });
+        }
+
+        const dmSend = document.getElementById("dm-send");
+        if (dmSend) {
+            dmSend.addEventListener("click", sendDM);
+        }
+
+        const dmInput = document.getElementById("dm-input");
+        if (dmInput) {
+            dmInput.addEventListener("keypress", e => {
+                if (e.key === "Enter") sendDM();
+            });
+        }
+
     initAvatarUpload();
 });
 
-// ===============================
-//        LOAD USER PROFILE
-// ===============================
+async function loadDMList() {
+    const res = await fetch(`/api/follows/list?uid=${viewerId}`);
+    const data = await res.json();
+    if (!data.ok) return;
+
+    const box = document.getElementById("pm-list");
+    box.innerHTML = "";
+
+    data.list.forEach(u => {
+        const div = document.createElement("div");
+        div.className = "dm-user-row";
+        div.style.cssText = `
+            display:flex;
+            align-items:center;
+            padding:10px;
+            background:#1115;
+            border-radius:10px;
+            margin-bottom:8px;
+            cursor:pointer;
+        `;
+
+        div.innerHTML = `
+            <img src="${u.avatar}" style="width:40px;height:40px;border-radius:50%;margin-right:10px;">
+            <div style="font-size:16px;">${u.username}</div>
+        `;
+
+        div.onclick = () => openDM(u.user_id);
+        box.appendChild(div);
+    });
+}
+
 async function loadProfile() {
     if (!profileId) return;
 
@@ -102,19 +128,15 @@ async function loadProfile() {
 
         const user = data.user;
 
-        // ------------------------------
-        //   FIXED AVATAR LOGIC
-        // ------------------------------
         const profileAvatar = document.getElementById("profile-avatar");
         if (profileAvatar) {
 
             let avatarUrl = "/portal/default.png";
 
-            // 1) avatar_data → Base64 (ամենաուշադիր)
             if (user.avatar_data && user.avatar_data !== "") {
                 avatarUrl = user.avatar_data;
             }
-            // 2) avatar URL (Telegram)
+
             else if (user.avatar && user.avatar !== "") {
                 avatarUrl = user.avatar;
             }
@@ -122,14 +144,12 @@ async function loadProfile() {
             profileAvatar.src = avatarUrl;
         }
 
-        // username
         setUsername(user.username || "");
 
     } catch (e) {
         console.error("loadProfile error:", e);
     }
 }
-
 
 async function loadGlobalChat() {
     const res = await fetch(`/api/global/history`);
@@ -231,11 +251,6 @@ document.getElementById("dm-input").addEventListener("keypress", function(e){
     if (e.key === "Enter") sendDM();
 });
 
-
-
-// ===============================
-//        USERNAME LOGIC
-// ===============================
 async function checkUsername() {
     if (!profileId) return;
 
@@ -247,24 +262,19 @@ async function checkUsername() {
         const savedName = data.user.username;
         const teleName = telegramUser?.username || null;
 
-        // եթե բազայում արդեն անուն կա → ուղղակի ցույց ենք տալիս
         if (savedName && savedName.trim() !== "") {
             setUsername(savedName);
             return;
         }
 
-        // եթե սա իմ սեփական պրոֆիլն է
         if (isOwner) {
-            // եթե Telegram username ունեմ → ավտոմատ օգտագործում ենք
             if (teleName && teleName.trim() !== "") {
                 await saveUsername(teleName);
                 setUsername(teleName);
                 return;
             }
-            // այլապես բացում ենք popup, որ ինքդ գրես
             showUsernamePopup();
         } else {
-            // օտար պրոֆիլ է, անուն չունի → պարզապես թողնում ենք դատարկ
             setUsername("");
         }
     } catch (e) {
@@ -272,7 +282,6 @@ async function checkUsername() {
     }
 }
 
-// ❗ Այստեղ ԱԼԵՎԵՍ ՉԵՆՔ ԴԻՊՉՈՒՄ ՎԵՐԵՎԻ USERNAME-ին
 function setUsername(name) {
     const profileName = document.getElementById("profile-name");
     if (profileName) profileName.innerText = name;
@@ -311,9 +320,6 @@ function showUsernamePopup() {
     };
 }
 
-// ===============================
-//          AVATAR LOGIC
-// ===============================
 function initAvatarUpload() {
     const avatarInput = document.getElementById("avatar-input");
     const avatarTop = document.getElementById("user-avatar");
@@ -358,9 +364,6 @@ function initAvatarUpload() {
     }
 }
 
-// ===============================
-//      SETTINGS PANEL LOGIC
-// ===============================
 function initSettingsPanel() {
     const settingsBtn = document.getElementById("settings-btn");
     const settingsPanel = document.getElementById("settings-panel");
@@ -392,9 +395,6 @@ function initSettingsPanel() {
     }
 }
 
-// ===============================
-//        LOAD USERS LIST
-// ===============================
 async function loadUsers(search = "") {
     try {
         const q = encodeURIComponent(search);
@@ -443,14 +443,10 @@ async function loadUsers(search = "") {
     }
 }
 
-// ===============================
-//      VIEWER TOP PANEL
-// ===============================
 function loadViewerPanel() {
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
 
-    // enable click → always return to my profile
     if (topAvatar) {
         topAvatar.style.cursor = "pointer";
         topAvatar.onclick = () => {
@@ -460,14 +456,12 @@ function loadViewerPanel() {
 
     if (!topAvatar || !topUsername) return;
 
-    // viewerId must exist
     if (!viewerId) {
         topAvatar.src = "/portal/default.png";
         topUsername.innerText = "Unknown";
         return;
     }
 
-    // 🔥 ALWAYS LOAD VIEWER FROM DATABASE (NOT TELEGRAM)
     fetch(`/api/user/${viewerId}`)
         .then(r => r.json())
         .then(d => {
@@ -479,7 +473,6 @@ function loadViewerPanel() {
 
             const user = d.user;
 
-            // 🔥 Correct avatar logic: avatar_data → avatar → default
             if (user.avatar_data && user.avatar_data !== "") {
                 topAvatar.src = user.avatar_data;
             } else if (user.avatar && user.avatar !== "") {
@@ -496,11 +489,6 @@ function loadViewerPanel() {
         });
 }
 
-
-
-// ===============================
-//      FOLLOW STATS + STATE
-// ===============================
 async function loadFollowStats() {
     if (!profileId) return;
 
@@ -532,9 +520,6 @@ async function loadFollowStats() {
     }
 }
 
-// ===============================
-//       FOLLOW BUTTON INIT
-// ===============================
 function initFollowButton() {
     const followBtn = document.getElementById("follow-btn");
     if (!followBtn) return;

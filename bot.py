@@ -177,6 +177,33 @@ def api_global_history():
     messages.reverse()
     return jsonify({"ok": True, "messages": messages})
 
+@app_web.route("/api/follows/list")
+def api_follows_list():
+    uid = int(request.args.get("uid", 0))
+    if uid == 0:
+        return jsonify({"ok": False}), 400
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT u.user_id, u.username, u.avatar, u.avatar_data
+        FROM dom_follows f
+        JOIN dom_users u ON u.user_id = f.target
+        WHERE f.follower = %s
+    """, (uid,))
+    rows = c.fetchall()
+    release_db(conn)
+
+    users = []
+    for r in rows:
+        avatar = r[3] if r[3] else (r[2] or "/portal/default.png")
+        users.append({
+            "user_id": r[0],
+            "username": r[1],
+            "avatar": avatar
+        })
+
+    return jsonify({"ok": True, "list": users})
+
 
 @app_web.route("/api/upload_avatar", methods=["POST"])
 def upload_avatar():
