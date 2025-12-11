@@ -883,18 +883,7 @@ async function loadFeed() {
     }
 }
 
-// normalize old wrong paths
-if (post.media_url) {
-    // եթե հին պոստը պահված է սխալ: "/webapp/uploads/xxxx"
-    if (post.media_url.startsWith("/webapp/uploads/")) {
-        post.media_url = post.media_url.replace("/webapp", "");
-    }
 
-    // եթե backend-ը տվել է "/uploads/...", դարձնում ենք absolute URL
-    if (post.media_url.startsWith("/uploads/")) {
-        post.media_url = window.location.origin + post.media_url;
-    }
-}
 
 
 function renderPostCard(post) {
@@ -947,7 +936,10 @@ function renderPostCard(post) {
     // ------------------------------------------------
     div.innerHTML = `
         <div style="display:flex;align-items:center;margin-bottom:6px;">
-            <img src="${post.avatar}" style="width:32px;height:32px;border-radius:50%;margin-right:8px;">
+            <img src="${post.avatar}"
+                style="width:32px;height:32px;border-radius:50%;margin-right:8px;cursor:pointer;"
+                onclick="window.location.href='/portal/portal.html?uid=${post.user_id}&viewer=${viewerId}'">
+
             <div style="flex-grow:1;">
                 <div style="font-size:14px;font-weight:bold;">
                     ${post.username || "User " + post.user_id}
@@ -963,15 +955,55 @@ function renderPostCard(post) {
 
         ${mediaHtml}
 
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+
+            <!-- LIKE -->
             <button class="like-btn" data-id="${post.id}"
                 style="padding:4px 10px;border-radius:999px;border:none;
-                       background:${post.liked ? "#22c55e33" : "#222"};
-                       color:#fff;font-size:13px;cursor:pointer;">
+                    background:${post.liked ? "#22c55e33" : "#222"};
+                    color:#fff;font-size:13px;cursor:pointer;">
                 ❤️ <span class="like-count">${post.likes}</span>
             </button>
+
+            <!-- COMMENT -->
+            <button class="comment-btn" data-id="${post.id}"
+                style="padding:4px 10px;border-radius:999px;border:none;
+                    background:#222;color:#fff;font-size:13px;cursor:pointer;">
+                💬 Comments
+            </button>
+
+            <!-- SHARE -->
+            <button class="share-btn" data-id="${post.id}"
+                style="padding:4px 10px;border-radius:999px;border:none;
+                    background:#222;color:#fff;font-size:13px;cursor:pointer;">
+            🔄 Share
+            </button>
+
         </div>
     `;
+
+    const commentBtn = div.querySelector(".comment-btn");
+    if (commentBtn) {
+        commentBtn.addEventListener("click", () => openComments(post.id));
+    }
+
+    const shareBtn = div.querySelector(".share-btn");
+    if (shareBtn) {
+        shareBtn.addEventListener("click", () => sharePost(post.id));
+    }
+
+
+    // normalize old wrong paths
+    if (post.media_url) {
+        if (post.media_url.startsWith("/webapp/uploads/")) {
+            post.media_url = post.media_url.replace("/webapp", "");
+        }
+
+        if (post.media_url.startsWith("/uploads/")) {
+            post.media_url = window.location.origin + post.media_url;
+        }
+    }
+
 
     // like
     const likeBtn = div.querySelector(".like-btn");
@@ -1030,4 +1062,69 @@ function escapeHtml(str) {
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+}
+
+let CURRENT_COMMENT_POST = null;
+
+async function openComments(postId) {
+    CURRENT_COMMENT_POST = postId;
+
+    const popup = document.getElementById("comment-popup");
+    const list = document.getElementById("comment-list");
+    if (!popup || !list) return;
+
+    list.innerHTML = "Loading...";
+
+    popup.classList.remove("hidden");
+
+    const res = await fetch(`/api/comment/list?post_id=${postId}`);
+    const data = await res.json();
+
+    if (!data.ok) {
+        list.innerHTML = "Error loading comments";
+        return;
+    }
+
+    list.innerHTML = "";
+    data.comments.forEach(c => {
+        const div = document.createElement("div");
+        div.style.marginBottom = "8px";
+        div.innerHTML = `
+            <b>${c.username}</b>: ${escapeHtml(c.text)}
+            <div style='opacity:0.6;font-size:11px;'>${new Date(c.created_at * 1000).toLocaleString()}</div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+document.getElementById("comment-send").onclick = async () => {
+    const input = document.getElementById("comment-input");
+    if (!input.value.trim()) return;
+
+    await fetch(`/api/comment/create`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            post_id: CURRENT_COMMENT_POST,
+            user_id: viewerId,
+            text: input.value.trim()
+        })
+    });
+
+    input.value = "";
+    openComments(CURRENT_COMMENT_POST);
+};
+
+document.getElementById("comment-close").onclick = () => {
+    document.getElementById("comment-popup").classList.add("hidden");
+};
+
+function sharePost(postId) {
+    const shareText = `Դիտիր իմ գրառումը Domino Portal-ում:\nhttps://domino-backend-iavj.onrender.com/portal/portal.html?post=${postId}`;
+
+    if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareText)}`);
+    } else {
+        alert("Կարող եք տարածել այս հղումը:\n" + shareText);
+    }
 }

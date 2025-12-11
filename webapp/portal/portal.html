@@ -178,6 +178,49 @@
     </div>
 </div>
 
+<div id="comment-popup" class="hidden" 
+     style="position:fixed;left:0;top:0;width:100%;height:100%;
+            background:#000a;backdrop-filter:blur(4px);
+            display:flex;align-items:center;justify-content:center;">
+
+    <div style="background:#111;padding:15px;border-radius:12px;width:90%;max-width:380px;">
+        <h3 style="margin-bottom:10px;">Comments</h3>
+
+        <div id="comment-list"
+             style="max-height:220px;overflow-y:auto;margin-bottom:10px;
+                    padding-right:4px;"></div>
+
+        <textarea id="comment-input"
+                  placeholder="Write a comment..."
+                  style="width:100%;min-height:50px;border-radius:8px;
+                         background:#000;border:1px solid #333;
+                         color:#fff;padding:8px;margin-bottom:8px;">
+        </textarea>
+
+        <button id="comment-send"
+                style="padding:8px 14px;border-radius:8px;background:#3478f6;
+                       color:white;border:none;width:100%;margin-bottom:6px;">
+            Post Comment
+        </button>
+
+        <button id="comment-close"
+                style="padding:6px;border:none;background:#333;
+                       border-radius:8px;color:#fff;width:100%;">
+            Close
+        </button>
+    </div>
+
+</div>
+
+<div id="comment-popup" class="hidden">
+    <div>
+        <div id="comment-list"></div>
+        <textarea id="comment-input"></textarea>
+        <button id="comment-send">Post Comment</button>
+        <button id="comment-close">Close</button>
+    </div>
+</div>
+
 
 <script src="portal.js?v=4"></script>
 </body>
