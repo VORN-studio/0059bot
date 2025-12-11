@@ -486,6 +486,55 @@ def api_post_create():
 
     return jsonify({"ok": True, "post_id": pid})
 
+@app_web.route("/api/comment/list")
+def api_comment_list():
+    post_id = request.args.get("post_id", type=int)
+    if not post_id:
+        return jsonify({"ok": False, "error": "missing post_id"}), 400
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT c.id, c.user_id, c.text, c.created_at, u.username
+        FROM dom_comments c
+        LEFT JOIN dom_users u ON u.user_id = c.user_id
+        WHERE c.post_id = %s
+        ORDER BY c.id ASC
+    """, (post_id,))
+    rows = c.fetchall()
+    conn.close()
+
+    comments = [{
+        "id": r[0],
+        "user_id": r[1],
+        "text": r[2],
+        "created_at": r[3],
+        "username": r[4] or ("User " + str(r[1]))
+    } for r in rows]
+
+    return jsonify({"ok": True, "comments": comments})
+
+@app_web.route("/api/comment/create", methods=["POST"])
+def api_comment_create():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = data.get("user_id")
+    post_id = data.get("post_id")
+    text = (data.get("text") or "").strip()
+
+    if not user_id or not post_id or not text:
+        return jsonify({"ok": False, "error": "missing data"}), 400
+
+    now = int(time.time())
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        INSERT INTO dom_comments (post_id, user_id, text, created_at)
+        VALUES (%s, %s, %s, %s)
+    """, (post_id, user_id, text, now))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
 
 @app_web.route("/api/posts/feed")
 def api_posts_feed():
@@ -761,6 +810,17 @@ def init_db():
             processed_at BIGINT
         )
     """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_comments (
+            id SERIAL PRIMARY KEY,
+            post_id BIGINT,
+            user_id BIGINT,
+            text TEXT,
+            created_at BIGINT
+        )
+    """)
+
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_withdrawals (
