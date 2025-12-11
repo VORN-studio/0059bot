@@ -6,6 +6,8 @@ const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
 const viewerId = viewerFromUrl || profileId;
 const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
+let REPLY_TO = null;
+let REPLY_TO_USERNAME = null;
 
 // քո ID-ն այս պորտալում
 const CURRENT_UID = viewerId;
@@ -957,6 +959,24 @@ function renderPostCard(post) {
 
         <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
 
+            ${isMine ? `
+            <button class="delete-post-btn" data-id="${post.id}"
+                style="padding:4px 10px;border-radius:999px;border:none;
+                    background:#922;color:#fff;font-size:13px;cursor:pointer;">
+                🗑️ Delete
+            </button>
+            ` : ""}
+
+            <div style="display:flex; gap:10px; margin-top:3px;">
+                <button class="comment-reply-btn"
+                        data-id="${c.id}"
+                        data-username="${c.username}"
+                        style="background:none;border:none;color:#7af;cursor:pointer;">
+                    💬 Reply
+                </button>
+            </div>
+
+
             <!-- LIKE -->
             <button class="like-btn" data-id="${post.id}"
                 style="padding:4px 10px;border-radius:999px;border:none;
@@ -981,6 +1001,11 @@ function renderPostCard(post) {
 
         </div>
     `;
+
+    const delBtn = div.querySelector(".delete-post-btn");
+    if (delBtn) {
+        delBtn.onclick = () => deletePost(post.id);
+    }
 
     const commentBtn = div.querySelector(".comment-btn");
     if (commentBtn) {
@@ -1099,14 +1124,42 @@ async function openComments(postId) {
         div.innerHTML = `
             <b>${c.username}</b>
             ${deleteBtn}
+
+            <button class="comment-like-btn"
+                    data-id="${c.id}"
+                    style="float:right;margin-right:10px;background:none;
+                        border:none;color:#4af;cursor:pointer;">
+                👍 ${c.likes || 0}
+            </button>
+
+            <div style="clear:both"></div>
+
             <div>${escapeHtml(c.text)}</div>
+
             <div style="opacity:0.5;font-size:11px;">
                 ${new Date(c.created_at * 1000).toLocaleString()}
             </div>
         `;
 
+
         list.appendChild(div);
     });
+
+    document.querySelectorAll(".comment-like-btn").forEach(btn => {
+        btn.onclick = () => likeComment(btn.dataset.id);
+    });
+
+    document.querySelectorAll(".comment-reply-btn").forEach(btn => {
+        btn.onclick = () => {
+            REPLY_TO = btn.dataset.id;
+            REPLY_TO_USERNAME = btn.dataset.username;
+
+            const input = document.getElementById("comment-input");
+            input.placeholder = `Reply to ${REPLY_TO_USERNAME}...`;
+            input.focus();
+        };
+    });
+
 
     // Bind delete button events
     document.querySelectorAll(".delete-comment").forEach(btn => {
@@ -1115,28 +1168,35 @@ async function openComments(postId) {
 }
 
 
-document.getElementById("comment-close").onclick = () => {
-    document.getElementById("comment-drawer").classList.add("hidden");
-};
+    document.getElementById("comment-close").onclick = () => {
+        document.getElementById("comment-drawer").classList.add("hidden");
+    };
 
 
-document.getElementById("comment-send").onclick = async () => {
-    const input = document.getElementById("comment-input");
-    if (!input.value.trim()) return;
+    document.getElementById("comment-send").onclick = async () => {
+        const input = document.getElementById("comment-input");
+        const text = input.value.trim();
+        if (!text) return;
 
-    await fetch(`/api/comment/create`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            post_id: CURRENT_COMMENT_POST,
-            user_id: viewerId,
-            text: input.value.trim()
-        })
-    });
+        await fetch(`/api/comment/create`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                post_id: CURRENT_COMMENT_POST,
+                user_id: viewerId,
+                text,
+                reply_to: REPLY_TO
+            })
+        });
 
-    input.value = "";
-    openComments(CURRENT_COMMENT_POST);
-};
+        REPLY_TO = null;
+        REPLY_TO_USERNAME = null;
+        input.placeholder = "Write a comment...";
+        input.value = "";
+
+        openComments(CURRENT_COMMENT_POST);
+    };
+
 
 function sharePost(postId) {
     const shareText = `Դիտիր իմ գրառումը Domino Portal-ում:\nhttps://domino-backend-iavj.onrender.com/portal/portal.html?post=${postId}`;
@@ -1152,6 +1212,35 @@ async function deleteComment(commentId) {
     await fetch(`/api/comment/delete`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            comment_id: commentId,
+            user_id: viewerId
+        })
+    });
+
+    openComments(CURRENT_COMMENT_POST);
+}
+
+async function deletePost(postId) {
+    const ok = confirm("Համոզվա՞ծ ես, որ ուզում ես ջնջել գրառումը։");
+    if (!ok) return;
+
+    await fetch("/api/post/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            post_id: postId,
+            user_id: viewerId
+        })
+    });
+
+    loadFeed(); // թարմացնում ենք feed-ը
+}
+
+async function likeComment(commentId) {
+    await fetch("/api/comment/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             comment_id: commentId,
             user_id: viewerId
