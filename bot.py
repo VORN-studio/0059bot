@@ -322,19 +322,64 @@ def api_follow():
     follower = int(data.get("follower"))
     target = int(data.get("target"))
 
+    ADMIN_ID = 5274439601   # ← այստեղ գրած է քոնը, կարող ես փոխել
+
     if follower == target:
         return jsonify({"ok": False, "error": "cannot_follow_self"}), 200
 
+    # --- 1) Ստուգում ենք follower-ի բալանսը ---
     conn = db(); c = conn.cursor()
+    c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (follower,))
+    row = c.fetchone()
+
+    if not row:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "user_not_found"}), 404
+
+    balance = float(row[0])
+
+    FOLLOW_PRICE = 5.0
+    PAY_TO_TARGET = 3.0
+    PAY_TO_ADMIN = 2.0
+
+    if balance < FOLLOW_PRICE:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "low_balance"}), 200
+
+    # --- 2) Հանում ենք follower-ից 5 DOMIT ---
+    new_balance = balance - FOLLOW_PRICE
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = %s
+        WHERE user_id = %s
+    """, (new_balance, follower))
+
+    # --- 3) Ավելացնում ենք target user-ին 3 DOMIT ---
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd,0) + %s
+        WHERE user_id = %s
+    """, (PAY_TO_TARGET, target))
+
+    # --- 4) Ավելացնում ենք admin-ին 2 DOMIT ---
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd,0) + %s
+        WHERE user_id = %s
+    """, (PAY_TO_ADMIN, ADMIN_ID))
+
+    # --- 5) Գրանցում ենք follow-ը ---
     c.execute("""
         INSERT INTO dom_follows (follower, target)
         VALUES (%s, %s)
         ON CONFLICT DO NOTHING
     """, (follower, target))
+
     conn.commit()
     release_db(conn)
 
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "new_balance": new_balance})
+
 
 @app_web.route("/api/follow_stats/<int:user_id>")
 def api_follow_stats(user_id):
