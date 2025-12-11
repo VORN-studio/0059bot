@@ -356,3 +356,128 @@ body {
     text-shadow: 0 0 10px rgba(168,85,247,0.9),
                  0 0 18px rgba(59,130,246,0.7);
 }
+
+/* =============================
+   POST CREATOR AREA
+   ============================= */
+#post-creator {
+    background: rgba(17, 17, 17, 0.3);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    backdrop-filter: blur(6px);
+}
+
+#post-creator textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    border: 1px solid #333;
+    resize: none;
+}
+
+#post-creator input[type="file"] {
+    color: #bbb;
+    font-size: 13px;
+}
+
+#post-send {
+    background: #3478f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+#post-send:hover {
+    background: #508dff;
+}
+
+
+/* =============================
+   FEED SWITCH BUTTONS
+   ============================= */
+.feed-switch-btn {
+    background: #222;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    flex: 1;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.feed-switch-btn.active {
+    background: #3478f6;
+}
+
+.feed-switch-btn:hover {
+    background: #2d2d2d;
+}
+
+
+/* =============================
+   FEED LIST POSTS (future-proof)
+   ============================= */
+.post-card {
+    background: rgba(20, 20, 20, 0.4);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.post-card .post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.post-card .post-header img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.post-card .post-username {
+    font-weight: bold;
+    color: #fff;
+}
+
+.post-card .post-text {
+    margin-top: 6px;
+    margin-bottom: 10px;
+    color: #ddd;
+    font-size: 15px;
+}
+
+.post-card .post-media {
+    width: 100%;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+
+.post-card .post-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.post-card .action-btn {
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.post-card .action-btn:hover {
+    color: #fff;
+}

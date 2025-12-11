@@ -51,10 +51,64 @@
     <!-- CONTENT AREA -->
     <div id="portal-content">
 
-        <div id="feed" class="tab-page active">
+                <div id="feed" class="tab-page active">
             <h3>Հոսիաֆիդ</h3>
+
+            <!-- 🟦 POST CREATOR (ONLY UI, NO JS BREAK) -->
+            <div id="post-creator" style="
+                background:#1113;
+                padding:12px;
+                border-radius:12px;
+                margin-bottom:15px;
+            ">
+                <textarea id="post-text" 
+                    placeholder="Գրի՛ր մի բան…"
+                    style="width:100%;padding:10px;border-radius:8px;background:#0005;color:#fff;border:1px solid #333;"
+                    rows="3"></textarea>
+
+                <div style="display:flex;justify-content:space-between;margin-top:8px;">
+                    <input type="file" id="post-media" 
+                        accept="image/*,video/*"
+                        style="color:#ccc;width:70%;">
+                    <button id="post-send" style="
+                        padding:8px 16px;
+                        background:#3478f6;
+                        border-radius:8px;
+                        border:none;
+                        color:white;
+                    ">Post</button>
+                </div>
+            </div>
+
+            <!-- 🟦 FEED SWITCH (recommended / mine) -->
+            <div id="feed-switch" style="
+                display:flex;
+                gap:10px;
+                margin-bottom:15px;
+            ">
+                <button class="feed-switch-btn active" data-feed="recommended" style="
+                    flex:1;
+                    padding:10px;
+                    background:#222;
+                    border-radius:10px;
+                    border:none;
+                    color:white;
+                ">Ռեկոմենդ</button>
+
+                <button class="feed-switch-btn" data-feed="mine" style="
+                    flex:1;
+                    padding:10px;
+                    background:#222;
+                    border-radius:10px;
+                    border:none;
+                    color:white;
+                ">Իմ գրառումները</button>
+            </div>
+
+            <!-- 🟦 POSTS WILL APPEAR HERE -->
             <div id="feed-list"></div>
         </div>
+
 
         <div id="users" class="tab-page">
             <h3>Օգտատերեր</h3>
