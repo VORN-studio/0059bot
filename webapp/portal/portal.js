@@ -1123,6 +1123,14 @@ async function openComments(postId) {
                 👍 ${c.likes || 0}
             </button>
 
+            <button class="comment-reply-btn"
+                    data-id="${c.id}"
+                    data-username="${c.username}"
+                    style="float:right;margin-right:10px;background:none;
+                        border:none;color:#7af;cursor:pointer;">
+                💬 Reply
+            </button>
+
             <div style="clear:both"></div>
 
             <div>${escapeHtml(c.text)}</div>
@@ -1131,7 +1139,6 @@ async function openComments(postId) {
                 ${new Date(c.created_at * 1000).toLocaleString()}
             </div>
         `;
-
 
         list.appendChild(div);
     });

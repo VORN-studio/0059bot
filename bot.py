@@ -534,7 +534,8 @@ def api_comment_list():
             c.text,
             c.created_at,
             u.username,
-            p.user_id AS post_owner_id
+            p.user_id AS post_owner_id,
+            c.likes                      -- 🔥 ԱՅՍՆ Է ՊԱԿԱՍՈՒՄ
         FROM dom_comments c
         JOIN dom_users u ON u.user_id = c.user_id
         JOIN dom_posts p ON p.id = c.post_id
@@ -551,11 +552,12 @@ def api_comment_list():
         "text": r[2],
         "created_at": r[3],
         "username": r[4] or ("User " + str(r[1])),
-        "post_owner_id": r[5]
+        "post_owner_id": r[5],
+        "likes": r[6] or 0            # 🔥 FRONTEND-ը հիմա ԿԱՆԳՆԻ ՃԻՇՏ ԹՎԵՐՈՎ
     } for r in rows]
 
-
     return jsonify({"ok": True, "comments": comments})
+
 
 @app_web.route("/api/comment/create", methods=["POST"])
 def api_comment_create():
