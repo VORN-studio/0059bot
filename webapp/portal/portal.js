@@ -896,9 +896,32 @@ function renderPostCard(post) {
 
     const created = new Date(post.created_at * 1000);
     const timeStr = created.toLocaleString();
-
     const isMine = String(post.user_id) === String(viewerId);
 
+    // ------------------------------------------------
+    // ✅ MEDIA FIRST — առանձին հաշվարկվում է, հետո կմտնի HTML
+    // ------------------------------------------------
+    let mediaHtml = "";
+    if (post.media_url && post.media_url !== "") {
+
+        if (post.media_url.endsWith(".mp4")) {
+            mediaHtml = `
+                <video controls
+                       style="width:100%;border-radius:12px;margin-bottom:10px;">
+                    <source src="${post.media_url}">
+                </video>
+            `;
+        } else {
+            mediaHtml = `
+                <img src="${post.media_url}"
+                     style="width:100%;border-radius:12px;margin-bottom:10px;" />
+            `;
+        }
+    }
+
+    // ------------------------------------------------
+    // ✅ Հիմա օգտագործում ենք mediaHtml-ը div.innerHTML-ի մեջ
+    // ------------------------------------------------
     div.innerHTML = `
         <div style="display:flex;align-items:center;margin-bottom:6px;">
             <img src="${post.avatar}" style="width:32px;height:32px;border-radius:50%;margin-right:8px;">
@@ -910,6 +933,7 @@ function renderPostCard(post) {
                 <div style="font-size:11px;opacity:0.6;">${timeStr}</div>
             </div>
         </div>
+
         <div style="font-size:14px;white-space:pre-wrap;margin-bottom:8px;">
             ${escapeHtml(post.text || "")}
         </div>
@@ -917,7 +941,6 @@ function renderPostCard(post) {
         ${mediaHtml}
 
         <div style="display:flex;align-items:center;justify-content:space-between;">
-
             <button class="like-btn" data-id="${post.id}"
                 style="padding:4px 10px;border-radius:999px;border:none;
                        background:${post.liked ? "#22c55e33" : "#222"};
@@ -927,30 +950,7 @@ function renderPostCard(post) {
         </div>
     `;
 
-        // ---- MEDIA BLOCK ----
-    let mediaHtml = "";
-    if (post.media_url && post.media_url !== "") {
-
-        // VIDEO
-        if (post.media_url.endsWith(".mp4")) {
-            mediaHtml = `
-                <video controls
-                    style="width:100%;border-radius:12px;margin-bottom:10px;">
-                    <source src="${post.media_url}">
-                </video>
-            `;
-        }
-
-        // IMAGE
-        else {
-            mediaHtml = `
-                <img src="${post.media_url}"
-                    style="width:100%;border-radius:12px;margin-bottom:10px;" />
-            `;
-        }
-    }
-
-
+    // like
     const likeBtn = div.querySelector(".like-btn");
     likeBtn.addEventListener("click", async () => {
         await likePost(post.id, likeBtn);
@@ -958,6 +958,7 @@ function renderPostCard(post) {
 
     return div;
 }
+
 
 async function likePost(postId, btn) {
     if (!viewerId) {
