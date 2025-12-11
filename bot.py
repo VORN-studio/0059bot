@@ -830,35 +830,54 @@ _db_pool: Optional[pool.SimpleConnectionPool] = None
 
 def db():
     """
-    PostgreSQL connection pool — նույն գաղափարը, ինչ VORN-ում
+    SAFE PostgreSQL pooled connection getter
     """
     global _db_pool
+
     if _db_pool is None:
         _db_pool = pool.SimpleConnectionPool(
             minconn=1,
-            maxconn=8,
+            maxconn=20,                 # ← 5-ից → 20 (fix pool exhaustion)
             dsn=DATABASE_URL,
-            sslmode="require",
+            sslmode="require"
         )
-        print("🧩 PostgreSQL pool initialized (Domino).")
+        print("🧩 PostgreSQL pool initialized (20 connections).")
+
     try:
         conn = _db_pool.getconn()
+        conn.autocommit = False        # ← autocommit OFF (correct)
+        return conn
     except Exception as e:
-        print("⚠️ Pool exhausted, temporary direct connection:", e)
+        print("⚠️ Pool exhausted, creating TEMP connection:", e)
         conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+        conn.autocommit = False
+        conn._temp_conn = True         # ← label this connection
+        return conn
 
-    conn.autocommit = True
-    return conn
 
 def release_db(conn):
+    """
+    Safely return connection to pool
+    """
     global _db_pool
+
+    if conn is None:
+        return
+
     try:
+        # temp_CONN? → close instead of returning to pool
+        if hasattr(conn, "_temp_conn"):
+            conn.close()
+            return
+
+        # Normal pooled connection
         if _db_pool:
-            _db_pool.putconn(conn)
+            _db_pool.putconn(conn, close=False)
         else:
             conn.close()
     except Exception as e:
         print("⚠️ release_db error:", e)
+
 
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
@@ -2225,14 +2244,15 @@ def ton_rate_updater():
                 time.sleep(15)
                 continue
 
-            conn = db()
-            c = conn.cursor()
-            c.execute("""
-                UPDATE dom_users
-                SET last_rate = %s
-            """, (rate,))
-            conn.commit()
-            release_db(conn)
+            conn = None
+            try:
+                conn = db()
+                c = conn.cursor()
+                c.execute("UPDATE dom_users SET last_rate=%s", (rate,))
+                conn.commit()
+
+            finally:
+                release_db(conn)
             print("💹 last_rate updated in DB:", rate)
 
         except Exception as e:
