@@ -914,6 +914,8 @@ def init_db():
 
     """)
 
+    c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS likes INT DEFAULT 0")
+
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_withdrawals (
