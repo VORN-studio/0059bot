@@ -913,7 +913,11 @@ function renderPostCard(post) {
         <div style="font-size:14px;white-space:pre-wrap;margin-bottom:8px;">
             ${escapeHtml(post.text || "")}
         </div>
+
+        ${mediaHtml}
+
         <div style="display:flex;align-items:center;justify-content:space-between;">
+
             <button class="like-btn" data-id="${post.id}"
                 style="padding:4px 10px;border-radius:999px;border:none;
                        background:${post.liked ? "#22c55e33" : "#222"};
@@ -922,6 +926,30 @@ function renderPostCard(post) {
             </button>
         </div>
     `;
+
+        // ---- MEDIA BLOCK ----
+    let mediaHtml = "";
+    if (post.media_url && post.media_url !== "") {
+
+        // VIDEO
+        if (post.media_url.endsWith(".mp4")) {
+            mediaHtml = `
+                <video controls
+                    style="width:100%;border-radius:12px;margin-bottom:10px;">
+                    <source src="${post.media_url}">
+                </video>
+            `;
+        }
+
+        // IMAGE
+        else {
+            mediaHtml = `
+                <img src="${post.media_url}"
+                    style="width:100%;border-radius:12px;margin-bottom:10px;" />
+            `;
+        }
+    }
+
 
     const likeBtn = div.querySelector(".like-btn");
     likeBtn.addEventListener("click", async () => {
