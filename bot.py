@@ -390,6 +390,40 @@ def api_follow():
 
     return jsonify({"ok": True}), 200
 
+@app_web.route("/api/comment/delete", methods=["POST"])
+def api_comment_delete():
+    data = request.get_json()
+    cid = data.get("comment_id")
+    uid = data.get("user_id")
+
+    if not cid or not uid:
+        return jsonify({"ok": False}), 400
+
+    conn = db(); c = conn.cursor()
+
+    # Սեփական comment կամ սեփական post–ի comment:
+    c.execute("""
+        DELETE FROM dom_comments 
+        WHERE id=%s AND (user_id=%s OR post_id IN(
+            SELECT id FROM dom_posts WHERE user_id=%s
+        ))
+    """, (cid, uid, uid))
+
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+@app_web.route("/api/post/delete", methods=["POST"])
+def api_post_delete():
+    data = request.get_json()
+    pid = data.get("post_id")
+    uid = data.get("user_id")
+
+    conn = db(); c = conn.cursor()
+    c.execute("DELETE FROM dom_posts WHERE id=%s AND user_id=%s", (pid, uid))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
 
 
 @app_web.route("/api/admin/give", methods=["POST"])

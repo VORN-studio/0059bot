@@ -178,10 +178,23 @@
     </div>
 </div>
 
-<div id="comment-popup" class="hidden" 
-     style="position:fixed;left:0;top:0;width:100%;height:100%;
-            background:#000a;backdrop-filter:blur(4px);
-            display:none;align-items:center;justify-content:center;">
+    <div id="comment-drawer" class="drawer hidden">
+        <div class="drawer-panel">
+
+            <div class="drawer-header">
+                <div id="comment-count">Comments</div>
+                <button id="comment-close" class="drawer-close">✕</button>
+            </div>
+
+            <div id="comment-list" class="drawer-comments"></div>
+
+            <div class="drawer-input-row">
+                <textarea id="comment-input" placeholder="Write a comment..."></textarea>
+                <button id="comment-send">Send</button>
+            </div>
+
+        </div>
+    </div>
 
 
     <div style="background:#111;padding:15px;border-radius:12px;width:90%;max-width:380px;">

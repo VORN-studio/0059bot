@@ -1056,14 +1056,13 @@ let CURRENT_COMMENT_POST = null;
 async function openComments(postId) {
     CURRENT_COMMENT_POST = postId;
 
-    const popup = document.getElementById("comment-popup");
+    const drawer = document.getElementById("comment-drawer");
     const list = document.getElementById("comment-list");
-    if (!popup || !list) return;
+    const header = document.getElementById("comment-count");
 
+    drawer.classList.remove("hidden");
     list.innerHTML = "Loading...";
 
-    popup.classList.remove("hidden");
-    popup.style.display = "flex";
     const res = await fetch(`/api/comment/list?post_id=${postId}`);
     const data = await res.json();
 
@@ -1072,17 +1071,39 @@ async function openComments(postId) {
         return;
     }
 
+    header.innerText = `Comments (${data.comments.length})`;
     list.innerHTML = "";
+
     data.comments.forEach(c => {
         const div = document.createElement("div");
-        div.style.marginBottom = "8px";
+        div.className = "comment-item";
+        div.style.cssText = "margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #222;";
+
+        let deleteBtn = "";
+        if (String(c.user_id) === String(viewerId) || String(postId).user_id === String(viewerId)) {
+            deleteBtn = `<button class="delete-comment" data-id="${c.id}" style="float:right;color:red;background:none;border:none;">Delete</button>`;
+        }
+
         div.innerHTML = `
-            <b>${c.username}</b>: ${escapeHtml(c.text)}
-            <div style='opacity:0.6;font-size:11px;'>${new Date(c.created_at * 1000).toLocaleString()}</div>
+            <b>${c.username}</b> 
+            ${deleteBtn}
+            <div>${escapeHtml(c.text)}</div>
+            <div style="opacity:0.6;font-size:11px;">${new Date(c.created_at * 1000).toLocaleString()}</div>
         `;
+
         list.appendChild(div);
     });
+
+    // Delete comment buttons
+    document.querySelectorAll(".delete-comment").forEach(btn => {
+        btn.onclick = () => deleteComment(btn.dataset.id);
+    });
 }
+
+document.getElementById("comment-close").onclick = () => {
+    document.getElementById("comment-drawer").classList.add("hidden");
+};
+
 
 document.getElementById("comment-send").onclick = async () => {
     const input = document.getElementById("comment-input");
