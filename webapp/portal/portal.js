@@ -747,6 +747,13 @@ function initFeed() {
 
     // ----- Composer only for profile owner -----
     // REMOVE DUPLICATE COMPOSER — portal.html already contains creator
+    // BIND POST BUTTON FROM portal.html
+    const postBtn = document.getElementById("post-send");
+    if (postBtn) {
+        postBtn.onclick = createPost;
+    } else {
+        console.warn("post-send button not found");
+    }
 
 
     // սկզբում բեռնում ենք feed-ը
@@ -811,22 +818,20 @@ async function createPost() {
     loadFeed();
 }
 
-document.querySelectorAll(".feed-switch-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll(".feed-switch-btn")
-            .forEach(b => b.classList.remove("active"));
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".feed-switch-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".feed-switch-btn")
+                .forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
 
-        btn.classList.add("active");
-
-        const mode = btn.dataset.feed;
-
-        if (mode === "recommended") {
-            loadFeed();
-        } else {
-            loadMyPosts();
-        }
+            const mode = btn.dataset.feed;
+            if (mode === "recommended") loadFeed();
+            else loadMyPosts();
+        });
     });
 });
+
 
 async function loadMyPosts() {
     const feedList = document.getElementById("feed-list");
