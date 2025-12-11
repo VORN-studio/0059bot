@@ -967,16 +967,6 @@ function renderPostCard(post) {
             </button>
             ` : ""}
 
-            <div style="display:flex; gap:10px; margin-top:3px;">
-                <button class="comment-reply-btn"
-                        data-id="${c.id}"
-                        data-username="${c.username}"
-                        style="background:none;border:none;color:#7af;cursor:pointer;">
-                    💬 Reply
-                </button>
-            </div>
-
-
             <!-- LIKE -->
             <button class="like-btn" data-id="${post.id}"
                 style="padding:4px 10px;border-radius:999px;border:none;
@@ -985,7 +975,7 @@ function renderPostCard(post) {
                 ❤️ <span class="like-count">${post.likes}</span>
             </button>
 
-            <!-- COMMENT -->
+            <!-- COMMENTS -->
             <button class="comment-btn" data-id="${post.id}"
                 style="padding:4px 10px;border-radius:999px;border:none;
                     background:#222;color:#fff;font-size:13px;cursor:pointer;">
@@ -1001,6 +991,7 @@ function renderPostCard(post) {
 
         </div>
     `;
+
 
     const delBtn = div.querySelector(".delete-post-btn");
     if (delBtn) {
