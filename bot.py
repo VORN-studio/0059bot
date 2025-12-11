@@ -535,7 +535,8 @@ def api_comment_list():
             c.created_at,
             u.username,
             p.user_id AS post_owner_id,
-            c.likes                      -- 🔥 ԱՅՍՆ Է ՊԱԿԱՍՈՒՄ
+            c.likes
+            c.parent_id
         FROM dom_comments c
         JOIN dom_users u ON u.user_id = c.user_id
         JOIN dom_posts p ON p.id = c.post_id
@@ -553,7 +554,8 @@ def api_comment_list():
         "created_at": r[3],
         "username": r[4] or ("User " + str(r[1])),
         "post_owner_id": r[5],
-        "likes": r[6] or 0            # 🔥 FRONTEND-ը հիմա ԿԱՆԳՆԻ ՃԻՇՏ ԹՎԵՐՈՎ
+        "likes": r[6] or 0,
+        "parent_id": r[7]
     } for r in rows]
 
     return jsonify({"ok": True, "comments": comments})
@@ -565,6 +567,7 @@ def api_comment_create():
     user_id = data.get("user_id")
     post_id = data.get("post_id")
     text = (data.get("text") or "").strip()
+    parent_id = data.get("reply_to") or None
 
     if not user_id or not post_id or not text:
         return jsonify({"ok": False, "error": "missing data"}), 400
@@ -573,13 +576,15 @@ def api_comment_create():
 
     conn = db(); c = conn.cursor()
     c.execute("""
-        INSERT INTO dom_comments (post_id, user_id, text, created_at)
-        VALUES (%s, %s, %s, %s)
-    """, (post_id, user_id, text, now))
+        INSERT INTO dom_comments (post_id, user_id, text, created_at, parent_id)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (post_id, user_id, text, now, parent_id))
+
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
+
 
 
 @app_web.route("/api/posts/feed")
@@ -917,6 +922,7 @@ def init_db():
     """)
 
     c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS likes INT DEFAULT 0")
+    c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS parent_id BIGINT DEFAULT NULL")
 
 
     c.execute("""

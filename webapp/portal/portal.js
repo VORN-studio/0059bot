@@ -1133,6 +1133,14 @@ async function openComments(postId) {
 
             <div style="clear:both"></div>
 
+            let replyHtml = "";
+            if (c.parent_id) {
+                replyHtml =
+                    '<div style="font-size:12px;color:#7af;margin-bottom:4px;">' +
+                    '↳ reply to comment #' + c.parent_id +
+                    '</div>';
+            }
+
             <div>${escapeHtml(c.text)}</div>
 
             <div style="opacity:0.5;font-size:11px;">
