@@ -46,6 +46,33 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = `/app?uid=${backUid}`;
         });
     }
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadViewerPanel();
+    checkUsername();
+    loadProfile();
+    loadFollowStats();
+    loadUsers("");
+
+    initSettingsPanel();
+    initFollowButton();
+    initAvatarUpload();
+    initTabs();
+    initChatEvents();
+
+    const backBtn = document.getElementById("back-btn");
+    if (backBtn) {
+        backBtn.addEventListener("click", () => {
+            const backUid = viewerId || profileId || "";
+            window.location.href = `/app?uid=${backUid}`;
+        });
+    }
+
+    // 🔥 ԱՅՍ ՏՈՂԸ ԱՎԵԼԱՑՐՈՒ
+    initFeed();
+});
+
+
 });
 
 // ===============================
@@ -731,3 +758,211 @@ function initFollowButton() {
     });
 }
 
+// ===============================
+//          FEED / POSTS
+// ===============================
+
+function initFeed() {
+    const feedPage = document.getElementById("feed");
+    const feedList = document.getElementById("feed-list");
+    if (!feedPage || !feedList) return;
+
+    // ----- Composer only for profile owner -----
+    if (String(viewerId) === String(profileId)) {
+        const composer = document.createElement("div");
+        composer.style.cssText = `
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #1118;
+            border-radius: 10px;
+        `;
+
+        composer.innerHTML = `
+            <div style="font-size:14px; margin-bottom:6px;">Քո գրառումը 👇</div>
+            <textarea id="post-text"
+                style="width:100%;min-height:60px;background:#000a;color:#fff;border-radius:8px;border:1px solid #333;padding:8px;resize:vertical;"
+                placeholder="Գրիր ինչ ուզում ես կիսվել..."></textarea>
+            <button id="post-send"
+                style="margin-top:8px;padding:8px 14px;border-radius:8px;border:none;background:#3478f6;color:#fff;font-size:14px;cursor:pointer;">
+                Հրապարակել
+            </button>
+        `;
+
+        feedPage.insertBefore(composer, feedList);
+
+        const btn = composer.querySelector("#post-send");
+        btn.addEventListener("click", createPost);
+    }
+
+    // սկզբում բեռնում ենք feed-ը
+    loadFeed();
+}
+
+async function createPost() {
+    const textarea = document.getElementById("post-text");
+    if (!textarea) return;
+
+    const text = textarea.value.trim();
+    if (text === "") {
+        alert("Դատարկ post չեմ կարող հրապարակել :)");
+        return;
+    }
+
+    if (!viewerId) {
+        alert("User ID չկա (viewerId), հնարավոր չէ հրապարակել");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/post/create", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                user_id: viewerId,
+                text: text
+            })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            alert("Չստացվեց post հրապարակել");
+            return;
+        }
+
+        textarea.value = "";
+        // նորից բեռնում ենք feed-ը
+        loadFeed();
+    } catch (e) {
+        console.error("createPost error:", e);
+    }
+}
+
+async function loadFeed() {
+    const feedList = document.getElementById("feed-list");
+    if (!feedList) return;
+
+    feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Բեռնվում է...</div>";
+
+    let url = "/api/posts/feed";
+    if (viewerId) url += "?uid=" + encodeURIComponent(viewerId);
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data.ok) {
+            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Սխալ feed բեռնելիս</div>";
+            return;
+        }
+
+        const posts = data.posts || [];
+        if (posts.length === 0) {
+            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Դեռ գրառումներ չկան։ Գրի՛ր առաջինը 🙂</div>";
+            return;
+        }
+
+        feedList.innerHTML = "";
+        posts.forEach(p => {
+            const card = renderPostCard(p);
+            feedList.appendChild(card);
+        });
+    } catch (e) {
+        console.error("loadFeed error:", e);
+        feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Սխալ feed բեռնելիս</div>";
+    }
+}
+
+function renderPostCard(post) {
+    const div = document.createElement("div");
+    div.className = "post-card";
+    div.style.cssText = `
+        background:#000a;
+        border-radius:12px;
+        padding:10px;
+        margin-bottom:10px;
+        border:1px solid #222;
+    `;
+
+    const created = new Date(post.created_at * 1000);
+    const timeStr = created.toLocaleString();
+
+    const isMine = String(post.user_id) === String(viewerId);
+
+    div.innerHTML = `
+        <div style="display:flex;align-items:center;margin-bottom:6px;">
+            <img src="${post.avatar}" style="width:32px;height:32px;border-radius:50%;margin-right:8px;">
+            <div style="flex-grow:1;">
+                <div style="font-size:14px;font-weight:bold;">
+                    ${post.username || "User " + post.user_id}
+                    ${isMine ? '<span style="font-size:11px;opacity:0.7;"> (դու)</span>' : ""}
+                </div>
+                <div style="font-size:11px;opacity:0.6;">${timeStr}</div>
+            </div>
+        </div>
+        <div style="font-size:14px;white-space:pre-wrap;margin-bottom:8px;">
+            ${escapeHtml(post.text || "")}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+            <button class="like-btn" data-id="${post.id}"
+                style="padding:4px 10px;border-radius:999px;border:none;
+                       background:${post.liked ? "#22c55e33" : "#222"};
+                       color:#fff;font-size:13px;cursor:pointer;">
+                ❤️ <span class="like-count">${post.likes}</span>
+            </button>
+        </div>
+    `;
+
+    const likeBtn = div.querySelector(".like-btn");
+    likeBtn.addEventListener("click", async () => {
+        await likePost(post.id, likeBtn);
+    });
+
+    return div;
+}
+
+async function likePost(postId, btn) {
+    if (!viewerId) {
+        alert("Չի իմացվում քո ID-ն, like անել չի ստացվի");
+        return;
+    }
+    if (!btn) return;
+
+    // եթե արդեն սեղմված տեսակ ա, 2-րդ անգամ չենք ուղարկում
+    if (btn.dataset.clicked === "1") return;
+
+    try {
+        const res = await fetch("/api/post/like", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                user_id: viewerId,
+                post_id: postId
+            })
+        });
+        const data = await res.json();
+        if (!data.ok && !data.already) {
+            console.error("likePost failed", data);
+            return;
+        }
+
+        const countSpan = btn.querySelector(".like-count");
+        if (countSpan) {
+            let current = parseInt(countSpan.innerText || "0", 10);
+            if (!data.already) {
+                current += 1;
+            }
+            countSpan.innerText = String(current);
+        }
+
+        btn.style.background = "#22c55e33";
+        btn.dataset.clicked = "1";
+    } catch (e) {
+        console.error("likePost error:", e);
+    }
+}
+
+// փոքր helper՝ HTML escape անելու համար
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}

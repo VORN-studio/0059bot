@@ -456,6 +456,190 @@ def api_is_following(follower, target):
         "is_following": bool(row)
     })
 
+@app_web.route("/api/post/create", methods=["POST"])
+def api_post_create():
+    """
+    Ստեղծում է նոր post Domino Portal–ի համար։
+    Body: { "user_id": ..., "text": "...", "media_url": optional }
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    text = (data.get("text") or "").strip()
+    media_url = (data.get("media_url") or "").strip()
+
+    if not user_id or text == "":
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+
+    c.execute("""
+        INSERT INTO dom_posts (user_id, text, media_url, created_at)
+        VALUES (%s, %s, %s, %s)
+        RETURNING id
+    """, (user_id, text, media_url, now))
+    pid = c.fetchone()[0]
+
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True, "post_id": pid})
+
+@app_web.route("/api/posts/feed")
+def api_posts_feed():
+    """
+    Հիմնական feed՝ խառը օգտատերերի post–երով։
+    Query: ?uid=VIEWER_ID  (պետք ա like-ի ստատուսը ցույց տալու համար)
+    """
+    viewer_raw = request.args.get("uid", "0")
+    try:
+        viewer_id = int(viewer_raw)
+    except Exception:
+        viewer_id = 0
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
+               p.text, p.media_url, p.likes, p.created_at
+        FROM dom_posts p
+        JOIN dom_users u ON u.user_id = p.user_id
+        ORDER BY p.created_at DESC
+        LIMIT 50
+    """)
+    rows = c.fetchall()
+
+    liked_map = {}
+    if viewer_id:
+        c.execute("""
+            SELECT post_id
+            FROM dom_post_likes
+            WHERE user_id = %s
+        """, (viewer_id,))
+        liked_rows = c.fetchall()
+        liked_map = {r[0]: True for r in liked_rows}
+
+    release_db(conn)
+
+    posts = []
+    for r in rows:
+        pid, uid, username, avatar, avatar_data, text, media_url, likes, created_at = r
+        if avatar_data:
+            avatar_url = avatar_data
+        else:
+            avatar_url = avatar or "/portal/default.png"
+
+        posts.append({
+            "id": pid,
+            "user_id": uid,
+            "username": username or "",
+            "avatar": avatar_url,
+            "text": text,
+            "media_url": media_url,
+            "likes": int(likes or 0),
+            "created_at": int(created_at),
+            "liked": bool(liked_map.get(pid, False))
+        })
+
+    return jsonify({"ok": True, "posts": posts})
+
+@app_web.route("/api/posts/user/<int:user_id>")
+def api_posts_user(user_id):
+    """
+    Վերադարձնում է user-ի սեփական post–երը։
+    Optional viewer=? param like-ի ստատուսի համար։
+    """
+    viewer_raw = request.args.get("viewer", "0")
+    try:
+        viewer_id = int(viewer_raw)
+    except Exception:
+        viewer_id = 0
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
+               p.text, p.media_url, p.likes, p.created_at
+        FROM dom_posts p
+        JOIN dom_users u ON u.user_id = p.user_id
+        WHERE p.user_id = %s
+        ORDER BY p.created_at DESC
+        LIMIT 50
+    """, (user_id,))
+    rows = c.fetchall()
+
+    liked_map = {}
+    if viewer_id:
+        c.execute("""
+            SELECT post_id
+            FROM dom_post_likes
+            WHERE user_id = %s
+        """, (viewer_id,))
+        liked_rows = c.fetchall()
+        liked_map = {r[0]: True for r in liked_rows}
+
+    release_db(conn)
+
+    posts = []
+    for r in rows:
+        pid, uid, username, avatar, avatar_data, text, media_url, likes, created_at = r
+        if avatar_data:
+            avatar_url = avatar_data
+        else:
+            avatar_url = avatar or "/portal/default.png"
+
+        posts.append({
+            "id": pid,
+            "user_id": uid,
+            "username": username or "",
+            "avatar": avatar_url,
+            "text": text,
+            "media_url": media_url,
+            "likes": int(likes or 0),
+            "created_at": int(created_at),
+            "liked": bool(liked_map.get(pid, False))
+        })
+
+    return jsonify({"ok": True, "posts": posts})
+
+@app_web.route("/api/post/like", methods=["POST"])
+def api_post_like():
+    """
+    Օգտատերը լայքում է post-ը:
+    Body: { "user_id": ..., "post_id": ... }
+    Առայժմ՝ միայն 1 անգամ կարելի է like անել, unlike չկա։
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    post_id = int(data.get("post_id", 0))
+
+    if not user_id or not post_id:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+
+    c.execute("SELECT 1 FROM dom_post_likes WHERE user_id=%s AND post_id=%s",
+              (user_id, post_id))
+    if c.fetchone():
+        release_db(conn)
+        return jsonify({"ok": True, "already": True}), 200
+
+    c.execute("""
+        INSERT INTO dom_post_likes (user_id, post_id, created_at)
+        VALUES (%s, %s, %s)
+        ON CONFLICT DO NOTHING
+    """, (user_id, post_id, now))
+
+    c.execute("""
+        UPDATE dom_posts
+        SET likes = likes + 1
+        WHERE id = %s
+    """, (post_id,))
+
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True}), 200
+
 
 @app_web.route("/admaven-verify")
 def admaven_verify():
@@ -653,6 +837,28 @@ def init_db():
             UNIQUE(follower, target)
         )
     """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_posts (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            text TEXT,
+            media_url TEXT,
+            likes INT DEFAULT 0,
+            created_at BIGINT
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_post_likes (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            post_id INT,
+            created_at BIGINT,
+            UNIQUE(user_id, post_id)
+        )
+    """)
+
 
     # Եթե պլանների աղյուսակը դատարկ է → լցնում ենք մեր 10 tier-երը
     c.execute("SELECT COUNT(*) FROM dom_mining_plans")
