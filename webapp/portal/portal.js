@@ -1063,6 +1063,7 @@ async function openComments(postId) {
     drawer.classList.remove("hidden");
     list.innerHTML = "Loading...";
 
+    // Load comments
     const res = await fetch(`/api/comment/list?post_id=${postId}`);
     const data = await res.json();
 
@@ -1075,30 +1076,44 @@ async function openComments(postId) {
     list.innerHTML = "";
 
     data.comments.forEach(c => {
+
         const div = document.createElement("div");
         div.className = "comment-item";
-        div.style.cssText = "margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #222;";
+        div.style.cssText =
+            "margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #222;";
 
+        // WHO CAN DELETE?
         let deleteBtn = "";
-        if (String(c.user_id) === String(viewerId) || String(postId).user_id === String(viewerId)) {
-            deleteBtn = `<button class="delete-comment" data-id="${c.id}" style="float:right;color:red;background:none;border:none;">Delete</button>`;
+        if (
+            String(c.user_id) === String(viewerId) ||
+            String(c.post_owner_id) === String(viewerId)
+        ) {
+            deleteBtn = `
+                <button class="delete-comment"
+                    data-id="${c.id}"
+                    style="float:right;color:red;background:none;border:none;">
+                    Delete
+                </button>`;
         }
 
         div.innerHTML = `
-            <b>${c.username}</b> 
+            <b>${c.username}</b>
             ${deleteBtn}
             <div>${escapeHtml(c.text)}</div>
-            <div style="opacity:0.6;font-size:11px;">${new Date(c.created_at * 1000).toLocaleString()}</div>
+            <div style="opacity:0.5;font-size:11px;">
+                ${new Date(c.created_at * 1000).toLocaleString()}
+            </div>
         `;
 
         list.appendChild(div);
     });
 
-    // Delete comment buttons
+    // Bind delete button events
     document.querySelectorAll(".delete-comment").forEach(btn => {
         btn.onclick = () => deleteComment(btn.dataset.id);
     });
 }
+
 
 document.getElementById("comment-close").onclick = () => {
     document.getElementById("comment-drawer").classList.add("hidden");
@@ -1123,13 +1138,6 @@ document.getElementById("comment-send").onclick = async () => {
     openComments(CURRENT_COMMENT_POST);
 };
 
-document.getElementById("comment-close").onclick = () => {
-    const popup = document.getElementById("comment-popup");
-    if (!popup) return;
-    popup.classList.add("hidden");
-    popup.style.display = "none";   // ← Ավելացրու էս տողը
-};
-
 function sharePost(postId) {
     const shareText = `Դիտիր իմ գրառումը Domino Portal-ում:\nhttps://domino-backend-iavj.onrender.com/portal/portal.html?post=${postId}`;
 
@@ -1138,4 +1146,17 @@ function sharePost(postId) {
     } else {
         alert("Կարող եք տարածել այս հղումը:\n" + shareText);
     }
+}
+
+async function deleteComment(commentId) {
+    await fetch(`/api/comment/delete`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            comment_id: commentId,
+            user_id: viewerId
+        })
+    });
+
+    openComments(CURRENT_COMMENT_POST);
 }

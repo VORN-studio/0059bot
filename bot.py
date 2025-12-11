@@ -528,12 +528,20 @@ def api_comment_list():
 
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT c.id, c.user_id, c.text, c.created_at, u.username
+        SELECT 
+            c.id,
+            c.user_id,
+            c.text,
+            c.created_at,
+            u.username,
+            p.user_id AS post_owner_id
         FROM dom_comments c
-        LEFT JOIN dom_users u ON u.user_id = c.user_id
+        JOIN dom_users u ON u.user_id = c.user_id
+        JOIN dom_posts p ON p.id = c.post_id
         WHERE c.post_id = %s
         ORDER BY c.id ASC
     """, (post_id,))
+
     rows = c.fetchall()
     conn.close()
 
@@ -542,8 +550,10 @@ def api_comment_list():
         "user_id": r[1],
         "text": r[2],
         "created_at": r[3],
-        "username": r[4] or ("User " + str(r[1]))
+        "username": r[4] or ("User " + str(r[1])),
+        "post_owner_id": r[5]
     } for r in rows]
+
 
     return jsonify({"ok": True, "comments": comments})
 
