@@ -746,73 +746,103 @@ function initFeed() {
     if (!feedPage || !feedList) return;
 
     // ----- Composer only for profile owner -----
-    if (String(viewerId) === String(profileId)) {
-        const composer = document.createElement("div");
-        composer.style.cssText = `
-            padding: 10px;
-            margin-bottom: 10px;
-            background: #1118;
-            border-radius: 10px;
-        `;
+    // REMOVE DUPLICATE COMPOSER — portal.html already contains creator
 
-        composer.innerHTML = `
-            <div style="font-size:14px; margin-bottom:6px;">Քո գրառումը 👇</div>
-            <textarea id="post-text"
-                style="width:100%;min-height:60px;background:#000a;color:#fff;border-radius:8px;border:1px solid #333;padding:8px;resize:vertical;"
-                placeholder="Գրիր ինչ ուզում ես կիսվել..."></textarea>
-            <button id="post-send"
-                style="margin-top:8px;padding:8px 14px;border-radius:8px;border:none;background:#3478f6;color:#fff;font-size:14px;cursor:pointer;">
-                Հրապարակել
-            </button>
-        `;
-
-        feedPage.insertBefore(composer, feedList);
-
-        const btn = composer.querySelector("#post-send");
-        btn.addEventListener("click", createPost);
-    }
 
     // սկզբում բեռնում ենք feed-ը
     loadFeed();
 }
 
 async function createPost() {
-    const textarea = document.getElementById("post-text");
-    if (!textarea) return;
+    const textArea = document.getElementById("post-text");
+    const fileInput = document.getElementById("post-media");
 
-    const text = textarea.value.trim();
-    if (text === "") {
-        alert("Դատարկ post չեմ կարող հրապարակել :)");
+    const text = (textArea.value || "").trim();
+    if (text === "" && (!fileInput.files || fileInput.files.length === 0)) {
+        alert("Գրառումը չի կարող լինել լիովին դատարկ 🙂");
         return;
     }
 
-    if (!viewerId) {
-        alert("User ID չկա (viewerId), հնարավոր չէ հրապարակել");
-        return;
-    }
+    let mediaUrl = "";
 
-    try {
-        const res = await fetch("/api/post/create", {
+    // 1) եթե media կա՝ upload → backend
+    if (fileInput.files && fileInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("uid", viewerId);
+
+        const up = await fetch("/api/upload_post_media", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                user_id: viewerId,
-                text: text
-            })
+            body: formData
         });
-        const data = await res.json();
-        if (!data.ok) {
-            alert("Չստացվեց post հրապարակել");
+
+        const upData = await up.json();
+
+        if (!upData.ok) {
+            alert("Չհաջողվեց բեռնել ֆայլը");
             return;
         }
 
-        textarea.value = "";
-        // նորից բեռնում ենք feed-ը
-        loadFeed();
-    } catch (e) {
-        console.error("createPost error:", e);
+        mediaUrl = upData.url;
     }
+
+    // 2) ստեղծում ենք post
+    const res = await fetch("/api/post/create", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            user_id: viewerId,
+            text,
+            media_url: mediaUrl
+        })
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+        alert("Չհաջողվեց հրապարակել");
+        return;
+    }
+
+    // Reset UI
+    textArea.value = "";
+    fileInput.value = "";
+
+    loadFeed();
 }
+
+document.querySelectorAll(".feed-switch-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".feed-switch-btn")
+            .forEach(b => b.classList.remove("active"));
+
+        btn.classList.add("active");
+
+        const mode = btn.dataset.feed;
+
+        if (mode === "recommended") {
+            loadFeed();
+        } else {
+            loadMyPosts();
+        }
+    });
+});
+
+async function loadMyPosts() {
+    const feedList = document.getElementById("feed-list");
+    feedList.innerHTML = "Բեռնվում է...";
+
+    const res = await fetch(`/api/posts/user/${viewerId}`);
+    const data = await res.json();
+    if (!data.ok) {
+        feedList.innerHTML = "Չստացվեց բեռնել";
+        return;
+    }
+
+    feedList.innerHTML = "";
+    data.posts.forEach(p => feedList.appendChild(renderPostCard(p)));
+}
+
 
 async function loadFeed() {
     const feedList = document.getElementById("feed-list");

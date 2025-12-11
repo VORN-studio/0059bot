@@ -62,22 +62,10 @@ def app_page():
     """
     return send_from_directory(WEBAPP_DIR, "index.html")
 
-@app_web.route("/webapp/<path:filename>")
-def serve_webapp(filename):
-    """
-    Static ֆայլերի սերվինգ՝ /webapp/... համար
-    օրինակ՝ /webapp/app.js, /webapp/style.css, /webapp/assets/...
-    """
-    resp = send_from_directory(WEBAPP_DIR, filename)
-    if filename.endswith(".mp4"):
-        resp.headers["Cache-Control"] = "public, max-age=86400"
-        resp.headers["Accept-Ranges"] = "bytes"
-        resp.headers["Content-Type"] = "video/mp4"
-    elif filename.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico")):
-        resp.headers["Cache-Control"] = "public, max-age=86400"
-    elif filename.endswith((".css", ".js")):
-        resp.headers["Cache-Control"] = "no-cache"
-    return resp
+@app_web.route("/webapp/uploads/<path:filename>")
+def serve_uploads(filename):
+    return send_from_directory(os.path.join(WEBAPP_DIR, "uploads"), filename)
+
 
 @app_web.route("/api/message/send", methods=["POST"])
 def api_message_send():
@@ -639,6 +627,31 @@ def api_post_like():
     release_db(conn)
 
     return jsonify({"ok": True}), 200
+
+
+@app_web.route("/api/upload_post_media", methods=["POST"])
+def api_upload_post_media():
+    from werkzeug.utils import secure_filename
+    import base64, time
+
+    uid = request.form.get("uid")
+    file = request.files.get("file")
+
+    if not uid or not file:
+        return jsonify({"ok": False, "error": "missing"}), 400
+
+    ext = file.filename.rsplit(".", 1)[-1].lower()
+    safe_name = secure_filename(f"{uid}_{int(time.time())}.{ext}")
+
+    save_path = os.path.join(WEBAPP_DIR, "uploads")
+    os.makedirs(save_path, exist_ok=True)
+
+    full = os.path.join(save_path, safe_name)
+    file.save(full)
+
+    url = f"/webapp/uploads/{safe_name}"
+
+    return jsonify({"ok": True, "url": url})
 
 
 @app_web.route("/admaven-verify")
