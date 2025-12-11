@@ -884,6 +884,16 @@ async function loadFeed() {
 }
 
 function renderPostCard(post) {
+    let mediaUrl = "";
+    if (post.media_url && post.media_url !== "") {
+        mediaUrl = post.media_url;
+
+        // Եթե backend-ը տվել է "/uploads/..." → դարձնում ենք լիարժեք URL
+        if (mediaUrl.startsWith("/uploads/")) {
+            mediaUrl = window.location.origin + mediaUrl;
+        }
+    }
+
     const div = document.createElement("div");
     div.className = "post-card";
     div.style.cssText = `
@@ -902,22 +912,21 @@ function renderPostCard(post) {
     // ✅ MEDIA FIRST — առանձին հաշվարկվում է, հետո կմտնի HTML
     // ------------------------------------------------
     let mediaHtml = "";
-    if (post.media_url && post.media_url !== "") {
-
-        if (post.media_url.endsWith(".mp4")) {
+    if (mediaUrl) {
+        if (mediaUrl.endsWith(".mp4")) {
             mediaHtml = `
-                <video controls
-                       style="width:100%;border-radius:12px;margin-bottom:10px;">
-                    <source src="${post.media_url}">
+                <video controls style="width:100%; border-radius:12px; margin-bottom:10px;">
+                    <source src="${mediaUrl}">
                 </video>
             `;
         } else {
             mediaHtml = `
-                <img src="${post.media_url}"
-                     style="width:100%;border-radius:12px;margin-bottom:10px;" />
+                <img src="${mediaUrl}"
+                    style="width:100%; border-radius:12px; margin-bottom:10px;" />
             `;
         }
     }
+
 
     // ------------------------------------------------
     // ✅ Հիմա օգտագործում ենք mediaHtml-ը div.innerHTML-ի մեջ
