@@ -62,10 +62,22 @@ def app_page():
     """
     return send_from_directory(WEBAPP_DIR, "index.html")
 
-@app_web.route("/webapp/uploads/<path:filename>")
-def serve_uploads(filename):
-    return send_from_directory(os.path.join(WEBAPP_DIR, "uploads"), filename)
-
+@app_web.route("/webapp/<path:filename>")
+def serve_webapp(filename):
+    """
+    Static ֆայլերի սերվինգ՝ /webapp/... համար
+    օրինակ՝ /webapp/app.js, /webapp/style.css, /webapp/assets/...
+    """
+    resp = send_from_directory(WEBAPP_DIR, filename)
+    if filename.endswith(".mp4"):
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+        resp.headers["Accept-Ranges"] = "bytes"
+        resp.headers["Content-Type"] = "video/mp4"
+    elif filename.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico")):
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+    elif filename.endswith((".css", ".js")):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
 
 @app_web.route("/api/message/send", methods=["POST"])
 def api_message_send():
