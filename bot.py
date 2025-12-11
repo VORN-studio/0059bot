@@ -460,14 +460,15 @@ def api_is_following(follower, target):
 def api_post_create():
     """
     Ստեղծում է նոր post Domino Portal–ի համար։
-    Body: { "user_id": ..., "text": "...", "media_url": optional }
+    Body: { "user_id": ..., "text": optional, "media_url": optional }
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
     text = (data.get("text") or "").strip()
     media_url = (data.get("media_url") or "").strip()
 
-    if not user_id or text == "":
+    # user_id պարտադիր է, բայց կամ text, կամ media_url պետք է լինի (է least մեկը)
+    if not user_id or (text == "" and media_url == ""):
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
     now = int(time.time())
@@ -484,6 +485,7 @@ def api_post_create():
     release_db(conn)
 
     return jsonify({"ok": True, "post_id": pid})
+
 
 @app_web.route("/api/posts/feed")
 def api_posts_feed():
@@ -987,7 +989,6 @@ def get_user_stats(user_id: int):
 
     (username, avatar, avatar_data, balance_usd, total_dep, total_wd, ton_balance, last_rate) = row
 
-        # --- STATUS from mining plans (max tier) ---
     c.execute("""
         SELECT COALESCE(MAX(p.tier), 0)
         FROM dom_user_miners m
@@ -1736,12 +1737,14 @@ def mylead_postback():
         &transaction_id={transaction_id}
     """
 
+    task_id_raw = request.args.get("subid2") or request.args.get("s2")
     task_id = None
     if task_id_raw:
         try:
             task_id = int(task_id_raw)
         except Exception:
             task_id = None
+
 
 
     user_id_raw = request.args.get("subid1") or request.args.get("s1")
