@@ -695,6 +695,11 @@ function initFollowButton() {
     followBtn.addEventListener("click", async () => {
         if (!viewerId || !profileId || isOwner) return;
 
+        // 👉 եթե արդեն Following է, երկրորդ անգամ չի սարքում request
+        if (followBtn.innerText === "Following") return;
+
+        followBtn.disabled = true;
+
         try {
             const res = await fetch("/api/follow", {
                 method: "POST",
@@ -705,7 +710,14 @@ function initFollowButton() {
                 })
             });
             const data = await res.json();
+
             if (data.ok) {
+                followBtn.innerText = "Following";
+                await loadFollowStats();
+            } else if (data.error === "low_balance") {
+                alert("Բալանսը բավարար չէ follow անելու համար");
+            } else if (data.already) {
+                // եթե սերվերը ասում է արդեն follow արած ես
                 followBtn.innerText = "Following";
                 await loadFollowStats();
             } else {
@@ -713,6 +725,9 @@ function initFollowButton() {
             }
         } catch (e) {
             console.error(e);
+        } finally {
+            followBtn.disabled = false;
         }
     });
 }
+

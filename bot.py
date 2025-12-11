@@ -329,6 +329,17 @@ def api_follow():
 
     conn = db(); c = conn.cursor()
 
+    # 👉 ՍՏԵՂԵՑ՝ ՍԿԶԲՈՒՄ ստուգում ենք՝ արդյո՞ք արդեն follow արած է
+    c.execute("""
+        SELECT 1 FROM dom_follows
+        WHERE follower = %s AND target = %s
+    """, (follower, target))
+    already = c.fetchone()
+    if already:
+        # արդեն follow արած է, գումար չենք հանում, ուղղակի OK ենք տալիս
+        release_db(conn)
+        return jsonify({"ok": True, "already": True}), 200
+
     # --- check follower balance ---
     c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (follower,))
     row = c.fetchone()
@@ -377,7 +388,8 @@ def api_follow():
     conn.commit()
     release_db(conn)
 
-    return jsonify({"ok": True})
+    return jsonify({"ok": True}), 200
+
 
 
 @app_web.route("/api/admin/give", methods=["POST"])
@@ -1492,6 +1504,14 @@ def mylead_postback():
         &offer_id={program_id}
         &transaction_id={transaction_id}
     """
+
+    task_id = None
+    if task_id_raw:
+        try:
+            task_id = int(task_id_raw)
+        except Exception:
+            task_id = None
+
 
     user_id_raw = request.args.get("subid1") or request.args.get("s1")
     task_id_raw = request.args.get("subid2") or request.args.get("s2")
