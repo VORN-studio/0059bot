@@ -304,3 +304,55 @@ body {
 .dm-user-row:hover {
     background: rgba(255,255,255,0.15);
 }
+
+/* =======================
+   STATUS COLOR LEVELS
+   ======================= */
+
+.status-0 {
+    color: #e5e7eb; /* default, առանց փաթեթ */
+}
+
+.status-1 {
+    color: #9ca3af; /* Initiate – մուգ մոխրագույն */
+}
+
+.status-2 {
+    color: #22c55e; /* Apprentice – կանաչավուն */
+}
+
+.status-3 {
+    color: #38bdf8; /* Associate – կապտավուն */
+}
+
+.status-4 {
+    color: #6366f1; /* Adept – էլեկտրիկ կապույտ */
+}
+
+.status-5 {
+    color: #a855f7; /* Knight – մանուշակագույն */
+}
+
+.status-6 {
+    color: #f97316; /* Vanguard – նարնջագույն */
+}
+
+.status-7 {
+    color: #facc15; /* Ascendant – ոսկեգույն */
+}
+
+.status-8 {
+    color: #fbbf24; /* Sovereign – ավելի պայծառ ոսկի */
+    text-shadow: 0 0 6px rgba(250,191,36,0.7);
+}
+
+.status-9 {
+    color: #e11d48; /* Imperial – կարմիր + glow */
+    text-shadow: 0 0 6px rgba(225,29,72,0.7);
+}
+
+.status-10 {
+    color: #a855f7; /* Ethereal – մանուշակագույն + ուժեղ glow */
+    text-shadow: 0 0 10px rgba(168,85,247,0.9),
+                 0 0 18px rgba(59,130,246,0.7);
+}

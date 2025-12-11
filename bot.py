@@ -672,6 +672,31 @@ def get_user_stats(user_id: int):
 
     (username, avatar, avatar_data, balance_usd, total_dep, total_wd, ton_balance, last_rate) = row
 
+        # --- STATUS from mining plans (max tier) ---
+    c.execute("""
+        SELECT COALESCE(MAX(p.tier), 0)
+        FROM dom_user_miners m
+        JOIN dom_mining_plans p ON m.plan_id = p.id
+        WHERE m.user_id = %s
+    """, (user_id,))
+    status_row = c.fetchone()
+    status_level = int(status_row[0] or 0)
+
+    # ցանկութամբ — անուն ըստ tier
+    name_map = {
+        1: "Initiate",
+        2: "Apprentice",
+        3: "Associate",
+        4: "Adept",
+        5: "Knight",
+        6: "Vanguard",
+        7: "Ascendant",
+        8: "Sovereign",
+        9: "Imperial",
+        10: "Ethereal",
+    }
+    status_name = name_map.get(status_level, "None")
+
 
     if last_rate and last_rate > 0:
         ton_balance = balance_usd / last_rate
@@ -709,6 +734,9 @@ def get_user_stats(user_id: int):
         "ref_count": int(ref_count),
         "active_refs": int(active_refs),
         "team_deposit_usd": float(team_dep),
+        # 🔥 STATUS FIELDS
+        "status_level": int(status_level),
+        "status_name": status_name,
     }
 
 def apply_deposit(user_id: int, amount: float):

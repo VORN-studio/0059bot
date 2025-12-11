@@ -236,11 +236,15 @@ async function loadProfile() {
             profileAvatar.src = avatarUrl;
         }
 
-        setUsername(user.username || "");
+                setUsername(user.username || "");
+
+        // 🔥 Ավելացնում ենք status-ի դեկոր
+        decorateUsername(user.status_level || 0, user.status_name || "None");
     } catch (e) {
         console.error("loadProfile error:", e);
     }
 }
+
 
 // ===============================
 //        GLOBAL CHAT
@@ -423,6 +427,28 @@ async function saveUsername(name) {
         body: JSON.stringify({ uid: viewerId, username: name })
     });
 }
+
+// ===============================
+//        STATUS DECORATION
+// ===============================
+function decorateUsername(level, name) {
+    const el = document.getElementById("profile-name");
+    if (!el) return;
+
+    // մաքրում ենք հների classes-ը
+    for (let i = 0; i <= 10; i++) {
+        el.classList.remove(`status-${i}`);
+    }
+
+    const lvl = Number(level) || 0;
+    el.classList.add(`status-${lvl}`);
+
+    // ցանկության դեպքում՝ title tooltip
+    if (name) {
+        el.title = `Status: ${name}`;
+    }
+}
+
 
 function showUsernamePopup() {
     if (!isOwner) return;
