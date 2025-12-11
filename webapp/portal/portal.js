@@ -47,32 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadViewerPanel();
-    checkUsername();
-    loadProfile();
-    loadFollowStats();
-    loadUsers("");
-
-    initSettingsPanel();
-    initFollowButton();
-    initAvatarUpload();
-    initTabs();
-    initChatEvents();
-
-    const backBtn = document.getElementById("back-btn");
-    if (backBtn) {
-        backBtn.addEventListener("click", () => {
-            const backUid = viewerId || profileId || "";
-            window.location.href = `/app?uid=${backUid}`;
-        });
-    }
-
-    // 🔥 ԱՅՍ ՏՈՂԸ ԱՎԵԼԱՑՐՈՒ
-    initFeed();
-});
-
-
 });
 
 // ===============================
