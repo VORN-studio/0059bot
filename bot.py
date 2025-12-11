@@ -535,7 +535,7 @@ def api_comment_list():
             c.created_at,
             u.username,
             p.user_id AS post_owner_id,
-            c.likes
+            c.likes,
             c.parent_id
         FROM dom_comments c
         JOIN dom_users u ON u.user_id = c.user_id

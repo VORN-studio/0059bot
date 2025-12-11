@@ -1067,6 +1067,9 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;");
 }
 
+// ===============================
+//      COMMENTS
+// ===============================
 let CURRENT_COMMENT_POST = null;
 
 async function openComments(postId) {
@@ -1075,6 +1078,8 @@ async function openComments(postId) {
     const drawer = document.getElementById("comment-drawer");
     const list = document.getElementById("comment-list");
     const header = document.getElementById("comment-count");
+
+    if (!drawer || !list || !header) return;
 
     drawer.classList.remove("hidden");
     list.innerHTML = "Loading...";
@@ -1092,7 +1097,6 @@ async function openComments(postId) {
     list.innerHTML = "";
 
     data.comments.forEach(c => {
-
         const div = document.createElement("div");
         div.className = "comment-item";
         div.style.cssText =
@@ -1109,37 +1113,43 @@ async function openComments(postId) {
                     data-id="${c.id}"
                     style="float:right;color:red;background:none;border:none;">
                     Delete
-                </button>`;
+                </button>
+            `;
         }
 
+        // reply block
+        let replyHtml = "";
+        if (c.parent_id) {
+            replyHtml = `
+                <div style="font-size:12px;color:#7af;margin-bottom:4px;">
+                    ↳ reply to comment #${c.parent_id}
+                </div>
+            `;
+        }
+
+        // FINAL HTML
         div.innerHTML = `
             <b>${c.username}</b>
             ${deleteBtn}
 
             <button class="comment-like-btn"
-                    data-id="${c.id}"
-                    style="float:right;margin-right:10px;background:none;
-                        border:none;color:#4af;cursor:pointer;">
+                data-id="${c.id}"
+                style="float:right;margin-right:10px;background:none;
+                    border:none;color:#4af;cursor:pointer;">
                 👍 ${c.likes || 0}
             </button>
 
             <button class="comment-reply-btn"
-                    data-id="${c.id}"
-                    data-username="${c.username}"
-                    style="float:right;margin-right:10px;background:none;
-                        border:none;color:#7af;cursor:pointer;">
+                data-id="${c.id}"
+                data-username="${c.username}"
+                style="float:right;margin-right:10px;background:none;
+                    border:none;color:#7af;cursor:pointer;">
                 💬 Reply
             </button>
 
-            <div style="clear:both"></div>
+            <div style="clear:both;"></div>
 
-            let replyHtml = "";
-            if (c.parent_id) {
-                replyHtml =
-                    '<div style="font-size:12px;color:#7af;margin-bottom:4px;">' +
-                    '↳ reply to comment #' + c.parent_id +
-                    '</div>';
-            }
+            ${replyHtml}
 
             <div>${escapeHtml(c.text)}</div>
 
@@ -1151,57 +1161,123 @@ async function openComments(postId) {
         list.appendChild(div);
     });
 
-    document.querySelectorAll(".comment-like-btn").forEach(btn => {
-        btn.onclick = () => likeComment(btn.dataset.id);
+    // LIKE
+    list.querySelectorAll(".comment-like-btn").forEach(btn => {
+        btn.addEventListener("click", () => likeComment(btn.dataset.id));
     });
 
-    document.querySelectorAll(".comment-reply-btn").forEach(btn => {
-        btn.onclick = () => {
+    // REPLY
+    list.querySelectorAll(".comment-reply-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
             REPLY_TO = btn.dataset.id;
             REPLY_TO_USERNAME = btn.dataset.username;
 
             const input = document.getElementById("comment-input");
-            input.placeholder = `Reply to ${REPLY_TO_USERNAME}...`;
-            input.focus();
-        };
+            if (input) {
+                input.placeholder = `Reply to ${REPLY_TO_USERNAME}...`;
+                input.focus();
+            }
+        });
     });
 
-
-    // Bind delete button events
-    document.querySelectorAll(".delete-comment").forEach(btn => {
-        btn.onclick = () => deleteComment(btn.dataset.id);
+    // DELETE
+    list.querySelectorAll(".delete-comment").forEach(btn => {
+        btn.addEventListener("click", () => deleteComment(btn.dataset.id));
     });
 }
 
+// bind close / send AFTER DOM loaded
+document.addEventListener("DOMContentLoaded", () => {
+    const closeBtn = document.getElementById("comment-close");
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            const drawer = document.getElementById("comment-drawer");
+            if (drawer) drawer.classList.add("hidden");
+        };
+    }
 
-    document.getElementById("comment-close").onclick = () => {
-        document.getElementById("comment-drawer").classList.add("hidden");
-    };
+    const sendBtn = document.getElementById("comment-send");
+    if (sendBtn) {
+        sendBtn.onclick = async () => {
+            const input = document.getElementById("comment-input");
+            if (!input) return;
 
+            const text = input.value.trim();
+            if (!text) return;
 
-    document.getElementById("comment-send").onclick = async () => {
-        const input = document.getElementById("comment-input");
-        const text = input.value.trim();
-        if (!text) return;
+            await fetch(`/api/comment/create`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    post_id: CURRENT_COMMENT_POST,
+                    user_id: viewerId,
+                    text,
+                    reply_to: REPLY_TO
+                })
+            });
 
-        await fetch(`/api/comment/create`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                post_id: CURRENT_COMMENT_POST,
-                user_id: viewerId,
-                text,
-                reply_to: REPLY_TO
-            })
-        });
+            REPLY_TO = null;
+            REPLY_TO_USERNAME = null;
+            input.placeholder = "Write a comment...";
+            input.value = "";
 
-        REPLY_TO = null;
-        REPLY_TO_USERNAME = null;
-        input.placeholder = "Write a comment...";
-        input.value = "";
+            openComments(CURRENT_COMMENT_POST);
+        };
+    }
+});
 
-        openComments(CURRENT_COMMENT_POST);
-    };
+function sharePost(postId) {
+    const shareText = `Դիտիր իմ գրառումը Domino Portal-ում:\nhttps://domino-backend-iavj.onrender.com/portal/portal.html?post=${postId}`;
+
+    if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareText)}`);
+    } else {
+        alert("Կարող եք տարածել այս հղումը:\n" + shareText);
+    }
+}
+
+async function deleteComment(commentId) {
+    await fetch(`/api/comment/delete`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            comment_id: commentId,
+            user_id: viewerId
+        })
+    });
+
+    openComments(CURRENT_COMMENT_POST);
+}
+
+async function deletePost(postId) {
+    const ok = confirm("Համոզվա՞ծ ես, որ ուզում ես ջնջել գրառումը։");
+    if (!ok) return;
+
+    await fetch("/api/post/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            post_id: postId,
+            user_id: viewerId
+        })
+    });
+
+    loadFeed(); // թարմացնում ենք feed-ը
+}
+
+async function likeComment(commentId) {
+    await fetch("/api/comment/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            comment_id: commentId,
+            user_id: viewerId
+        })
+    });
+
+    openComments(CURRENT_COMMENT_POST);
+}
+
 
 
 function sharePost(postId) {
