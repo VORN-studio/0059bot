@@ -883,6 +883,20 @@ async function loadFeed() {
     }
 }
 
+// normalize old wrong paths
+if (post.media_url) {
+    // եթե հին պոստը պահված է սխալ: "/webapp/uploads/xxxx"
+    if (post.media_url.startsWith("/webapp/uploads/")) {
+        post.media_url = post.media_url.replace("/webapp", "");
+    }
+
+    // եթե backend-ը տվել է "/uploads/...", դարձնում ենք absolute URL
+    if (post.media_url.startsWith("/uploads/")) {
+        post.media_url = window.location.origin + post.media_url;
+    }
+}
+
+
 function renderPostCard(post) {
     let mediaUrl = "";
     if (post.media_url && post.media_url !== "") {
