@@ -1063,7 +1063,7 @@ async function openComments(postId) {
     list.innerHTML = "Loading...";
 
     popup.classList.remove("hidden");
-
+    popup.style.display = "flex";
     const res = await fetch(`/api/comment/list?post_id=${postId}`);
     const data = await res.json();
 
@@ -1103,7 +1103,10 @@ document.getElementById("comment-send").onclick = async () => {
 };
 
 document.getElementById("comment-close").onclick = () => {
-    document.getElementById("comment-popup").classList.add("hidden");
+    const popup = document.getElementById("comment-popup");
+    if (!popup) return;
+    popup.classList.add("hidden");
+    popup.style.display = "none";   // ← Ավելացրու էս տողը
 };
 
 function sharePost(postId) {
