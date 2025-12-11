@@ -992,19 +992,6 @@ function renderPostCard(post) {
         shareBtn.addEventListener("click", () => sharePost(post.id));
     }
 
-
-    // normalize old wrong paths
-    if (post.media_url) {
-        if (post.media_url.startsWith("/webapp/uploads/")) {
-            post.media_url = post.media_url.replace("/webapp", "");
-        }
-
-        if (post.media_url.startsWith("/uploads/")) {
-            post.media_url = window.location.origin + post.media_url;
-        }
-    }
-
-
     // like
     const likeBtn = div.querySelector(".like-btn");
     likeBtn.addEventListener("click", async () => {
