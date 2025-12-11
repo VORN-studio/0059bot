@@ -735,6 +735,53 @@ def api_post_like():
 
     return jsonify({"ok": True}), 200
 
+@app_web.route("/api/comment/like", methods=["POST"])
+def api_comment_like():
+    data = request.get_json(force=True, silent=True) or {}
+    cid = int(data.get("comment_id", 0))
+    uid = int(data.get("user_id", 0))
+
+    if cid == 0 or uid == 0:
+        return jsonify({"ok": False, "error": "missing_params"}), 400
+
+    conn = db(); c = conn.cursor()
+
+    # prevent double-like
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_comment_likes (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            comment_id BIGINT,
+            UNIQUE(user_id, comment_id)
+        )
+    """)
+
+    # check existing
+    c.execute("SELECT 1 FROM dom_comment_likes WHERE user_id=%s AND comment_id=%s",
+              (uid, cid))
+    if c.fetchone():
+        release_db(conn)
+        return jsonify({"ok": True, "already": True})
+
+    # register like
+    now = int(time.time())
+    c.execute("""
+        INSERT INTO dom_comment_likes (user_id, comment_id)
+        VALUES (%s, %s)
+    """, (uid, cid))
+
+    # increment count
+    c.execute("""
+        UPDATE dom_comments
+        SET likes = likes + 1
+        WHERE id = %s
+    """, (cid,))
+
+    conn.commit()
+    release_db(conn)
+
+    return jsonify({"ok": True})
+
 
 @app_web.route("/api/upload_post_media", methods=["POST"])
 def api_upload_post_media():
@@ -861,8 +908,10 @@ def init_db():
             post_id BIGINT,
             user_id BIGINT,
             text TEXT,
-            created_at BIGINT
+            created_at BIGINT,
+            likes INT DEFAULT 0
         )
+
     """)
 
 
