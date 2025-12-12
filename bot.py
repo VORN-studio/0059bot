@@ -2219,18 +2219,17 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if not user:
         return
-    print("✅ /start received from", user.id, "text:", text)
 
     text = update.message.text if update.message else ""
+    print("✅ /start received from", user.id, "text:", text)
+
     inviter_id = parse_start_payload(text)
-    # post_id = parse_startapp_payload(text)
 
     if inviter_id == user.id:
         inviter_id = None
 
     ensure_user(user.id, user.username, inviter_id)
 
-    base = (PUBLIC_BASE_URL or "").rstrip("/")
     wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
 
     keyboard = InlineKeyboardMarkup([
@@ -2243,11 +2242,13 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=keyboard
     )
 
+    # (սա կարող ես թողնել կամ հանել, բայց սխալ չի)
     try:
         if update.message:
             await context.bot.pin_chat_message(chat_id=user.id, message_id=update.message.message_id)
     except Exception:
         pass
+
 
 async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
