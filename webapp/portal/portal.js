@@ -1067,6 +1067,55 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;");
 }
 
+function renderComment(c, isReply) {
+    const div = document.createElement("div");
+    div.style.cssText = `
+        padding:6px;
+        margin-bottom:8px;
+        border-bottom:1px solid #222;
+        ${isReply ? "opacity:0.9;" : ""}
+    `;
+
+    let deleteBtn = "";
+    if (
+        String(c.user_id) === String(viewerId) ||
+        String(c.post_owner_id) === String(viewerId)
+    ) {
+        deleteBtn = `<span class="delete-comment" data-id="${c.id}"
+            style="float:right;color:red;cursor:pointer;">Delete</span>`;
+    }
+
+    div.innerHTML = `
+        <b>${c.username}</b>
+        ${deleteBtn}
+
+        <span class="comment-like-btn" data-id="${c.id}"
+            style="float:right;margin-right:10px;color:#4af;cursor:pointer;">
+            👍 ${c.likes || 0}
+        </span>
+
+        <span class="comment-reply-btn"
+            data-id="${c.id}"
+            data-username="${c.username}"
+            style="float:right;margin-right:10px;color:#7af;cursor:pointer;">
+            Reply
+        </span>
+
+        <div style="clear:both"></div>
+
+        <div style="font-size:13px;margin-top:4px;">
+            ${escapeHtml(c.text)}
+        </div>
+
+        <div style="font-size:11px;opacity:0.5;">
+            ${new Date(c.created_at * 1000).toLocaleString()}
+        </div>
+    `;
+
+    return div;
+}
+
+
 // ===============================
 //      COMMENTS
 // ===============================
@@ -1096,70 +1145,57 @@ async function openComments(postId) {
     header.innerText = `Comments (${data.comments.length})`;
     list.innerHTML = "";
 
+    const parents = [];
+    const repliesMap = {};
+
     data.comments.forEach(c => {
-        const div = document.createElement("div");
-        div.className = "comment-item";
-        div.style.cssText =
-            "margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #222;";
-
-        // WHO CAN DELETE?
-        let deleteBtn = "";
-        if (
-            String(c.user_id) === String(viewerId) ||
-            String(c.post_owner_id) === String(viewerId)
-        ) {
-            deleteBtn = `
-                <button class="delete-comment"
-                    data-id="${c.id}"
-                    style="float:right;color:red;background:none;border:none;">
-                    Delete
-                </button>
-            `;
-        }
-
-        // reply block
-        let replyHtml = "";
         if (c.parent_id) {
-            replyHtml = `
-                <div style="font-size:12px;color:#7af;margin-bottom:4px;">
-                    ↳ reply to comment #${c.parent_id}
-                </div>
-            `;
+            if (!repliesMap[c.parent_id]) {
+                repliesMap[c.parent_id] = [];
+            }
+            repliesMap[c.parent_id].push(c);
+        } else {
+            parents.push(c);
         }
-
-        // FINAL HTML
-        div.innerHTML = `
-            <b>${c.username}</b>
-            ${deleteBtn}
-
-            <button class="comment-like-btn"
-                data-id="${c.id}"
-                style="float:right;margin-right:10px;background:none;
-                    border:none;color:#4af;cursor:pointer;">
-                👍 ${c.likes || 0}
-            </button>
-
-            <button class="comment-reply-btn"
-                data-id="${c.id}"
-                data-username="${c.username}"
-                style="float:right;margin-right:10px;background:none;
-                    border:none;color:#7af;cursor:pointer;">
-                💬 Reply
-            </button>
-
-            <div style="clear:both;"></div>
-
-            ${replyHtml}
-
-            <div>${escapeHtml(c.text)}</div>
-
-            <div style="opacity:0.5;font-size:11px;">
-                ${new Date(c.created_at * 1000).toLocaleString()}
-            </div>
-        `;
-
-        list.appendChild(div);
     });
+
+    parents.forEach(parent => {
+        const parentDiv = renderComment(parent, false);
+        list.appendChild(parentDiv);
+
+        const replies = repliesMap[parent.id] || [];
+
+        if (replies.length > 0) {
+            const wrap = document.createElement("div");
+            wrap.style.marginLeft = "20px";
+            wrap.style.marginTop = "6px";
+
+            replies.slice(0, 2).forEach(r => {
+                wrap.appendChild(renderComment(r, true));
+            });
+
+            if (replies.length > 2) {
+                const more = document.createElement("div");
+                more.innerText = `Show ${replies.length - 2} replies`;
+                more.style.color = "#7af";
+                more.style.cursor = "pointer";
+                more.style.fontSize = "12px";
+
+                more.onclick = () => {
+                    wrap.innerHTML = "";
+                    replies.forEach(r => {
+                        wrap.appendChild(renderComment(r, true));
+                    });
+                    more.remove();
+                };
+
+                wrap.appendChild(more);
+            }
+
+            list.appendChild(wrap);
+        }
+    });
+
 
     // LIKE
     list.querySelectorAll(".comment-like-btn").forEach(btn => {
