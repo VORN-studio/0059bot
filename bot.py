@@ -309,6 +309,12 @@ def webapp_tasks(filename):
 def serve_portal(filename):
     return send_from_directory(PORTAL_DIR, filename)
 
+UPLOADS_DIR = os.path.join(WEBAPP_DIR, "uploads")
+
+@app_web.route("/uploads/<path:filename>")
+def serve_uploads(filename):
+    return send_from_directory(UPLOADS_DIR, filename)
+
 @app_web.route("/api/set_username", methods=["POST"])
 def api_set_username():
     data = request.get_json()
@@ -800,7 +806,7 @@ def api_upload_post_media():
     full = os.path.join(save_path, safe_name)
     file.save(full)
 
-    url = f"/webapp/uploads/{safe_name}"
+    url = f"/uploads/{safe_name}"
 
     return jsonify({"ok": True, "url": url})
 
