@@ -129,6 +129,28 @@ def api_message_history():
 
     return jsonify({"ok": True, "messages": messages})
 
+@app_web.route("/api/wallet_connect", methods=["POST"])
+def api_wallet_connect():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    wallet = (data.get("wallet") or "").strip()
+
+    if not user_id or not wallet:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        UPDATE dom_users
+        SET wallet_address = %s
+        WHERE user_id = %s
+    """, (wallet, user_id))
+    conn.commit()
+    release_db(conn)
+
+    user = get_user_stats(user_id)
+    return jsonify({"ok": True, "user": user})
+
+
 @app_web.route("/api/global/send", methods=["POST"])
 def api_global_send():
     data = request.get_json(force=True, silent=True) or {}
@@ -225,7 +247,7 @@ def upload_avatar():
         WHERE user_id = %s
     """, (avatar_data, uid))
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({"ok": True})
 
@@ -300,7 +322,7 @@ def api_set_username():
     c = conn.cursor()
     c.execute("UPDATE dom_users SET username=%s WHERE user_id=%s", (username, uid))
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({"ok": True})
 
@@ -390,7 +412,7 @@ def api_comment_delete():
     """, (cid, uid, uid))
 
     conn.commit()
-    conn.close()
+    release_db(conn)
     return jsonify({"ok": True})
 
 @app_web.route("/api/post/delete", methods=["POST"])
@@ -402,7 +424,7 @@ def api_post_delete():
     conn = db(); c = conn.cursor()
     c.execute("DELETE FROM dom_posts WHERE id=%s AND user_id=%s", (pid, uid))
     conn.commit()
-    conn.close()
+    release_db(conn)
     return jsonify({"ok": True})
 
 @app_web.route("/api/admin/give", methods=["POST"])
@@ -521,7 +543,7 @@ def api_comment_list():
     """, (post_id,))
 
     rows = c.fetchall()
-    conn.close()
+    release_db(conn)
 
     comments = [{
         "id": r[0],
@@ -556,9 +578,17 @@ def api_comment_create():
     """, (post_id, user_id, text, now, parent_id))
 
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({"ok": True})
+
+@app_web.route("/app")
+def app_page():
+    uid = request.args.get("uid", "")
+    start_param = request.args.get("tgWebAppStartParam")
+
+    return send_from_directory(WEBAPP_DIR, "index.html")
+
 
 @app_web.route("/api/posts/feed")
 def api_posts_feed():
@@ -1456,7 +1486,20 @@ def api_crash_claim():
     if user_id == 0 or win <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
-    return jsonify({"ok": True})
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd,0) + %s
+        WHERE user_id = %s
+        RETURNING balance_usd
+    """, (win, user_id))
+    row = c.fetchone()
+    conn.commit()
+    release_db(conn)
+
+    new_balance = float(row[0]) if row else 0.0
+    return jsonify({"ok": True, "new_balance": new_balance})
+
 
 @app_web.route("/api/crash/lose", methods=["POST"])
 def api_crash_lose():
@@ -1629,7 +1672,7 @@ def api_slots_deposit():
               (new_main, user_id))
 
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({
         "ok": True,
@@ -1659,7 +1702,7 @@ def api_slots_withdraw():
               (new_main, user_id))
 
     conn.commit()
-    conn.close()
+    release_db(conn)
 
     return jsonify({
         "ok": True,

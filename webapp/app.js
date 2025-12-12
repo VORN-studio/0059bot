@@ -116,6 +116,13 @@ async function loadMiningState() {
     }
 }
 
+const tgParam = new URLSearchParams(window.location.search)
+    .get("tgWebAppStartParam");
+
+if (tgParam && tgParam.startsWith("post_")) {
+    const postId = tgParam.replace("post_", "");
+    // բացիր comments drawer կամ scroll արա
+}
 
 
 async function buyMiningPlan(planId) {
@@ -184,7 +191,7 @@ document.getElementById("mining-claim-btn")
         }
         updateBalanceDisplay();
 
-        const claimedDomit = data.claimed_domit || 0;
+        const claimedDomit = data.claimed_usd || 0;
         if (tg) {
             tg.showPopup({
                 message: `✅ ${claimedDomit.toFixed(2)} DOMIT փոխանցվեց ձեր բալանսին`
