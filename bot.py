@@ -2219,10 +2219,11 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if not user:
         return
+    print("✅ /start received from", user.id, "text:", text)
 
     text = update.message.text if update.message else ""
     inviter_id = parse_start_payload(text)
-    post_id = parse_startapp_payload(text)
+    # post_id = parse_startapp_payload(text)
 
     if inviter_id == user.id:
         inviter_id = None
@@ -2230,10 +2231,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ensure_user(user.id, user.username, inviter_id)
 
     base = (PUBLIC_BASE_URL or "").rstrip("/")
-    if post_id:
-        wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}&open_post={post_id}"
-    else:
-        wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
+    wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]
@@ -2330,6 +2328,7 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("task_toggle", task_toggle))
 
     await application.initialize()
+    await application.start()
 
     port = int(os.environ.get("PORT", "10000"))
     webhook_url = f"{PUBLIC_BASE_URL}/webhook"
