@@ -582,14 +582,6 @@ def api_comment_create():
 
     return jsonify({"ok": True})
 
-@app_web.route("/app")
-def app_page():
-    uid = request.args.get("uid", "")
-    start_param = request.args.get("tgWebAppStartParam")
-
-    return send_from_directory(WEBAPP_DIR, "index.html")
-
-
 @app_web.route("/api/posts/feed")
 def api_posts_feed():
     """
