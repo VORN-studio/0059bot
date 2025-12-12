@@ -292,6 +292,21 @@ async function loadGlobalChat() {
             div.innerHTML = `<b>${who}</b>: ${renderMessageText(msg.text)}`;
             div.style.marginBottom = "6px";
             box.appendChild(div);
+            div.querySelectorAll(".portal-post-link").forEach(el => {
+                el.onclick = () => {
+                    const postId = el.dataset.post;
+                    if (!postId) return;
+
+                    // բացում ենք feed tab
+                    document.querySelector('[data-tab="feed"]').click();
+
+                    // փոքր ուշացում, որ feed-ը բեռնվի
+                    setTimeout(() => {
+                        openComments(postId);
+                    }, 300);
+                };
+            });
+
             div.querySelectorAll(".portal-link").forEach(el => {
                 el.onclick = () => {
                     const link = el.dataset.link;
@@ -1328,13 +1343,22 @@ async function likeComment(commentId) {
 let SHARE_POST_ID = null;
 
 function renderMessageText(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return String(text).replace(urlRegex, url => {
-        return `<span class="portal-link" data-link="${url}"
-            style="color:#4da3ff;cursor:pointer;text-decoration:underline;">
-            ${url}
-        </span>`;
-    });
+    if (!text) return "";
+
+    // Share post format
+    if (text.includes("DOMINO_POST:")) {
+        const postId = text.split("DOMINO_POST:")[1].trim();
+
+        return `
+            <span class="portal-post-link"
+                data-post="${postId}"
+                style="color:#4da3ff;cursor:pointer;text-decoration:underline;">
+                🔗 Բացել գրառումը
+            </span>
+        `;
+    }
+
+    return escapeHtml(text);
 }
 
 
@@ -1419,15 +1443,16 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             // պահում ենք share text-ը
-            window.DM_SHARE_TEXT = `📢 Նայիր այս գրառումը 👉 ${getShareLink()}`;
+            window.DM_SHARE_TEXT = `📢 Նայիր այս գրառումը\n${getSharePayload()}`;
         };
     }
 
 
 
-    function getShareLink() {
-        return `https://t.me/doominobot?startapp=post_${SHARE_POST_ID}`;
+    function getSharePayload() {
+        return `DOMINO_POST:${SHARE_POST_ID}`;
     }
+
 
 
     if (tgBtn) {
@@ -1457,7 +1482,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     sender: viewerId,
-                    text: `📢 Նոր գրառում՝ ${getShareLink()}`
+                    text: `📢 Նոր գրառում\n${getSharePayload()}`
                 })
             });
 
@@ -1465,5 +1490,6 @@ document.addEventListener("DOMContentLoaded", () => {
             closeShareModal();
         };
     }
+
 
 });
