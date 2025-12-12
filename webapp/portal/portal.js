@@ -11,19 +11,54 @@ let CURRENT_DM_TARGET = null;
 
 let CONFIRM_ACTION = null;
 
-function openConfirm(title, text, onConfirm) {
+function openInfo(title, text) {
     const modal = document.getElementById("confirm-modal");
     const titleEl = document.getElementById("confirm-title");
     const textEl = document.getElementById("confirm-text");
+    const okBtn = document.getElementById("confirm-ok");
+    const cancelBtn = document.getElementById("confirm-cancel");
 
     if (!modal) return;
 
     titleEl.innerText = title;
     textEl.innerText = text;
-    CONFIRM_ACTION = onConfirm;
 
+    // INFO ռեժիմ → Cancel-ը թաքցնում ենք
+    if (cancelBtn) cancelBtn.style.display = "none";
+
+    if (okBtn) {
+        okBtn.innerText = "OK";
+        okBtn.style.background = "#3a8bff";
+        okBtn.onclick = closeConfirm;
+    }
+
+    CONFIRM_ACTION = null;
     modal.classList.remove("hidden");
 }
+
+
+function openConfirm(title, text, onConfirm) {
+    const modal = document.getElementById("confirm-modal");
+    const titleEl = document.getElementById("confirm-title");
+    const textEl = document.getElementById("confirm-text");
+    const cancelBtn = document.getElementById("confirm-cancel");
+    const okBtn = document.getElementById("confirm-ok");
+
+    if (!modal) return;
+
+    titleEl.innerText = title;
+    textEl.innerText = text;
+
+    if (cancelBtn) cancelBtn.style.display = "block";
+    if (okBtn) {
+        okBtn.innerText = "Delete";
+        okBtn.style.background = "#e11d48";
+    }
+
+    CONFIRM_ACTION = onConfirm;
+    modal.classList.remove("hidden");
+}
+
 
 function closeConfirm() {
     const modal = document.getElementById("confirm-modal");
@@ -707,9 +742,13 @@ async function createPost() {
 
     const text = (textArea.value || "").trim();
     if (text === "" && (!fileInput.files || fileInput.files.length === 0)) {
-        alert("Գրառումը չի կարող լինել լիովին դատարկ 🙂");
+        openInfo(
+            "Չի ստացվում",
+            "Գրառումը չի կարող լինել լիովին դատարկ 🙂"
+        );
         return;
     }
+
 
     let mediaUrl = "";
 
