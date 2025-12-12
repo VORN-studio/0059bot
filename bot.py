@@ -2,14 +2,11 @@ import os
 import time
 import threading
 from typing import Optional
-
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
-
 import asyncio
 import psycopg2
 from psycopg2 import pool
-
 from telegram import (
     Update,
     InlineKeyboardMarkup,
@@ -36,7 +33,6 @@ if not PUBLIC_BASE_URL:
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL env var is missing (PostgreSQL connection string)")
-
 ADMIN_IDS = {5274439601} 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
@@ -129,7 +125,7 @@ def api_message_history():
             "time": r[3]
         })
 
-    messages.reverse()  # նամակները cronological կարգով
+    messages.reverse()
 
     return jsonify({"ok": True, "messages": messages})
 
@@ -213,18 +209,14 @@ def upload_avatar():
     if not uid or not file:
         return jsonify({"ok": False, "error": "missing"}), 400
 
-    # file type extract (png, jpg, jpeg)
-    content_type = file.mimetype  # e.g. "image/png", "image/jpeg"
+    content_type = file.mimetype 
 
-    # read file and convert to base64
     import base64
     raw = file.read()
     b64 = base64.b64encode(raw).decode("utf-8")
 
-    # full "data:image/xxx;base64,...."
     avatar_data = f"data:{content_type};base64,{b64}"
 
-    # save into database
     conn = db(); 
     c = conn.cursor()
     c.execute("""
@@ -236,8 +228,6 @@ def upload_avatar():
     conn.close()
 
     return jsonify({"ok": True})
-
-
 
 @app_web.route("/api/search_users")
 def api_search_users():
@@ -269,7 +259,7 @@ def api_search_users():
     users = []
     for u in rows:
         if viewer and str(u[0]) == str(viewer):
-            continue   # skip own profile
+            continue  
 
         users.append({
             "user_id": u[0],
@@ -278,7 +268,6 @@ def api_search_users():
         })
 
     return jsonify({"ok": True, "users": users})
-
 
 @app_web.route("/webapp/games/<path:filename>")
 def serve_games(filename):
@@ -297,7 +286,6 @@ def webapp_tasks(filename):
 @app_web.route("/portal/<path:filename>")
 def serve_portal(filename):
     return send_from_directory(PORTAL_DIR, filename)
-
 
 @app_web.route("/api/set_username", methods=["POST"])
 def api_set_username():
@@ -329,18 +317,15 @@ def api_follow():
 
     conn = db(); c = conn.cursor()
 
-    # 👉 ՍՏԵՂԵՑ՝ ՍԿԶԲՈՒՄ ստուգում ենք՝ արդյո՞ք արդեն follow արած է
     c.execute("""
         SELECT 1 FROM dom_follows
         WHERE follower = %s AND target = %s
     """, (follower, target))
     already = c.fetchone()
     if already:
-        # արդեն follow արած է, գումար չենք հանում, ուղղակի OK ենք տալիս
         release_db(conn)
         return jsonify({"ok": True, "already": True}), 200
-
-    # --- check follower balance ---
+    
     c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (follower,))
     row = c.fetchone()
     if not row:
@@ -357,28 +342,24 @@ def api_follow():
         release_db(conn)
         return jsonify({"ok": False, "error": "low_balance"}), 200
 
-    # --- subtract exactly 5 DOMIT ---
     c.execute("""
         UPDATE dom_users
         SET balance_usd = balance_usd - %s
         WHERE user_id=%s
     """, (FOLLOW_PRICE, follower))
 
-    # --- add 3 DOMIT to target ---
     c.execute("""
         UPDATE dom_users
         SET balance_usd = balance_usd + %s
         WHERE user_id=%s
     """, (PAY_TARGET, target))
 
-    # --- add 2 DOMIT to admin ---
     c.execute("""
         UPDATE dom_users
         SET balance_usd = balance_usd + %s
         WHERE user_id=%s
     """, (PAY_ADMIN, ADMIN_ID))
 
-    # --- register follow ---
     c.execute("""
         INSERT INTO dom_follows (follower, target)
         VALUES (%s, %s)
@@ -401,7 +382,6 @@ def api_comment_delete():
 
     conn = db(); c = conn.cursor()
 
-    # Սեփական comment կամ սեփական post–ի comment:
     c.execute("""
         DELETE FROM dom_comments 
         WHERE id=%s AND (user_id=%s OR post_id IN(
@@ -424,7 +404,6 @@ def api_post_delete():
     conn.commit()
     conn.close()
     return jsonify({"ok": True})
-
 
 @app_web.route("/api/admin/give", methods=["POST"])
 def api_admin_give():
@@ -451,8 +430,6 @@ def api_admin_give():
     release_db(conn)
 
     return jsonify({"ok": True, "message": f"Added {amount} DOMIT to {target}"})
-
-
 
 @app_web.route("/api/follow_stats/<int:user_id>")
 def api_follow_stats(user_id):
@@ -501,7 +478,6 @@ def api_post_create():
     text = (data.get("text") or "").strip()
     media_url = (data.get("media_url") or "").strip()
 
-    # user_id պարտադիր է, բայց կամ text, կամ media_url պետք է լինի (է least մեկը)
     if not user_id or (text == "" and media_url == ""):
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
@@ -560,7 +536,6 @@ def api_comment_list():
 
     return jsonify({"ok": True, "comments": comments})
 
-
 @app_web.route("/api/comment/create", methods=["POST"])
 def api_comment_create():
     data = request.get_json(force=True, silent=True) or {}
@@ -584,8 +559,6 @@ def api_comment_create():
     conn.close()
 
     return jsonify({"ok": True})
-
-
 
 @app_web.route("/api/posts/feed")
 def api_posts_feed():
@@ -753,7 +726,6 @@ def api_comment_like():
 
     conn = db(); c = conn.cursor()
 
-    # prevent double-like
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_comment_likes (
             id SERIAL PRIMARY KEY,
@@ -763,21 +735,18 @@ def api_comment_like():
         )
     """)
 
-    # check existing
     c.execute("SELECT 1 FROM dom_comment_likes WHERE user_id=%s AND comment_id=%s",
               (uid, cid))
     if c.fetchone():
         release_db(conn)
         return jsonify({"ok": True, "already": True})
 
-    # register like
     now = int(time.time())
     c.execute("""
         INSERT INTO dom_comment_likes (user_id, comment_id)
         VALUES (%s, %s)
     """, (uid, cid))
 
-    # increment count
     c.execute("""
         UPDATE dom_comments
         SET likes = likes + 1
@@ -788,7 +757,6 @@ def api_comment_like():
     release_db(conn)
 
     return jsonify({"ok": True})
-
 
 @app_web.route("/api/upload_post_media", methods=["POST"])
 def api_upload_post_media():
@@ -814,7 +782,6 @@ def api_upload_post_media():
 
     return jsonify({"ok": True, "url": url})
 
-
 @app_web.route("/admaven-verify")
 def admaven_verify():
     return """
@@ -837,7 +804,7 @@ def db():
     if _db_pool is None:
         _db_pool = pool.SimpleConnectionPool(
             minconn=1,
-            maxconn=20,                 # ← 5-ից → 20 (fix pool exhaustion)
+            maxconn=20,                 
             dsn=DATABASE_URL,
             sslmode="require"
         )
@@ -845,15 +812,14 @@ def db():
 
     try:
         conn = _db_pool.getconn()
-        conn.autocommit = False        # ← autocommit OFF (correct)
+        conn.autocommit = False       
         return conn
     except Exception as e:
         print("⚠️ Pool exhausted, creating TEMP connection:", e)
         conn = psycopg2.connect(DATABASE_URL, sslmode="require")
         conn.autocommit = False
-        conn._temp_conn = True         # ← label this connection
+        conn._temp_conn = True       
         return conn
-
 
 def release_db(conn):
     """
@@ -865,12 +831,10 @@ def release_db(conn):
         return
 
     try:
-        # temp_CONN? → close instead of returning to pool
         if hasattr(conn, "_temp_conn"):
             conn.close()
             return
 
-        # Normal pooled connection
         if _db_pool:
             _db_pool.putconn(conn, close=False)
         else:
@@ -878,14 +842,12 @@ def release_db(conn):
     except Exception as e:
         print("⚠️ release_db error:", e)
 
-
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar TEXT",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT"
-    
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT"    
 ]
 
 def init_db():
@@ -937,12 +899,10 @@ def init_db():
             created_at BIGINT,
             likes INT DEFAULT 0
         )
-
     """)
 
     c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS likes INT DEFAULT 0")
     c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS parent_id BIGINT DEFAULT NULL")
-
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_withdrawals (
@@ -998,8 +958,6 @@ def init_db():
             UNIQUE(user_id, task_id)
         )
     """)
-
-        # --- DOMINO MINING TABLES ---
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_mining_plans (
@@ -1068,8 +1026,6 @@ def init_db():
         )
     """)
 
-
-    # Եթե պլանների աղյուսակը դատարկ է → լցնում ենք մեր 10 tier-երը
     c.execute("SELECT COUNT(*) FROM dom_mining_plans")
     count = c.fetchone()[0] or 0
     if count == 0:
@@ -1086,8 +1042,8 @@ def init_db():
             (9, "Imperial", 7500),
             (10, "Ethereal", 10000),
         ]
-        duration_hours = 60 * 24   # 60 օր = 1440 ժամ
-        return_mult = 1.5          # 1.5x
+        duration_hours = 60 * 24   
+        return_mult = 1.5       
 
         for tier, name, price in plans:
             c.execute("""
@@ -1096,7 +1052,6 @@ def init_db():
             """, (tier, name, price, duration_hours, return_mult, now))
         print("💎 Mining plans initialized (10 tiers).")
 
-        # --- ALWAYS update plan names by tier (rename existing rows as well) ---
     name_map = {
         1: "Initiate",
         2: "Apprentice",
@@ -1114,7 +1069,6 @@ def init_db():
             "UPDATE dom_mining_plans SET name = %s WHERE tier = %s",
             (name, tier)
         )
-
 
     conn.commit()
     release_db(conn)
@@ -1180,7 +1134,6 @@ def get_user_stats(user_id: int):
     status_row = c.fetchone()
     status_level = int(status_row[0] or 0)
 
-    # ցանկութամբ — անուն ըստ tier
     name_map = {
         1: "Initiate",
         2: "Apprentice",
@@ -1194,7 +1147,6 @@ def get_user_stats(user_id: int):
         10: "Ethereal",
     }
     status_name = name_map.get(status_level, "None")
-
 
     if last_rate and last_rate > 0:
         ton_balance = balance_usd / last_rate
@@ -1232,7 +1184,6 @@ def get_user_stats(user_id: int):
         "ref_count": int(ref_count),
         "active_refs": int(active_refs),
         "team_deposit_usd": float(team_dep),
-        # 🔥 STATUS FIELDS
         "status_level": int(status_level),
         "status_name": status_name,
     }
@@ -1282,9 +1233,8 @@ def get_mining_plans():
         price_usd = float(price_usd)
         duration_hours = int(duration_hours)
         return_mult = float(return_mult)
-
-        total_return_usd = price_usd * return_mult      # ընդհանուր վերադարձ USD-ով
-        usd_per_hour = total_return_usd / duration_hours  # USD / ժամ
+        total_return_usd = price_usd * return_mult     
+        usd_per_hour = total_return_usd / duration_hours  
 
         plans.append({
             "id": pid,
@@ -1295,13 +1245,9 @@ def get_mining_plans():
             "return_mult": return_mult,
             "total_return_usd": total_return_usd,
             "usd_per_hour": usd_per_hour,
-            # Եթե mining.js-ում դեռ օգտագործում ես plan.domit_per_hour,
-            # կարող ես պահել որպես նույն թիվը.
             "domit_per_hour": usd_per_hour,
         })
     return plans
-
-
 
 def get_user_miners(user_id: int):
     """
@@ -1341,7 +1287,6 @@ def get_user_miners(user_id: int):
         })
     return miners
 
-
 def calc_miner_pending(miner: dict, now: int):
     """
     Հաշվում է կոնկրետ miner-ի չվերցված reward-ը (մինչև now կամ մինչև ends_at)։
@@ -1361,7 +1306,6 @@ def calc_miner_pending(miner: dict, now: int):
     new_last = effective_to
     return reward, new_last
 
-
 def claim_user_mining_rewards(user_id: int):
     """
     Հավաքում է օգտատիրոջ բոլոր miners-ների pending reward-ը,
@@ -1370,7 +1314,7 @@ def claim_user_mining_rewards(user_id: int):
     now = int(time.time())
     miners = get_user_miners(user_id)
     if not miners:
-        return 0.0, 0, 0.0  # reward, miners_count, new_balance
+        return 0.0, 0, 0.0  
 
     total_reward = 0.0
     updated_ids = []
@@ -1382,14 +1326,12 @@ def claim_user_mining_rewards(user_id: int):
             updated_ids.append((m["id"], new_last))
 
     if total_reward <= 0:
-        # ոչինչ չկուտակվեց
         stats = get_user_stats(user_id)
         new_balance = stats["balance_usd"] if stats else 0.0
         return 0.0, len(miners), new_balance
 
     conn = db(); c = conn.cursor()
 
-    # Թարմացնում ենք last_claim_at-երը
     for mid, new_last in updated_ids:
         c.execute("""
             UPDATE dom_user_miners
@@ -1397,7 +1339,6 @@ def claim_user_mining_rewards(user_id: int):
              WHERE id = %s
         """, (new_last, mid))
 
-    # Ավելացնում ենք օգուտը օգտատիրոջ USD balance-ի վրա
     c.execute("""
         UPDATE dom_users
            SET balance_usd = COALESCE(balance_usd,0) + %s
@@ -1410,7 +1351,6 @@ def claim_user_mining_rewards(user_id: int):
 
     new_balance = float(row[0]) if row else 0.0
     return total_reward, len(miners), new_balance
-
 
 def create_withdraw_request(user_id: int, amount: float):
     """
@@ -1927,8 +1867,6 @@ def mylead_postback():
         except Exception:
             task_id = None
 
-
-
     user_id_raw = request.args.get("subid1") or request.args.get("s1")
     task_id_raw = request.args.get("subid2") or request.args.get("s2")
     status = (request.args.get("status") or "").lower()
@@ -2023,7 +1961,6 @@ def api_mining_buy():
     if not user_id or not plan_id:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
-    # ստուգում ենք օգտատերը կա՞
     stats = get_user_stats(user_id)
     if not stats:
         return jsonify({"ok": False, "error": "user_not_found"}), 404
@@ -2055,14 +1992,12 @@ def api_mining_buy():
     now = int(time.time())
     ends_at = now + duration_sec
 
-    # հանում ենք գումարը հիմնական բալանսից
     c.execute("""
         UPDATE dom_users
            SET balance_usd = COALESCE(balance_usd,0) - %s
          WHERE user_id = %s
     """, (price_usd, user_id))
 
-    # գրանցում ենք miner-ը
     c.execute("""
         INSERT INTO dom_user_miners (
             user_id, plan_id, price_usd, duration_hours,
@@ -2099,16 +2034,11 @@ def api_mining_claim():
 
     return jsonify({
         "ok": True,
-        # մայնինգից վերցրած գումարը՝ ՄԻԱՅՆ USD
         "claimed_usd": reward_usd,
-        # եթե front-ում դեռ սպասում ես այս դաշտին, կարող ես թողնել 1:1 նույն թիվը
-        # "claimed_domit": reward_usd,
         "miners_count": miners_count,
         "new_balance_usd": new_balance,
         "user": user
     })
-
-
 
 @app_web.route("/api/mining/state/<int:user_id>")
 def api_mining_state(user_id):
@@ -2124,26 +2054,21 @@ def api_mining_state(user_id):
     miners_view = []
 
     for m in miners:
-        reward, _ = calc_miner_pending(m, now)  # reward = USD
+        reward, _ = calc_miner_pending(m, now) 
         total_pending += reward
         miners_view.append({
             **m,
             "pending_usd": reward,
-            # frontend-ը հիմա էլի կարող է օգտագործել pending_domit,
-            # բայց այստեղ դա նույնն է, ինչ pending_usd (1 = 1)
             "pending_domit": reward,
         })
 
     state = None
     if miners_view:
         first = miners_view[0]
-        # reward_per_second_usd → ուղիղ USD/վրկ, ուրեմն * 3600 = USD/ժամ
         speed_per_hour = first["reward_per_second_usd"] * 3600.0
         state = {
             "tier": first["tier"],
-            # speed – էլի USD/ժամ, եթե ուզում ես՝ frontend-ում կարող ես գրիլ "DOMIT/ժամ"
             "speed": round(speed_per_hour, 2),
-            # ընդհանուր կուտակված USD, 1:1 նույնը կարող ես DOMIT համարել
             "earned": total_pending,
         }
 
@@ -2153,17 +2078,13 @@ def api_mining_state(user_id):
         "plans": plans,
         "miners": miners_view,
         "total_pending_usd": total_pending,
-        # եթե front-ում դեռ սպասում ես total_pending_domit դաշտին → պահում ենք նույն թիվը
         "total_pending_domit": total_pending,
         "state": state
     })
 
-
-
 @app_web.route("/app/mining")
 def app_mining():
     return send_from_directory("webapp/mining", "index.html")
-
 
 @app_web.route("/api/task_complete", methods=["POST"])
 def api_task_complete():
@@ -2435,7 +2356,6 @@ async def task_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg += f"ID: {r[0]} | {r[1]} | {r[2]} | 💰 {r[3]}$ | {'🟢 ON' if r[4] else '🔴 OFF'}\n"
 
     await update.message.reply_text(msg)
-
 
 async def task_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id

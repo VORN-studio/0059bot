@@ -1,6 +1,3 @@
-// -----------------------------
-//   URL params
-// -----------------------------
 const urlParams = new URLSearchParams(window.location.search);
 const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
@@ -8,19 +5,10 @@ const viewerId = viewerFromUrl || profileId;
 const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
 let REPLY_TO = null;
 let REPLY_TO_USERNAME = null;
-
-// քո ID-ն այս պորտալում
 const CURRENT_UID = viewerId;
-
-// Current active tab (feed | users | messages | chat)
 let CURRENT_TAB = "feed";
-
-// DM՝ ում հետ ենք հիմա խոսում
 let CURRENT_DM_TARGET = null;
 
-// ===============================
-//      STARTUP
-// ===============================
 document.addEventListener("DOMContentLoaded", () => {
     loadViewerPanel();
     checkUsername();
@@ -49,27 +37,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // ----------------------------------------------------
-    // 🔥 ԱՅՍ ՏՈՂԸ ԱՎԵԼԱՑՐՈՒ, ԱՅԼԱՊԵՍ ՈՉԻՆՉ ՉԻ ԱՇԽԱՏԻ
-    // ----------------------------------------------------
     initFeed();
 });
 
-// ===============================
-//      TABS LOGIC
-// ===============================
 function initTabs() {
     document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
 
-            // reset UI
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
 
             btn.classList.add("active");
             const tabId = btn.dataset.tab;
 
-            // 🔥 ԱՅՍ ՏՈՂԸ ՊԱՐՏԱԴԻՐ Է
             CURRENT_TAB = tabId;
 
             const page = document.getElementById(tabId);
@@ -78,19 +58,17 @@ function initTabs() {
             const globalBox = document.getElementById("global-chat");
             const dmBox = document.getElementById("dm-chat");
 
-            // ========= GLOBAL CHAT =========
             if (tabId === "chat") {
                 if (globalBox) globalBox.style.display = "flex";
                 if (dmBox) dmBox.style.display = "none";
 
                 loadGlobalChat();
-                startGlobalRefresh();   // ← ԱՅՍԸ ԱՐԴԵՆ ԿԱՄԱՎՈՐ ԱՇԽԱՏՈՒՄ Է
+                startGlobalRefresh();
             } else {
                 if (globalBox) globalBox.style.display = "none";
                 stopGlobalRefresh();
             }
 
-            // ========= DM LIST =========
             if (tabId === "messages") {
                 if (dmBox) dmBox.style.display = "none";
                 loadDMList();
@@ -98,7 +76,6 @@ function initTabs() {
                 if (dmBox) dmBox.style.display = "none";
             }
 
-            // ========= STOP DM REFRESH =========
             if (tabId !== "messages") {
                 if (window.DM_REFRESH_INTERVAL) {
                     clearInterval(window.DM_REFRESH_INTERVAL);
@@ -110,13 +87,12 @@ function initTabs() {
 }
 
 function startGlobalRefresh() {
-    if (window.GLOBAL_REFRESH_INTERVAL) return; // prevent double refresh
+    if (window.GLOBAL_REFRESH_INTERVAL) return; 
 
     window.GLOBAL_REFRESH_INTERVAL = setInterval(() => {
         loadGlobalChat();
-    }, 2000); // update every 2 sec
+    }, 2000); 
 }
-
 
 async function sendGlobalMessage() {
     const input = document.getElementById("global-input");
@@ -134,10 +110,9 @@ async function sendGlobalMessage() {
 
     input.value = "";
 
-    loadGlobalChat();   // ← անմիջապես ցուցադրում ենք
-    startGlobalRefresh();  // ← ապահովում ենք auto refresh
+    loadGlobalChat(); 
+    startGlobalRefresh(); 
 }
-
 
 function stopGlobalRefresh() {
     if (window.GLOBAL_REFRESH_INTERVAL) {
@@ -146,12 +121,7 @@ function stopGlobalRefresh() {
     }
 }
 
-
-// ===============================
-//      CHAT EVENTS
-// ===============================
 function initChatEvents() {
-    // GLOBAL CHAT
     const globalSend = document.getElementById("global-send");
     if (globalSend) {
         globalSend.addEventListener("click", sendGlobalMessage);
@@ -164,7 +134,6 @@ function initChatEvents() {
         });
     }
 
-    // DM CHAT
     const dmSend = document.getElementById("dm-send");
     if (dmSend) {
         dmSend.addEventListener("click", sendDM);
@@ -178,9 +147,6 @@ function initChatEvents() {
     }
 }
 
-// ===============================
-//        DM LIST
-// ===============================
 async function loadDMList() {
     if (!viewerId) return;
 
@@ -216,9 +182,6 @@ async function loadDMList() {
     });
 }
 
-// ===============================
-//        LOAD PROFILE
-// ===============================
 async function loadProfile() {
     if (!profileId) return;
 
@@ -245,19 +208,13 @@ async function loadProfile() {
 
                 setUsername(user.username || "");
 
-        // 🔥 Ավելացնում ենք status-ի դեկոր
         decorateUsername(user.status_level || 0, user.status_name || "None");
     } catch (e) {
         console.error("loadProfile error:", e);
     }
 }
 
-
-// ===============================
-//        GLOBAL CHAT
-// ===============================
 async function loadGlobalChat() {
-    // եթե Global Chat tab-ում չենք, անիմաստ է ամեն անգամ թարմացնել
     if (CURRENT_TAB !== "chat") return;
 
     try {
@@ -309,9 +266,6 @@ async function sendGlobalMessage() {
     }
 }
 
-// ===============================
-//        DM CHAT
-// ===============================
 async function openDM(targetId) {
     if (!targetId) return;
     CURRENT_DM_TARGET = targetId;
@@ -324,9 +278,6 @@ async function openDM(targetId) {
 
     await loadDM();
 
-    // =============================
-    //  🔥 Auto-refresh every 2 sec
-    // =============================
     if (window.DM_REFRESH_INTERVAL) clearInterval(window.DM_REFRESH_INTERVAL);
 
     window.DM_REFRESH_INTERVAL = setInterval(() => {
@@ -387,9 +338,6 @@ async function sendDM() {
     }
 }
 
-// ===============================
-//        USERNAME LOGIC
-// ===============================
 async function checkUsername() {
     if (!profileId) return;
 
@@ -435,14 +383,10 @@ async function saveUsername(name) {
     });
 }
 
-// ===============================
-//        STATUS DECORATION
-// ===============================
 function decorateUsername(level, name) {
     const el = document.getElementById("profile-name");
     if (!el) return;
 
-    // մաքրում ենք հների classes-ը
     for (let i = 0; i <= 10; i++) {
         el.classList.remove(`status-${i}`);
     }
@@ -450,12 +394,10 @@ function decorateUsername(level, name) {
     const lvl = Number(level) || 0;
     el.classList.add(`status-${lvl}`);
 
-    // ցանկության դեպքում՝ title tooltip
     if (name) {
         el.title = `Status: ${name}`;
     }
 }
-
 
 function showUsernamePopup() {
     if (!isOwner) return;
@@ -481,9 +423,6 @@ function showUsernamePopup() {
     };
 }
 
-// ===============================
-//          AVATAR LOGIC
-// ===============================
 function initAvatarUpload() {
     const avatarInput = document.getElementById("avatar-input");
     const avatarTop = document.getElementById("user-avatar");
@@ -528,9 +467,6 @@ function initAvatarUpload() {
     }
 }
 
-// ===============================
-//      SETTINGS PANEL LOGIC
-// ===============================
 function initSettingsPanel() {
     const settingsBtn = document.getElementById("settings-btn");
     const settingsPanel = document.getElementById("settings-panel");
@@ -562,9 +498,6 @@ function initSettingsPanel() {
     }
 }
 
-// ===============================
-//        LOAD USERS LIST
-// ===============================
 async function loadUsers(search = "") {
     try {
         const q = encodeURIComponent(search);
@@ -612,9 +545,6 @@ async function loadUsers(search = "") {
     }
 }
 
-// ===============================
-//      VIEWER TOP PANEL
-// ===============================
 function loadViewerPanel() {
     const topAvatar = document.getElementById("user-avatar");
     const topUsername = document.getElementById("username");
@@ -661,9 +591,6 @@ function loadViewerPanel() {
         });
 }
 
-// ===============================
-//      FOLLOW STATS + BUTTON
-// ===============================
 async function loadFollowStats() {
     if (!profileId) return;
 
@@ -702,7 +629,6 @@ function initFollowButton() {
     followBtn.addEventListener("click", async () => {
         if (!viewerId || !profileId || isOwner) return;
 
-        // 👉 եթե արդեն Following է, երկրորդ անգամ չի սարքում request
         if (followBtn.innerText === "Following") return;
 
         followBtn.disabled = true;
@@ -724,7 +650,6 @@ function initFollowButton() {
             } else if (data.error === "low_balance") {
                 alert("Բալանսը բավարար չէ follow անելու համար");
             } else if (data.already) {
-                // եթե սերվերը ասում է արդեն follow արած ես
                 followBtn.innerText = "Following";
                 await loadFollowStats();
             } else {
@@ -738,18 +663,11 @@ function initFollowButton() {
     });
 }
 
-// ===============================
-//          FEED / POSTS
-// ===============================
-
 function initFeed() {
     const feedPage = document.getElementById("feed");
     const feedList = document.getElementById("feed-list");
     if (!feedPage || !feedList) return;
 
-    // ----- Composer only for profile owner -----
-    // REMOVE DUPLICATE COMPOSER — portal.html already contains creator
-    // BIND POST BUTTON FROM portal.html
     const postBtn = document.getElementById("post-send");
     if (postBtn) {
         postBtn.onclick = createPost;
@@ -757,8 +675,6 @@ function initFeed() {
         console.warn("post-send button not found");
     }
 
-
-    // սկզբում բեռնում ենք feed-ը
     loadFeed();
 }
 
@@ -774,7 +690,6 @@ async function createPost() {
 
     let mediaUrl = "";
 
-    // 1) եթե media կա՝ upload → backend
     if (fileInput.files && fileInput.files.length > 0) {
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
@@ -795,7 +710,6 @@ async function createPost() {
         mediaUrl = upData.url;
     }
 
-    // 2) ստեղծում ենք post
     const res = await fetch("/api/post/create", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
@@ -813,7 +727,6 @@ async function createPost() {
         return;
     }
 
-    // Reset UI
     textArea.value = "";
     fileInput.value = "";
 
@@ -834,7 +747,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
-
 async function loadMyPosts() {
     const feedList = document.getElementById("feed-list");
     feedList.innerHTML = "Բեռնվում է...";
@@ -849,7 +761,6 @@ async function loadMyPosts() {
     feedList.innerHTML = "";
     data.posts.forEach(p => feedList.appendChild(renderPostCard(p)));
 }
-
 
 async function loadFeed() {
     const feedList = document.getElementById("feed-list");
@@ -885,15 +796,11 @@ async function loadFeed() {
     }
 }
 
-
-
-
 function renderPostCard(post) {
     let mediaUrl = "";
     if (post.media_url && post.media_url !== "") {
         mediaUrl = post.media_url;
 
-        // Եթե backend-ը տվել է "/uploads/..." → դարձնում ենք լիարժեք URL
         if (mediaUrl.startsWith("/uploads/")) {
             mediaUrl = window.location.origin + mediaUrl;
         }
@@ -913,9 +820,6 @@ function renderPostCard(post) {
     const timeStr = created.toLocaleString();
     const isMine = String(post.user_id) === String(viewerId);
 
-    // ------------------------------------------------
-    // ✅ MEDIA FIRST — առանձին հաշվարկվում է, հետո կմտնի HTML
-    // ------------------------------------------------
     let mediaHtml = "";
     if (mediaUrl) {
         if (mediaUrl.endsWith(".mp4")) {
@@ -932,10 +836,6 @@ function renderPostCard(post) {
         }
     }
 
-
-    // ------------------------------------------------
-    // ✅ Հիմա օգտագործում ենք mediaHtml-ը div.innerHTML-ի մեջ
-    // ------------------------------------------------
     div.innerHTML = `
         <div style="display:flex;align-items:center;margin-bottom:6px;">
             <img src="${post.avatar}"
@@ -992,7 +892,6 @@ function renderPostCard(post) {
         </div>
     `;
 
-
     const delBtn = div.querySelector(".delete-post-btn");
     if (delBtn) {
         delBtn.onclick = () => deletePost(post.id);
@@ -1008,7 +907,6 @@ function renderPostCard(post) {
         shareBtn.addEventListener("click", () => sharePost(post.id));
     }
 
-    // like
     const likeBtn = div.querySelector(".like-btn");
     likeBtn.addEventListener("click", async () => {
         await likePost(post.id, likeBtn);
@@ -1017,7 +915,6 @@ function renderPostCard(post) {
     return div;
 }
 
-
 async function likePost(postId, btn) {
     if (!viewerId) {
         alert("Չի իմացվում քո ID-ն, like անել չի ստացվի");
@@ -1025,7 +922,6 @@ async function likePost(postId, btn) {
     }
     if (!btn) return;
 
-    // եթե արդեն սեղմված տեսակ ա, 2-րդ անգամ չենք ուղարկում
     if (btn.dataset.clicked === "1") return;
 
     try {
@@ -1059,7 +955,6 @@ async function likePost(postId, btn) {
     }
 }
 
-// փոքր helper՝ HTML escape անելու համար
 function escapeHtml(str) {
     return String(str)
         .replace(/&/g, "&amp;")
@@ -1115,10 +1010,6 @@ function renderComment(c, isReply) {
     return div;
 }
 
-
-// ===============================
-//      COMMENTS
-// ===============================
 let CURRENT_COMMENT_POST = null;
 
 async function openComments(postId) {
@@ -1133,7 +1024,6 @@ async function openComments(postId) {
     drawer.classList.remove("hidden");
     list.innerHTML = "Loading...";
 
-    // Load comments
     const res = await fetch(`/api/comment/list?post_id=${postId}`);
     const data = await res.json();
 
@@ -1145,64 +1035,55 @@ async function openComments(postId) {
     header.innerText = `Comments (${data.comments.length})`;
     list.innerHTML = "";
 
-    const parents = [];
-    const repliesMap = {};
+    const map = {};
+    data.comments.forEach(c => {
+        c.children = [];
+        map[c.id] = c;
+    });
+
+    const roots = [];
 
     data.comments.forEach(c => {
-        if (c.parent_id) {
-            if (!repliesMap[c.parent_id]) {
-                repliesMap[c.parent_id] = [];
-            }
-            repliesMap[c.parent_id].push(c);
+        if (c.parent_id && map[c.parent_id]) {
+            map[c.parent_id].children.push(c);
         } else {
-            parents.push(c);
-        }
-    });
-
-    parents.forEach(parent => {
-        const parentDiv = renderComment(parent, false);
-        list.appendChild(parentDiv);
-
-        const replies = repliesMap[parent.id] || [];
-
-        if (replies.length > 0) {
-            const wrap = document.createElement("div");
-            wrap.style.marginLeft = "20px";
-            wrap.style.marginTop = "6px";
-
-            replies.slice(0, 2).forEach(r => {
-                wrap.appendChild(renderComment(r, true));
-            });
-
-            if (replies.length > 2) {
-                const more = document.createElement("div");
-                more.innerText = `Show ${replies.length - 2} replies`;
-                more.style.color = "#7af";
-                more.style.cursor = "pointer";
-                more.style.fontSize = "12px";
-
-                more.onclick = () => {
-                    wrap.innerHTML = "";
-                    replies.forEach(r => {
-                        wrap.appendChild(renderComment(r, true));
-                    });
-                    more.remove();
-                };
-
-                wrap.appendChild(more);
-            }
-
-            list.appendChild(wrap);
+            roots.push(c);
         }
     });
 
 
-    // LIKE
+    function renderThread(comment, level = 0) {
+        const div = renderComment(comment, level > 0);
+        div.style.marginLeft = level * 18 + "px";
+        list.appendChild(div);
+
+        if (comment.children && comment.children.length > 0) {
+            const toggle = document.createElement("div");
+            toggle.style.cssText = `
+                margin-left:${level * 18 + 18}px;
+                font-size:12px;
+                color:#7af;
+                cursor:pointer;
+            `;
+            toggle.innerText = `Show ${comment.children.length} replies`;
+
+            let opened = false;
+            toggle.onclick = () => {
+                if (opened) return;
+                opened = true;
+                toggle.remove();
+                comment.children.forEach(ch => renderThread(ch, level + 1));
+            };
+
+            list.appendChild(toggle);
+        }
+    }
+
+
     list.querySelectorAll(".comment-like-btn").forEach(btn => {
         btn.addEventListener("click", () => likeComment(btn.dataset.id));
     });
 
-    // REPLY
     list.querySelectorAll(".comment-reply-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             REPLY_TO = btn.dataset.id;
@@ -1216,13 +1097,12 @@ async function openComments(postId) {
         });
     });
 
-    // DELETE
     list.querySelectorAll(".delete-comment").forEach(btn => {
         btn.addEventListener("click", () => deleteComment(btn.dataset.id));
     });
+    roots.forEach(c => renderThread(c));
 }
 
-// bind close / send AFTER DOM loaded
 document.addEventListener("DOMContentLoaded", () => {
     const closeBtn = document.getElementById("comment-close");
     if (closeBtn) {
@@ -1298,7 +1178,7 @@ async function deletePost(postId) {
         })
     });
 
-    loadFeed(); // թարմացնում ենք feed-ը
+    loadFeed(); 
 }
 
 async function likeComment(commentId) {
@@ -1313,8 +1193,6 @@ async function likeComment(commentId) {
 
     openComments(CURRENT_COMMENT_POST);
 }
-
-
 
 function sharePost(postId) {
     const shareText = `Դիտիր իմ գրառումը Domino Portal-ում:\nhttps://domino-backend-iavj.onrender.com/portal/portal.html?post=${postId}`;
@@ -1352,7 +1230,7 @@ async function deletePost(postId) {
         })
     });
 
-    loadFeed(); // թարմացնում ենք feed-ը
+    loadFeed(); 
 }
 
 async function likeComment(commentId) {
