@@ -299,8 +299,13 @@ async function loadGlobalChat() {
 
         data.messages.forEach(msg => {
             const div = document.createElement("div");
-            const who = (String(msg.sender) === String(CURRENT_UID)) ? "You" : msg.sender;
-            div.innerHTML = `<b>${who}</b>: ${renderMessageText(msg.text)}`;
+            const isMe = String(msg.sender) === String(CURRENT_UID);
+            const whoHtml = isMe
+                ? `<span style="opacity:0.8;">You</span>`
+                : renderUsernameLabel(msg.sender, msg.username, msg.status_level);
+
+            div.innerHTML = `<b>${whoHtml}</b>: ${renderMessageText(msg.text)}`;
+
             div.style.marginBottom = "6px";
             box.appendChild(div);
             div.querySelectorAll(".portal-post-link").forEach(el => {
@@ -421,8 +426,18 @@ async function loadDM() {
 
         data.messages.forEach(m => {
             const div = document.createElement("div");
-            const who = (String(m.sender) === String(CURRENT_UID)) ? "You" : m.sender;
-            div.innerHTML = `<b>${who}</b>: ${renderMessageText(m.text)}`;
+            const isMe = String(m.sender) === String(CURRENT_UID);
+
+            const whoHtml = isMe
+                ? `<span style="opacity:0.8;">You</span>`
+                : renderUsernameLabel(
+                    m.sender,
+                    m.sender_username,
+                    m.sender_status_level
+                );
+
+            div.innerHTML = `<b>${whoHtml}</b>: ${renderMessageText(m.text)}`;
+
             div.style.marginBottom = "6px";
             div.querySelectorAll(".portal-post-link").forEach(el => {
                 el.onclick = () => {
@@ -666,7 +681,9 @@ async function loadUsers(search = "") {
 
             div.innerHTML = `
                 <img src="${avatarUrl}" style="width:40px;height:40px;border-radius:50%;margin-right:10px;">
-                <div style="flex-grow:1;font-size:16px;">${u.username}</div>
+                <div style="flex-grow:1;font-size:16px;">
+                    ${renderUsernameLabel(u.user_id, u.username, u.status_level)}
+                </div>
                 <button data-id="${u.user_id}"
                     style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
                     Բացել
@@ -1005,7 +1022,7 @@ function renderPostCard(post) {
 
             <div style="flex-grow:1;">
                 <div style="font-size:14px;font-weight:bold;">
-                    ${post.username || "User " + post.user_id}
+                    ${renderUsernameLabel(post.user_id, post.username, post.status_level)}
                     ${isMine ? '<span style="font-size:11px;opacity:0.7;"> (դու)</span>' : ""}
                 </div>
                 <div style="font-size:11px;opacity:0.6;">${timeStr}</div>
@@ -1076,6 +1093,14 @@ function renderPostCard(post) {
     return div;
 }
 
+function renderUsernameLabel(userId, username, statusLevel) {
+  const lvl = Number(statusLevel) || 0;
+  const safeName = escapeHtml(username || ("User " + userId));
+  const href = `/portal/portal.html?uid=${userId}&viewer=${viewerId}`;
+  return `<span class="status-${lvl}" style="cursor:pointer;" onclick="window.location.href='${href}'">${safeName}</span>`;
+}
+
+
 async function likePost(postId, btn) {
     if (!viewerId) {
         alert("Չի իմացվում քո ID-ն, like անել չի ստացվի");
@@ -1142,7 +1167,7 @@ function renderComment(c, isReply) {
     }
 
     div.innerHTML = `
-        <b>${c.username}</b>
+        <b>${renderUsernameLabel(c.user_id, c.username, c.status_level)}</b>
         ${deleteBtn}
 
         <span class="comment-like-btn" data-id="${c.id}"

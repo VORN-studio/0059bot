@@ -106,24 +106,44 @@ def api_message_history():
 
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT sender, receiver, text, created_at
-        FROM dom_messages
-        WHERE (sender=%s AND receiver=%s) OR (sender=%s AND receiver=%s)
-        ORDER BY id DESC
+        SELECT m.sender, su.username,
+            (SELECT COALESCE(MAX(pl.tier),0)
+                FROM dom_user_miners mm
+                JOIN dom_mining_plans pl ON pl.id = mm.plan_id
+                WHERE mm.user_id = su.user_id) AS sender_status,
+            m.receiver, ru.username,
+            (SELECT COALESCE(MAX(pl.tier),0)
+                FROM dom_user_miners mm
+                JOIN dom_mining_plans pl ON pl.id = mm.plan_id
+                WHERE mm.user_id = ru.user_id) AS receiver_status,
+            m.text, m.created_at
+        FROM dom_messages m
+        LEFT JOIN dom_users su ON su.user_id = m.sender
+        LEFT JOIN dom_users ru ON ru.user_id = m.receiver
+        WHERE (m.sender=%s AND m.receiver=%s) OR (m.sender=%s AND m.receiver=%s)
+        ORDER BY m.id DESC
         LIMIT 50
     """, (u1, u2, u2, u1))
 
+
     rows = c.fetchall()
     release_db(conn)
+
+    
 
     messages = []
     for r in rows:
         messages.append({
             "sender": r[0],
-            "receiver": r[1],
-            "text": r[2],
-            "time": r[3]
+            "sender_username": r[1] or f"User {r[0]}",
+            "sender_status_level": int(r[2] or 0),
+            "receiver": r[3],
+            "receiver_username": r[4] or f"User {r[3]}",
+            "receiver_status_level": int(r[5] or 0),
+            "text": r[6],
+            "time": r[7],
         })
+
 
     messages.reverse()
 
@@ -175,12 +195,17 @@ def api_global_send():
 def api_global_history():
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT sender, text, created_at
-        FROM dom_global_chat
-        ORDER BY id DESC
+        SELECT g.sender, u.username,
+               (SELECT COALESCE(MAX(pl.tier),0)
+                  FROM dom_user_miners m
+                  JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                 WHERE m.user_id = u.user_id) AS status_level,
+               g.text, g.created_at
+        FROM dom_global_chat g
+        LEFT JOIN dom_users u ON u.user_id = g.sender
+        ORDER BY g.id DESC
         LIMIT 100
     """)
-
     rows = c.fetchall()
     release_db(conn)
 
@@ -188,12 +213,15 @@ def api_global_history():
     for r in rows:
         messages.append({
             "sender": r[0],
-            "text": r[1],
-            "time": r[2]
+            "username": r[1] or f"User {r[0]}",
+            "status_level": int(r[2] or 0),
+            "text": r[3],
+            "time": r[4],
         })
 
     messages.reverse()
     return jsonify({"ok": True, "messages": messages})
+
 
 @app_web.route("/api/follows/list")
 def api_follows_list():
@@ -259,10 +287,18 @@ def api_search_users():
 
     if q == "":
         c.execute("""
-            SELECT user_id, username, avatar
-            FROM dom_users
-            ORDER BY user_id DESC
-            LIMIT 50
+            SELECT 
+                u.user_id,
+                u.username,
+                u.avatar,
+                (
+                    SELECT COALESCE(MAX(pl.tier),0)
+                    FROM dom_user_miners m
+                    JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                    WHERE m.user_id = u.user_id
+                ) AS status_level
+            FROM dom_users u
+
         """)
     else:
         c.execute("""
@@ -285,6 +321,7 @@ def api_search_users():
 
         users.append({
             "user_id": u[0],
+            "status_level": int(u[3] or 0),
             "username": u[1] or "",
             "avatar": u[2] or "/portal/default.png"
         })
@@ -540,13 +577,18 @@ def api_comment_list():
             u.username,
             p.user_id AS post_owner_id,
             c.likes,
-            c.parent_id
+            c.parent_id,
+            (SELECT COALESCE(MAX(pl.tier),0)
+            FROM dom_user_miners m
+            JOIN dom_mining_plans pl ON pl.id = m.plan_id
+            WHERE m.user_id = u.user_id) AS status_level
         FROM dom_comments c
         JOIN dom_users u ON u.user_id = c.user_id
         JOIN dom_posts p ON p.id = c.post_id
         WHERE c.post_id = %s
         ORDER BY c.id ASC
     """, (post_id,))
+
 
     rows = c.fetchall()
     release_db(conn)
@@ -555,6 +597,7 @@ def api_comment_list():
         "id": r[0],
         "user_id": r[1],
         "text": r[2],
+        "status_level": int(r[8] or 0),
         "created_at": r[3],
         "username": r[4] or ("User " + str(r[1])),
         "post_owner_id": r[5],
@@ -603,12 +646,17 @@ def api_posts_feed():
     conn = db(); c = conn.cursor()
     c.execute("""
         SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
-               p.text, p.media_url, p.likes, p.created_at
+            (SELECT COALESCE(MAX(pl.tier),0)
+                FROM dom_user_miners m
+                JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                WHERE m.user_id = u.user_id) AS status_level,
+            p.text, p.media_url, p.likes, p.created_at
         FROM dom_posts p
         JOIN dom_users u ON u.user_id = p.user_id
         ORDER BY p.created_at DESC
         LIMIT 50
     """)
+
     rows = c.fetchall()
 
     liked_map = {}
@@ -625,7 +673,7 @@ def api_posts_feed():
 
     posts = []
     for r in rows:
-        pid, uid, username, avatar, avatar_data, text, media_url, likes, created_at = r
+        pid, uid, username, avatar, avatar_data, status_level, text, media_url, likes, created_at = r
         if avatar_data:
             avatar_url = avatar_data
         else:
@@ -637,6 +685,7 @@ def api_posts_feed():
             "username": username or "",
             "avatar": avatar_url,
             "text": text,
+            "status_level": int(status_level or 0),
             "media_url": media_url,
             "likes": int(likes or 0),
             "created_at": int(created_at),
@@ -683,7 +732,7 @@ def api_posts_user(user_id):
 
     posts = []
     for r in rows:
-        pid, uid, username, avatar, avatar_data, text, media_url, likes, created_at = r
+        pid, uid, username, avatar, avatar_data, status_level, text, media_url, likes, created_at = r
         if avatar_data:
             avatar_url = avatar_data
         else:
@@ -694,6 +743,7 @@ def api_posts_user(user_id):
             "user_id": uid,
             "username": username or "",
             "avatar": avatar_url,
+            "status_level": int(status_level or 0),
             "text": text,
             "media_url": media_url,
             "likes": int(likes or 0),
