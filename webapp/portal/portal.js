@@ -369,6 +369,11 @@ async function openDM(targetId) {
     }, 2000);
 
     if (window.DM_SHARE_TEXT) {
+        const textToSend = window.DM_SHARE_TEXT;
+
+        window.DM_SHARE_TEXT = null;
+        SHARE_POST_ID = null; // ✅ ԱՅՍՏԵՂ Է ՃԻՇՏ ՊԱՀԸ
+
         setTimeout(async () => {
             await fetch(`/api/message/send`, {
                 method: "POST",
@@ -376,14 +381,15 @@ async function openDM(targetId) {
                 body: JSON.stringify({
                     sender: CURRENT_UID,
                     receiver: CURRENT_DM_TARGET,
-                    text: window.DM_SHARE_TEXT
+                    text: textToSend
                 })
             });
 
-            window.DM_SHARE_TEXT = null;
+            closeShareModal();
             await loadDM();
         }, 300);
     }
+
 
 
 }
@@ -405,8 +411,21 @@ async function loadDM() {
         data.messages.forEach(m => {
             const div = document.createElement("div");
             const who = (String(m.sender) === String(CURRENT_UID)) ? "You" : m.sender;
-            div.innerHTML = `<b>${who}</b>: ${m.text}`;
+            div.innerHTML = `<b>${who}</b>: ${renderMessageText(m.text)}`;
             div.style.marginBottom = "6px";
+            div.querySelectorAll(".portal-post-link").forEach(el => {
+                el.onclick = () => {
+                    const postId = el.dataset.post;
+                    if (!postId) return;
+
+                    // բացում ենք feed tab
+                    document.querySelector('[data-tab="feed"]').click();
+
+                    setTimeout(() => {
+                        openComments(postId);
+                    }, 300);
+                };
+            });
             box.appendChild(div);
         });
 
@@ -1371,8 +1390,8 @@ function sharePost(postId) {
 function closeShareModal() {
     const modal = document.getElementById("share-modal");
     if (modal) modal.classList.add("hidden");
-    SHARE_POST_ID = null;
 }
+
 
 
 async function deleteComment(commentId) {
@@ -1427,7 +1446,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (dmBtn) {
         dmBtn.onclick = () => {
-            closeShareModal();
             CURRENT_TAB = "messages";
 
             // բացում ենք Messages tab-ը
