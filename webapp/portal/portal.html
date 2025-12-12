@@ -205,6 +205,39 @@
     </div>
 </div>
 
+<!-- SHARE MODAL -->
+<div id="share-modal" class="popup hidden">
+    <div class="popup-box">
+
+        <h3>Տարածել փոստը</h3>
+        <p style="opacity:0.7;font-size:13px;">
+            Ընտրիր որտեղ տարածել
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0;">
+
+            <button class="share-option-btn" id="share-telegram">
+                📤 Telegram
+            </button>
+
+            <button class="share-option-btn" id="share-global">
+                🌍 Global Chat
+            </button>
+
+            <button class="share-option-btn" id="share-copy">
+                📋 Պատճենել հղումը
+            </button>
+
+        </div>
+
+        <button class="settings-close" onclick="closeShareModal()">
+            Փակել
+        </button>
+
+    </div>
+</div>
+
+
     <!-- DELETE CONFIRM MODAL -->
     <div id="confirm-modal" class="popup hidden">
         <div class="popup-box">

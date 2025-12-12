@@ -1241,15 +1241,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-function sharePost(postId) {
-    const shareText = `Դիտիր իմ գրառումը Domino Portal-ում:\nhttps://domino-backend-iavj.onrender.com/portal/portal.html?post=${postId}`;
 
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareText)}`);
-    } else {
-        alert("Կարող եք տարածել այս հղումը:\n" + shareText);
-    }
-}
 
 async function deleteComment(commentId) {
     await fetch(`/api/comment/delete`, {
@@ -1297,15 +1289,20 @@ async function likeComment(commentId) {
     openComments(CURRENT_COMMENT_POST);
 }
 
-function sharePost(postId) {
-    const shareText = `Դիտիր իմ գրառումը Domino Portal-ում:\nhttps://domino-backend-iavj.onrender.com/portal/portal.html?post=${postId}`;
+let SHARE_POST_ID = null;
 
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareText)}`);
-    } else {
-        alert("Կարող եք տարածել այս հղումը:\n" + shareText);
-    }
+function sharePost(postId) {
+    SHARE_POST_ID = postId;
+    const modal = document.getElementById("share-modal");
+    if (modal) modal.classList.remove("hidden");
 }
+
+function closeShareModal() {
+    const modal = document.getElementById("share-modal");
+    if (modal) modal.classList.add("hidden");
+    SHARE_POST_ID = null;
+}
+
 
 async function deleteComment(commentId) {
     await fetch(`/api/comment/delete`, {
@@ -1348,4 +1345,51 @@ document.addEventListener("DOMContentLoaded", () => {
     if (cancelBtn) {
         cancelBtn.onclick = closeConfirm;
     }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const tgBtn = document.getElementById("share-telegram");
+    const globalBtn = document.getElementById("share-global");
+    const copyBtn = document.getElementById("share-copy");
+
+    function getShareLink() {
+        return `https://domino-backend-iavj.onrender.com/portal/portal.html?post=${SHARE_POST_ID}`;
+    }
+
+    if (tgBtn) {
+        tgBtn.onclick = () => {
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.openTelegramLink(
+                    `https://t.me/share/url?url=${encodeURIComponent(getShareLink())}`
+                );
+            }
+            closeShareModal();
+        };
+    }
+
+    if (copyBtn) {
+        copyBtn.onclick = async () => {
+            await navigator.clipboard.writeText(getShareLink());
+            openInfo("Պատրաստ է", "Հղումը պատճենվեց 🙂");
+            closeShareModal();
+        };
+    }
+
+    if (globalBtn) {
+        globalBtn.onclick = async () => {
+            await fetch("/api/global/send", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    sender: viewerId,
+                    text: `📢 Նոր գրառում՝ ${getShareLink()}`
+                })
+            });
+
+            openInfo("Տարածվեց", "Գրառումը ուղարկվեց Global Chat");
+            closeShareModal();
+        };
+    }
+
 });
