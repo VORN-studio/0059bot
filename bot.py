@@ -2201,6 +2201,20 @@ def parse_start_payload(text: Optional[str]) -> Optional[int]:
             return None
     return None
 
+def parse_startapp_payload(text: str):
+    if not text:
+        return None
+    parts = text.strip().split(maxsplit=1)
+    if len(parts) < 2:
+        return None
+    payload = parts[1]
+    if payload.startswith("post_"):
+        try:
+            return int(payload.replace("post_", "", 1))
+        except:
+            return None
+    return None
+
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if not user:
@@ -2208,6 +2222,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text if update.message else ""
     inviter_id = parse_start_payload(text)
+    post_id = parse_startapp_payload(text)
 
     if inviter_id == user.id:
         inviter_id = None
@@ -2215,7 +2230,10 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ensure_user(user.id, user.username, inviter_id)
 
     base = (PUBLIC_BASE_URL or "").rstrip("/")
-    wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
+    if post_id:
+        wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}&open_post={post_id}"
+    else:
+        wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]

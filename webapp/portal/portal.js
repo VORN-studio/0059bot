@@ -1,4 +1,5 @@
 const urlParams = new URLSearchParams(window.location.search);
+const OPEN_POST_ID = urlParams.get("open_post");
 const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
 const viewerId = viewerFromUrl || profileId;
@@ -96,6 +97,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     initFeed();
+    
+    if (OPEN_POST_ID) {
+        setTimeout(() => {
+            document.querySelector('[data-tab="feed"]').click();
+            setTimeout(() => {
+                openComments(OPEN_POST_ID);
+            }, 400);
+        }, 400);
+    }
+
 });
 
 function initTabs() {
