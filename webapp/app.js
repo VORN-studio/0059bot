@@ -20,6 +20,16 @@ tonConnectUI.onStatusChange((walletInfo) => {
 
 console.log("✅ Casino WebApp loaded");
 const tg = window.Telegram && window.Telegram.WebApp;
+// 🔗 Telegram deep-link support
+const urlParams = new URLSearchParams(window.location.search);
+
+const START_PARAM =
+  urlParams.get("tgWebAppStartParam") ||
+  (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) ||
+  null;
+
+console.log("🔗 START_PARAM =", START_PARAM);
+
 const API_BASE = "https://domino-backend-iavj.onrender.com"; // ← հետո կփոխենք
 let CURRENT_USER_ID = null;
 let CURRENT_USERNAME = null;
@@ -211,7 +221,13 @@ function openPortal() {
 
     const uid = window.Telegram.WebApp.initDataUnsafe.user.id;
 
-    window.location.href = `${window.location.origin}/portal/portal.html?uid=${uid}`;
+    let url = `${window.location.origin}/portal/portal.html?uid=${uid}&viewer=${uid}`;
+
+    if (window.DEEP_LINK_POST_ID) {
+        url += `&open_post=${window.DEEP_LINK_POST_ID}`;
+    }
+
+    window.location.href = url;
 }
 
 
@@ -245,6 +261,13 @@ function initFromTelegram() {
   } else {
     console.log("⚠️ user object չկա initDataUnsafe-ից");
   }
+
+  // 🧠 save deep-linked post for portal
+  if (START_PARAM && START_PARAM.startsWith("post_")) {
+    window.DEEP_LINK_POST_ID = START_PARAM.replace("post_", "");
+    console.log("📌 Deep link post id:", window.DEEP_LINK_POST_ID);
+  }
+
 
   updateUserHeader();
   updateBalanceDisplay();
