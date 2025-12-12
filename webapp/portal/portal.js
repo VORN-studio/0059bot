@@ -289,9 +289,20 @@ async function loadGlobalChat() {
         data.messages.forEach(msg => {
             const div = document.createElement("div");
             const who = (String(msg.sender) === String(CURRENT_UID)) ? "You" : msg.sender;
-            div.innerHTML = `<b>${who}</b>: ${msg.text}`;
+            div.innerHTML = `<b>${who}</b>: ${renderMessageText(msg.text)}`;
             div.style.marginBottom = "6px";
             box.appendChild(div);
+            div.querySelectorAll(".portal-link").forEach(el => {
+                el.onclick = () => {
+                    const link = el.dataset.link;
+                    if (window.Telegram && Telegram.WebApp) {
+                        Telegram.WebApp.openLink(link);
+                    } else {
+                        window.open(link, "_blank");
+                    }
+                };
+            });
+
         });
 
         box.scrollTop = box.scrollHeight;
@@ -341,6 +352,25 @@ async function openDM(targetId) {
     window.DM_REFRESH_INTERVAL = setInterval(() => {
         if (CURRENT_DM_TARGET) loadDM();
     }, 2000);
+
+    if (window.DM_SHARE_TEXT) {
+        setTimeout(async () => {
+            await fetch(`/api/message/send`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    sender: CURRENT_UID,
+                    receiver: CURRENT_DM_TARGET,
+                    text: window.DM_SHARE_TEXT
+                })
+            });
+
+            window.DM_SHARE_TEXT = null;
+            await loadDM();
+        }, 300);
+    }
+
+
 }
 
 async function loadDM() {
@@ -1296,6 +1326,17 @@ async function likeComment(commentId) {
 }
 
 let SHARE_POST_ID = null;
+
+function renderMessageText(text) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return String(text).replace(urlRegex, url => {
+        return `<span class="portal-link" data-link="${url}"
+            style="color:#4da3ff;cursor:pointer;text-decoration:underline;">
+            ${url}
+        </span>`;
+    });
+}
+
 
 function sharePost(postId) {
     SHARE_POST_ID = postId;
