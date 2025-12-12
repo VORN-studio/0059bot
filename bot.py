@@ -709,13 +709,18 @@ def api_posts_user(user_id):
     conn = db(); c = conn.cursor()
     c.execute("""
         SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
-               p.text, p.media_url, p.likes, p.created_at
+            (SELECT COALESCE(MAX(pl.tier),0)
+                FROM dom_user_miners m
+                JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                WHERE m.user_id = u.user_id) AS status_level,
+            p.text, p.media_url, p.likes, p.created_at
         FROM dom_posts p
         JOIN dom_users u ON u.user_id = p.user_id
         WHERE p.user_id = %s
         ORDER BY p.created_at DESC
         LIMIT 50
     """, (user_id,))
+
     rows = c.fetchall()
 
     liked_map = {}
@@ -838,27 +843,24 @@ def api_comment_like():
 
 @app_web.route("/api/upload_post_media", methods=["POST"])
 def api_upload_post_media():
-    from werkzeug.utils import secure_filename
-    import base64, time
-
     uid = request.form.get("uid")
     file = request.files.get("file")
 
     if not uid or not file:
         return jsonify({"ok": False, "error": "missing"}), 400
 
-    ext = file.filename.rsplit(".", 1)[-1].lower()
-    safe_name = secure_filename(f"{uid}_{int(time.time())}.{ext}")
+    import base64
+    raw = file.read()
+    b64 = base64.b64encode(raw).decode("utf-8")
+    content_type = file.mimetype
 
-    save_path = os.path.join(WEBAPP_DIR, "uploads")
-    os.makedirs(save_path, exist_ok=True)
+    media_data = f"data:{content_type};base64,{b64}"
 
-    full = os.path.join(save_path, safe_name)
-    file.save(full)
+    return jsonify({
+        "ok": True,
+        "url": media_data
+    })
 
-    url = f"/uploads/{safe_name}"
-
-    return jsonify({"ok": True, "url": url})
 
 @app_web.route("/admaven-verify")
 def admaven_verify():
