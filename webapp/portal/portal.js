@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     initFeed();
-    
+
     if (OPEN_POST_ID) {
         setTimeout(() => {
             document.querySelector('[data-tab="feed"]').click();
@@ -1486,16 +1486,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // Deep link դեպի քո bot-ը, որը կբացի հենց տվյալ post-ը
         return `https://t.me/doominobot?startapp=post_${SHARE_POST_ID}`;
     }
-
-
-    if (tgBtn) {
-        tgBtn.onclick = () => {
-            const link = `https://t.me/share/url?url=${encodeURIComponent(getShareLink())}`;
-            window.open(link, "_blank"); // ⬅️ ՍԱ Է ՔՈ ԲԱՆԱԼԻՆ
-            closeShareModal();
-        };
-    }
-
 
     if (copyBtn) {
         copyBtn.onclick = async () => {
