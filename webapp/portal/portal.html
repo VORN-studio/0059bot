@@ -66,10 +66,16 @@
                     style="width:100%;padding:10px;border-radius:8px;background:#0005;color:#fff;border:1px solid #333;"
                     rows="3"></textarea>
 
-                <div style="display:flex;justify-content:space-between;margin-top:8px;">
-                    <input type="file" id="post-media" 
-                        accept="image/*,video/*"
-                        style="color:#ccc;width:70%;">
+                <div style="display:flex;justify-content:space-between;margin-top:8px;gap:8px;">
+
+                    <!-- hidden real input -->
+                    <input type="file" id="post-media" accept="image/*,video/*" hidden>
+
+                    <!-- nice button -->
+                    <button id="media-btn" class="media-btn">
+                        📎 Media
+                    </button>
+
                     <button id="post-send" style="
                         padding:8px 16px;
                         background:#3478f6;
@@ -77,7 +83,9 @@
                         border:none;
                         color:white;
                     ">Post</button>
+
                 </div>
+
             </div>
 
             <!-- 🟦 FEED SWITCH (recommended / mine) -->

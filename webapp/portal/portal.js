@@ -733,6 +733,24 @@ function initFeed() {
         console.warn("post-send button not found");
     }
 
+    const mediaBtn = document.getElementById("media-btn");
+    const mediaInput = document.getElementById("post-media");
+
+    if (mediaBtn && mediaInput) {
+        mediaBtn.onclick = () => mediaInput.click();
+
+        mediaInput.onchange = () => {
+            if (mediaInput.files && mediaInput.files.length > 0) {
+                mediaBtn.classList.add("selected");
+                mediaBtn.innerText = "📎 Ընտրված է";
+            } else {
+                mediaBtn.classList.remove("selected");
+                mediaBtn.innerText = "📎 Media";
+            }
+        };
+    }
+
+
     loadFeed();
 }
 
