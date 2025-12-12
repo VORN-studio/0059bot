@@ -1064,21 +1064,40 @@ async function openComments(postId) {
                 font-size:12px;
                 color:#7af;
                 cursor:pointer;
+                margin-bottom:4px;
             `;
+
             toggle.innerText = `Show ${comment.children.length} replies`;
 
+            const repliesBox = document.createElement("div");
+            repliesBox.style.display = "none";
+
             let opened = false;
+
             toggle.onclick = () => {
-                if (opened) return;
-                opened = true;
-                toggle.remove();
-                comment.children.forEach(ch => renderThread(ch, level + 1));
+                opened = !opened;
+
+                if (opened) {
+                    toggle.innerText = "Hide replies";
+                    repliesBox.style.display = "block";
+
+                    if (!repliesBox.hasChildNodes()) {
+                        comment.children.forEach(ch => {
+                            const childDiv = renderThread(ch, level + 1);
+                            repliesBox.appendChild(childDiv);
+                        });
+                    }
+                } else {
+                    toggle.innerText = `Show ${comment.children.length} replies`;
+                    repliesBox.style.display = "none";
+                }
             };
 
             list.appendChild(toggle);
+            list.appendChild(repliesBox);
         }
+        return div;
     }
-
 
     list.querySelectorAll(".comment-like-btn").forEach(btn => {
         btn.addEventListener("click", () => likeComment(btn.dataset.id));
