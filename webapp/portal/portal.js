@@ -1471,6 +1471,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return `DOMINO_POST:${SHARE_POST_ID}`;
     }
 
+    function getShareLink() {
+        // Deep link դեպի քո bot-ը, որը կբացի հենց տվյալ post-ը
+        return `https://t.me/doominobot?startapp=post_${SHARE_POST_ID}`;
+    }
 
 
     if (tgBtn) {
