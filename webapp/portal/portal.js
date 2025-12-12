@@ -375,7 +375,13 @@ async function sendDM() {
     const input = document.getElementById("dm-input");
     if (!input) return;
 
-    const text = input.value.trim();
+    let text = input.value.trim();
+
+    if (!text && window.DM_SHARE_TEXT) {
+        text = window.DM_SHARE_TEXT;
+        window.DM_SHARE_TEXT = null;
+    }
+
     if (text === "" || !CURRENT_UID || !CURRENT_DM_TARGET) return;
 
     try {
@@ -1352,17 +1358,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const tgBtn = document.getElementById("share-telegram");
     const globalBtn = document.getElementById("share-global");
     const copyBtn = document.getElementById("share-copy");
+    const dmBtn = document.getElementById("share-dm");
+
+    if (dmBtn) {
+        dmBtn.onclick = () => {
+            closeShareModal();
+            CURRENT_TAB = "messages";
+
+            // բացում ենք Messages tab-ը
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+
+            document.querySelector('[data-tab="messages"]').classList.add("active");
+            document.getElementById("messages").classList.add("active");
+
+            openInfo(
+                "Ընտրիր օգտատիրոջը",
+                "Սեղմիր այն մարդու վրա, ում DM-ով ուզում ես ուղարկել փոստը"
+            );
+
+            // պահում ենք share text-ը
+            window.DM_SHARE_TEXT = `📢 Նայիր այս գրառումը 👉 ${getShareLink()}`;
+        };
+    }
+
+
 
     function getShareLink() {
-        return `https://domino-backend-iavj.onrender.com/portal/portal.html?post=${SHARE_POST_ID}`;
+        return `https://t.me/doominobot?startapp=post_${SHARE_POST_ID}`;
     }
+
 
     if (tgBtn) {
         tgBtn.onclick = () => {
             if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.openTelegramLink(
+                Telegram.WebApp.openLink(
                     `https://t.me/share/url?url=${encodeURIComponent(getShareLink())}`
                 );
+
             }
             closeShareModal();
         };
