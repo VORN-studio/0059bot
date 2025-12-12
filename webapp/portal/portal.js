@@ -1479,15 +1479,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (tgBtn) {
         tgBtn.onclick = () => {
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.openLink(
-                    `https://t.me/share/url?url=${encodeURIComponent(getShareLink())}`
-                );
-
-            }
+            const link = `https://t.me/share/url?url=${encodeURIComponent(getShareLink())}`;
+            window.open(link, "_blank"); // ⬅️ ՍԱ Է ՔՈ ԲԱՆԱԼԻՆ
             closeShareModal();
         };
     }
+
 
     if (copyBtn) {
         copyBtn.onclick = async () => {
