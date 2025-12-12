@@ -551,3 +551,11 @@ body {
     padding:8px 14px;
     border-radius:8px;
 }
+
+#confirm-ok:hover {
+    background: #be123c;
+}
+
+#confirm-cancel:hover {
+    background: rgba(255,255,255,0.2);
+}

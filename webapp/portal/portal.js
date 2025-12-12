@@ -9,6 +9,29 @@ const CURRENT_UID = viewerId;
 let CURRENT_TAB = "feed";
 let CURRENT_DM_TARGET = null;
 
+let CONFIRM_ACTION = null;
+
+function openConfirm(title, text, onConfirm) {
+    const modal = document.getElementById("confirm-modal");
+    const titleEl = document.getElementById("confirm-title");
+    const textEl = document.getElementById("confirm-text");
+
+    if (!modal) return;
+
+    titleEl.innerText = title;
+    textEl.innerText = text;
+    CONFIRM_ACTION = onConfirm;
+
+    modal.classList.remove("hidden");
+}
+
+function closeConfirm() {
+    const modal = document.getElementById("confirm-modal");
+    if (modal) modal.classList.add("hidden");
+    CONFIRM_ACTION = null;
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
     loadViewerPanel();
     checkUsername();
@@ -1185,20 +1208,24 @@ async function deleteComment(commentId) {
 }
 
 async function deletePost(postId) {
-    const ok = confirm("Համոզվա՞ծ ես, որ ուզում ես ջնջել գրառումը։");
-    if (!ok) return;
+    openConfirm(
+        "Ջնջել գրառումը",
+        "Վստա՞հ ես, որ ուզում ես ջնջել այս գրառումը։ Այս գործողությունը չի կարող հետ վերադարձվել։",
+        async () => {
+            await fetch("/api/post/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    post_id: postId,
+                    user_id: viewerId
+                })
+            });
 
-    await fetch("/api/post/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            post_id: postId,
-            user_id: viewerId
-        })
-    });
-
-    loadFeed(); 
+            loadFeed();
+        }
+    );
 }
+
 
 async function likeComment(commentId) {
     await fetch("/api/comment/like", {
@@ -1236,21 +1263,6 @@ async function deleteComment(commentId) {
     openComments(CURRENT_COMMENT_POST);
 }
 
-async function deletePost(postId) {
-    const ok = confirm("Համոզվա՞ծ ես, որ ուզում ես ջնջել գրառումը։");
-    if (!ok) return;
-
-    await fetch("/api/post/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            post_id: postId,
-            user_id: viewerId
-        })
-    });
-
-    loadFeed(); 
-}
 
 async function likeComment(commentId) {
     await fetch("/api/comment/like", {
@@ -1264,3 +1276,19 @@ async function likeComment(commentId) {
 
     openComments(CURRENT_COMMENT_POST);
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const okBtn = document.getElementById("confirm-ok");
+    const cancelBtn = document.getElementById("confirm-cancel");
+
+    if (okBtn) {
+        okBtn.onclick = async () => {
+            if (CONFIRM_ACTION) await CONFIRM_ACTION();
+            closeConfirm();
+        };
+    }
+
+    if (cancelBtn) {
+        cancelBtn.onclick = closeConfirm;
+    }
+});
