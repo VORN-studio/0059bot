@@ -1530,10 +1530,15 @@ function renderMessageText(text) {
 }
 
 function renderChatMessage(msg, isMe) {
-    const avatar =
-        msg.avatar && msg.avatar !== ""
-            ? msg.avatar
-            : "/portal/default.png";
+    let avatar = "/portal/default.png";
+
+    if (msg.avatar && msg.avatar !== "") {
+        avatar = msg.avatar;
+    } else if (String(msg.sender) === String(CURRENT_UID)) {
+        const myAvatar = document.getElementById("user-avatar")?.src;
+        if (myAvatar) avatar = myAvatar;
+    }
+
 
     const username = msg.username || msg.sender_username || "User";
 
@@ -1553,9 +1558,14 @@ function renderChatMessage(msg, isMe) {
                      style="width:32px;height:32px;border-radius:50%;flex-shrink:0;">
 
                 <div>
-                    <div style="font-size:12px;opacity:0.7;margin-bottom:2px;">
-                        ${escapeHtml(username)}
+                    <div style="font-size:12px;margin-bottom:2px;">
+                        ${renderUsernameLabel(
+                            msg.sender,
+                            msg.username || msg.sender_username,
+                            msg.status_level || 0
+                        )}
                     </div>
+
 
                     <div style="
                         background:${bubbleBg};
