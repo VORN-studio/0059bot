@@ -135,10 +135,13 @@ function closeConfirm() {
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
-            const backUid = viewerId || profileId || "";
-            window.location.href = `/app?uid=${backUid}`;
+            const uid = viewerId || profileId || "";
+
+            // 🔁 Վերադառնում ենք Feed, առանց open_post
+            window.location.href = `/portal/portal.html?uid=${uid}&viewer=${uid}`;
         });
     }
+
 
 });
 
@@ -1053,10 +1056,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".feed-switch-btn").forEach(btn => {
         btn.addEventListener("click", () => {
 
-            // 🔒 Եթե single post mode ենք → ոչ մի բան չանել
+            // 🔁 Եթե single post-ից ենք → reload feed mode
             if (SINGLE_POST_MODE) {
+                const uid = viewerId || profileId || "";
+                window.location.href = `/portal/portal.html?uid=${uid}&viewer=${uid}`;
                 return;
             }
+
 
             document.querySelectorAll(".feed-switch-btn")
                 .forEach(b => b.classList.remove("active"));
