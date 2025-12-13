@@ -20,6 +20,20 @@ function applySinglePostUI() {
 
 // 🔒 ՄԻԱՑՆՈՒՄ ԵՆՔ ՄԻԱՆԳԱՄԻՑ
 let SINGLE_POST_MODE = !!OPEN_POST_ID;
+document.addEventListener("DOMContentLoaded", () => {
+    const backBtn = document.getElementById("back-to-feed");
+
+    if (backBtn && SINGLE_POST_MODE) {
+        backBtn.style.display = "block";
+
+        backBtn.onclick = () => {
+            const uid = viewerId || profileId || "";
+            window.location.href =
+                `/portal/portal.html?uid=${uid}&viewer=${uid}`;
+        };
+    }
+});
+
 const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
 const viewerId = viewerFromUrl || profileId;
