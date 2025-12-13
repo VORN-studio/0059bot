@@ -84,14 +84,13 @@ def api_message_partners():
     conn = db()
     c = conn.cursor()
 
-    # գտնում ենք բոլոր DM-երը որտեղ user-ը կա
     c.execute("""
         SELECT DISTINCT
             CASE
                 WHEN sender = %s THEN receiver
                 ELSE sender
             END AS partner_id
-        FROM messages
+        FROM dom_messages
         WHERE sender = %s OR receiver = %s
         ORDER BY partner_id
     """, (uid, uid, uid))
@@ -99,12 +98,12 @@ def api_message_partners():
     partner_ids = [row[0] for row in c.fetchall()]
 
     if not partner_ids:
+        release_db(conn)
         return jsonify({"ok": True, "users": []})
 
-    # բերում ենք user info
     c.execute("""
-        SELECT user_id, username, avatar, avatar_data, status_level
-        FROM users
+        SELECT user_id, username, avatar, avatar_data
+        FROM dom_users
         WHERE user_id = ANY(%s)
     """, (partner_ids,))
 
@@ -113,14 +112,16 @@ def api_message_partners():
         users.append({
             "user_id": u[0],
             "username": u[1] or f"User {u[0]}",
-            "avatar": u[3] or u[2] or "/portal/default.png",
-            "status_level": u[4] or 0
+            "avatar": u[3] or u[2] or "/portal/default.png"
         })
+
+    release_db(conn)
 
     return jsonify({
         "ok": True,
         "users": users
     })
+
 
 
 @app_web.route("/api/message/send", methods=["POST"])
