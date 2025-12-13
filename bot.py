@@ -232,8 +232,22 @@ def api_message_history():
 
     messages = []
     for r in rows:
+        # SELECT order:
+        # 0 sender
+        # 1 su.username
+        # 2 su.avatar
+        # 3 su.avatar_data
+        # 4 sender_status
+        # 5 receiver
+        # 6 ru.username
+        # 7 ru.avatar
+        # 8 ru.avatar_data
+        # 9 receiver_status
+        # 10 m.text
+        # 11 m.created_at
+
         sender_avatar = r[3] or r[2] or "/portal/default.png"
-        receiver_avatar = r[7] or r[6] or "/portal/default.png"
+        receiver_avatar = r[8] or r[7] or "/portal/default.png"
 
         messages.append({
             "sender": r[0],
@@ -244,11 +258,12 @@ def api_message_history():
             "receiver": r[5],
             "receiver_username": r[6] or f"User {r[5]}",
             "receiver_avatar": receiver_avatar,
-            "receiver_status_level": int(r[8] or 0),
+            "receiver_status_level": int(r[9] or 0),
 
-            "text": r[9],
-            "time": r[10],
+            "text": r[10],
+            "time": r[11],
         })
+
 
 
 
@@ -426,12 +441,17 @@ def api_search_users():
         if viewer and str(u[0]) == str(viewer):
             continue  
 
+        status_level = 0
+        if len(u) > 3:
+            status_level = int(u[3] or 0)
+
         users.append({
             "user_id": u[0],
-            "status_level": int(u[3] or 0),
+            "status_level": status_level,
             "username": u[1] or "",
             "avatar": u[2] or "/portal/default.png"
         })
+
 
     return jsonify({"ok": True, "users": users})
 
