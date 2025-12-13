@@ -1414,7 +1414,7 @@ def global_chat_cleaner():
             print("❌ Global chat cleaner error:", e)
 
         # ⏱️ սպասում ենք 5 րոպե
-        time.sleep(1 * 60)
+        time.sleep(5 * 60)
 
 
 def apply_burn_transaction(

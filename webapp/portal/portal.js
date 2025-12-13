@@ -355,40 +355,14 @@ async function loadGlobalChat() {
         box.innerHTML = "";
 
         data.messages.forEach(msg => {
-            const div = document.createElement("div");
             const isMe = String(msg.sender) === String(CURRENT_UID);
-            const whoHtml = isMe
-                ? `<span style="opacity:0.8;">You</span>`
-                : renderUsernameLabel(msg.sender, msg.username, msg.status_level);
 
-            div.innerHTML = `<b>${whoHtml}</b>: ${renderMessageText(msg.text)}`;
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = renderChatMessage(msg, isMe);
 
-            div.style.marginBottom = "6px";
-            box.appendChild(div);
-            div.querySelectorAll(".portal-post-link").forEach(el => {
-                el.onclick = () => {
-                    const postId = el.dataset.post;
-                    if (!postId) return;
-
-                    const uid = viewerId || "";
-                    window.location.href =
-                        `/portal/portal.html?uid=${uid}&viewer=${uid}&open_post=${postId}`;
-                };
-            });
-
-
-            div.querySelectorAll(".portal-link").forEach(el => {
-                el.onclick = () => {
-                    const link = el.dataset.link;
-                    if (window.Telegram && Telegram.WebApp) {
-                        Telegram.WebApp.openLink(link);
-                    } else {
-                        window.open(link, "_blank");
-                    }
-                };
-            });
-
+            box.appendChild(wrapper);
         });
+
 
         box.scrollTop = box.scrollHeight;
     } catch (e) {
@@ -524,42 +498,14 @@ async function loadDM() {
         box.innerHTML = "";
 
         data.messages.forEach(m => {
-            const div = document.createElement("div");
             const isMe = String(m.sender) === String(CURRENT_UID);
 
-            const whoHtml = isMe
-                ? `<span style="opacity:0.8;">You</span>`
-                : renderUsernameLabel(
-                    m.sender,
-                    m.sender_username,
-                    m.sender_status_level
-                );
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = renderChatMessage(m, isMe);
 
-            div.innerHTML = `<b>${whoHtml}</b>: ${renderMessageText(m.text)}`;
-
-            div.style.marginBottom = "6px";
-            div.querySelectorAll(".portal-post-link").forEach(el => {
-                el.onclick = () => {
-                    const postId = el.dataset.post;
-                    if (!postId) return;
-
-                    // բացում ենք feed tab
-                    div.querySelectorAll(".portal-post-link").forEach(el => {
-                        el.onclick = () => {
-                            const postId = el.dataset.post;
-                            if (!postId) return;
-
-                            const uid = viewerId || "";
-                            window.location.href =
-                                `/portal/portal.html?uid=${uid}&viewer=${uid}&open_post=${postId}`;
-                        };
-                    });
-
-
-                };
-            });
-            box.appendChild(div);
+            box.appendChild(wrapper);
         });
+
 
         box.scrollTop = box.scrollHeight;
         // 🔧 FIX: attach post link clicks in DM
@@ -1581,6 +1527,49 @@ function renderMessageText(text) {
     }
 
     return escapeHtml(text);
+}
+
+function renderChatMessage(msg, isMe) {
+    const avatar =
+        msg.avatar && msg.avatar !== ""
+            ? msg.avatar
+            : "/portal/default.png";
+
+    const username = msg.username || msg.sender_username || "User";
+
+    const align = isMe ? "flex-end" : "flex-start";
+    const bubbleBg = isMe ? "#2563eb" : "#111827";
+    const textColor = "#fff";
+
+    return `
+        <div style="display:flex; justify-content:${align}; margin-bottom:10px;">
+            <div style="
+                display:flex;
+                gap:8px;
+                max-width:70%;
+                ${isMe ? "flex-direction:row-reverse;" : ""}
+            ">
+                <img src="${avatar}"
+                     style="width:32px;height:32px;border-radius:50%;flex-shrink:0;">
+
+                <div>
+                    <div style="font-size:12px;opacity:0.7;margin-bottom:2px;">
+                        ${escapeHtml(username)}
+                    </div>
+
+                    <div style="
+                        background:${bubbleBg};
+                        color:${textColor};
+                        padding:8px 12px;
+                        border-radius:12px;
+                        word-break:break-word;
+                    ">
+                        ${renderMessageText(msg.text)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 
