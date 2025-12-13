@@ -75,6 +75,54 @@ def serve_webapp(filename):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
+@app_web.route("/api/message/partners")
+def api_message_partners():
+    uid = request.args.get("uid", type=int)
+    if not uid:
+        return jsonify({"ok": False, "error": "no uid"}), 400
+
+    conn = db()
+    c = conn.cursor()
+
+    # գտնում ենք բոլոր DM-երը որտեղ user-ը կա
+    c.execute("""
+        SELECT DISTINCT
+            CASE
+                WHEN sender = %s THEN receiver
+                ELSE sender
+            END AS partner_id
+        FROM messages
+        WHERE sender = %s OR receiver = %s
+        ORDER BY partner_id
+    """, (uid, uid, uid))
+
+    partner_ids = [row[0] for row in c.fetchall()]
+
+    if not partner_ids:
+        return jsonify({"ok": True, "users": []})
+
+    # բերում ենք user info
+    c.execute("""
+        SELECT user_id, username, avatar, avatar_data, status_level
+        FROM users
+        WHERE user_id = ANY(%s)
+    """, (partner_ids,))
+
+    users = []
+    for u in c.fetchall():
+        users.append({
+            "user_id": u[0],
+            "username": u[1] or f"User {u[0]}",
+            "avatar": u[3] or u[2] or "/portal/default.png",
+            "status_level": u[4] or 0
+        })
+
+    return jsonify({
+        "ok": True,
+        "users": users
+    })
+
+
 @app_web.route("/api/message/send", methods=["POST"])
 def api_message_send():
     data = request.get_json(force=True, silent=True) or {}
