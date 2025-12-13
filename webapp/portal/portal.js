@@ -322,17 +322,12 @@ async function loadGlobalChat() {
                     const postId = el.dataset.post;
                     if (!postId) return;
 
-                    // բացում ենք feed tab
-                    document.querySelector('[data-tab="feed"]').click();
-
-                    // փոքր ուշացում, որ feed-ը բեռնվի
-                    setTimeout(() => {
-                        if (SINGLE_POST_MODE) return;
-                        openComments(postId);
-                    }, 300);
-
+                    const uid = viewerId || "";
+                    window.location.href =
+                        `/portal/portal.html?uid=${uid}&viewer=${uid}&open_post=${postId}`;
                 };
             });
+
 
             div.querySelectorAll(".portal-link").forEach(el => {
                 el.onclick = () => {
@@ -501,12 +496,17 @@ async function loadDM() {
                     if (!postId) return;
 
                     // բացում ենք feed tab
-                    document.querySelector('[data-tab="feed"]').click();
+                    div.querySelectorAll(".portal-post-link").forEach(el => {
+                        el.onclick = () => {
+                            const postId = el.dataset.post;
+                            if (!postId) return;
 
-                    setTimeout(() => {
-                        if (SINGLE_POST_MODE) return;
-                        openComments(postId);
-                    }, 300);
+                            const uid = viewerId || "";
+                            window.location.href =
+                                `/portal/portal.html?uid=${uid}&viewer=${uid}&open_post=${postId}`;
+                        };
+                    });
+
 
                 };
             });
