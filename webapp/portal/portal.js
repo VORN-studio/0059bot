@@ -1025,6 +1025,12 @@ async function createPost() {
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".feed-switch-btn").forEach(btn => {
         btn.addEventListener("click", () => {
+
+            // 🔒 Եթե single post mode ենք → ոչ մի բան չանել
+            if (SINGLE_POST_MODE) {
+                return;
+            }
+
             document.querySelectorAll(".feed-switch-btn")
                 .forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
