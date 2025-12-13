@@ -1,6 +1,8 @@
 const urlParams = new URLSearchParams(window.location.search);
 const OPEN_POST_ID = urlParams.get("open_post");
-let SINGLE_POST_MODE = false;
+
+// 🔒 ՄԻԱՑՆՈՒՄ ԵՆՔ ՄԻԱՆԳԱՄԻՑ
+let SINGLE_POST_MODE = !!OPEN_POST_ID;
 const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
 const viewerId = viewerFromUrl || profileId;
@@ -69,19 +71,31 @@ function closeConfirm() {
 }
 
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadViewerPanel();
-    checkUsername();
-    loadProfile();
+    document.addEventListener("DOMContentLoaded", () => {
+        loadViewerPanel();
+        checkUsername();
+        loadProfile();
 
-    // 🔹 Feed-ը բեռնենք ԱՌԱՋԻՆԸ
-    initFeed();
+        // 🔑 ՍԿԶԲՈՒՄ որոշում ենք՝ single post թե feed
+        if (SINGLE_POST_MODE) {
+            document.querySelector('[data-tab="feed"]').click();
+            loadSinglePost(OPEN_POST_ID);
+        } else {
+            initFeed();
+        }
 
-    // 🔹 Մնացածը՝ մի փոքր ուշ
-    setTimeout(() => {
-        loadFollowStats();
-        loadUsers("");
-    }, 300);
+        setTimeout(() => {
+            loadFollowStats();
+            loadUsers("");
+        }, 300);
+
+        initSettingsPanel();
+        initFollowButton();
+        initAvatarUpload();
+        initTabs();
+        initChatEvents();
+
+
 
 
     const search = document.getElementById("user-search");
@@ -91,12 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    initSettingsPanel();
-    initFollowButton();
-    initAvatarUpload();
-    initTabs();
-    initChatEvents();
-
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
@@ -104,24 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = `/app?uid=${backUid}`;
         });
     }
-
-    initFeed();
-
-    if (OPEN_POST_ID) {
-        SINGLE_POST_MODE = true;
-    }
-
-
-    if (OPEN_POST_ID) {
-        SINGLE_POST_MODE = true;
-
-        // բացում ենք feed tab
-        document.querySelector('[data-tab="feed"]').click();
-
-        // բեռնում ենք միայն մեկ post
-        loadSinglePost(OPEN_POST_ID);
-    }
-
 
 });
 
@@ -905,6 +895,10 @@ function initFollowButton() {
 }
 
 function initFeed() {
+    if (SINGLE_POST_MODE) {
+        return; // ⛔ ոչ մի feed logic single post-ի ժամանակ
+    }
+
     const feedPage = document.getElementById("feed");
     const feedList = document.getElementById("feed-list");
     if (feedList) {
