@@ -76,8 +76,21 @@
                 <button class="sub-btn" data-sub="chat">Global Chat</button>
             </div>
 
-            <div id="users" class="sub-page active"></div>
-            <div id="messages" class="sub-page"></div>
+            <div id="users" class="sub-page active">
+
+                <input id="user-search"
+                    placeholder="Փնտրել username…"
+                    style="width:100%;padding:10px;border-radius:10px;margin-bottom:10px;">
+
+                <div id="users-list"></div>
+
+            </div>
+            <div id="messages" class="sub-page">
+
+                <div id="pm-list"></div>
+
+            </div>
+
             <div id="chat" class="sub-page">
 
             <div id="global-chat" class="chat-box">
@@ -116,17 +129,6 @@
         <button id="dm-send" class="chat-send-btn">Send</button>
     </div>
 </div>
-
-<!-- ========================= GLOBAL CHAT ========================= -->
-<div id="global-chat" class="chat-box" style="display:none;">
-    <div id="global-messages" class="chat-messages"></div>
-
-    <div class="chat-input-row">
-        <input id="global-input" class="chat-input" placeholder="Write to global chat..." />
-        <button id="global-send" class="chat-send-btn">Send</button>
-    </div>
-</div>
-
 
 <!-- Username Setup Popup -->
 <div id="username-popup" class="popup hidden">

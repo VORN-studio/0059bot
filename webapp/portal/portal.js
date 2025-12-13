@@ -373,6 +373,20 @@ async function sendGlobalMessage() {
 }
 
 async function openDM(targetId) {
+    // Social tab ակտիվ
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelector('[data-tab="social"]').classList.add("active");
+
+    document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+    document.getElementById("social").classList.add("active");
+
+    // Social → Messages sub-tab
+    document.querySelectorAll(".sub-btn").forEach(b => b.classList.remove("active"));
+    document.querySelector('[data-sub="messages"]').classList.add("active");
+
+    document.querySelectorAll(".sub-page").forEach(p => p.classList.remove("active"));
+    document.getElementById("messages").classList.add("active");
+
     if (!targetId) return;
     CURRENT_DM_TARGET = targetId;
 
