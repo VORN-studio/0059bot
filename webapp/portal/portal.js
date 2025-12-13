@@ -73,8 +73,16 @@ document.addEventListener("DOMContentLoaded", () => {
     loadViewerPanel();
     checkUsername();
     loadProfile();
-    loadFollowStats();
-    loadUsers("");
+
+    // 🔹 Feed-ը բեռնենք ԱՌԱՋԻՆԸ
+    initFeed();
+
+    // 🔹 Մնացածը՝ մի փոքր ուշ
+    setTimeout(() => {
+        loadFollowStats();
+        loadUsers("");
+    }, 300);
+
 
     const search = document.getElementById("user-search");
     if (search) {
@@ -293,7 +301,8 @@ async function loadProfile() {
 
 async function loadGlobalChat() {
     // Global chat-ը կապված է Social tab-ի հետ
-    if (CURRENT_TAB !== "social") return;
+    const chatPage = document.getElementById("chat");
+    if (!chatPage || !chatPage.classList.contains("active")) return;
 
     try {
         const res = await fetch(`/api/global/history`);
@@ -514,6 +523,19 @@ async function loadDM() {
         });
 
         box.scrollTop = box.scrollHeight;
+        // 🔧 FIX: attach post link clicks in DM
+        box.querySelectorAll(".portal-post-link").forEach(el => {
+            el.onclick = () => {
+                const postId = el.dataset.post;
+                if (!postId) return;
+
+                const uid = viewerId || "";
+                window.location.href =
+                    `/portal/portal.html?uid=${uid}&viewer=${uid}&open_post=${postId}`;
+            };
+        });
+
+
     } catch (e) {
         console.error("loadDM error:", e);
     }
@@ -880,6 +902,9 @@ function initFollowButton() {
 function initFeed() {
     const feedPage = document.getElementById("feed");
     const feedList = document.getElementById("feed-list");
+    if (feedList) {
+        feedList.innerHTML = "<div style='padding:12px;opacity:0.6'>Loading feed...</div>";
+    }
     if (!feedPage || !feedList) return;
 
     const postBtn = document.getElementById("post-send");
@@ -1636,11 +1661,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (sub === "chat") {
+                CURRENT_TAB = "social";
                 loadGlobalChat();
                 startGlobalRefresh();
             } else {
                 stopGlobalRefresh();
             }
+
         });
     });
 });
