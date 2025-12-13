@@ -109,6 +109,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (OPEN_POST_ID) {
         SINGLE_POST_MODE = true;
+    }
+
+
+    if (OPEN_POST_ID) {
+        SINGLE_POST_MODE = true;
 
         // բացում ենք feed tab
         document.querySelector('[data-tab="feed"]').click();
@@ -932,7 +937,9 @@ function initFeed() {
     }
 
 
-    loadFeed();
+    if (!SINGLE_POST_MODE) {
+        loadFeed();
+    }
 }
 
 async function loadSinglePost(postId) {
@@ -1051,6 +1058,11 @@ async function loadMyPosts() {
 }
 
 async function loadFeed() {
+    // 🔒 Եթե բացվել է կոնկրետ post, feed-ը չբեռնենք
+    if (SINGLE_POST_MODE) {
+        return;
+    }
+
     const feedList = document.getElementById("feed-list");
     if (!feedList) return;
 
