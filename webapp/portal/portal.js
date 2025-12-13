@@ -127,30 +127,30 @@ function initTabs() {
             const globalBox = document.getElementById("global-chat");
             const dmBox = document.getElementById("dm-chat");
 
-            if (tabId === "chat") {
-                if (globalBox) globalBox.style.display = "flex";
-                if (dmBox) dmBox.style.display = "none";
+            //if (tabId === "chat") {
+                //if (globalBox) globalBox.style.display = "flex";
+                //if (dmBox) dmBox.style.display = "none";
 
                 loadGlobalChat();
                 startGlobalRefresh();
-            } else {
-                if (globalBox) globalBox.style.display = "none";
-                stopGlobalRefresh();
-            }
+            //} else {
+                //if (globalBox) globalBox.style.display = "none";
+                //stopGlobalRefresh();
+            //}
 
-            if (tabId === "messages") {
-                if (dmBox) dmBox.style.display = "none";
-                loadDMList();
-            } else {
-                if (dmBox) dmBox.style.display = "none";
-            }
+            // if (tabId === "messages") {
+                // if (dmBox) dmBox.style.display = "none";
+                // loadDMList();
+            // } else {
+                //if (dmBox) dmBox.style.display = "none";
+            /// }
 
-            if (tabId !== "messages") {
-                if (window.DM_REFRESH_INTERVAL) {
-                    clearInterval(window.DM_REFRESH_INTERVAL);
-                    window.DM_REFRESH_INTERVAL = null;
-                }
-            }
+            // if (tabId !== "messages") {
+                //if (window.DM_REFRESH_INTERVAL) {
+                    //clearInterval(window.DM_REFRESH_INTERVAL);
+                    // window.DM_REFRESH_INTERVAL = null;
+                //}
+            //}
         });
     });
 }
@@ -1537,4 +1537,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".sub-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+
+            // ակտիվ sub կոճակ
+            document.querySelectorAll(".sub-btn")
+                .forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+
+            const sub = btn.dataset.sub;
+
+            // sub էջեր
+            document.querySelectorAll(".sub-page")
+                .forEach(p => p.classList.remove("active"));
+
+            const page = document.getElementById(sub);
+            if (page) page.classList.add("active");
+
+            // 🔹 կապում ենք հին լոգիկան
+            if (sub === "users") {
+                loadUsers("");
+            }
+
+            if (sub === "messages") {
+                loadDMList();
+            }
+
+            if (sub === "chat") {
+                loadGlobalChat();
+                startGlobalRefresh();
+            } else {
+                stopGlobalRefresh();
+            }
+        });
+    });
 });
