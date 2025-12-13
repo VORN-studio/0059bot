@@ -1396,6 +1396,27 @@ def get_user_stats(user_id: int):
         "status_name": status_name,
     }
 
+def global_chat_cleaner():
+    while True:
+        try:
+            conn = db()
+            c = conn.cursor()
+
+            # Ջնջում ենք բոլոր գլոբալ չատի գրառումները
+            c.execute("DELETE FROM dom_global_messages")
+
+            conn.commit()
+            release_db(conn)
+
+            print("🧹 Global chat cleared")
+
+        except Exception as e:
+            print("❌ Global chat cleaner error:", e)
+
+        # ⏱️ սպասում ենք 5 րոպե
+        time.sleep(5 * 60)
+
+
 def apply_burn_transaction(
     from_user: int,
     total_amount: float,
@@ -3023,6 +3044,12 @@ if __name__ == "__main__":
 
     keepalive_thread = threading.Thread(target=keep_alive, daemon=True)
     keepalive_thread.start()
+
+    threading.Thread(
+        target=global_chat_cleaner,
+        daemon=True
+    ).start()
+
 
     print("🚀 Domino Flask + Telegram bot started.")
 
