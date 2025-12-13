@@ -54,8 +54,44 @@
 
         <!-- FEED -->
         <div id="feed" class="tab-page active">
-            <!-- քո feed ամբողջը 그대로 -->
+
+            <h3>Հոսիաֆիդ</h3>
+
+            <!-- POST CREATOR -->
+            <div id="post-creator">
+                <textarea id="post-text"
+                    placeholder="Գրի՛ր մի բան…"
+                    rows="3"></textarea>
+
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <input type="file" id="post-media" accept="image/*,video/*" hidden>
+
+                    <button id="media-btn" class="media-btn">
+                        📎 Media
+                    </button>
+
+                    <button id="post-send">
+                        Post
+                    </button>
+                </div>
+            </div>
+
+            <!-- FEED SWITCH -->
+            <div id="feed-switch">
+                <button class="feed-switch-btn active" data-feed="recommended">
+                    Ռեկոմենդ
+                </button>
+
+                <button class="feed-switch-btn" data-feed="mine">
+                    Իմ գրառումները
+                </button>
+            </div>
+
+            <!-- POSTS -->
+            <div id="feed-list"></div>
+
         </div>
+
 
         <!-- PLAY (նոր container, դեռ դատարկ) -->
         <div id="play" class="tab-page">
