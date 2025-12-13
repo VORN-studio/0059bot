@@ -389,10 +389,36 @@ async function openDM(targetId) {
 
     if (!targetId) return;
     CURRENT_DM_TARGET = targetId;
-    // ցույց ենք տալիս username-ը վերևում
-    const headerName = document.getElementById("dm-username");
-    if (headerName) {
-        headerName.innerText = "Chat with user " + targetId;
+    // 🔹 Բեռնում ենք DM header user info (avatar + username + status)
+    try {
+        const res = await fetch(`/api/user/${targetId}`);
+        const data = await res.json();
+
+        if (data.ok && data.user) {
+            const u = data.user;
+
+            const avatarEl = document.getElementById("dm-avatar");
+            const nameEl = document.getElementById("dm-username");
+
+            if (avatarEl) {
+                avatarEl.src =
+                    (u.avatar_data && u.avatar_data !== "")
+                        ? u.avatar_data
+                        : (u.avatar && u.avatar !== "")
+                            ? u.avatar
+                            : "/portal/default.png";
+            }
+
+            if (nameEl) {
+                nameEl.innerHTML = renderUsernameLabel(
+                    u.user_id,
+                    u.username,
+                    u.status_level
+                );
+            }
+        }
+    } catch (e) {
+        console.error("DM header load error:", e);
     }
 
     const dmBox = document.getElementById("dm-chat");

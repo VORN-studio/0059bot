@@ -698,3 +698,16 @@ body {
     font-size: 18px;
     cursor: pointer;
 }
+
+.dm-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#dm-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+}
