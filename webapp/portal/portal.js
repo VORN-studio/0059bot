@@ -327,8 +327,10 @@ async function loadGlobalChat() {
 
                     // փոքր ուշացում, որ feed-ը բեռնվի
                     setTimeout(() => {
+                        if (SINGLE_POST_MODE) return;
                         openComments(postId);
                     }, 300);
+
                 };
             });
 
@@ -502,8 +504,10 @@ async function loadDM() {
                     document.querySelector('[data-tab="feed"]').click();
 
                     setTimeout(() => {
+                        if (SINGLE_POST_MODE) return;
                         openComments(postId);
                     }, 300);
+
                 };
             });
             box.appendChild(div);
