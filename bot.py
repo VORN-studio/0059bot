@@ -194,23 +194,34 @@ def api_message_history():
 
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT m.sender, su.username,
+        SELECT
+            m.sender,
+            su.username,
+            su.avatar,
+            su.avatar_data,
             (SELECT COALESCE(MAX(pl.tier),0)
                 FROM dom_user_miners mm
                 JOIN dom_mining_plans pl ON pl.id = mm.plan_id
                 WHERE mm.user_id = su.user_id) AS sender_status,
-            m.receiver, ru.username,
+
+            m.receiver,
+            ru.username,
+            ru.avatar,
+            ru.avatar_data,
             (SELECT COALESCE(MAX(pl.tier),0)
                 FROM dom_user_miners mm
                 JOIN dom_mining_plans pl ON pl.id = mm.plan_id
                 WHERE mm.user_id = ru.user_id) AS receiver_status,
-            m.text, m.created_at
+
+            m.text,
+            m.created_at
         FROM dom_messages m
         LEFT JOIN dom_users su ON su.user_id = m.sender
         LEFT JOIN dom_users ru ON ru.user_id = m.receiver
         WHERE (m.sender=%s AND m.receiver=%s) OR (m.sender=%s AND m.receiver=%s)
         ORDER BY m.id DESC
         LIMIT 50
+
     """, (u1, u2, u2, u1))
 
 
@@ -221,16 +232,24 @@ def api_message_history():
 
     messages = []
     for r in rows:
+        sender_avatar = r[3] or r[2] or "/portal/default.png"
+        receiver_avatar = r[7] or r[6] or "/portal/default.png"
+
         messages.append({
             "sender": r[0],
-            "sender_username": r[1] or f"User {r[0]}",
-            "sender_status_level": int(r[2] or 0),
-            "receiver": r[3],
-            "receiver_username": r[4] or f"User {r[3]}",
-            "receiver_status_level": int(r[5] or 0),
-            "text": r[6],
-            "time": r[7],
+            "username": r[1] or f"User {r[0]}",
+            "avatar": sender_avatar,
+            "status_level": int(r[4] or 0),
+
+            "receiver": r[5],
+            "receiver_username": r[6] or f"User {r[5]}",
+            "receiver_avatar": receiver_avatar,
+            "receiver_status_level": int(r[8] or 0),
+
+            "text": r[9],
+            "time": r[10],
         })
+
 
 
     messages.reverse()
