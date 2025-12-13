@@ -131,8 +131,13 @@ function initTabs() {
                 //if (globalBox) globalBox.style.display = "flex";
                 //if (dmBox) dmBox.style.display = "none";
 
-                loadGlobalChat();
-                startGlobalRefresh();
+                if (tabId === "social") {
+                    loadGlobalChat();
+                    startGlobalRefresh();
+                } else {
+                    stopGlobalRefresh();
+                }
+
             //} else {
                 //if (globalBox) globalBox.style.display = "none";
                 //stopGlobalRefresh();
@@ -284,7 +289,8 @@ async function loadProfile() {
 }
 
 async function loadGlobalChat() {
-    if (CURRENT_TAB !== "chat") return;
+    // Global chat-ը կապված է Social tab-ի հետ
+    if (CURRENT_TAB !== "social") return;
 
     try {
         const res = await fetch(`/api/global/history`);
