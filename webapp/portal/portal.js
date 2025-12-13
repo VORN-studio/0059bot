@@ -1456,26 +1456,37 @@ async function openComments(postId) {
 
     roots.forEach(c => renderThread(c));
 
-        list.querySelectorAll(".comment-like-btn").forEach(btn => {
-        btn.onclick = () => likeComment(btn.dataset.id);
-    });
+        list.onclick = (e) => {
+            const likeBtn = e.target.closest(".comment-like-btn");
+            const replyBtn = e.target.closest(".comment-reply-btn");
+            const deleteBtn = e.target.closest(".delete-comment");
 
-    list.querySelectorAll(".comment-reply-btn").forEach(btn => {
-        btn.onclick = () => {
-            REPLY_TO = btn.dataset.id;
-            REPLY_TO_USERNAME = btn.dataset.username;
+            // 👍 LIKE
+            if (likeBtn) {
+                likeComment(likeBtn.dataset.id);
+                return;
+            }
 
-            const input = document.getElementById("comment-input");
-            if (input) {
-                input.placeholder = `Reply to ${REPLY_TO_USERNAME}...`;
-                input.focus();
+            // 💬 REPLY
+            if (replyBtn) {
+                REPLY_TO = replyBtn.dataset.id;
+                REPLY_TO_USERNAME = replyBtn.dataset.username;
+
+                const input = document.getElementById("comment-input");
+                if (input) {
+                    input.placeholder = `Reply to ${REPLY_TO_USERNAME}...`;
+                    input.focus();
+                }
+                return;
+            }
+
+            // 🗑 DELETE
+            if (deleteBtn) {
+                deleteComment(deleteBtn.dataset.id);
+                return;
             }
         };
-    });
 
-    list.querySelectorAll(".delete-comment").forEach(btn => {
-        btn.onclick = () => deleteComment(btn.dataset.id);
-    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
