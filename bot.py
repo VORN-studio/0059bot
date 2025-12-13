@@ -1403,7 +1403,7 @@ def global_chat_cleaner():
             c = conn.cursor()
 
             # Ջնջում ենք բոլոր գլոբալ չատի գրառումները
-            c.execute("DELETE FROM dom_global_messages")
+            c.execute("DELETE FROM dom_global_chat")
 
             conn.commit()
             release_db(conn)
@@ -1414,7 +1414,7 @@ def global_chat_cleaner():
             print("❌ Global chat cleaner error:", e)
 
         # ⏱️ սպասում ենք 5 րոպե
-        time.sleep(5 * 60)
+        time.sleep(1 * 60)
 
 
 def apply_burn_transaction(
