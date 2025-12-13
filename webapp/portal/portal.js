@@ -1532,25 +1532,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const dmBtn = document.getElementById("share-dm");
 
     if (dmBtn) {
-        dmBtn.onclick = () => {
-            CURRENT_TAB = "messages";
-
-            // բացում ենք Messages tab-ը
-            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
-
-            document.querySelector('[data-tab="messages"]').classList.add("active");
-            document.getElementById("messages").classList.add("active");
-
-            openInfo(
-                "Ընտրիր օգտատիրոջը",
-                "Սեղմիր այն մարդու վրա, ում DM-ով ուզում ես ուղարկել փոստը"
-            );
-
-            // պահում ենք share text-ը
-            window.DM_SHARE_TEXT = `📢 Նայիր այս գրառումը\n${getSharePayload()}`;
-        };
+        dmBtn.onclick = openDMShare;
     }
+
 
 
 
@@ -1645,3 +1629,89 @@ function closeDM() {
         window.DM_REFRESH_INTERVAL = null;
     }
 }
+
+async function openDMShare() {
+    const popup = document.getElementById("dm-share-popup");
+    const list = document.getElementById("dm-share-list");
+
+    if (!popup || !list) return;
+
+    list.innerHTML = "Բեռնվում է...";
+
+    // Բերում ենք DM ունեցած օգտատերերին
+    const res = await fetch(`/api/message/partners?uid=${viewerId}`);
+    const data = await res.json();
+
+    if (!data.ok || !data.users || data.users.length === 0) {
+        list.innerHTML = "Դեռ DM չունես";
+        popup.classList.remove("hidden");
+        return;
+    }
+
+    list.innerHTML = "";
+
+    data.users.forEach(u => {
+        const row = document.createElement("div");
+        row.style.cssText = `
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:8px;
+            border-radius:10px;
+            background:#1115;
+            margin-bottom:6px;
+        `;
+
+        row.innerHTML = `
+            <input type="checkbox" data-id="${u.user_id}">
+            <img src="${u.avatar || '/portal/default.png'}"
+                style="width:32px;height:32px;border-radius:50%;">
+            <span>${u.username}</span>
+        `;
+
+        list.appendChild(row);
+    });
+
+    popup.classList.remove("hidden");
+}
+
+function closeDMShare() {
+    const popup = document.getElementById("dm-share-popup");
+    if (popup) popup.classList.add("hidden");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const sendBtn = document.getElementById("dm-share-send");
+
+    if (!sendBtn) return;
+
+    sendBtn.onclick = async () => {
+        const checked = document.querySelectorAll(
+            "#dm-share-list input:checked"
+        );
+
+        if (checked.length === 0) {
+            openInfo("Սխալ", "Ընտրիր գոնե մեկ օգտատիրոջ");
+            return;
+        }
+
+        const payload = `DOMINO_POST:${SHARE_POST_ID}`;
+
+        for (const cb of checked) {
+            await fetch(`/api/message/send`, {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    sender: viewerId,
+                    receiver: cb.dataset.id,
+                    text: payload
+                })
+            });
+        }
+
+        closeDMShare();
+        closeShareModal();
+
+        openInfo("Պատրաստ է", "Գրառումը ուղարկվեց DM-ով");
+    };
+});
