@@ -1454,12 +1454,14 @@ async function openComments(postId) {
         return div;
     }
 
-    list.querySelectorAll(".comment-like-btn").forEach(btn => {
-        btn.addEventListener("click", () => likeComment(btn.dataset.id));
+    roots.forEach(c => renderThread(c));
+
+        list.querySelectorAll(".comment-like-btn").forEach(btn => {
+        btn.onclick = () => likeComment(btn.dataset.id);
     });
 
     list.querySelectorAll(".comment-reply-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
+        btn.onclick = () => {
             REPLY_TO = btn.dataset.id;
             REPLY_TO_USERNAME = btn.dataset.username;
 
@@ -1468,13 +1470,12 @@ async function openComments(postId) {
                 input.placeholder = `Reply to ${REPLY_TO_USERNAME}...`;
                 input.focus();
             }
-        });
+        };
     });
 
     list.querySelectorAll(".delete-comment").forEach(btn => {
-        btn.addEventListener("click", () => deleteComment(btn.dataset.id));
+        btn.onclick = () => deleteComment(btn.dataset.id);
     });
-    roots.forEach(c => renderThread(c));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1548,20 +1549,6 @@ async function deletePost(postId) {
             loadFeed();
         }
     );
-}
-
-
-async function likeComment(commentId) {
-    await fetch("/api/comment/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            comment_id: commentId,
-            user_id: viewerId
-        })
-    });
-
-    openComments(CURRENT_COMMENT_POST);
 }
 
 let SHARE_POST_ID = null;
