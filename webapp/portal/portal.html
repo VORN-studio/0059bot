@@ -42,100 +42,57 @@
 
     <!-- MAIN TABS -->
     <div class="portal-tabs">
-        <button class="tab-btn active" data-tab="feed">Feed</button>
-        <button class="tab-btn" data-tab="users">Users</button>
-        <button class="tab-btn" data-tab="messages">Messages</button>
-        <button class="tab-btn" data-tab="chat">Global Chat</button>
+        <button class="tab-btn active" data-tab="feed">📰 Feed</button>
+        <button class="tab-btn" data-tab="play">⚔️ Play</button>
+        <button class="tab-btn" data-tab="social">👥 Social</button>
+        <button class="tab-btn" data-tab="profile">💼 Profile</button>
     </div>
+
 
     <!-- CONTENT AREA -->
     <div id="portal-content">
 
-                <div id="feed" class="tab-page active">
-            <h3>Հոսիաֆիդ</h3>
+        <!-- FEED -->
+        <div id="feed" class="tab-page active">
+            <!-- քո feed ամբողջը 그대로 -->
+        </div>
 
-            <!-- 🟦 POST CREATOR (ONLY UI, NO JS BREAK) -->
-            <div id="post-creator" style="
-                background:#1113;
-                padding:12px;
-                border-radius:12px;
-                margin-bottom:15px;
-            ">
-                <textarea id="post-text" 
-                    placeholder="Գրի՛ր մի բան…"
-                    style="width:100%;padding:10px;border-radius:8px;background:#0005;color:#fff;border:1px solid #333;"
-                    rows="3"></textarea>
+        <!-- PLAY (նոր container, դեռ դատարկ) -->
+        <div id="play" class="tab-page">
+            <h3>⚔️ Play</h3>
 
-                <div style="display:flex;justify-content:space-between;margin-top:8px;gap:8px;">
+            <div class="play-grid">
+                <div class="play-card">Duels</div>
+                <div class="play-card">Leagues</div>
+                <div class="play-card muted">Coming Soon</div>
+            </div>
+        </div>
 
-                    <!-- hidden real input -->
-                    <input type="file" id="post-media" accept="image/*,video/*" hidden>
-
-                    <!-- nice button -->
-                    <button id="media-btn" class="media-btn">
-                        📎 Media
-                    </button>
-
-                    <button id="post-send" style="
-                        padding:8px 16px;
-                        background:#3478f6;
-                        border-radius:8px;
-                        border:none;
-                        color:white;
-                    ">Post</button>
-
-                </div>
-
+        <!-- SOCIAL -->
+        <div id="social" class="tab-page">
+            <div class="social-tabs">
+                <button class="sub-btn active" data-sub="users">Users</button>
+                <button class="sub-btn" data-sub="messages">Messages</button>
+                <button class="sub-btn" data-sub="chat">Global Chat</button>
             </div>
 
-            <!-- 🟦 FEED SWITCH (recommended / mine) -->
-            <div id="feed-switch" style="
-                display:flex;
-                gap:10px;
-                margin-bottom:15px;
-            ">
-                <button class="feed-switch-btn active" data-feed="recommended" style="
-                    flex:1;
-                    padding:10px;
-                    background:#222;
-                    border-radius:10px;
-                    border:none;
-                    color:white;
-                ">Ռեկոմենդ</button>
+            <div id="users" class="sub-page active"></div>
+            <div id="messages" class="sub-page"></div>
+            <div id="chat" class="sub-page"></div>
+        </div>
 
-                <button class="feed-switch-btn" data-feed="mine" style="
-                    flex:1;
-                    padding:10px;
-                    background:#222;
-                    border-radius:10px;
-                    border:none;
-                    color:white;
-                ">Իմ գրառումները</button>
+        <!-- PROFILE -->
+        <div id="profile" class="tab-page">
+            <div class="profile-actions">
+                <div class="profile-card">Balance</div>
+                <div class="profile-card">Packages</div>
+                <div class="profile-card">Stats</div>
+                <div id="settings-btn" class="settings-btn">⚙️ Settings</div>
             </div>
-
-            <!-- 🟦 POSTS WILL APPEAR HERE -->
-            <div id="feed-list"></div>
         </div>
 
-
-        <div id="users" class="tab-page">
-            <h3>Օգտատերեր</h3>
-
-            <input id="user-search"
-                placeholder="Փնտրել username…"
-                style="width:90%;padding:10px;border-radius:10px;margin:10px 0;">
-
-            <div id="users-list"></div>
         </div>
 
-
-        <div id="messages" class="tab-page">
-            <h3>Նամակներ</h3>
-            <div id="pm-list"></div>
-        </div>
-        <div id="settings-btn" class="settings-btn">⚙️ Կարգավորումներ</div>
-
-    </div>
 </div>
 
 <!-- ========================= PERSONAL CHAT ========================= -->

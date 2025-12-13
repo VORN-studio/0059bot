@@ -597,3 +597,73 @@ body {
 .share-option-btn:hover {
     background: rgba(255,255,255,0.18);
 }
+
+/* =====================
+   DOMAIN LAYOUT
+   ===================== */
+
+.play-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.play-card {
+    background: rgba(255,255,255,0.06);
+    padding: 20px;
+    border-radius: 14px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.play-card:hover {
+    background: rgba(255,255,255,0.14);
+}
+
+.play-card.muted {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.social-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.sub-btn {
+    flex: 1;
+    padding: 8px;
+    background: rgba(255,255,255,0.05);
+    border: none;
+    border-radius: 10px;
+    color: #9bb3ff;
+}
+
+.sub-btn.active {
+    background: #3a8bff;
+    color: white;
+}
+
+.sub-page {
+    display: none;
+}
+
+.sub-page.active {
+    display: block;
+}
+
+.profile-actions {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 12px;
+}
+
+.profile-card {
+    background: rgba(255,255,255,0.06);
+    padding: 16px;
+    border-radius: 14px;
+    text-align: center;
+}
