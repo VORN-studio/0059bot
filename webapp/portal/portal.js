@@ -1614,17 +1614,34 @@ async function deleteComment(commentId) {
 
 
 async function likeComment(commentId) {
-    await fetch("/api/comment/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            comment_id: commentId,
-            user_id: viewerId
-        })
-    });
+    try {
+        const res = await fetch("/api/comment/like", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                comment_id: commentId,
+                user_id: viewerId
+            })
+        });
 
-    openComments(CURRENT_COMMENT_POST);
+        const data = await res.json();
+        if (!data.ok) return;
+
+        // 🔥 գտնում ենք հենց սեղմված 👍 span-ը
+        const btn = document.querySelector(
+            `.comment-like-btn[data-id="${commentId}"]`
+        );
+
+        if (btn) {
+            btn.innerHTML = `👍 ${data.likes}`;
+            btn.style.color = data.liked ? "#22c55e" : "#4af";
+        }
+
+    } catch (e) {
+        console.error("likeComment error:", e);
+    }
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
     const okBtn = document.getElementById("confirm-ok");

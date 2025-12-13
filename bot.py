@@ -888,37 +888,61 @@ def api_comment_like():
 
     conn = db(); c = conn.cursor()
 
+    # table-ը ավելի ճիշտ է init_db-ում ստեղծել, բայց թող այստեղ էլ լինի՝ ապահով
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_comment_likes (
             id SERIAL PRIMARY KEY,
             user_id BIGINT,
             comment_id BIGINT,
+            created_at BIGINT DEFAULT 0,
             UNIQUE(user_id, comment_id)
         )
     """)
 
-    c.execute("SELECT 1 FROM dom_comment_likes WHERE user_id=%s AND comment_id=%s",
-              (uid, cid))
-    if c.fetchone():
-        release_db(conn)
-        return jsonify({"ok": True, "already": True})
+    # already liked?
+    c.execute(
+        "SELECT 1 FROM dom_comment_likes WHERE user_id=%s AND comment_id=%s",
+        (uid, cid)
+    )
+    already = c.fetchone() is not None
 
     now = int(time.time())
-    c.execute("""
-        INSERT INTO dom_comment_likes (user_id, comment_id)
-        VALUES (%s, %s)
-    """, (uid, cid))
 
+    if already:
+        # UNLIKE
+        c.execute(
+            "DELETE FROM dom_comment_likes WHERE user_id=%s AND comment_id=%s",
+            (uid, cid)
+        )
+        c.execute("""
+            UPDATE dom_comments
+               SET likes = GREATEST(COALESCE(likes,0) - 1, 0)
+             WHERE id = %s
+         RETURNING likes
+        """, (cid,))
+        row = c.fetchone()
+        conn.commit()
+        release_db(conn)
+        return jsonify({"ok": True, "liked": False, "likes": int(row[0] if row else 0)}), 200
+
+    # LIKE
+    c.execute(
+        "INSERT INTO dom_comment_likes (user_id, comment_id, created_at) VALUES (%s, %s, %s)",
+        (uid, cid, now)
+    )
     c.execute("""
         UPDATE dom_comments
-        SET likes = likes + 1
-        WHERE id = %s
+           SET likes = COALESCE(likes,0) + 1
+         WHERE id = %s
+     RETURNING likes
     """, (cid,))
+    row = c.fetchone()
 
     conn.commit()
     release_db(conn)
 
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "liked": True, "likes": int(row[0] if row else 0)}), 200
+
 
 @app_web.route("/api/upload_post_media", methods=["POST"])
 def api_upload_post_media():
