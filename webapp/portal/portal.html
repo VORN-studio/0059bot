@@ -121,7 +121,14 @@
 </div>
 
 <!-- ========================= PERSONAL CHAT ========================= -->
-<div id="dm-chat" class="chat-box" style="display:none;">
+<div id="dm-chat" class="chat-box dm-overlay" style="display:none;">
+
+    <!-- HEADER -->
+    <div class="dm-header">
+        <span id="dm-username">Chat</span>
+        <button id="dm-close">✕</button>
+    </div>
+
     <div id="dm-messages" class="chat-messages"></div>
 
     <div class="chat-input-row">
@@ -129,6 +136,7 @@
         <button id="dm-send" class="chat-send-btn">Send</button>
     </div>
 </div>
+
 
 <!-- Username Setup Popup -->
 <div id="username-popup" class="popup hidden">

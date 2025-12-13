@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function initTabs() {
     document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-
+            closeDM();
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
 
@@ -389,6 +389,11 @@ async function openDM(targetId) {
 
     if (!targetId) return;
     CURRENT_DM_TARGET = targetId;
+    // ցույց ենք տալիս username-ը վերևում
+    const headerName = document.getElementById("dm-username");
+    if (headerName) {
+        headerName.innerText = "Chat with user " + targetId;
+    }
 
     const dmBox = document.getElementById("dm-chat");
     const globalBox = document.getElementById("global-chat");
@@ -1595,3 +1600,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+    const closeBtn = document.getElementById("dm-close");
+    if (closeBtn) {
+        closeBtn.onclick = closeDM;
+    }
+});
+
+function closeDM() {
+    const dmBox = document.getElementById("dm-chat");
+    if (dmBox) dmBox.style.display = "none";
+
+    CURRENT_DM_TARGET = null;
+
+    if (window.DM_REFRESH_INTERVAL) {
+        clearInterval(window.DM_REFRESH_INTERVAL);
+        window.DM_REFRESH_INTERVAL = null;
+    }
+}
