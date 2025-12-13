@@ -400,30 +400,21 @@ def api_follow():
     balance = float(row[0])
 
     FOLLOW_PRICE = 5.0
-    PAY_TARGET = 3.0
-    PAY_ADMIN  = 2.0
+    PAY_TARGET = 2.0
+    BURN_AMOUNT = 3.0
 
-    if balance < FOLLOW_PRICE:
+    try:
+        apply_burn_transaction(
+            from_user=follower,
+            total_amount=FOLLOW_PRICE,
+            transfers=[(target, PAY_TARGET)],
+            burn_amount=BURN_AMOUNT,
+            reason="follow"
+        )
+    except ValueError:
         release_db(conn)
         return jsonify({"ok": False, "error": "low_balance"}), 200
 
-    c.execute("""
-        UPDATE dom_users
-        SET balance_usd = balance_usd - %s
-        WHERE user_id=%s
-    """, (FOLLOW_PRICE, follower))
-
-    c.execute("""
-        UPDATE dom_users
-        SET balance_usd = balance_usd + %s
-        WHERE user_id=%s
-    """, (PAY_TARGET, target))
-
-    c.execute("""
-        UPDATE dom_users
-        SET balance_usd = balance_usd + %s
-        WHERE user_id=%s
-    """, (PAY_ADMIN, ADMIN_ID))
 
     c.execute("""
         INSERT INTO dom_follows (follower, target)
@@ -981,6 +972,26 @@ def init_db():
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_admin_fund (
+            id INT PRIMARY KEY DEFAULT 1,
+            balance NUMERIC(18,2) DEFAULT 0
+        );
+        INSERT INTO dom_admin_fund (id, balance)
+        VALUES (1, 0)
+        ON CONFLICT DO NOTHING;
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_burn_ledger (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            amount NUMERIC(18,2),
+            reason TEXT,
+            created_at BIGINT
+        )
+    """)
+
     c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS likes INT DEFAULT 0")
     c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS parent_id BIGINT DEFAULT NULL")
 
@@ -1267,6 +1278,68 @@ def get_user_stats(user_id: int):
         "status_level": int(status_level),
         "status_name": status_name,
     }
+
+def apply_burn_transaction(
+    from_user: int,
+    total_amount: float,
+    transfers: list = None,
+    burn_amount: float = 0.0,
+    reason: str = ""
+):
+    """
+    Universal balance operation:
+    - total_amount հանվում է from_user-ից
+    - transfers → [(user_id, amount), ...]
+    - burn_amount → գնում է admin fund + burn ledger
+    """
+
+    if total_amount <= 0:
+        raise ValueError("total_amount must be > 0")
+
+    transfers = transfers or []
+    now = int(time.time())
+
+    conn = db()
+    c = conn.cursor()
+
+    # ստուգում ենք բալանսը
+    c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (from_user,))
+    row = c.fetchone()
+    if not row or float(row[0]) < total_amount:
+        release_db(conn)
+        raise ValueError("low_balance")
+
+    # հանում ենք ամբողջ գումարը
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = balance_usd - %s
+        WHERE user_id=%s
+    """, (total_amount, from_user))
+
+    # փոխանցումներ
+    for uid, amt in transfers:
+        c.execute("""
+            UPDATE dom_users
+            SET balance_usd = balance_usd + %s
+            WHERE user_id=%s
+        """, (amt, uid))
+
+    # burn
+    if burn_amount > 0:
+        c.execute("""
+            INSERT INTO dom_burn_ledger (user_id, amount, reason, created_at)
+            VALUES (%s, %s, %s, %s)
+        """, (from_user, burn_amount, reason, now))
+
+        c.execute("""
+            UPDATE dom_admin_fund
+            SET balance = balance + %s
+            WHERE id = 1
+        """, (burn_amount,))
+
+    conn.commit()
+    release_db(conn)
+
 
 def apply_deposit(user_id: int, amount: float):
     """
@@ -2277,22 +2350,34 @@ def ton_rate_updater():
 application = None  
 bot_loop = None     
 
-def parse_start_payload(text: Optional[str]) -> Optional[int]:
+def parse_start_payload(text: Optional[str]):
     """
-    /start ref_123456789 → 123456789
+    /start ref_123 -> ("ref", 123)
+    /start post_55 -> ("post", 55)
     """
     if not text:
-        return None
+        return (None, None)
+
     parts = text.strip().split(maxsplit=1)
     if len(parts) < 2:
-        return None
-    payload = parts[1]
+        return (None, None)
+
+    payload = parts[1].strip()
+
     if payload.startswith("ref_"):
         try:
-            return int(payload.replace("ref_", "", 1))
+            return ("ref", int(payload.replace("ref_", "", 1)))
         except Exception:
-            return None
-    return None
+            return (None, None)
+
+    if payload.startswith("post_"):
+        try:
+            return ("post", int(payload.replace("post_", "", 1)))
+        except Exception:
+            return (None, None)
+
+    return (None, None)
+
 
 def parse_startapp_payload(text: str):
     if not text:
@@ -2316,7 +2401,14 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text if update.message else ""
     print("✅ /start received from", user.id, "text:", text)
 
-    inviter_id = parse_start_payload(text)
+    ptype, pvalue = parse_start_payload(text)
+    inviter_id = None
+    open_post_id = None
+
+    if ptype == "ref":
+        inviter_id = pvalue
+    elif ptype == "post":
+        open_post_id = pvalue
 
     if inviter_id == user.id:
         inviter_id = None
@@ -2324,6 +2416,8 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ensure_user(user.id, user.username, inviter_id)
 
     wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
+    if open_post_id:
+        wa_url += f"&open_post={open_post_id}"
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]
@@ -2373,6 +2467,79 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(msg)
 
+async def burn_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        await update.message.reply_text("❌ admin չես")
+        return
+
+    conn = db(); c = conn.cursor()
+
+    now = int(time.time())
+    today_start = now - 86400
+
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM dom_burn_ledger")
+    total_burn = float(c.fetchone()[0])
+
+    c.execute(
+        "SELECT COALESCE(SUM(amount),0) FROM dom_burn_ledger WHERE created_at >= %s",
+        (today_start,)
+    )
+    today_burn = float(c.fetchone()[0])
+
+    c.execute("SELECT balance FROM dom_admin_fund WHERE id=1")
+    fund = float(c.fetchone()[0])
+
+    release_db(conn)
+
+    await update.message.reply_text(
+        f"🔥 Burn վիճակ\n\n"
+        f"Այսօր: {today_burn:.2f} DOMIT\n"
+        f"Ընդհանուր: {total_burn:.2f} DOMIT\n"
+        f"Burn ֆոնդ: {fund:.2f} DOMIT"
+    )
+
+async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        await update.message.reply_text("❌ admin չես")
+        return
+
+    if len(context.args) != 2:
+        await update.message.reply_text("Օգտագործում՝ /burn_reward user_id amount")
+        return
+
+    target = int(context.args[0])
+    amount = float(context.args[1])
+
+    conn = db(); c = conn.cursor()
+
+    c.execute("SELECT balance FROM dom_admin_fund WHERE id=1")
+    fund = float(c.fetchone()[0])
+
+    if fund < amount:
+        release_db(conn)
+        await update.message.reply_text("❌ Burn ֆոնդում բավարար գումար չկա")
+        return
+
+    c.execute("""
+        UPDATE dom_admin_fund
+        SET balance = balance - %s
+        WHERE id = 1
+    """, (amount,))
+
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = balance_usd + %s
+        WHERE user_id = %s
+    """, (amount, target))
+
+    conn.commit()
+    release_db(conn)
+
+    await update.message.reply_text(
+        f"🎁 {amount} DOMIT փոխանցվեց օգտատեր {target}-ին burn ֆոնդից"
+    )
+
+
 async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
@@ -2420,6 +2587,8 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("task_list", task_list))
     application.add_handler(CommandHandler("task_delete", task_delete))
     application.add_handler(CommandHandler("task_toggle", task_toggle))
+    application.add_handler(CommandHandler("burn_stats", burn_stats))
+    application.add_handler(CommandHandler("burn_reward", burn_reward))
 
     await application.initialize()
     await application.start()
