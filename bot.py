@@ -122,6 +122,45 @@ def api_message_partners():
         "users": users
     })
 
+@app_web.route("/api/post/<int:post_id>")
+def api_get_single_post(post_id):
+    conn = db(); c = conn.cursor()
+
+    c.execute("""
+        SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
+               (SELECT COALESCE(MAX(pl.tier),0)
+                FROM dom_user_miners m
+                JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                WHERE m.user_id = u.user_id) AS status_level,
+               p.text, p.media_url, p.likes, p.created_at
+        FROM dom_posts p
+        JOIN dom_users u ON u.user_id = p.user_id
+        WHERE p.id = %s
+    """, (post_id,))
+
+    row = c.fetchone()
+    release_db(conn)
+
+    if not row:
+        return jsonify({"ok": False, "error": "post_not_found"}), 404
+
+    avatar_url = row[4] or row[3] or "/portal/default.png"
+
+    return jsonify({
+        "ok": True,
+        "post": {
+            "id": row[0],
+            "user_id": row[1],
+            "username": row[2],
+            "avatar": avatar_url,
+            "status_level": int(row[5] or 0),
+            "text": row[6],
+            "media_url": row[7],
+            "likes": int(row[8] or 0),
+            "created_at": int(row[9]),
+        }
+    })
+
 
 
 @app_web.route("/api/message/send", methods=["POST"])

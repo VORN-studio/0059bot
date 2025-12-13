@@ -1,5 +1,6 @@
 const urlParams = new URLSearchParams(window.location.search);
 const OPEN_POST_ID = urlParams.get("open_post");
+let SINGLE_POST_MODE = false;
 const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
 const viewerId = viewerFromUrl || profileId;
@@ -99,13 +100,15 @@ document.addEventListener("DOMContentLoaded", () => {
     initFeed();
 
     if (OPEN_POST_ID) {
-        setTimeout(() => {
-            document.querySelector('[data-tab="feed"]').click();
-            setTimeout(() => {
-                openComments(OPEN_POST_ID);
-            }, 400);
-        }, 400);
+        SINGLE_POST_MODE = true;
+
+        // բացում ենք feed tab
+        document.querySelector('[data-tab="feed"]').click();
+
+        // բեռնում ենք միայն մեկ post
+        loadSinglePost(OPEN_POST_ID);
     }
+
 
 });
 
@@ -902,6 +905,33 @@ function initFeed() {
 
     loadFeed();
 }
+
+async function loadSinglePost(postId) {
+    const feedList = document.getElementById("feed-list");
+    if (!feedList) return;
+
+    feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Բեռնվում է...</div>";
+
+    try {
+        const res = await fetch(`/api/post/${postId}`);
+        const data = await res.json();
+
+        if (!data.ok || !data.post) {
+            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Գրառումը չի գտնվել</div>";
+            return;
+        }
+
+        feedList.innerHTML = "";
+
+        const card = renderPostCard(data.post);
+        feedList.appendChild(card);
+
+    } catch (e) {
+        console.error("loadSinglePost error:", e);
+        feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Սխալ</div>";
+    }
+}
+
 
 async function createPost() {
     const textArea = document.getElementById("post-text");
