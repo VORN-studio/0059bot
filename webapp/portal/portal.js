@@ -1,5 +1,22 @@
 const urlParams = new URLSearchParams(window.location.search);
 const OPEN_POST_ID = urlParams.get("open_post");
+function applySinglePostUI() {
+    const title = document.querySelector("#feed h3");
+    if (title) title.innerText = "Գրառում";
+
+    const creator = document.getElementById("post-creator");
+    if (creator) creator.style.display = "none";
+
+    const sw = document.getElementById("feed-switch");
+    if (sw) sw.style.display = "none";
+
+    // disable switch buttons just in case
+    document.querySelectorAll(".feed-switch-btn").forEach(b => {
+        b.disabled = true;
+        b.style.opacity = "0.4";
+        b.style.pointerEvents = "none";
+    });
+}
 
 // 🔒 ՄԻԱՑՆՈՒՄ ԵՆՔ ՄԻԱՆԳԱՄԻՑ
 let SINGLE_POST_MODE = !!OPEN_POST_ID;
@@ -76,13 +93,23 @@ function closeConfirm() {
         checkUsername();
         loadProfile();
 
-        // 🔑 ՍԿԶԲՈՒՄ որոշում ենք՝ single post թե feed
         if (SINGLE_POST_MODE) {
-            document.querySelector('[data-tab="feed"]').click();
+            applySinglePostUI();
+
+            // Feed tab-ը ուղղակի դարձնենք active (click չանենք)
+            document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
+
+            const feedBtn = document.querySelector('[data-tab="feed"]');
+            const feedPage = document.getElementById("feed");
+            if (feedBtn) feedBtn.classList.add("active");
+            if (feedPage) feedPage.classList.add("active");
+
             loadSinglePost(OPEN_POST_ID);
         } else {
             initFeed();
         }
+
 
         setTimeout(() => {
             loadFollowStats();
