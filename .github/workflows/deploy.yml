@@ -26,5 +26,5 @@ jobs:
             git reset --hard origin/main
             source venv/bin/activate || true
             pip install -r requirements.txt
-            pkill -f bot.py || true
-            nohup python3 bot.py > bot.log 2>&1 &
+            systemctl restart 0059bot
+
