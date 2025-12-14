@@ -38,6 +38,7 @@ DOMIT_PRICE_USD = 1  # DOMIT հիմա նույնն է, ինչ $ (միայն տե
 PORTAL_DIR = os.path.join(WEBAPP_DIR, "portal")
 TASKS_DIR = os.path.join(WEBAPP_DIR, "tasks")
 GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
+BOT_READY = False
 
 
 app_web = Flask(__name__, static_folder=None)
@@ -1110,10 +1111,7 @@ def init_db():
         )
     """)
 
-    c.execute("""
-        ALTER TABLE dom_comment_likes
-        ADD COLUMN IF NOT EXISTS created_at BIGINT DEFAULT 0;
-    """)
+    
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_comments (
@@ -1125,6 +1123,17 @@ def init_db():
             likes INT DEFAULT 0
         )
     """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_comment_likes (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            comment_id BIGINT,
+            created_at BIGINT DEFAULT 0,
+            UNIQUE(user_id, comment_id)
+        )
+    """)
+
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_admin_fund (
@@ -2773,6 +2782,9 @@ async def start_bot_webhook():
 
     await application.bot.delete_webhook(drop_pending_updates=True)
     await application.bot.set_webhook(url=webhook_url)
+    global BOT_READY
+    BOT_READY = True
+    print("🟢 BOT_READY = True")
 
     print(f"✅ Webhook set to {webhook_url}")
 
@@ -2899,14 +2911,17 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
 
     await update.message.reply_text(f"✔ Տասկը ավելացվեց `{category}` բաժնում։")
 
+
+
 @app_web.route("/webhook", methods=["POST"])
 def telegram_webhook():
     """
     Flask route, որը ստանում է Telegram–ի update-ները
     և փոխանցում է PTB application-ին։
     """
-    global application, bot_loop
 
+    global application, bot_loop
+    
     if application is None or bot_loop is None:
         print("❌ application or bot_loop is None — bot not ready")
         return jsonify({"ok": False, "error": "bot_not_ready"}), 503
@@ -3070,11 +3085,21 @@ if __name__ == "__main__":
         except Exception as e:
             print("🔥 Telegram bot failed:", e)
 
+    # === START TELEGRAM BOT FIRST ===
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
+
+    # ⏳ սպասում ենք մինչև bot_loop պատրաստ լինի
+    print("⏳ Waiting for Telegram bot to be ready...")
+    while bot_loop is None:
+        time.sleep(0.2)
+
+    print("✅ Telegram bot event loop is ready.")
+
+    # === START FLASK ONLY AFTER BOT IS READY ===
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
 
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
 
     ton_thread = threading.Thread(target=ton_rate_updater, daemon=True)
     ton_thread.start()
