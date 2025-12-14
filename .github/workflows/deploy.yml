@@ -27,4 +27,4 @@ jobs:
             source venv/bin/activate || true
             pip install -r requirements.txt
             pkill -f bot.py || true
-            nohup python bot.py > bot.log 2>&1 &
+            nohup python3 bot.py > bot.log 2>&1 &
