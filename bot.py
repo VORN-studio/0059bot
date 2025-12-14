@@ -34,7 +34,7 @@ if not DATABASE_URL:
 ADMIN_IDS = {5274439601} 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
-DOMIT_PRICE_USD = 1  # DOMIT հիմա նույնն է, ինչ $ (միայն տեքստով տարբերս)
+DOMIT_PRICE_USD = 1  # DOMIT հիմա նույնն է, ինչ $ (միայն տեքստով տարբեր)
 PORTAL_DIR = os.path.join(WEBAPP_DIR, "portal")
 TASKS_DIR = os.path.join(WEBAPP_DIR, "tasks")
 GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
