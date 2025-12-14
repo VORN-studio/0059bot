@@ -26,9 +26,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN env var is missing")
 
-PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").strip()
-if not PUBLIC_BASE_URL:
-    PUBLIC_BASE_URL = "https://domino-backend-iavj.onrender.com"
+BASE_URL = os.getenv("BASE_URL", "https://domino-play.online").strip()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if not DATABASE_URL:
@@ -2467,7 +2465,7 @@ import requests
 
 def keep_alive():
     print("🟢 Keep-alive thread started")
-    url = f"{PUBLIC_BASE_URL}/"
+    url = f"{BASE_URL}/"
     while True:
         try:
             r = requests.get(url, timeout=10)
@@ -2592,7 +2590,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ensure_user(user.id, user.username, inviter_id)
 
-    wa_url = f"{PUBLIC_BASE_URL}/app?uid={user.id}"
+    wa_url = f"{BASE_URL}/app?uid={user.id}"
     if open_post_id:
         wa_url += f"&open_post={open_post_id}"
 
@@ -2771,7 +2769,7 @@ async def start_bot_webhook():
     await application.start()
 
     port = int(os.environ.get("PORT", "10000"))
-    webhook_url = f"{PUBLIC_BASE_URL}/webhook"
+    webhook_url = f"{BASE_URL}/webhook"
 
     await application.bot.delete_webhook(drop_pending_updates=True)
     await application.bot.set_webhook(url=webhook_url)
