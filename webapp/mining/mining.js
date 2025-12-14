@@ -1,5 +1,5 @@
 const tg = window.Telegram && window.Telegram.WebApp;
-const API_BASE = "https://domino-backend-iavj.onrender.com";
+const API_BASE = window.location.origin;
 const TIER_NAMES = {
     1: "Initiate",
     2: "Apprentice",

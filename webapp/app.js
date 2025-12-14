@@ -30,7 +30,7 @@ const START_PARAM =
 
 console.log("🔗 START_PARAM =", START_PARAM);
 
-const API_BASE = "https://domino-backend-iavj.onrender.com"; // ← հետո կփոխենք
+const API_BASE = window.location.origin;
 let CURRENT_USER_ID = null;
 let CURRENT_USERNAME = null;
 let balance = 0.0;
@@ -244,7 +244,7 @@ function openTasks() {
         window.location.href = url;  
         return;
     }
-    window.location.href = `https://domino-backend-iavj.onrender.com${url}`;
+    window.location.href = url;
 }
 
 function initFromTelegram() {
@@ -332,19 +332,19 @@ async function loadUserFromBackend() {
 
 
 function openCrash() {
-    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/crash.html?uid=" + CURRENT_USER_ID;
+    window.location.href = `/webapp/games/crash.html?uid=${CURRENT_USER_ID}`;
 }
 function openDice() {
-    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/dice.html?uid=" + CURRENT_USER_ID;
+    window.location.href = `/webapp/games/dice.html?uid=${CURRENT_USER_ID}`;
 }
 function openSlots() {
-    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/slots.html?uid=" + CURRENT_USER_ID;
+    window.location.href = `/webapp/games/slots.html?uid=${CURRENT_USER_ID}`;
 }
 function openCoinflip() {
-    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/games/coinflip.html?uid=" + CURRENT_USER_ID;
+    window.location.href = `/webapp/games/coinflip.html?uid=${CURRENT_USER_ID}`;
 }
 function openMining() {
-    window.location.href = "https://domino-backend-iavj.onrender.com/webapp/mining/index.html?uid=" + CURRENT_USER_ID;
+    window.location.href = `/webapp/mining/index.html?uid=${CURRENT_USER_ID}`;
 }
 const buttons = document.querySelectorAll(".btn[data-section]");
 const screens = document.querySelectorAll(".screen");
@@ -415,7 +415,7 @@ if (walletSaveBtn) {
     } catch (err) {
       console.log("❌ Wallet save error:", err);
       walletStatus.textContent =
-        "Չստացվեց կապվել սերվերին։ Հետո Render-ում կաշխատի։";
+        "Չստացվեց կապվել սերվերին։ Խնդրում ենք փորձել ավելի ուշ։";
     }
   });
 }

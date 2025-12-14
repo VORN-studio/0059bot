@@ -13,7 +13,7 @@ function openCategory(cat) {
     document.getElementById("screen-" + cat).style.display = "block";
 }
 
-const API_BASE = "https://domino-backend-iavj.onrender.com";
+
 
 async function loadBalance() {
     const uid = new URLSearchParams(window.location.search).get("uid");
@@ -24,7 +24,7 @@ async function loadBalance() {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/user/${uid}`);
+        const res = await fetch(`/api/user/${uid}`);
         const data = await res.json();
 
         if (data.ok && data.user) {
@@ -40,7 +40,7 @@ async function loadTasks() {
     const uid = new URLSearchParams(window.location.search).get("uid");
 
     try {
-        const res = await fetch(`${API_BASE}/api/tasks/${uid}`);
+        const res = await fetch(`/api/tasks/${uid}`);
         const data = await res.json();
 
         console.log("TASK RESPONSE:", data);
@@ -102,7 +102,7 @@ function performTask(taskId) {
     }
 
     // Attempt register
-    fetch(`${API_BASE}/api/task_attempt_create`, {
+    fetch(`/api/task_attempt_create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: uid, task_id: taskId })
