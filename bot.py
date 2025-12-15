@@ -355,32 +355,33 @@ def api_wallet_connect():
 @app_web.route("/api/global/send", methods=["POST"])
 def api_global_send():
     data = request.get_json(force=True, silent=True) or {}
-    sender = int(data.get("sender", 0))
-    text = data.get("text", "").strip()
+    user_id = int(data.get("user_id", 0))
+    message = data.get("message", "").strip()
 
-    if sender == 0 or text == "":
+    if user_id == 0 or message == "":
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
     c.execute("""
-        INSERT INTO dom_global_chat (sender, text, created_at)
+        INSERT INTO dom_global_chat (user_id, message, created_at)
         VALUES (%s, %s, %s)
-    """, (sender, text, now))
+    """, (user_id, message, now))
     conn.commit()
+
     realtime_emit(
         "global_new",
         {
-            "sender": sender,
-            "text": text,
+            "user_id": user_id,
+            "message": message,
             "time": now
         },
         room="global"
     )
 
     release_db(conn)
-
     return jsonify({"ok": True})
+
 
 @app_web.route("/api/global/history")
 def api_global_history():
@@ -1372,11 +1373,12 @@ def init_db():
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_global_chat (
             id SERIAL PRIMARY KEY,
-            sender BIGINT,
-            text TEXT,
+            user_id BIGINT,
+            message TEXT,
             created_at BIGINT
         )
     """)
+
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_task_completions (
