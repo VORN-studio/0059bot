@@ -1765,20 +1765,12 @@ function renderChatMessage(msg, isMe) {
                             background:${bubbleBg};
                             color:${textColor};
                             padding:8px 12px;
+                            border-radius:12px;
+                            word-break:break-word;
                         ">
                             ${replyHtml}
                             ${renderMessageText(msg.text)}
                         </div>
-
-                    <div style="
-                        background:${bubbleBg};
-                        color:${textColor};
-                        padding:8px 12px;
-                        border-radius:12px;
-                        word-break:break-word;
-                    ">
-                        ${renderMessageText(msg.text)}
-                    </div>
                 </div>
             </div>
         </div>
