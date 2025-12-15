@@ -386,14 +386,17 @@ def api_global_send():
 def api_global_history():
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT g.sender, u.username,
-               (SELECT COALESCE(MAX(pl.tier),0)
-                  FROM dom_user_miners m
-                  JOIN dom_mining_plans pl ON pl.id = m.plan_id
-                 WHERE m.user_id = u.user_id) AS status_level,
-               g.text, g.created_at
+        SELECT 
+            g.user_id,
+            u.username,
+            (SELECT COALESCE(MAX(pl.tier),0)
+                FROM dom_user_miners m
+                JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                WHERE m.user_id = u.user_id) AS status_level,
+            g.message,
+            g.created_at
         FROM dom_global_chat g
-        LEFT JOIN dom_users u ON u.user_id = g.sender
+        LEFT JOIN dom_users u ON u.user_id = g.user_id
         ORDER BY g.id DESC
         LIMIT 100
     """)
@@ -412,6 +415,7 @@ def api_global_history():
 
     messages.reverse()
     return jsonify({"ok": True, "messages": messages})
+
 
 
 @app_web.route("/api/follows/list")
