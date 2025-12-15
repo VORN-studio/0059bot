@@ -3231,10 +3231,12 @@ if __name__ == "__main__":
                 app_web,
                 host="0.0.0.0",
                 port=port,
-                use_reloader=False
+                use_reloader=False,
+                allow_unsafe_werkzeug=True
             )
         except Exception:
             logger.exception("Flask failed")
+
 
 
     def run_bot():
