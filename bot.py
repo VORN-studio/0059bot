@@ -4,6 +4,7 @@ import eventlet
 eventlet.monkey_patch()
 load_dotenv()
 import time
+import sys
 import threading
 from typing import Optional
 from flask import Flask, jsonify, send_from_directory, request
@@ -57,6 +58,26 @@ console_handler.setLevel(logging.INFO)
 
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
+# --- Redirect all print() to logger ---
+class _PrintToLogger:
+    def __init__(self, _logger, level=logging.INFO, prefix=""):
+        self.logger = _logger
+        self.level = level
+        self.prefix = prefix
+
+    def write(self, message):
+        # print() հաճախ գրում է "\n" առանձին, սրանք անտեսում ենք
+        msg = (message or "").rstrip()
+        if msg:
+            self.logger.log(self.level, f"{self.prefix}{msg}")
+
+    def flush(self):
+        # required for file-like interface
+        pass
+
+# Redirect stdout/stderr (captures print() from anywhere in the process)
+sys.stdout = _PrintToLogger(logger, logging.INFO, prefix="")
+sys.stderr = _PrintToLogger(logger, logging.ERROR, prefix="STDERR: ")
 
 
 
@@ -358,6 +379,8 @@ def api_global_send():
     user_id = int(data.get("user_id", 0))
     message = data.get("message", "").strip()
 
+    logger.info(f"📩 GLOBAL SEND | user_id={user_id} | text_len={len(message)}")
+
     if user_id == 0 or message == "":
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
@@ -537,11 +560,11 @@ def on_join(data):
 
 @socketio.on("connect")
 def on_connect():
-    logger.info("🟢 Socket connected")
+    logger.info(f"🟢 Socket connected | sid={request.sid}")
 
 @socketio.on("disconnect")
 def on_disconnect():
-    logger.info("🔴 Socket disconnected")
+    logger.info(f"🔴 Socket disconnected | sid={request.sid}")
 
 @socketio.on("join_user")
 def on_join_user(data):
@@ -562,10 +585,12 @@ def on_join_user(data):
         logger.info(f"👤 joined user_{uid}")
 
 
+from flask import request
+
 @socketio.on("join_global")
 def on_join_global():
     join_room("global")
-    logger.info("🌍 joined global")
+    logger.info(f"🌍 joined global | sid={request.sid}")
 
 @socketio.on("join_feed")
 def on_join_feed():
@@ -1251,7 +1276,7 @@ def init_db():
     """
     Creates base tables and applies ALTER patches safely.
     """
-    print("🛠️ init_db() — Domino")
+    logger.info("🛠️ init_db() — Domino")
 
     conn = db()
     c = conn.cursor()
@@ -1272,9 +1297,9 @@ def init_db():
     for sql in alters:
         try:
             c.execute(sql)
-            print("Applied:", sql)
+            logger.info(f"Applied ALTER: {sql}")
         except Exception as e:
-            print("Skip alter:", sql, "Reason:", e)
+            logger.warning(f"Skip ALTER: {sql} | Reason: {e}")
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_deposits (
@@ -1481,7 +1506,7 @@ def init_db():
                 INSERT INTO dom_mining_plans (tier, name, price_usd, duration_hours, return_mult, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (tier, name, price, duration_hours, return_mult, now))
-        print("💎 Mining plans initialized (10 tiers).")
+        logger.info("💎 Mining plans initialized (10 tiers).")
 
     name_map = {
         1: "Initiate",
@@ -1503,7 +1528,7 @@ def init_db():
 
     conn.commit()
     release_db(conn)
-    print("✅ Domino tables ready with applied patches!")
+    logger.info("✅ Domino tables ready with applied patches!")
 
 def realtime_emit(event: str, data: dict, room: str = None):
     try:
@@ -2699,7 +2724,7 @@ def ton_rate_updater():
 
             if rate is None or rate <= 0:
                 print("⚠️ Invalid TON rate, skipping DB update")
-                time.sleep(15)
+                time.sleep(300)
                 continue
 
             conn = None
@@ -3303,11 +3328,6 @@ if __name__ == "__main__":
     threading.Thread(target=ton_rate_updater, daemon=True).start()
     threading.Thread(target=keep_alive, daemon=True).start()
     threading.Thread(target=global_chat_cleaner, daemon=True).start()
-
-    threading.Thread(
-        target=global_chat_cleaner,
-        daemon=True
-    ).start()
 
     run_flask()
     print("🚀 Domino Flask + Telegram bot started.")
