@@ -593,31 +593,61 @@ def handle_global_send(data):
         logger.info("🌍 global_send received:")
         logger.info(data)
 
-        user_id = data.get("user_id")
-        message = data.get("message")
+        user_id = int(data.get("user_id", 0))
+        message = (data.get("message") or "").strip()
 
         if not user_id or not message:
             logger.warning("⚠️ global_send missing fields")
             return
 
-        # 🔹 պահում ենք DB (եթե ունես)
+        conn = db()
+        c = conn.cursor()
+
+        c.execute("""
+            SELECT 
+                u.username,
+                u.avatar,
+                u.avatar_data,
+                COALESCE(
+                    (SELECT MAX(pl.tier)
+                     FROM dom_user_miners m
+                     JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                     WHERE m.user_id = u.user_id),
+                0)
+            FROM dom_users u
+            WHERE u.user_id = %s
+        """, (user_id,))
+
+        row = c.fetchone()
+        release_db(conn)
+
+        if row:
+            username, avatar, avatar_data, status_level = row
+        else:
+            username = f"User {user_id}"
+            avatar = "/portal/default.png"
+            avatar_data = None
+            status_level = 0
+
         msg = {
+            "sender": user_id,
             "user_id": user_id,
+            "username": username,
+            "avatar": avatar_data or avatar or "/portal/default.png",
+            "status_level": int(status_level),
+            "text": message,
             "message": message,
-            "username": get_username(user_id),
-            "status_level": get_status_level(user_id),
-            "avatar": get_avatar(user_id),
-            "time": int(time.time())
+            "time": int(time.time()),
         }
 
         logger.info("📢 emitting global_new:")
         logger.info(msg)
 
-        # 🔥 ՍԱ Է ՔՈ ՀԻՄՆԱԿԱՆ ՍԽԱԼԻ ԿԵՏԸ
-        socketio.emit("global_new", msg, broadcast=True)
+        socketio.emit("global_new", msg, room="global")
 
-    except Exception as e:
+    except Exception:
         logger.exception("❌ ERROR in global_send")
+
 
 
 @socketio.on("join_global")
