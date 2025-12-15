@@ -1747,18 +1747,42 @@ function renderChatMessage(msg, isMe) {
         if (!el) return;
 
         let startX = 0;
+        let currentX = 0;
+        let dragging = false;
+
+        el.style.transition = "transform 0.2s ease";
 
         el.addEventListener("touchstart", e => {
             startX = e.touches[0].clientX;
+            dragging = true;
+            el.style.transition = "none";
         });
 
-        el.addEventListener("touchend", e => {
-            const endX = e.changedTouches[0].clientX;
-            if (endX - startX > 50) {
-                setReply(msg);
+        el.addEventListener("touchmove", e => {
+            if (!dragging) return;
+
+            currentX = e.touches[0].clientX;
+            const diff = currentX - startX;
+
+            if (diff > 0 && diff < 120) {
+                el.style.transform = `translateX(${diff}px)`;
             }
         });
+
+        el.addEventListener("touchend", () => {
+            dragging = false;
+            el.style.transition = "transform 0.2s ease";
+
+            const diff = currentX - startX;
+
+            if (diff > 60) {
+                setReply(msg);
+            }
+
+            el.style.transform = "translateX(0)";
+        });
     }, 0);
+
 
 
     return `
