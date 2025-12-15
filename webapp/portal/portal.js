@@ -7,7 +7,7 @@ socket.on("connect", () => {
     console.log("🟢 Realtime connected");
 
     if (viewerId) {
-        socket.emit("join_user", viewerId);
+        socket.emit("join_user", { uid: viewerId });
     }
 });
 
