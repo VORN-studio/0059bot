@@ -1756,6 +1756,7 @@ function renderChatMessage(msg, isMe) {
             startX = e.touches[0].clientX;
             dragging = true;
             el.style.transition = "none";
+            el.style.willChange = "transform";
         });
 
         el.addEventListener("touchmove", e => {

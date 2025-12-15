@@ -782,7 +782,9 @@ body {
   display: none;
 }
 
-html, body {
+/* ⛔️ STOP horizontal scroll ONLY for chat */
+.chat-messages,
+.global-message {
     overflow-x: hidden;
     overscroll-behavior-x: none;
     touch-action: pan-y;
