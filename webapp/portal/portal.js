@@ -1704,6 +1704,11 @@ function renderMessageText(text) {
 }
 
 function renderChatMessage(msg, isMe) {
+    // 🔧 FIX: ապահովում ենք reply-ի համար id
+    if (!msg.id) {
+        msg.id = `${msg.sender}_${msg.created_at}`;
+    }
+
     let replyHtml = "";
 
     if (msg.reply_to_text) {
