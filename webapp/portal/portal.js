@@ -17,14 +17,24 @@ const telegramUser = TG?.initDataUnsafe?.user || null;
 
 
 socket.on("global_new", (msg) => {
-    if (CURRENT_TAB !== "social") return;
+    console.log("🌍 global_new received:", msg);
 
     const box = document.getElementById("global-messages");
     if (!box) return;
 
-    const isMe = String(msg.sender) === String(CURRENT_UID);
+    // 🔧 backend → frontend mapping
+    const fixedMsg = {
+        sender: msg.user_id,
+        text: msg.message,
+        username: msg.username || ("User " + msg.user_id),
+        status_level: msg.status_level || 0,
+        avatar: msg.avatar || "",
+        created_at: msg.time
+    };
+
+    const isMe = String(fixedMsg.sender) === String(CURRENT_UID);
     const wrapper = document.createElement("div");
-    wrapper.innerHTML = renderChatMessage(msg, isMe);
+    wrapper.innerHTML = renderChatMessage(fixedMsg, isMe);
 
     box.appendChild(wrapper);
     box.scrollTop = box.scrollHeight;
