@@ -93,6 +93,12 @@ socket.on("comment_new", (data) => {
     }
 });
 
+socket.on("post_deleted", (data) => {
+  // data = { post_id: 123 }
+  removePostFromUI(data.post_id);
+});
+
+
 socket.on("post_like", (data) => {
     const span = document.querySelector(
         `.like-btn[data-id="${data.post_id}"] .like-count`
@@ -1212,6 +1218,7 @@ function renderPostCard(post) {
 
     const div = document.createElement("div");
     div.className = "post-card";
+    iv.dataset.postId = String(post.id);
     div.style.cssText = `
         background:#000a;
         border-radius:12px;
@@ -1601,23 +1608,36 @@ async function deleteComment(commentId) {
 }
 
 async function deletePost(postId) {
-    openConfirm(
-        "Ջնջել գրառումը",
-        "Վստա՞հ ես, որ ուզում ես ջնջել այս գրառումը։ Այս գործողությունը չի կարող հետ վերադարձվել։",
-        async () => {
-            await fetch("/api/post/delete", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    post_id: postId,
-                    user_id: viewerId
-                })
-            });
+  openConfirm(
+    "Ջնջել գրառումը",
+    "Վստա՞հ ես, որ ուզում ես ջնջել այս գրառումը։ Այս գործողությունը չի կարող հետ վերադարձվել։",
+    async () => {
 
-            loadFeed();
-        }
-    );
+      // 1) UI-ից ՀԵՆՑ ՀԻՄԱ remove (optimistic)
+      removePostFromUI(postId);
+
+      // 2) server delete
+      const res = await fetch("/api/post/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: postId, user_id: viewerId })
+      });
+
+      const data = await res.json();
+
+      // 3) Եթե server-ը ասեց ok չէ → վերադարձնենք (fallback reload)
+      if (!data.ok) {
+        loadFeed();
+        openInfo("Չստացվեց", "Server-ը չջնջեց, նորից փորձիր");
+        return;
+      }
+
+      // 4) (optional) server-ը թող socket-ով broadcast անի՝ մյուսներին էլ ջնջվի
+      // դու սրա համար client-ում արդեն socket.on() կավելացնես ՔԱՅԼ 3-ում
+    }
+  );
 }
+
 
 let SHARE_POST_ID = null;
 
@@ -1658,7 +1678,7 @@ function renderChatMessage(msg, isMe) {
     const textColor = "#fff";
 
     return `
-        <div style="display:flex; justify-content:${align}; margin-bottom:10px;">
+        <div class="global-message" style="display:flex; justify-content:${align}; margin-bottom:10px;">
             <div style="
                 display:flex;
                 gap:8px;
@@ -1953,3 +1973,8 @@ document.addEventListener("DOMContentLoaded", () => {
         openInfo("Պատրաստ է", "Գրառումը ուղարկվեց DM-ով");
     };
 });
+
+function removePostFromUI(postId) {
+  const el = document.querySelector(`.post-card[data-post-id="${postId}"]`);
+  if (el) el.remove();
+}
