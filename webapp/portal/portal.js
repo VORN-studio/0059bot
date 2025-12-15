@@ -220,12 +220,16 @@ function closeConfirm() {
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
         backBtn.addEventListener("click", () => {
-            const uid = viewerId || profileId || "";
-
-            // 🔁 Վերադառնում ենք Feed, առանց open_post
-            window.location.href = `/portal/portal.html?uid=${uid}&viewer=${uid}`;
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.close();
+            } else {
+                // fallback browser-ի համար
+                const uid = viewerId || profileId || "";
+                window.location.href = `/portal/portal.html?uid=${uid}&viewer=${uid}`;
+            }
         });
     }
+
 
 
 });
@@ -352,7 +356,7 @@ async function loadProfile() {
 
 async function loadGlobalChat() {
     // Global chat-ը կապված է Social tab-ի հետ
-    const chatPage = document.getElementById("chat");
+    const chatPage = document.getElementById("social");
     if (!chatPage || !chatPage.classList.contains("active")) return;
 
     try {
@@ -387,24 +391,34 @@ async function sendGlobalMessage() {
     if (!input) return;
 
     const text = input.value.trim();
-    if (text === "" || !CURRENT_UID) return;
+    if (!text || !CURRENT_UID) return;
 
-    try {
-        await fetch(`/api/global/send`, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                sender: CURRENT_UID,
-                text
-            })
-        });
+    // 1️⃣ ԻՆՔԴ ՔՈ ՀԱՂՈՐԴԱԳՐՈՒԹՅՈՒՆԸ ՑՈՒՅՑ ՏՈՒՐ
+    const box = document.getElementById("global-messages");
+    if (box) {
+        const msg = {
+            sender: CURRENT_UID,
+            username: document.getElementById("username")?.innerText || "You",
+            text,
+            status_level: 0
+        };
 
-        input.value = "";
-        await loadGlobalChat();
-    } catch (e) {
-        console.error("sendGlobalMessage error:", e);
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = renderChatMessage(msg, true);
+        box.appendChild(wrapper);
+        box.scrollTop = box.scrollHeight;
     }
+
+    // 2️⃣ ՀԵՏՈ ՄԻԱՅՆ ՈՒՂԱՐԿԻ՛Ր SOCKET-ՈՎ
+    socket.emit("global_send", {
+        sender: CURRENT_UID,
+        text
+    });
+
+    input.value = "";
 }
+
+
 
 async function openDM(targetId) {
     // Social tab ակտիվ
@@ -970,6 +984,12 @@ async function createPost() {
             "Չի ստացվում",
             "Գրառումը չի կարող լինել լիովին դատարկ 🙂"
         );
+    const mediaBtn = document.getElementById("media-btn");
+        if (mediaBtn) {
+            mediaBtn.classList.remove("selected");
+            mediaBtn.innerText = "📎 Media";
+        }
+
         return;
     }
 
