@@ -584,6 +584,12 @@ def favicon():
 def webapp_tasks(filename):
     return send_from_directory(TASKS_DIR, filename)
 
+@app_web.route("/portal")
+@app_web.route("/portal/")
+def portal_page():
+    return send_from_directory(PORTAL_DIR, "portal.html")
+
+
 @app_web.route("/portal/<path:filename>")
 def serve_portal(filename):
     return send_from_directory(PORTAL_DIR, filename)
