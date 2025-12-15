@@ -288,12 +288,14 @@ def api_message_send():
         release_db(conn)
         return jsonify({"ok": False, "error": "need_follow"}), 200
 
-    c.execute("""
-        INSERT INTO dom_messages (sender, receiver, text, reply_to, created_at)
-        VALUES (%s, %s, %s, %s, %s)
+    reply_text = None
 
-    """, (sender, receiver, text, reply_to, now))
-    conn.commit()
+    if reply_to:
+        c.execute("SELECT text FROM dom_messages WHERE id=%s", (reply_to,))
+        r = c.fetchone()
+        if r:
+            reply_text = r[0]
+
     room = f"dm_{min(sender, receiver)}_{max(sender, receiver)}"
 
     
@@ -304,10 +306,13 @@ def api_message_send():
             "sender": sender,
             "receiver": receiver,
             "text": text,
-            "time": now
+            "time": now,
+            "reply_to": reply_to,
+            "reply_to_text": reply_text
         },
         room=room
     )
+
 
         # ✅ Notify receiver (inbox badge), even if DM room not open
     realtime_emit(
