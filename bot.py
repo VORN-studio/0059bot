@@ -106,9 +106,7 @@ CORS(app_web)
 socketio = SocketIO(
     app_web,
     cors_allowed_origins="*",
-    async_mode="eventlet",
-    ping_interval=25,
-    ping_timeout=60
+    async_mode="eventlet"
 )
 
 
@@ -373,38 +371,6 @@ def api_wallet_connect():
     return jsonify({"ok": True, "user": user})
 
 
-@app_web.route("/api/global/send", methods=["POST"])
-def api_global_send():
-    data = request.get_json(force=True, silent=True) or {}
-    user_id = int(data.get("user_id", 0))
-    message = data.get("message", "").strip()
-
-    logger.info(f"📩 GLOBAL SEND | user_id={user_id} | text_len={len(message)}")
-
-    if user_id == 0 or message == "":
-        return jsonify({"ok": False, "error": "bad_params"}), 400
-
-    now = int(time.time())
-    conn = db(); c = conn.cursor()
-    c.execute("""
-        INSERT INTO dom_global_chat (user_id, message, created_at)
-        VALUES (%s, %s, %s)
-    """, (user_id, message, now))
-    conn.commit()
-    trim_global_chat(30)
-
-    realtime_emit(
-        "global_new",
-        {
-            "user_id": user_id,
-            "message": message,
-            "time": now
-        },
-        room="global"
-    )
-
-    release_db(conn)
-    return jsonify({"ok": True})
 
 
 @app_web.route("/api/global/history")
@@ -423,7 +389,7 @@ def api_global_history():
         FROM dom_global_chat g
         LEFT JOIN dom_users u ON u.user_id = g.user_id
         ORDER BY g.id DESC
-        LIMIT 100
+        LIMIT 30
     """)
     rows = c.fetchall()
     release_db(conn)
@@ -601,9 +567,22 @@ def handle_global_send(data):
             logger.warning("⚠️ global_send missing fields")
             return
 
+        now = int(time.time())
+
+        # 1️⃣ Պահում ենք DB-ում
         conn = db()
         c = conn.cursor()
 
+        c.execute("""
+            INSERT INTO dom_global_chat (user_id, message, created_at)
+            VALUES (%s, %s, %s)
+        """, (user_id, message, now))
+        conn.commit()
+
+        # 2️⃣ Թրիմ՝ պահում ենք միայն վերջին 30-ը
+        trim_global_chat(30)
+
+        # 3️⃣ Վերցնում ենք user info
         c.execute("""
             SELECT 
                 u.username,
@@ -631,23 +610,22 @@ def handle_global_send(data):
             status_level = 0
 
         msg = {
-            "sender": user_id,
             "user_id": user_id,
             "username": username,
             "avatar": avatar_data or avatar or "/portal/default.png",
             "status_level": int(status_level),
             "text": message,
-            "message": message,
-            "time": int(time.time()),
+            "time": now,
         }
 
-        logger.info("📢 emitting global_new:")
-        logger.info(msg)
-
+        # 4️⃣ Realtime broadcast
         socketio.emit("global_new", msg, room="global")
+
+        logger.info("📢 global_new emitted")
 
     except Exception:
         logger.exception("❌ ERROR in global_send")
+
 
 
 
