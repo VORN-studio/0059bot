@@ -3,6 +3,11 @@ function getUrlParam(name) {
     return params.get(name);
 }
 
+const socket = io({
+    transports: ["websocket"],
+    reconnection: true
+});
+
 const TG = window.Telegram?.WebApp;
 TG?.ready?.();
 
@@ -117,10 +122,7 @@ let CURRENT_TAB = "feed";
 let CURRENT_DM_TARGET = null;
 let CONFIRM_ACTION = null;
 
-const socket = io({
-    transports: ["websocket"],
-    reconnection: true
-});
+
 
 socket.on("connect", () => {
     console.log("🟢 Realtime connected");
