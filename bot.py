@@ -85,7 +85,11 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN env var is missing")
 
-BASE_URL = os.getenv("BASE_URL", "https://domino-play.online").strip()
+WEBAPP_BASE_URL = os.getenv("WEBAPP_BASE_URL", "https://domino-play.online").strip()
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "").strip()
+
+if not BACKEND_BASE_URL:
+    raise RuntimeError("BACKEND_BASE_URL env var is missing")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if not DATABASE_URL:
@@ -1985,8 +1989,11 @@ def api_user(user_id):
 
     if stats.get("avatar_data"):
         stats["avatar"] = stats["avatar_data"]
+    elif stats.get("avatar"):
+        stats["avatar"] = stats["avatar"]
     else:
         stats["avatar"] = "/portal/default.png"
+
 
     return jsonify({"ok": True, "user": stats})
 
@@ -2042,7 +2049,11 @@ def api_crash_deposit():
         UPDATE dom_users
         SET balance_usd = balance_usd - %s
         WHERE user_id = %s
+        RETURNING balance_usd
     """, (amount, user_id))
+
+    new_main = float(c.fetchone()[0])
+
     conn.commit()
     release_db(conn)
 
@@ -2781,7 +2792,7 @@ def ton_rate_updater():
         except Exception as e:
             print("🔥 TON updater crashed:", e)
 
-        time.sleep(15)
+        time.sleep(300)
 
 application = None  
 bot_loop = None     
@@ -2851,7 +2862,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ensure_user(user.id, user.username, inviter_id)
 
-    wa_url = f"{BASE_URL}/app?uid={user.id}"
+    wa_url = f"{WEBAPP_BASE_URL}/app?uid={user.id}"
     if open_post_id:
         wa_url += f"&open_post={open_post_id}"
 
@@ -3030,8 +3041,7 @@ async def start_bot_webhook():
     await application.start()
 
     port = int(os.environ.get("PORT", "10000"))
-    webhook_url = f"{BASE_URL}/webhook"
-
+    webhook_url = f"{BACKEND_BASE_URL}/webhook"
     await application.bot.delete_webhook(drop_pending_updates=True)
     await application.bot.set_webhook(url=webhook_url)
     global BOT_READY
@@ -3349,14 +3359,6 @@ if __name__ == "__main__":
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
 
-    # ⏳ սպասում ենք մինչև bot_loop պատրաստ լինի
-    print("⏳ Waiting for Telegram bot to be ready...")
-    while bot_loop is None:
-        time.sleep(0.2)
-
-    print("✅ Telegram bot event loop is ready.")
-
-    # === START FLASK ONLY AFTER BOT IS READY ===
     # ⏳ սպասում ենք մինչև bot_loop պատրաստ լինի
     print("⏳ Waiting for Telegram bot to be ready...")
     while bot_loop is None:
