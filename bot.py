@@ -360,10 +360,12 @@ def api_message_history():
 
             m.text,
             m.reply_to,
+            rm.text AS reply_to_text,
             m.created_at
         FROM dom_messages m
         LEFT JOIN dom_users su ON su.user_id = m.sender
         LEFT JOIN dom_users ru ON ru.user_id = m.receiver
+        LEFT JOIN dom_messages rm ON rm.id = m.reply_to
         WHERE (m.sender=%s AND m.receiver=%s)
            OR (m.sender=%s AND m.receiver=%s)
         ORDER BY m.id DESC
@@ -391,10 +393,11 @@ def api_message_history():
             "receiver_username": r[7] or f"User {r[6]}",
             "receiver_avatar": receiver_avatar,
             "receiver_status_level": int(r[10] or 0),
-
+            
             "text": r[11] or "",
             "reply_to": r[12],
-            "time": r[13],
+            "reply_to_text": r[13],
+            "time": r[14],
         })
 
     messages.reverse()
