@@ -391,6 +391,7 @@ def api_global_send():
         VALUES (%s, %s, %s)
     """, (user_id, message, now))
     conn.commit()
+    trim_global_chat(30)
 
     realtime_emit(
         "global_new",
@@ -1602,6 +1603,34 @@ def realtime_emit(event: str, data: dict, room: str = None):
     except Exception:
         logger.exception("Realtime emit failed")
 
+def trim_global_chat(limit: int = 30):
+    """
+    Պահում է միայն վերջին `limit` գլոբալ չատի հաղորդագրությունները։
+    Ավելի հիները ավտոմատ ջնջվում են։
+    """
+    try:
+        conn = db()
+        c = conn.cursor()
+
+        c.execute("""
+            DELETE FROM dom_global_chat
+            WHERE id NOT IN (
+                SELECT id FROM dom_global_chat
+                ORDER BY id DESC
+                LIMIT %s
+            )
+        """, (limit,))
+
+        deleted = c.rowcount
+        conn.commit()
+        release_db(conn)
+
+        if deleted > 0:
+            logger.info(f"🧹 Global chat trimmed, removed {deleted} old messages")
+
+    except Exception:
+        logger.exception("❌ trim_global_chat failed")
+
 
 def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int] = None):
     """
@@ -1716,26 +1745,6 @@ def get_user_stats(user_id: int):
         "status_level": int(status_level),
         "status_name": status_name,
     }
-
-def global_chat_cleaner():
-    while True:
-        try:
-            conn = db()
-            c = conn.cursor()
-
-            # Ջնջում ենք բոլոր գլոբալ չատի գրառումները
-            c.execute("DELETE FROM dom_global_chat")
-
-            conn.commit()
-            release_db(conn)
-
-            print("🧹 Global chat cleared")
-
-        except Exception as e:
-            print("❌ Global chat cleaner error:", e)
-
-        # ⏱️ սպասում ենք 5 րոպե
-        time.sleep(5 * 60)
 
 
 def apply_burn_transaction(
@@ -2747,18 +2756,6 @@ TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=TON&currencies=USD"
 
 import requests
 
-def keep_alive():
-    print("🟢 Keep-alive thread started")
-    url = f"{BASE_URL}/"
-    while True:
-        try:
-            r = requests.get(url, timeout=10)
-            print("🔄 Keep-alive ping:", r.status_code)
-        except Exception as e:
-            print("❌ Keep-alive error:", e)
-
-        time.sleep(240)  
-
 def fetch_ton_rate():
     try:
         print("🌐 Calling tonapi.io ...")
@@ -3389,8 +3386,6 @@ if __name__ == "__main__":
 
     # ✅ START BACKGROUND THREADS BEFORE FLASK (IMPORTANT!)
     threading.Thread(target=ton_rate_updater, daemon=True).start()
-    threading.Thread(target=keep_alive, daemon=True).start()
-    threading.Thread(target=global_chat_cleaner, daemon=True).start()
 
     run_flask()
     print("🚀 Domino Flask + Telegram bot started.")
