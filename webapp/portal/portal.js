@@ -1,28 +1,14 @@
+function getUrlParam(name) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(name);
+}
+
 const TG = window.Telegram?.WebApp;
 TG?.ready?.();
 
 const telegramUser = TG?.initDataUnsafe?.user || null;
 
-const socket = io({
-    transports: ["websocket"],
-    reconnection: true
-});
 
-socket.on("connect", () => {
-    console.log("🟢 Realtime connected");
-
-    if (viewerId) {
-        socket.emit("join_user", { uid: viewerId });
-    }
-
-    // 🔥 ՍԱ Է ԳԼՈԲԱԼ ՉԱՏԻ ԲԱՆԱԼԻՆ
-    socket.emit("join_global");
-    socket.emit("join_feed");
-});
-
-socket.on("disconnect", () => {
-    console.warn("🔴 Realtime disconnected");
-});
 
 socket.on("global_new", (msg) => {
     if (CURRENT_TAB !== "social") return;
@@ -129,8 +115,32 @@ let REPLY_TO_USERNAME = null;
 const CURRENT_UID = viewerId;
 let CURRENT_TAB = "feed";
 let CURRENT_DM_TARGET = null;
-
 let CONFIRM_ACTION = null;
+
+const socket = io({
+    transports: ["websocket"],
+    reconnection: true
+});
+
+socket.on("connect", () => {
+    console.log("🟢 Realtime connected");
+
+    if (viewerId) {
+        socket.emit("join_user", { uid: viewerId });
+    }
+
+    socket.emit("join_global");
+    socket.emit("join_feed");
+
+    if (SINGLE_POST_MODE && OPEN_POST_ID) {
+        socket.emit("join_post", { post_id: OPEN_POST_ID });
+    }
+});
+
+socket.on("disconnect", () => {
+    console.warn("🔴 Realtime disconnected");
+});
+
 
 function openInfo(title, text) {
     const modal = document.getElementById("confirm-modal");
