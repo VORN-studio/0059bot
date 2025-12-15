@@ -257,24 +257,6 @@ function initTabs() {
 }
 
 
-async function sendGlobalMessage() {
-    const input = document.getElementById("global-input");
-    const text = input.value.trim();
-    if (text === "") return;
-
-    await fetch(`/api/global/send`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            sender: CURRENT_UID,
-            text
-        })
-    });
-
-    input.value = "";
-
-}
-
 function initChatEvents() {
     const globalSend = document.getElementById("global-send");
     if (globalSend) {
