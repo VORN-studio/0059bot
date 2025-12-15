@@ -1740,7 +1740,6 @@ function renderChatMessage(msg, isMe) {
             <div class="global-message"
                 data-mid="${msg.id || ""}"
                 data-text="${escapeHtml(msg.text || "")}"
-                onclick="startReply(this)"
                 style="
                     display:flex;
                     justify-content:${isMe ? "flex-end" : "flex-start"};
@@ -1766,13 +1765,19 @@ function renderChatMessage(msg, isMe) {
                         )}
                     </div>
 
-                        <div style="
-                            background:${bubbleBg};
-                            color:${textColor};
-                            padding:8px 12px;
-                            border-radius:12px;
-                            word-break:break-word;
-                        ">
+                        <div
+                            data-mid="${msg.id || ""}"
+                            data-text="${escapeHtml(msg.text || "")}"
+                            onclick="startReply(this)"
+                            style="
+                                background:${bubbleBg};
+                                color:${textColor};
+                                padding:8px 12px;
+                                border-radius:12px;
+                                word-break:break-word;
+                                cursor:pointer;
+                            ">
+
                             ${replyHtml}
                             ${renderMessageText(msg.text)}
                         </div>
@@ -1951,11 +1956,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function closeDM() {
     const dmBox = document.getElementById("dm-chat");
+    const globalBox = document.getElementById("global-chat");
+
     if (dmBox) dmBox.style.display = "none";
+    if (globalBox) globalBox.style.display = "flex";
 
     CURRENT_DM_TARGET = null;
+    CURRENT_TAB = "social";
 
+    loadGlobalChat();
 }
+
 
 async function openDMShare() {
     const popup = document.getElementById("dm-share-popup");
