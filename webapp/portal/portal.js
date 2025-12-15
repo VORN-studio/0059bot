@@ -155,6 +155,21 @@ let CURRENT_TAB = "feed";
 let CURRENT_DM_TARGET = null;
 let CONFIRM_ACTION = null;
 
+socket.on("global_trim", (data) => {
+  const keep = data.keep || 30;
+
+  console.log("🧹 [UI] Trimming global chat to", keep);
+
+  const messages = document.querySelectorAll(".global-message");
+
+  if (messages.length <= keep) return;
+
+  const toRemove = messages.length - keep;
+
+  for (let i = 0; i < toRemove; i++) {
+    messages[i].remove();
+  }
+});
 
 
 socket.on("connect", () => {

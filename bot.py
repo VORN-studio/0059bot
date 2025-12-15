@@ -1582,10 +1582,6 @@ def realtime_emit(event: str, data: dict, room: str = None):
         logger.exception("Realtime emit failed")
 
 def trim_global_chat(limit: int = 30):
-    """
-    Պահում է միայն վերջին `limit` գլոբալ չատի հաղորդագրությունները։
-    Ավելի հիները ավտոմատ ջնջվում են։
-    """
     try:
         conn = db()
         c = conn.cursor()
@@ -1606,8 +1602,14 @@ def trim_global_chat(limit: int = 30):
         if deleted > 0:
             logger.info(f"🧹 Global chat trimmed, removed {deleted} old messages")
 
+            # 🔥 realtime ասում ենք frontend-ին
+            socketio.emit("global_trim", {
+                "keep": limit
+            }, room="global")
+
     except Exception:
         logger.exception("❌ trim_global_chat failed")
+
 
 
 def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int] = None):
