@@ -1,3 +1,8 @@
+const TG = window.Telegram?.WebApp;
+TG?.ready?.();
+
+const telegramUser = TG?.initDataUnsafe?.user || null;
+
 const socket = io({
     transports: ["websocket"],
     reconnection: true
@@ -9,6 +14,10 @@ socket.on("connect", () => {
     if (viewerId) {
         socket.emit("join_user", { uid: viewerId });
     }
+
+    // 🔥 ՍԱ Է ԳԼՈԲԱԼ ՉԱՏԻ ԲԱՆԱԼԻՆ
+    socket.emit("join_global");
+    socket.emit("join_feed");
 });
 
 socket.on("disconnect", () => {
@@ -107,7 +116,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 const profileId = urlParams.get("uid") || "";
 const viewerFromUrl = urlParams.get("viewer") || "";
-const viewerId = viewerFromUrl || profileId;
+const viewerId =
+  (telegramUser && telegramUser.id) ||
+  getUrlParam("uid") ||
+  getUrlParam("viewer") ||
+  getUrlParam("user_id") ||
+  0;
+
 const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
 let REPLY_TO = null;
 let REPLY_TO_USERNAME = null;
@@ -191,6 +206,7 @@ function closeConfirm() {
             if (feedPage) feedPage.classList.add("active");
 
             loadSinglePost(OPEN_POST_ID);
+            socket.emit("join_post", { post_id: OPEN_POST_ID });
         } else {
             initFeed();
         }
@@ -393,27 +409,11 @@ async function sendGlobalMessage() {
     const text = input.value.trim();
     if (!text || !CURRENT_UID) return;
 
-    // 1️⃣ ԻՆՔԴ ՔՈ ՀԱՂՈՐԴԱԳՐՈՒԹՅՈՒՆԸ ՑՈՒՅՑ ՏՈՒՐ
-    const box = document.getElementById("global-messages");
-    if (box) {
-        const msg = {
-            sender: CURRENT_UID,
-            username: document.getElementById("username")?.innerText || "You",
-            text,
-            status_level: 0
-        };
-
-        const wrapper = document.createElement("div");
-        wrapper.innerHTML = renderChatMessage(msg, true);
-        box.appendChild(wrapper);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    // 2️⃣ ՀԵՏՈ ՄԻԱՅՆ ՈՒՂԱՐԿԻ՛Ր SOCKET-ՈՎ
     socket.emit("global_send", {
-        sender: CURRENT_UID,
-        text
+        user_id: CURRENT_UID,
+        message: text
     });
+
 
     input.value = "";
 }
@@ -1763,9 +1763,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (sub === "chat") {
                 CURRENT_TAB = "social";
                 loadGlobalChat();
-                startGlobalRefresh();
+                
             } else {
-                stopGlobalRefresh();
+            
             }
 
         });

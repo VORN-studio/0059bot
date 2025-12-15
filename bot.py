@@ -3292,22 +3292,24 @@ if __name__ == "__main__":
     print("✅ Telegram bot event loop is ready.")
 
     # === START FLASK ONLY AFTER BOT IS READY ===
-    run_flask()
+    # ⏳ սպասում ենք մինչև bot_loop պատրաստ լինի
+    print("⏳ Waiting for Telegram bot to be ready...")
+    while bot_loop is None:
+        time.sleep(0.2)
 
+    print("✅ Telegram bot event loop is ready.")
 
-
-    ton_thread = threading.Thread(target=ton_rate_updater, daemon=True)
-    ton_thread.start()
-
-    keepalive_thread = threading.Thread(target=keep_alive, daemon=True)
-    keepalive_thread.start()
+    # ✅ START BACKGROUND THREADS BEFORE FLASK (IMPORTANT!)
+    threading.Thread(target=ton_rate_updater, daemon=True).start()
+    threading.Thread(target=keep_alive, daemon=True).start()
+    threading.Thread(target=global_chat_cleaner, daemon=True).start()
 
     threading.Thread(
         target=global_chat_cleaner,
         daemon=True
     ).start()
 
-
+    run_flask()
     print("🚀 Domino Flask + Telegram bot started.")
 
     while True:
