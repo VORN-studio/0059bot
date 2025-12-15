@@ -46,7 +46,11 @@
     <div class="portal-tabs">
         <button class="tab-btn active" data-tab="feed">📰 Feed</button>
         <button class="tab-btn" data-tab="play">⚔️ Play</button>
-        <button class="tab-btn" data-tab="social">👥 Social</button>
+        <button class="tab-btn" data-tab="social">
+            Social
+            <span id="notify-social" class="notify-dot hidden"></span>
+        </button>
+
         <button class="tab-btn" data-tab="profile">💼 Profile</button>
     </div>
 
@@ -128,7 +132,10 @@
         <div id="social" class="tab-page">
             <div class="social-tabs">
                 <button class="sub-btn active" data-sub="users">Users</button>
-                <button class="sub-btn" data-sub="messages">Messages</button>
+                <button class="sub-btn" data-sub="messages">
+                    Messages
+                    <span id="notify-messages" class="notify-dot hidden"></span>
+                </button>
                 <button class="sub-btn" data-sub="chat">Global Chat</button>
             </div>
 

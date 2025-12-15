@@ -84,11 +84,15 @@ socket.on("dm_new", (msg) => {
 socket.on("dm_notify", (d) => {
     LOG.event("🔔 DM NOTIFY:", d);
 
-    // եթե DM list-ը բաց է → refresh
-    loadDMList();
+    const dotSocial = document.getElementById("notify-social");
+    const dotMessages = document.getElementById("notify-messages");
 
-    // եթե հենց այս DM-ն է բաց → history-ն էլ կթարմանա dm_new-ով
+    if (dotSocial) dotSocial.classList.remove("hidden");
+    if (dotMessages) dotMessages.classList.remove("hidden");
+
+    loadDMList();
 });
+
 
 
 socket.on("post_new", () => {
@@ -597,6 +601,12 @@ async function openDM(targetId) {
         })
     });
 
+    const dotSocial = document.getElementById("notify-social");
+    const dotMessages = document.getElementById("notify-messages");
+
+    if (dotSocial) dotSocial.classList.add("hidden");
+    if (dotMessages) dotMessages.classList.add("hidden");
+
 
     if (window.DM_SHARE_TEXT) {
         const textToSend = window.DM_SHARE_TEXT;
@@ -668,6 +678,18 @@ async function loadDM() {
 }
 
 async function sendDM() {
+    // ❌ Չի կարելի գրել եթե ֆոլով չկա
+    const res = await fetch(`/api/is_following/${CURRENT_UID}/${CURRENT_DM_TARGET}`);
+    const data = await res.json();
+
+    if (!data.ok || !data.is_following) {
+        openInfo(
+            "Չի կարելի գրել",
+            "Դու պետք է ֆոլով լինես, որպեսզի կարողանաս գրել այս օգտատիրոջը"
+        );
+        return;
+    }
+
     const input = document.getElementById("dm-input");
     if (!input) return;
 
