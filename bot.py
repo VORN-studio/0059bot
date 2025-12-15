@@ -149,6 +149,7 @@ def api_message_partners():
     conn = db()
     c = conn.cursor()
 
+    # 1) բոլոր partner id-ները
     c.execute("""
         SELECT DISTINCT
             CASE
@@ -161,31 +162,71 @@ def api_message_partners():
     """, (uid, uid, uid))
 
     partner_ids = [row[0] for row in c.fetchall()]
-
     if not partner_ids:
         release_db(conn)
         return jsonify({"ok": True, "users": []})
 
+    # 2) partner users info
     c.execute("""
         SELECT user_id, username, avatar, avatar_data
         FROM dom_users
         WHERE user_id = ANY(%s)
     """, (partner_ids,))
+    rows = c.fetchall()
 
     users = []
-    for u in c.fetchall():
+    for u in rows:
+        partner_id = int(u[0])
+
+        avatar_url = u[3] or u[2] or "/portal/default.png"
+        username = u[1] or f"User {partner_id}"
+
+        # --- last message preview (այստեղ partner_id արդեն կա) ---
+        c.execute("""
+            SELECT id, sender, text, created_at
+            FROM dom_messages
+            WHERE (sender=%s AND receiver=%s) OR (sender=%s AND receiver=%s)
+            ORDER BY id DESC
+            LIMIT 1
+        """, (uid, partner_id, partner_id, uid))
+        lm = c.fetchone()
+        last_text = lm[2] if lm else ""
+        last_time = int(lm[3]) if lm else 0
+
+        # --- last seen ---
+        c.execute("""
+            SELECT COALESCE(last_seen_msg_id, 0)
+            FROM dom_dm_last_seen
+            WHERE user_id=%s AND partner_id=%s
+        """, (uid, partner_id))
+        seen_row = c.fetchone()
+        seen_id = int(seen_row[0]) if seen_row else 0
+
+        # --- unread ---
+        c.execute("""
+            SELECT COUNT(*)
+            FROM dom_messages
+            WHERE sender=%s AND receiver=%s AND id > %s
+        """, (partner_id, uid, seen_id))
+        unread = int(c.fetchone()[0] or 0)
+
+        # --- can reply? (uid follows partner) ---
+        c.execute("SELECT 1 FROM dom_follows WHERE follower=%s AND target=%s", (uid, partner_id))
+        can_reply = bool(c.fetchone())
+
         users.append({
-            "user_id": u[0],
-            "username": u[1] or f"User {u[0]}",
-            "avatar": u[3] or u[2] or "/portal/default.png"
+            "user_id": partner_id,
+            "username": username,
+            "avatar": avatar_url,
+            "last_text": last_text,
+            "last_time": last_time,
+            "unread": unread,
+            "can_reply": can_reply
         })
 
     release_db(conn)
+    return jsonify({"ok": True, "users": users})
 
-    return jsonify({
-        "ok": True,
-        "users": users
-    })
 
 @app_web.route("/api/post/<int:post_id>")
 def api_get_single_post(post_id):
@@ -240,12 +281,20 @@ def api_message_send():
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
+    # ✅ sender-ը կարող է գրել միայն նրան, ում follow է անում
+    c.execute("SELECT 1 FROM dom_follows WHERE follower=%s AND target=%s", (sender, receiver))
+    if not c.fetchone():
+        release_db(conn)
+        return jsonify({"ok": False, "error": "need_follow"}), 200
+
     c.execute("""
         INSERT INTO dom_messages (sender, receiver, text, created_at)
         VALUES (%s, %s, %s, %s)
     """, (sender, receiver, text, now))
     conn.commit()
     room = f"dm_{min(sender, receiver)}_{max(sender, receiver)}"
+
+    
 
     realtime_emit(
         "dm_new",
@@ -257,6 +306,19 @@ def api_message_send():
         },
         room=room
     )
+
+        # ✅ Notify receiver (inbox badge), even if DM room not open
+    realtime_emit(
+        "dm_notify",
+        {
+            "partner_id": sender,
+            "sender": sender,
+            "text": text[:120],
+            "time": now
+        },
+        room=f"user_{receiver}"
+    )
+
 
     release_db(conn)
 
@@ -982,6 +1044,38 @@ def api_comment_create():
 
     return jsonify({"ok": True})
 
+@app_web.route("/api/message/seen", methods=["POST"])
+def api_message_seen():
+    data = request.get_json(force=True, silent=True) or {}
+    uid = int(data.get("uid", 0))
+    partner = int(data.get("partner", 0))
+
+    if not uid or not partner:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    conn = db(); c = conn.cursor()
+
+    # գտնում ենք conversation-ի վերջին msg id-ն
+    c.execute("""
+        SELECT COALESCE(MAX(id), 0)
+        FROM dom_messages
+        WHERE (sender=%s AND receiver=%s) OR (sender=%s AND receiver=%s)
+    """, (uid, partner, partner, uid))
+    last_id = int(c.fetchone()[0] or 0)
+
+    now = int(time.time())
+    c.execute("""
+        INSERT INTO dom_dm_last_seen (user_id, partner_id, last_seen_msg_id, updated_at)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (user_id, partner_id)
+        DO UPDATE SET last_seen_msg_id=EXCLUDED.last_seen_msg_id, updated_at=EXCLUDED.updated_at
+    """, (uid, partner, last_id, now))
+
+    conn.commit()
+    release_db(conn)
+    return jsonify({"ok": True, "last_seen": last_id})
+
+
 @app_web.route("/api/posts/feed")
 def api_posts_feed():
     """
@@ -1354,8 +1448,16 @@ def init_db():
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_dm_last_seen (
+            user_id BIGINT,
+            partner_id BIGINT,
+            last_seen_msg_id BIGINT DEFAULT 0,
+            updated_at BIGINT DEFAULT 0,
+            PRIMARY KEY (user_id, partner_id)
+        )
+    """)
     
-
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_comments (
             id SERIAL PRIMARY KEY,

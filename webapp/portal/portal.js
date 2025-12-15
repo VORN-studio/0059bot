@@ -81,6 +81,16 @@ socket.on("dm_new", (msg) => {
     box.scrollTop = box.scrollHeight;
 });
 
+socket.on("dm_notify", (d) => {
+    LOG.event("🔔 DM NOTIFY:", d);
+
+    // եթե DM list-ը բաց է → refresh
+    loadDMList();
+
+    // եթե հենց այս DM-ն է բաց → history-ն էլ կթարմանա dm_new-ով
+});
+
+
 socket.on("post_new", () => {
     if (!SINGLE_POST_MODE && CURRENT_TAB === "feed") {
         loadFeed();
@@ -372,7 +382,7 @@ function initChatEvents() {
 async function loadDMList() {
     if (!viewerId) return;
 
-    const res = await fetch(`/api/follows/list?uid=${viewerId}`);
+    const res = await fetch(`/api/message/partners?uid=${viewerId}`);
     const data = await res.json();
     if (!data.ok) return;
 
@@ -381,7 +391,7 @@ async function loadDMList() {
 
     box.innerHTML = "";
 
-    data.list.forEach(u => {
+    data.users.forEach(u => {
         const div = document.createElement("div");
         div.className = "dm-user-row";
         div.style.cssText = `
@@ -511,6 +521,16 @@ async function sendGlobalMessage() {
 
 
 async function openDM(targetId) {
+    if (CURRENT_DM_TARGET) {
+        socket.emit("leave_dm", {
+            u1: CURRENT_UID,
+            u2: CURRENT_DM_TARGET
+        });
+    }
+
+    // 🔴 JOIN DM ROOM (realtime)
+    socket.emit("join_dm", { u1: CURRENT_UID, u2: targetId });
+
     // Social tab ակտիվ
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.querySelector('[data-tab="social"]').classList.add("active");
@@ -566,6 +586,16 @@ async function openDM(targetId) {
     if (globalBox) globalBox.style.display = "none";
 
     await loadDM();
+
+    // ✅ MARK DM AS SEEN
+    fetch("/api/message/seen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            uid: CURRENT_UID,
+            partner: targetId
+        })
+    });
 
 
     if (window.DM_SHARE_TEXT) {
@@ -1218,7 +1248,7 @@ function renderPostCard(post) {
 
     const div = document.createElement("div");
     div.className = "post-card";
-    iv.dataset.postId = String(post.id);
+    div.dataset.postId = String(post.id);
     div.style.cssText = `
         background:#000a;
         border-radius:12px;
@@ -1592,20 +1622,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-
-
-async function deleteComment(commentId) {
-    await fetch(`/api/comment/delete`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            comment_id: commentId,
-            user_id: viewerId
-        })
-    });
-
-    openComments(CURRENT_COMMENT_POST);
-}
 
 async function deletePost(postId) {
   openConfirm(
