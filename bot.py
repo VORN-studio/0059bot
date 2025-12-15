@@ -83,7 +83,9 @@ CORS(app_web)
 socketio = SocketIO(
     app_web,
     cors_allowed_origins="*",
-    async_mode="eventlet"
+    async_mode="threading",
+    ping_interval=25,
+    ping_timeout=60
 )
 
 
@@ -525,6 +527,47 @@ def on_join(data):
     room = data.get("room")
     if room:
         join_room(room)
+
+@socketio.on("connect")
+def on_connect():
+    logger.info("🟢 Socket connected")
+
+@socketio.on("disconnect")
+def on_disconnect():
+    logger.info("🔴 Socket disconnected")
+
+@socketio.on("join_user")
+def on_join_user(data):
+    uid = int(data.get("uid", 0))
+    if uid:
+        join_room(f"user_{uid}")
+        logger.info(f"👤 joined user_{uid}")
+
+@socketio.on("join_global")
+def on_join_global():
+    join_room("global")
+    logger.info("🌍 joined global")
+
+@socketio.on("join_feed")
+def on_join_feed():
+    join_room("feed")
+    logger.info("📰 joined feed")
+
+@socketio.on("join_post")
+def on_join_post(data):
+    post_id = int(data.get("post_id", 0))
+    if post_id:
+        join_room(f"post_{post_id}")
+        logger.info(f"💬 joined post_{post_id}")
+
+@socketio.on("join_dm")
+def on_join_dm(data):
+    u1 = int(data.get("u1", 0))
+    u2 = int(data.get("u2", 0))
+    if u1 and u2:
+        room = f"dm_{min(u1,u2)}_{max(u1,u2)}"
+        join_room(room)
+        logger.info(f"✉️ joined {room}")
 
 
 @app_web.route("/webapp/games/<path:filename>")
@@ -3221,8 +3264,8 @@ if __name__ == "__main__":
     print("✅ Telegram bot event loop is ready.")
 
     # === START FLASK ONLY AFTER BOT IS READY ===
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
+    run_flask()
+
 
 
     ton_thread = threading.Thread(target=ton_rate_updater, daemon=True)
