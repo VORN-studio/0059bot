@@ -1764,10 +1764,15 @@ function renderChatMessage(msg, isMe) {
             currentX = e.touches[0].clientX;
             const diff = currentX - startX;
 
+            if (diff > 0) {
+                e.preventDefault(); // 🔥 ԱՅՍ ՏՈՂԸ Է ԼՈՒԾՈՒՄ ԽՆԴԻՐԸ
+            }
+
             if (diff > 0 && diff < 120) {
                 el.style.transform = `translateX(${diff}px)`;
             }
-        });
+        }, { passive: false });
+
 
         el.addEventListener("touchend", () => {
             dragging = false;
