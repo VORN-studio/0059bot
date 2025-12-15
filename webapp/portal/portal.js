@@ -1,3 +1,12 @@
+const LOG = {
+    info: (...a) => console.log("ℹ️ [PORTAL]", ...a),
+    warn: (...a) => console.warn("⚠️ [PORTAL]", ...a),
+    error: (...a) => console.error("❌ [PORTAL]", ...a),
+    socket: (...a) => console.log("🔌 [SOCKET]", ...a),
+    event: (...a) => console.log("📨 [EVENT]", ...a),
+    ui: (...a) => console.log("🖥️ [UI]", ...a),
+};
+
 function getUrlParam(name) {
     const params = new URLSearchParams(window.location.search);
     return params.get(name);
@@ -17,20 +26,30 @@ const telegramUser = TG?.initDataUnsafe?.user || null;
 
 
 socket.on("global_new", (msg) => {
-    console.log("🌍 global_new received:", msg);
+    LOG.event("🌍 global_new RAW:", msg);
+
+    const chatPage = document.getElementById("social");
+    if (!chatPage || !chatPage.classList.contains("active")) {
+        LOG.warn("Global chat not active → skip render");
+        return;
+    }
 
     const box = document.getElementById("global-messages");
-    if (!box) return;
+    if (!box) {
+        LOG.error("❌ global-messages element not found");
+        return;
+    }
 
-    // 🔧 backend → frontend mapping
     const fixedMsg = {
-        sender: msg.user_id,
-        text: msg.message,
-        username: msg.username || ("User " + msg.user_id),
+        sender: msg.user_id ?? msg.sender,
+        text: msg.message ?? msg.text,
+        username: msg.username || ("User " + (msg.user_id ?? msg.sender)),
         status_level: msg.status_level || 0,
         avatar: msg.avatar || "",
-        created_at: msg.time
+        created_at: msg.time || Date.now() / 1000
     };
+
+    LOG.event("✅ normalized global msg:", fixedMsg);
 
     const isMe = String(fixedMsg.sender) === String(CURRENT_UID);
     const wrapper = document.createElement("div");
@@ -38,6 +57,8 @@ socket.on("global_new", (msg) => {
 
     box.appendChild(wrapper);
     box.scrollTop = box.scrollHeight;
+
+    LOG.ui("🖥️ Global message rendered");
 });
 
 socket.on("dm_new", (msg) => {
@@ -395,52 +416,76 @@ async function loadProfile() {
 }
 
 async function loadGlobalChat() {
-    // Global chat-ը կապված է Social tab-ի հետ
     const chatPage = document.getElementById("social");
-    if (!chatPage || !chatPage.classList.contains("active")) return;
+    if (!chatPage || !chatPage.classList.contains("active")) {
+        LOG.warn("Global chat load skipped (tab inactive)");
+        return;
+    }
+
+    LOG.info("🔄 Loading global chat history");
 
     try {
         const res = await fetch(`/api/global/history`);
         const data = await res.json();
 
-        if (!data.ok) return;
+        if (!data.ok) {
+            LOG.error("❌ global history api failed", data);
+            return;
+        }
 
         const box = document.getElementById("global-messages");
-        if (!box) return;
+        if (!box) {
+            LOG.error("❌ global-messages not found");
+            return;
+        }
 
         box.innerHTML = "";
 
         data.messages.forEach(msg => {
             const isMe = String(msg.sender) === String(CURRENT_UID);
-
             const wrapper = document.createElement("div");
             wrapper.innerHTML = renderChatMessage(msg, isMe);
-
             box.appendChild(wrapper);
         });
 
-
         box.scrollTop = box.scrollHeight;
+        LOG.ui("✅ Global history rendered");
     } catch (e) {
-        console.error("loadGlobalChat error:", e);
+        LOG.error("❌ loadGlobalChat error:", e);
     }
 }
 
+
 async function sendGlobalMessage() {
     const input = document.getElementById("global-input");
-    if (!input) return;
+    if (!input) {
+        LOG.error("❌ global-input not found");
+        return;
+    }
 
     const text = input.value.trim();
-    if (!text || !CURRENT_UID) return;
+    if (!text) {
+        LOG.warn("⚠️ empty global message");
+        return;
+    }
 
-    socket.emit("global_send", {
+    if (!CURRENT_UID) {
+        LOG.error("❌ CURRENT_UID missing");
+        return;
+    }
+
+    const payload = {
         user_id: CURRENT_UID,
         message: text
-    });
+    };
 
+    LOG.event("📤 sending global message:", payload);
+
+    socket.emit("global_send", payload);
 
     input.value = "";
 }
+
 
 
 
