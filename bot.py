@@ -275,6 +275,7 @@ def api_message_send():
     sender = int(data.get("sender", 0))
     receiver = int(data.get("receiver", 0))
     text = data.get("text", "").strip()
+    reply_to = data.get("reply_to")
 
     if sender == 0 or receiver == 0 or text == "":
         return jsonify({"ok": False, "error": "bad_params"}), 400
@@ -288,9 +289,10 @@ def api_message_send():
         return jsonify({"ok": False, "error": "need_follow"}), 200
 
     c.execute("""
-        INSERT INTO dom_messages (sender, receiver, text, created_at)
-        VALUES (%s, %s, %s, %s)
-    """, (sender, receiver, text, now))
+        INSERT INTO dom_messages (sender, receiver, text, reply_to, created_at)
+        VALUES (%s, %s, %s, %s, %s)
+
+    """, (sender, receiver, text, reply_to, now))
     conn.commit()
     room = f"dm_{min(sender, receiver)}_{max(sender, receiver)}"
 
@@ -333,8 +335,11 @@ def api_message_history():
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
     conn = db(); c = conn.cursor()
+
     c.execute("""
         SELECT
+            m.id,
+
             m.sender,
             su.username,
             su.avatar,
@@ -354,62 +359,47 @@ def api_message_history():
                 WHERE mm.user_id = ru.user_id) AS receiver_status,
 
             m.text,
+            m.reply_to,
             m.created_at
         FROM dom_messages m
         LEFT JOIN dom_users su ON su.user_id = m.sender
         LEFT JOIN dom_users ru ON ru.user_id = m.receiver
-        WHERE (m.sender=%s AND m.receiver=%s) OR (m.sender=%s AND m.receiver=%s)
+        WHERE (m.sender=%s AND m.receiver=%s)
+           OR (m.sender=%s AND m.receiver=%s)
         ORDER BY m.id DESC
         LIMIT 50
-
     """, (u1, u2, u2, u1))
-
 
     rows = c.fetchall()
     release_db(conn)
 
-    
-
     messages = []
-    for r in rows:
-        # SELECT order:
-        # 0 sender
-        # 1 su.username
-        # 2 su.avatar
-        # 3 su.avatar_data
-        # 4 sender_status
-        # 5 receiver
-        # 6 ru.username
-        # 7 ru.avatar
-        # 8 ru.avatar_data
-        # 9 receiver_status
-        # 10 m.text
-        # 11 m.created_at
 
-        sender_avatar = r[3] or r[2] or "/portal/default.png"
-        receiver_avatar = r[8] or r[7] or "/portal/default.png"
+    for r in rows:
+        sender_avatar = r[4] or r[3] or "/portal/default.png"
+        receiver_avatar = r[9] or r[8] or "/portal/default.png"
 
         messages.append({
-            "sender": r[0],
-            "username": r[1] or f"User {r[0]}",
+            "id": r[0],
+
+            "sender": r[1],
+            "username": r[2] or f"User {r[1]}",
             "avatar": sender_avatar,
-            "status_level": int(r[4] or 0),
+            "status_level": int(r[5] or 0),
 
-            "receiver": r[5],
-            "receiver_username": r[6] or f"User {r[5]}",
+            "receiver": r[6],
+            "receiver_username": r[7] or f"User {r[6]}",
             "receiver_avatar": receiver_avatar,
-            "receiver_status_level": int(r[9] or 0),
+            "receiver_status_level": int(r[10] or 0),
 
-            "text": r[10],
-            "time": r[11],
+            "text": r[11] or "",
+            "reply_to": r[12],
+            "time": r[13],
         })
 
-
-
-
     messages.reverse()
-
     return jsonify({"ok": True, "messages": messages})
+
 
 @app_web.route("/api/wallet_connect", methods=["POST"])
 def api_wallet_connect():
@@ -614,7 +604,7 @@ def on_join_user(data):
         logger.info(f"👤 joined user_{uid}")
 
 
-from flask import request
+import request
 
 @socketio.on("global_send")
 def handle_global_send(data):
@@ -1592,8 +1582,10 @@ def init_db():
             sender BIGINT,
             receiver BIGINT,
             text TEXT,
+            reply_to BIGINT DEFAULT NULL,
             created_at BIGINT
         )
+
     """)
 
     c.execute("""
@@ -2843,7 +2835,6 @@ import time
 
 TON_RATE_URL = "https://tonapi.io/v2/rates?tokens=TON&currencies=USD"
 
-import requests
 
 def fetch_ton_rate():
     try:
