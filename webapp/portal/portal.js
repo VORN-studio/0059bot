@@ -1741,7 +1741,12 @@ function renderChatMessage(msg, isMe) {
                 data-mid="${msg.id || ""}"
                 data-text="${escapeHtml(msg.text || "")}"
                 onclick="startReply(this)"
-                style="display:flex; ...">
+                style="
+                    display:flex;
+                    justify-content:${isMe ? "flex-end" : "flex-start"};
+                    margin-bottom:10px;
+                ">
+
 
             <div style="
                 display:flex;
