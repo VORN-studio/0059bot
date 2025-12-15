@@ -1586,6 +1586,8 @@ def init_db():
 
     """)
 
+    c.execute("ALTER TABLE dom_messages ADD COLUMN IF NOT EXISTS reply_to BIGINT")
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_follows (
             id SERIAL PRIMARY KEY,
