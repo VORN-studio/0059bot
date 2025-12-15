@@ -24,6 +24,39 @@ from telegram.ext import (
     filters,
 )
 
+import logging
+from logging.handlers import RotatingFileHandler
+
+LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LOG_FILE = os.path.join(LOG_DIR, "domino.log")
+
+logger = logging.getLogger("DOMINO")
+logger.setLevel(logging.INFO)
+logger.propagate = False
+
+formatter = logging.Formatter(
+    "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+
+file_handler = RotatingFileHandler(
+    LOG_FILE,
+    maxBytes=5 * 1024 * 1024,
+    backupCount=5
+)
+file_handler.setFormatter(formatter)
+file_handler.setLevel(logging.INFO)
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+console_handler.setLevel(logging.INFO)
+
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+
+
 BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN env var is missing")
@@ -1031,18 +1064,19 @@ def db():
             dsn=DATABASE_URL,
             sslmode="require"
         )
-        print("🧩 PostgreSQL pool initialized (20 connections).")
+        logger.info("PostgreSQL pool initialized (20 connections)")
 
     try:
         conn = _db_pool.getconn()
         conn.autocommit = False       
         return conn
     except Exception as e:
-        print("⚠️ Pool exhausted, creating TEMP connection:", e)
+        logger.warning(f"Pool exhausted, creating TEMP connection: {e}")
         conn = psycopg2.connect(DATABASE_URL, sslmode="require")
         conn.autocommit = False
-        conn._temp_conn = True       
+        conn._temp_conn = True   # ⚠️ ՍԱ ՊԱՐՏԱԴԻՐ Է
         return conn
+
 
 def release_db(conn):
     """
@@ -1062,8 +1096,9 @@ def release_db(conn):
             _db_pool.putconn(conn, close=False)
         else:
             conn.close()
-    except Exception as e:
-        print("⚠️ release_db error:", e)
+    except Exception:
+        logger.exception("release_db error")
+
 
 alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS ton_balance NUMERIC(20,6) DEFAULT 0",
@@ -2938,7 +2973,7 @@ def telegram_webhook():
         asyncio.run_coroutine_threadsafe(application.process_update(upd), bot_loop)
         return jsonify({"ok": True}), 200
     except Exception as e:
-        print("🔥 Webhook error:", e)
+        logger.exception("Webhook error")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @app_web.route("/api/game/bet", methods=["POST"])
@@ -3070,7 +3105,7 @@ if __name__ == "__main__":
             print(f"🌍 Flask (Domino) starting on port {port} ...")
             app_web.run(host="0.0.0.0", port=port, threaded=True, use_reloader=False)
         except Exception as e:
-            print("🔥 Flask failed:", e)
+            logger.exception("Flask failed")
 
     def run_bot():
         """
