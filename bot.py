@@ -587,6 +587,39 @@ def on_join_user(data):
 
 from flask import request
 
+@socketio.on("global_send")
+def handle_global_send(data):
+    try:
+        logger.info("🌍 global_send received:")
+        logger.info(data)
+
+        user_id = data.get("user_id")
+        message = data.get("message")
+
+        if not user_id or not message:
+            logger.warning("⚠️ global_send missing fields")
+            return
+
+        # 🔹 պահում ենք DB (եթե ունես)
+        msg = {
+            "user_id": user_id,
+            "message": message,
+            "username": get_username(user_id),
+            "status_level": get_status_level(user_id),
+            "avatar": get_avatar(user_id),
+            "time": int(time.time())
+        }
+
+        logger.info("📢 emitting global_new:")
+        logger.info(msg)
+
+        # 🔥 ՍԱ Է ՔՈ ՀԻՄՆԱԿԱՆ ՍԽԱԼԻ ԿԵՏԸ
+        socketio.emit("global_new", msg, broadcast=True)
+
+    except Exception as e:
+        logger.exception("❌ ERROR in global_send")
+
+
 @socketio.on("join_global")
 def on_join_global():
     join_room("global")
