@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv
+import eventlet
+eventlet.monkey_patch()
 load_dotenv()
 import time
 import threading
@@ -83,7 +85,7 @@ CORS(app_web)
 socketio = SocketIO(
     app_web,
     cors_allowed_origins="*",
-    async_mode="threading",
+    async_mode="eventlet",
     ping_interval=25,
     ping_timeout=60
 )
@@ -538,10 +540,22 @@ def on_disconnect():
 
 @socketio.on("join_user")
 def on_join_user(data):
-    uid = int(data.get("uid", 0))
+    # data can be dict {"uid":123} OR just "123"/123
+    uid_val = None
+    if isinstance(data, dict):
+        uid_val = data.get("uid") or data.get("user_id")
+    else:
+        uid_val = data
+
+    try:
+        uid = int(uid_val or 0)
+    except Exception:
+        uid = 0
+
     if uid:
         join_room(f"user_{uid}")
         logger.info(f"👤 joined user_{uid}")
+
 
 @socketio.on("join_global")
 def on_join_global():
