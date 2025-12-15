@@ -604,8 +604,6 @@ def on_join_user(data):
         logger.info(f"👤 joined user_{uid}")
 
 
-import request
-
 @socketio.on("global_send")
 def handle_global_send(data):
     try:
