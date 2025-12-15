@@ -709,11 +709,16 @@ async function sendDM() {
             body: JSON.stringify({
                 sender: CURRENT_UID,
                 receiver: CURRENT_DM_TARGET,
-                text
+                text,
+                reply_to: REPLY_TO
             })
+
         });
 
         input.value = "";
+        REPLY_TO = null;
+        input.placeholder = "";
+
         await loadDM();
     } catch (e) {
         console.error("sendDM error:", e);
@@ -1699,6 +1704,22 @@ function renderMessageText(text) {
 }
 
 function renderChatMessage(msg, isMe) {
+    let replyHtml = "";
+
+    if (msg.reply_to_text) {
+        replyHtml = `
+            <div style="
+                font-size:11px;
+                opacity:0.7;
+                padding:4px 8px;
+                border-left:2px solid #4da3ff;
+                margin-bottom:4px;
+            ">
+                Reply: ${escapeHtml(msg.reply_to_text)}
+            </div>
+        `;
+    }
+
     let avatar = "/portal/default.png";
 
     if (msg.avatar && msg.avatar !== "") {
@@ -1716,7 +1737,12 @@ function renderChatMessage(msg, isMe) {
     const textColor = "#fff";
 
     return `
-        <div class="global-message" style="display:flex; justify-content:${align}; margin-bottom:10px;">
+            <div class="global-message"
+                data-mid="${msg.id || ""}"
+                data-text="${escapeHtml(msg.text || "")}"
+                onclick="startReply(this)"
+                style="display:flex; ...">
+
             <div style="
                 display:flex;
                 gap:8px;
@@ -1735,6 +1761,14 @@ function renderChatMessage(msg, isMe) {
                         )}
                     </div>
 
+                        <div style="
+                            background:${bubbleBg};
+                            color:${textColor};
+                            padding:8px 12px;
+                        ">
+                            ${replyHtml}
+                            ${renderMessageText(msg.text)}
+                        </div>
 
                     <div style="
                         background:${bubbleBg};
@@ -2015,4 +2049,22 @@ document.addEventListener("DOMContentLoaded", () => {
 function removePostFromUI(postId) {
   const el = document.querySelector(`.post-card[data-post-id="${postId}"]`);
   if (el) el.remove();
+}
+
+function startReply(el) {
+    const mid = el.dataset.mid;
+    const text = el.dataset.text;
+
+    if (!mid || !text) return;
+
+    REPLY_TO = mid;
+
+    const input =
+        document.getElementById("dm-input") ||
+        document.getElementById("global-input");
+
+    if (input) {
+        input.placeholder = "Reply: " + text.slice(0, 30);
+        input.focus();
+    }
 }
