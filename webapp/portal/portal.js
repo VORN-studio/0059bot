@@ -5,7 +5,8 @@ function getUrlParam(name) {
 
 const socket = io({
     transports: ["websocket"],
-    reconnection: true
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
 });
 
 const TG = window.Telegram?.WebApp;
@@ -98,26 +99,27 @@ document.addEventListener("DOMContentLoaded", () => {
         backBtn.style.display = "block";
 
         backBtn.onclick = () => {
-            const uid = viewerId || profileId || "";
+            const uid = viewerId || "";
             window.location.href =
                 `/portal/portal.html?uid=${uid}&viewer=${uid}`;
         };
     }
 });
 
-const profileId = urlParams.get("uid") || "";
-const viewerFromUrl = urlParams.get("viewer") || "";
+const profileId = getUrlParam("uid") || "";
 const viewerId =
-  (telegramUser && telegramUser.id) ||
-  getUrlParam("uid") ||
-  getUrlParam("viewer") ||
-  getUrlParam("user_id") ||
-  0;
+    (telegramUser && telegramUser.id) ||
+    getUrlParam("viewer") ||
+    0;
 
-const isOwner = viewerId && profileId && String(viewerId) === String(profileId);
+const CURRENT_UID = viewerId;
+const isOwner =
+    viewerId &&
+    profileId &&
+    String(viewerId) === String(profileId);
+
 let REPLY_TO = null;
 let REPLY_TO_USERNAME = null;
-const CURRENT_UID = viewerId;
 let CURRENT_TAB = "feed";
 let CURRENT_DM_TARGET = null;
 let CONFIRM_ACTION = null;
@@ -247,15 +249,15 @@ function closeConfirm() {
 
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
-        backBtn.addEventListener("click", () => {
-            if (window.Telegram && Telegram.WebApp) {
-                Telegram.WebApp.close();
+        backBtn.onclick = () => {
+            if (window.history.length > 1) {
+                history.back();
             } else {
-                // fallback browser-ի համար
-                const uid = viewerId || profileId || "";
-                window.location.href = `/portal/portal.html?uid=${uid}&viewer=${uid}`;
+                window.location.href =
+                    `/portal/portal.html?uid=${viewerId}&viewer=${viewerId}`;
             }
-        });
+        };
+
     }
 
 
@@ -1057,7 +1059,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // 🔁 Եթե single post-ից ենք → reload feed mode
             if (SINGLE_POST_MODE) {
-                const uid = viewerId || profileId || "";
+                const uid = viewerId || "";
                 window.location.href = `/portal/portal.html?uid=${uid}&viewer=${uid}`;
                 return;
             }
@@ -1727,20 +1729,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (globalBtn) {
-        globalBtn.onclick = async () => {
-            await fetch("/api/global/send", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    sender: viewerId,
-                    text: `📢 Նոր գրառում\n${getSharePayload()}`
-                })
+        globalBtn.onclick = () => {
+            socket.emit("global_send", {
+                user_id: viewerId,
+                message: `📢 Նոր գրառում\n${getSharePayload()}`
             });
 
             openInfo("Տարածվեց", "Գրառումը ուղարկվեց Global Chat");
             closeShareModal();
         };
     }
+
 
 
 });
