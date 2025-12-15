@@ -1740,6 +1740,26 @@ function renderChatMessage(msg, isMe) {
     const align = isMe ? "flex-end" : "flex-start";
     const bubbleBg = isMe ? "#2563eb" : "#111827";
     const textColor = "#fff";
+    setTimeout(() => {
+        const el = document.querySelector(
+            `.global-message[data-mid="${msg.id}"]`
+        );
+        if (!el) return;
+
+        let startX = 0;
+
+        el.addEventListener("touchstart", e => {
+            startX = e.touches[0].clientX;
+        });
+
+        el.addEventListener("touchend", e => {
+            const endX = e.changedTouches[0].clientX;
+            if (endX - startX > 50) {
+                setReply(msg);
+            }
+        });
+    }, 0);
+
 
     return `
             <div class="global-message"
@@ -1773,7 +1793,6 @@ function renderChatMessage(msg, isMe) {
                         <div
                             data-mid="${msg.id || ""}"
                             data-text="${escapeHtml(msg.text || "")}"
-                            onclick="startReply(this)"
                             style="
                                 background:${bubbleBg};
                                 color:${textColor};
@@ -2080,4 +2099,25 @@ function startReply(el) {
         input.placeholder = "Reply: " + text.slice(0, 30);
         input.focus();
     }
+}
+
+function setReply(msg) {
+    REPLY_TO = msg.id;
+
+    const box = document.getElementById("reply-box");
+    const text = document.getElementById("reply-text");
+
+    if (!box || !text) return;
+
+    text.innerText = msg.text.slice(0, 80);
+    box.style.display = "block";
+
+    const input = document.getElementById("dm-input");
+    if (input) input.focus();
+}
+
+function cancelReply() {
+    REPLY_TO = null;
+    const box = document.getElementById("reply-box");
+    if (box) box.style.display = "none";
 }
