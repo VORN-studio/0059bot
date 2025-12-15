@@ -1,3 +1,74 @@
+const socket = io({
+    transports: ["websocket"],
+    reconnection: true
+});
+
+socket.on("connect", () => {
+    console.log("🟢 Realtime connected");
+
+    if (viewerId) {
+        socket.emit("join_user", viewerId);
+    }
+});
+
+socket.on("disconnect", () => {
+    console.warn("🔴 Realtime disconnected");
+});
+
+socket.on("global_new", (msg) => {
+    if (CURRENT_TAB !== "social") return;
+
+    const box = document.getElementById("global-messages");
+    if (!box) return;
+
+    const isMe = String(msg.sender) === String(CURRENT_UID);
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = renderChatMessage(msg, isMe);
+
+    box.appendChild(wrapper);
+    box.scrollTop = box.scrollHeight;
+});
+
+socket.on("dm_new", (msg) => {
+    if (
+        !CURRENT_DM_TARGET ||
+        !(
+            String(msg.sender) === String(CURRENT_DM_TARGET) ||
+            String(msg.receiver) === String(CURRENT_DM_TARGET)
+        )
+    ) return;
+
+    const box = document.getElementById("dm-messages");
+    if (!box) return;
+
+    const isMe = String(msg.sender) === String(CURRENT_UID);
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = renderChatMessage(msg, isMe);
+
+    box.appendChild(wrapper);
+    box.scrollTop = box.scrollHeight;
+});
+
+socket.on("post_new", () => {
+    if (!SINGLE_POST_MODE && CURRENT_TAB === "feed") {
+        loadFeed();
+    }
+});
+
+socket.on("comment_new", (data) => {
+    if (CURRENT_COMMENT_POST === data.post_id) {
+        openComments(data.post_id);
+    }
+});
+
+socket.on("post_like", (data) => {
+    const span = document.querySelector(
+        `.like-btn[data-id="${data.post_id}"] .like-count`
+    );
+    if (span) span.innerText = data.likes;
+});
+
+
 const urlParams = new URLSearchParams(window.location.search);
 const OPEN_POST_ID = urlParams.get("open_post");
 function applySinglePostUI() {
@@ -177,46 +248,14 @@ function initTabs() {
             const globalBox = document.getElementById("global-chat");
             const dmBox = document.getElementById("dm-chat");
 
-            //if (tabId === "chat") {
-                //if (globalBox) globalBox.style.display = "flex";
-                //if (dmBox) dmBox.style.display = "none";
-
                 if (tabId === "social") {
-                    loadGlobalChat();
-                    startGlobalRefresh();
-                } else {
-                    stopGlobalRefresh();
+                    loadGlobalChat(); 
                 }
 
-            //} else {
-                //if (globalBox) globalBox.style.display = "none";
-                //stopGlobalRefresh();
-            //}
-
-            // if (tabId === "messages") {
-                // if (dmBox) dmBox.style.display = "none";
-                // loadDMList();
-            // } else {
-                //if (dmBox) dmBox.style.display = "none";
-            /// }
-
-            // if (tabId !== "messages") {
-                //if (window.DM_REFRESH_INTERVAL) {
-                    //clearInterval(window.DM_REFRESH_INTERVAL);
-                    // window.DM_REFRESH_INTERVAL = null;
-                //}
-            //}
         });
     });
 }
 
-function startGlobalRefresh() {
-    if (window.GLOBAL_REFRESH_INTERVAL) return; 
-
-    window.GLOBAL_REFRESH_INTERVAL = setInterval(() => {
-        loadGlobalChat();
-    }, 2000); 
-}
 
 async function sendGlobalMessage() {
     const input = document.getElementById("global-input");
@@ -234,15 +273,6 @@ async function sendGlobalMessage() {
 
     input.value = "";
 
-    loadGlobalChat(); 
-    startGlobalRefresh(); 
-}
-
-function stopGlobalRefresh() {
-    if (window.GLOBAL_REFRESH_INTERVAL) {
-        clearInterval(window.GLOBAL_REFRESH_INTERVAL);
-        window.GLOBAL_REFRESH_INTERVAL = null;
-    }
 }
 
 function initChatEvents() {
@@ -451,11 +481,6 @@ async function openDM(targetId) {
 
     await loadDM();
 
-    if (window.DM_REFRESH_INTERVAL) clearInterval(window.DM_REFRESH_INTERVAL);
-
-    window.DM_REFRESH_INTERVAL = setInterval(() => {
-        if (CURRENT_DM_TARGET) loadDM();
-    }, 2000);
 
     if (window.DM_SHARE_TEXT) {
         const textToSend = window.DM_SHARE_TEXT;
@@ -1758,10 +1783,6 @@ function closeDM() {
 
     CURRENT_DM_TARGET = null;
 
-    if (window.DM_REFRESH_INTERVAL) {
-        clearInterval(window.DM_REFRESH_INTERVAL);
-        window.DM_REFRESH_INTERVAL = null;
-    }
 }
 
 async function openDMShare() {

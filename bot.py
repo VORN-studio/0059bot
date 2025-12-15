@@ -6,6 +6,7 @@ import threading
 from typing import Optional
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit, join_room, leave_room
 import asyncio
 import psycopg2
 from psycopg2 import pool
@@ -78,6 +79,13 @@ BOT_READY = False
 
 app_web = Flask(__name__, static_folder=None)
 CORS(app_web)
+
+socketio = SocketIO(
+    app_web,
+    cors_allowed_origins="*",
+    async_mode="eventlet"
+)
+
 
 @app_web.route("/")
 def index():
@@ -214,6 +222,19 @@ def api_message_send():
         VALUES (%s, %s, %s, %s)
     """, (sender, receiver, text, now))
     conn.commit()
+    room = f"dm_{min(sender, receiver)}_{max(sender, receiver)}"
+
+    realtime_emit(
+        "dm_new",
+        {
+            "sender": sender,
+            "receiver": receiver,
+            "text": text,
+            "time": now
+        },
+        room=room
+    )
+
     release_db(conn)
 
     return jsonify({"ok": True})
@@ -343,6 +364,16 @@ def api_global_send():
         VALUES (%s, %s, %s)
     """, (sender, text, now))
     conn.commit()
+    realtime_emit(
+        "global_new",
+        {
+            "sender": sender,
+            "text": text,
+            "time": now
+        },
+        room="global"
+    )
+
     release_db(conn)
 
     return jsonify({"ok": True})
@@ -489,6 +520,13 @@ def api_search_users():
 
     return jsonify({"ok": True, "users": users})
 
+@socketio.on("join")
+def on_join(data):
+    room = data.get("room")
+    if room:
+        join_room(room)
+
+
 @app_web.route("/webapp/games/<path:filename>")
 def serve_games(filename):
     games_dir = os.path.join(WEBAPP_DIR, "games")
@@ -584,6 +622,15 @@ def api_follow():
     """, (follower, target))
 
     conn.commit()
+    realtime_emit(
+        "follow_new",
+        {
+            "follower": follower,
+            "target": target
+        },
+        room=f"user_{target}"
+    )
+
     release_db(conn)
 
     return jsonify({"ok": True}), 200
@@ -709,6 +756,15 @@ def api_post_create():
     pid = c.fetchone()[0]
 
     conn.commit()
+    realtime_emit(
+        "post_new",
+        {
+            "post_id": pid,
+            "user_id": user_id
+        },
+        room="feed"
+    )
+
     release_db(conn)
 
     return jsonify({"ok": True, "post_id": pid})
@@ -779,6 +835,14 @@ def api_comment_create():
     """, (post_id, user_id, text, now, parent_id))
 
     conn.commit()
+    realtime_emit(
+        "comment_new",
+        {
+            "post_id": post_id
+        },
+        room=f"post_{post_id}"
+    )
+
     release_db(conn)
 
     return jsonify({"ok": True})
@@ -946,6 +1010,14 @@ def api_post_like():
     """, (post_id,))
 
     conn.commit()
+    realtime_emit(
+        "post_like",
+        {
+            "post_id": post_id
+        },
+        room=f"post_{post_id}"
+    )
+
     release_db(conn)
 
     return jsonify({"ok": True}), 200
@@ -1060,22 +1132,21 @@ def db():
     if _db_pool is None:
         _db_pool = pool.SimpleConnectionPool(
             minconn=1,
-            maxconn=20,                 
-            dsn=DATABASE_URL,
-            sslmode="require"
+            maxconn=20,
+            dsn=DATABASE_URL
         )
         logger.info("PostgreSQL pool initialized (20 connections)")
 
     try:
         conn = _db_pool.getconn()
-        conn.autocommit = False       
-        return conn
-    except Exception as e:
-        logger.warning(f"Pool exhausted, creating TEMP connection: {e}")
-        conn = psycopg2.connect(DATABASE_URL, sslmode="require")
         conn.autocommit = False
-        conn._temp_conn = True   # ⚠️ ՍԱ ՊԱՐՏԱԴԻՐ Է
         return conn
+    except pool.PoolError:
+        logger.warning("DB pool exhausted, creating direct connection")
+        conn = psycopg2.connect(DATABASE_URL)
+        conn.autocommit = False
+        return conn
+
 
 
 def release_db(conn):
@@ -1088,16 +1159,16 @@ def release_db(conn):
         return
 
     try:
-        if hasattr(conn, "_temp_conn"):
-            conn.close()
-            return
-
         if _db_pool:
-            _db_pool.putconn(conn, close=False)
+            try:
+                _db_pool.putconn(conn)
+            except Exception:
+                conn.close()
         else:
             conn.close()
     except Exception:
         logger.exception("release_db error")
+
 
 
 alters = [
@@ -1364,6 +1435,16 @@ def init_db():
     conn.commit()
     release_db(conn)
     print("✅ Domino tables ready with applied patches!")
+
+def realtime_emit(event: str, data: dict, room: str = None):
+    try:
+        if room:
+            socketio.emit(event, data, room=room)
+        else:
+            socketio.emit(event, data)
+    except Exception:
+        logger.exception("Realtime emit failed")
+
 
 def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int] = None):
     """
@@ -3102,10 +3183,16 @@ if __name__ == "__main__":
 
     def run_flask():
         try:
-            print(f"🌍 Flask (Domino) starting on port {port} ...")
-            app_web.run(host="0.0.0.0", port=port, threaded=True, use_reloader=False)
-        except Exception as e:
+            print(f"🌍 Flask + SocketIO starting on port {port} ...")
+            socketio.run(
+                app_web,
+                host="0.0.0.0",
+                port=port,
+                use_reloader=False
+            )
+        except Exception:
             logger.exception("Flask failed")
+
 
     def run_bot():
         """

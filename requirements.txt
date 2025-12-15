@@ -5,3 +5,5 @@ psycopg2-binary
 gunicorn
 requests
 python-dotenv
+flask-socketio
+eventlet
