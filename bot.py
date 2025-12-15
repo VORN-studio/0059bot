@@ -296,6 +296,16 @@ def api_message_send():
         if r:
             reply_text = r[0]
 
+    c.execute("""
+        INSERT INTO dom_messages (sender, receiver, text, reply_to, created_at)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING id
+    """, (sender, receiver, text, reply_to, now))
+
+    message_id = c.fetchone()[0]
+    conn.commit()
+
+
     room = f"dm_{min(sender, receiver)}_{max(sender, receiver)}"
 
     
@@ -303,6 +313,7 @@ def api_message_send():
     realtime_emit(
         "dm_new",
         {
+            "id": message_id,
             "sender": sender,
             "receiver": receiver,
             "text": text,
@@ -312,6 +323,7 @@ def api_message_send():
         },
         room=room
     )
+
 
 
         # ✅ Notify receiver (inbox badge), even if DM room not open
