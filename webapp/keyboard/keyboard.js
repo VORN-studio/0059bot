@@ -330,24 +330,31 @@ console.log('🎹 Custom Keyboard loading...');
             renderKeyboard();
         }
 
-        // Scroll input into view
+        // Wait for keyboard animation
         setTimeout(() => {
-            const kbHeight = kb.offsetHeight;
+            const kbRect = kb.getBoundingClientRect();
             const inputRect = input.getBoundingClientRect();
-            const viewportHeight = window.innerHeight;
             
-            // Calculate if input is hidden
+            // Calculate space needed
+            const kbTop = kbRect.top;
             const inputBottom = inputRect.bottom;
-            const visibleBottom = viewportHeight - kbHeight - 10;
             
-            if (inputBottom > visibleBottom) {
-                const scrollAmount = inputBottom - visibleBottom + 20;
-                window.scrollBy({
-                    top: scrollAmount,
-                    behavior: 'smooth'
-                });
+            // If input is behind keyboard
+            if (inputBottom > kbTop - 20) {
+                // Add padding to body
+                const paddingNeeded = kbRect.height + 20;
+                document.body.style.paddingBottom = paddingNeeded + 'px';
+                
+                // Scroll input into view
+                setTimeout(() => {
+                    input.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'nearest'
+                    });
+                }, 100);
             }
-        }, 100);
+        }, 350);
     }
 
     // Close keyboard
@@ -356,6 +363,9 @@ console.log('🎹 Custom Keyboard loading...');
         if (!kb) return;
 
         kb.classList.remove('active');
+        
+        // Remove body padding
+        document.body.style.paddingBottom = '0px';
         
         currentInput = null;
         capsLock = false;
