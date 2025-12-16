@@ -305,6 +305,7 @@ console.log('🎹 Custom Keyboard loading...');
     }
 
     // Open keyboard
+    // Open keyboard
     function openKeyboard(input) {
         currentInput = input;
         const kb = document.getElementById('custom-keyboard');
@@ -317,9 +318,20 @@ console.log('🎹 Custom Keyboard loading...');
                 renderKeyboard();
             }
 
-            // Scroll input into view
+            // Get keyboard height
             setTimeout(() => {
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const kbHeight = kb.offsetHeight;
+                const inputRect = input.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                
+                // If input is hidden behind keyboard
+                if (inputRect.bottom > (viewportHeight - kbHeight)) {
+                    const scrollAmount = inputRect.bottom - (viewportHeight - kbHeight) + 20;
+                    window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                }
+                
+                // Focus simulation
+                input.focus();
             }, 350);
         }
     }
