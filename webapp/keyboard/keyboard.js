@@ -1,6 +1,10 @@
 // Custom Keyboard System
+console.log('🎹 Custom Keyboard loading...');
+
 (function() {
     'use strict';
+    
+    console.log('🎹 Custom Keyboard initialized!');
 
     let currentInput = null;
     let currentLang = 'en';
