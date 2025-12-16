@@ -2352,3 +2352,50 @@ function stopHotUserRefresh() {
         hotUserInterval = null;
     }
 }
+
+
+
+async function loadHotUser() {
+    try {
+        const res = await fetch("/api/global/hot-user");
+        const data = await res.json();
+        
+        const banner = document.getElementById("hot-user-banner");
+        const avatar = document.getElementById("hot-user-avatar");
+        const name = document.getElementById("hot-user-name");
+        
+        if (!banner || !avatar || !name) return;
+        
+        if (data.ok && data.hot_user) {
+            const user = data.hot_user;
+            
+            avatar.src = user.avatar;
+            name.innerText = user.username;
+            name.className = `status-${user.status_level}`;
+            
+            banner.style.display = "flex";
+        } else {
+            banner.style.display = "none";
+        }
+        
+    } catch (e) {
+        console.error("❌ loadHotUser error:", e);
+    }
+}
+
+function startHotUserRefresh() {
+    if (hotUserInterval) {
+        clearInterval(hotUserInterval);
+    }
+    
+    hotUserInterval = setInterval(() => {
+        loadHotUser();
+    }, 60000);
+}
+
+function stopHotUserRefresh() {
+    if (hotUserInterval) {
+        clearInterval(hotUserInterval);
+        hotUserInterval = null;
+    }
+}
