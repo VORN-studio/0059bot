@@ -83,8 +83,12 @@ console.log('🎹 Custom Keyboard loading...');
             });
         });
 
-        // Close button
-        kb.querySelector('.keyboard-close-btn').addEventListener('click', closeKeyboard);
+        // Close button - ՖԻՔՍ
+        kb.querySelector('.keyboard-close-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeKeyboard();
+        });
 
         renderKeyboard();
     }
@@ -93,17 +97,24 @@ console.log('🎹 Custom Keyboard loading...');
     function handleCopy() {
         if (!currentInput) return;
         
-        const start = currentInput.selectionStart;
-        const end = currentInput.selectionEnd;
+        const start = currentInput.selectionStart || 0;
+        const end = currentInput.selectionEnd || 0;
         
         if (start !== end) {
             clipboardText = currentInput.value.substring(start, end);
             showToast('📋 Copied');
+        } else {
+            showToast('⚠️ Select text first');
         }
     }
 
     function handlePaste() {
-        if (!currentInput || !clipboardText) return;
+        if (!currentInput) return;
+        
+        if (!clipboardText) {
+            showToast('⚠️ Clipboard is empty');
+            return;
+        }
         
         insertText(clipboardText);
         showToast('📄 Pasted');
@@ -112,8 +123,8 @@ console.log('🎹 Custom Keyboard loading...');
     function handleCut() {
         if (!currentInput) return;
         
-        const start = currentInput.selectionStart;
-        const end = currentInput.selectionEnd;
+        const start = currentInput.selectionStart || 0;
+        const end = currentInput.selectionEnd || 0;
         
         if (start !== end) {
             clipboardText = currentInput.value.substring(start, end);
@@ -121,6 +132,8 @@ console.log('🎹 Custom Keyboard loading...');
             currentInput.selectionStart = currentInput.selectionEnd = start;
             currentInput.dispatchEvent(new Event('input', { bubbles: true }));
             showToast('✂️ Cut');
+        } else {
+            showToast('⚠️ Select text first');
         }
     }
 
@@ -147,6 +160,7 @@ console.log('🎹 Custom Keyboard loading...');
     // Render keyboard layout
     function renderKeyboard() {
         const content = document.getElementById('keyboard-content');
+        if (!content) return;
         
         if (currentLang === 'emoji') {
             content.innerHTML = '<div class="keyboard-emoji-grid"></div>';
@@ -228,7 +242,7 @@ console.log('🎹 Custom Keyboard loading...');
 
         const start = currentInput.selectionStart || 0;
         const end = currentInput.selectionEnd || 0;
-        const value = currentInput.value;
+        const value = currentInput.value || '';
 
         currentInput.value = value.substring(0, start) + text + value.substring(end);
         currentInput.selectionStart = currentInput.selectionEnd = start + text.length;
@@ -267,14 +281,14 @@ console.log('🎹 Custom Keyboard loading...');
     function handleBackspace() {
         if (!currentInput) return;
 
-        const start = currentInput.selectionStart;
-        const end = currentInput.selectionEnd;
-        const value = currentInput.value;
+        const start = currentInput.selectionStart || 0;
+        const end = currentInput.selectionEnd || 0;
+        const value = currentInput.value || '';
 
         if (start === end && start > 0) {
             currentInput.value = value.substring(0, start - 1) + value.substring(end);
             currentInput.selectionStart = currentInput.selectionEnd = start - 1;
-        } else {
+        } else if (start !== end) {
             currentInput.value = value.substring(0, start) + value.substring(end);
             currentInput.selectionStart = currentInput.selectionEnd = start;
         }
@@ -300,48 +314,49 @@ console.log('🎹 Custom Keyboard loading...');
                 sendBtn.click();
             }
         }
-
-        closeKeyboard();
     }
 
-    // Open keyboard
     // Open keyboard
     function openKeyboard(input) {
         currentInput = input;
         const kb = document.getElementById('custom-keyboard');
-        if (kb) {
-            kb.classList.add('active');
-            
-            // Auto-capitalize first letter
-            if (input.value.trim() === '') {
-                shiftPressed = true;
-                renderKeyboard();
-            }
+        if (!kb) return;
 
-            // Get keyboard height
-            setTimeout(() => {
-                const kbHeight = kb.offsetHeight;
-                const inputRect = input.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
-                
-                // If input is hidden behind keyboard
-                if (inputRect.bottom > (viewportHeight - kbHeight)) {
-                    const scrollAmount = inputRect.bottom - (viewportHeight - kbHeight) + 20;
-                    window.scrollBy({ top: scrollAmount, behavior: 'smooth' });
-                }
-                
-                // Focus simulation
-                input.focus();
-            }, 350);
+        kb.classList.add('active');
+        
+        // Auto-capitalize first letter
+        if ((input.value || '').trim() === '') {
+            shiftPressed = true;
+            renderKeyboard();
         }
+
+        // Scroll input into view
+        setTimeout(() => {
+            const kbHeight = kb.offsetHeight;
+            const inputRect = input.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            
+            // Calculate if input is hidden
+            const inputBottom = inputRect.bottom;
+            const visibleBottom = viewportHeight - kbHeight - 10;
+            
+            if (inputBottom > visibleBottom) {
+                const scrollAmount = inputBottom - visibleBottom + 20;
+                window.scrollBy({
+                    top: scrollAmount,
+                    behavior: 'smooth'
+                });
+            }
+        }, 100);
     }
 
     // Close keyboard
     function closeKeyboard() {
         const kb = document.getElementById('custom-keyboard');
-        if (kb) {
-            kb.classList.remove('active');
-        }
+        if (!kb) return;
+
+        kb.classList.remove('active');
+        
         currentInput = null;
         capsLock = false;
         shiftPressed = false;
@@ -349,17 +364,18 @@ console.log('🎹 Custom Keyboard loading...');
 
     // Global input detection
     document.addEventListener('focusin', (e) => {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-            // Ignore password fields
-            if (e.target.type === 'password') return;
+        const target = e.target;
+        
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') return;
+        if (target.type === 'password') return;
+        if (target.readOnly || target.disabled) return;
 
-            e.preventDefault();
-            e.target.blur();
-            
-            setTimeout(() => {
-                openKeyboard(e.target);
-            }, 100);
-        }
+        e.preventDefault();
+        target.blur();
+        
+        setTimeout(() => {
+            openKeyboard(target);
+        }, 100);
     });
 
     // Initialize on load
