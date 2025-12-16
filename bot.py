@@ -495,7 +495,8 @@ def api_global_send():
         "avatar": avatar,
         "status_level": status_level,
         "message": message,
-        "time": now
+        "time": now,
+        "highlighted": highlight
     }, room="global")
     
     return jsonify({"ok": True, "id": msg_id})
