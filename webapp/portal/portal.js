@@ -2346,11 +2346,27 @@ function startHotUserRefresh() {
     
     loadHotUser(); // Initial load
     
+    // Ping every 10 seconds
     hotUserInterval = setInterval(() => {
+        pingOnline();
         loadHotUser();
-    }, 60000);
+    }, 10000);
     
     console.log("🔄 Hot user refresh started");
+}
+
+async function pingOnline() {
+    if (!viewerId) return;
+    
+    try {
+        await fetch("/api/global/ping", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: viewerId })
+        });
+    } catch (e) {
+        console.error("❌ Ping error:", e);
+    }
 }
 
 function stopHotUserRefresh() {

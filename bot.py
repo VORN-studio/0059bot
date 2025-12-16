@@ -276,16 +276,14 @@ def api_global_messages():
 
 @app_web.route("/api/global/hot-user")
 def api_global_hot_user():
-    """Global chat-ում ներկա ամենա բարձր status ունեցող user-ը"""
+    """Global chat-ում ներկա ONLINE ամենա բարձր status ունեցող user-ը"""
     conn = db()
     c = conn.cursor()
     
-    # Get all users who sent messages in last 5 minutes (considered "active")
-    five_mins_ago = int(time.time()) - 300
-    
+    # Get online users (pinged in last 15 seconds)
     c.execute("""
-        SELECT DISTINCT
-            g.user_id,
+        SELECT 
+            o.user_id,
             u.username,
             u.avatar,
             u.avatar_data,
@@ -293,10 +291,9 @@ def api_global_hot_user():
              FROM dom_user_miners m
              JOIN dom_mining_plans pl ON pl.id = m.plan_id
              WHERE m.user_id = u.user_id) AS status_level
-        FROM dom_global_chat g
-        LEFT JOIN dom_users u ON u.user_id = g.user_id
-        WHERE g.created_at > %s
-    """, (five_mins_ago,))
+        FROM dom_global_chat_online o
+        LEFT JOIN dom_users u ON u.user_id = o.user_id
+    """)
     
     rows = c.fetchall()
     release_db(conn)
@@ -304,8 +301,8 @@ def api_global_hot_user():
     if not rows:
         return jsonify({"ok": True, "hot_user": None})
     
-    
-    eligible = [r for r in rows if int(r[4] or 0) >= 0]  # Show any user
+    # Filter only status 6+ users
+    eligible = [r for r in rows if int(r[4] or 0) >= 6]
     
     if not eligible:
         return jsonify({"ok": True, "hot_user": None})
@@ -331,6 +328,36 @@ def api_global_hot_user():
             "status_level": int(chosen[4] or 0)
         }
     })
+
+@app_web.route("/api/global/ping", methods=["POST"])
+def api_global_ping():
+    """User-ը ping է անում որ ցույց տա որ online է global chat-ում"""
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    
+    if user_id == 0:
+        return jsonify({"ok": False}), 400
+    
+    now = int(time.time())
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        INSERT INTO dom_global_chat_online (user_id, last_ping)
+        VALUES (%s, %s)
+        ON CONFLICT (user_id) DO UPDATE SET last_ping = %s
+    """, (user_id, now, now))
+    
+    # Clean offline users (>15 seconds)
+    c.execute("""
+        DELETE FROM dom_global_chat_online
+        WHERE last_ping < %s
+    """, (now - 15,))
+    
+    conn.commit()
+    release_db(conn)
+    
+    return jsonify({"ok": True})
 
 @app_web.route("/api/global/send", methods=["POST"])
 def api_global_send():
@@ -1612,6 +1639,13 @@ def init_db():
         )
     """)
     
+    # Global chat online users
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_global_chat_online (
+            user_id BIGINT PRIMARY KEY,
+            last_ping BIGINT NOT NULL
+        )
+    """)
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_dm_last_seen (
