@@ -11,6 +11,7 @@ console.log('🎹 Custom Keyboard loading...');
     let capsLock = false;
     let shiftPressed = false;
     let lastShiftTime = 0;
+    let clipboardText = '';
 
     const layouts = {
         en: [
@@ -22,6 +23,16 @@ console.log('🎹 Custom Keyboard loading...');
             ['й', 'ц', 'у', 'к', 'е', 'н', 'г', 'ш', 'щ', 'з', 'х', 'ъ'],
             ['ф', 'ы', 'в', 'а', 'п', 'р', 'о', 'л', 'д', 'ж', 'э'],
             ['shift', 'я', 'ч', 'с', 'м', 'и', 'т', 'ь', 'б', 'ю', 'backspace']
+        ],
+        num: [
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+            ['-', '/', ':', ';', '(', ')', '$', '&', '@', '"'],
+            ['symbols', '.', ',', '?', '!', "'", 'backspace']
+        ],
+        symbols: [
+            ['[', ']', '{', '}', '#', '%', '^', '*', '+', '='],
+            ['_', '\\', '|', '~', '<', '>', '€', '£', '¥', '•'],
+            ['num', '.', ',', '?', '!', "'", 'backspace']
         ]
     };
 
@@ -39,10 +50,16 @@ console.log('🎹 Custom Keyboard loading...');
         const kb = document.createElement('div');
         kb.id = 'custom-keyboard';
         kb.innerHTML = `
+            <div class="keyboard-toolbar">
+                <button class="keyboard-tool-btn" id="kb-copy">📋</button>
+                <button class="keyboard-tool-btn" id="kb-paste">📄</button>
+                <button class="keyboard-tool-btn" id="kb-cut">✂️</button>
+            </div>
             <div class="keyboard-header">
                 <div class="keyboard-lang-switcher">
                     <button class="keyboard-lang-btn active" data-lang="en">EN</button>
                     <button class="keyboard-lang-btn" data-lang="ru">RU</button>
+                    <button class="keyboard-lang-btn" data-lang="num">123</button>
                     <button class="keyboard-lang-btn" data-lang="emoji">😀</button>
                 </div>
                 <button class="keyboard-close-btn">✕</button>
@@ -50,6 +67,11 @@ console.log('🎹 Custom Keyboard loading...');
             <div id="keyboard-content"></div>
         `;
         document.body.appendChild(kb);
+
+        // Toolbar buttons
+        document.getElementById('kb-copy').addEventListener('click', handleCopy);
+        document.getElementById('kb-paste').addEventListener('click', handlePaste);
+        document.getElementById('kb-cut').addEventListener('click', handleCut);
 
         // Language switcher
         kb.querySelectorAll('.keyboard-lang-btn').forEach(btn => {
@@ -65,6 +87,61 @@ console.log('🎹 Custom Keyboard loading...');
         kb.querySelector('.keyboard-close-btn').addEventListener('click', closeKeyboard);
 
         renderKeyboard();
+    }
+
+    // Clipboard handlers
+    function handleCopy() {
+        if (!currentInput) return;
+        
+        const start = currentInput.selectionStart;
+        const end = currentInput.selectionEnd;
+        
+        if (start !== end) {
+            clipboardText = currentInput.value.substring(start, end);
+            showToast('📋 Copied');
+        }
+    }
+
+    function handlePaste() {
+        if (!currentInput || !clipboardText) return;
+        
+        insertText(clipboardText);
+        showToast('📄 Pasted');
+    }
+
+    function handleCut() {
+        if (!currentInput) return;
+        
+        const start = currentInput.selectionStart;
+        const end = currentInput.selectionEnd;
+        
+        if (start !== end) {
+            clipboardText = currentInput.value.substring(start, end);
+            currentInput.value = currentInput.value.substring(0, start) + currentInput.value.substring(end);
+            currentInput.selectionStart = currentInput.selectionEnd = start;
+            currentInput.dispatchEvent(new Event('input', { bubbles: true }));
+            showToast('✂️ Cut');
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 999999;
+            font-size: 14px;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 1500);
     }
 
     // Render keyboard layout
@@ -103,9 +180,23 @@ console.log('🎹 Custom Keyboard loading...');
                     keyBtn.textContent = '⌫';
                     keyBtn.classList.add('special');
                     keyBtn.addEventListener('click', handleBackspace);
+                } else if (key === 'symbols') {
+                    keyBtn.textContent = '#+=';
+                    keyBtn.classList.add('special');
+                    keyBtn.addEventListener('click', () => {
+                        currentLang = 'symbols';
+                        renderKeyboard();
+                    });
+                } else if (key === 'num') {
+                    keyBtn.textContent = '123';
+                    keyBtn.classList.add('special');
+                    keyBtn.addEventListener('click', () => {
+                        currentLang = 'num';
+                        renderKeyboard();
+                    });
                 } else {
                     let char = key;
-                    if (capsLock || shiftPressed) {
+                    if ((capsLock || shiftPressed) && (currentLang === 'en' || currentLang === 'ru')) {
                         char = key.toUpperCase();
                     }
                     keyBtn.textContent = char;
@@ -132,18 +223,18 @@ console.log('🎹 Custom Keyboard loading...');
     }
 
     // Insert text
-    function insertText(char) {
+    function insertText(text) {
         if (!currentInput) return;
 
-        const start = currentInput.selectionStart;
-        const end = currentInput.selectionEnd;
+        const start = currentInput.selectionStart || 0;
+        const end = currentInput.selectionEnd || 0;
         const value = currentInput.value;
 
-        currentInput.value = value.substring(0, start) + char + value.substring(end);
-        currentInput.selectionStart = currentInput.selectionEnd = start + char.length;
+        currentInput.value = value.substring(0, start) + text + value.substring(end);
+        currentInput.selectionStart = currentInput.selectionEnd = start + text.length;
 
         // Auto-capitalize after sentence
-        if (char === '.' || char === '!' || char === '?') {
+        if (text === '.' || text === '!' || text === '?') {
             shiftPressed = true;
             setTimeout(() => {
                 shiftPressed = false;
@@ -198,14 +289,13 @@ console.log('🎹 Custom Keyboard loading...');
         }
 
         if (currentInput) {
-            // Trigger submit if it's in a form
-            const form = currentInput.closest('form');
-            if (form) {
-                form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-            }
-
-            // Trigger click on nearby send button
-            const sendBtn = currentInput.parentElement.querySelector('button[type="submit"], .send-btn, #send-btn');
+            // Try to find send button
+            const sendBtn = 
+                document.getElementById('global-send') ||
+                document.getElementById('dm-send') ||
+                document.getElementById('comment-send') ||
+                currentInput.parentElement.querySelector('button[type="submit"], .send-btn, .chat-send-btn');
+            
             if (sendBtn) {
                 sendBtn.click();
             }
@@ -226,6 +316,11 @@ console.log('🎹 Custom Keyboard loading...');
                 shiftPressed = true;
                 renderKeyboard();
             }
+
+            // Scroll input into view
+            setTimeout(() => {
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
         }
     }
 

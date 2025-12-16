@@ -21,6 +21,31 @@
     transform: translateY(0);
 }
 
+.keyboard-toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.keyboard-tool-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.keyboard-tool-btn:active {
+    background: #e94560;
+    transform: scale(0.95);
+}
+
 .keyboard-header {
     display: flex;
     justify-content: space-between;
