@@ -476,7 +476,28 @@ async function loadGlobalChat() {
 
         box.innerHTML = "";
 
-        data.messages.forEach(msg => {
+        
+
+        let lastDate = null;
+
+        messages.forEach(m => {
+            const msgDate = new Date(m.created_at * 1000);
+            const dateKey = msgDate.toLocaleDateString('hy-AM');
+            
+            if (dateKey !== lastDate) {
+                lastDate = dateKey;
+                
+                const today = new Date().toLocaleDateString('hy-AM');
+                const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('hy-AM');
+                
+                let label = dateKey;
+                if (dateKey === today) label = "Այսօր";
+                else if (dateKey === yesterday) label = "Երեկ";
+                
+                box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
+            }
+            
+            // ... սա մնում է նույնը
             const isMe = String(msg.sender) === String(CURRENT_UID);
             const wrapper = document.createElement("div");
             wrapper.innerHTML = renderChatMessage(msg, isMe);
@@ -648,7 +669,26 @@ async function loadDM() {
 
         box.innerHTML = "";
 
+        let lastDate = null;
+
         data.messages.forEach(m => {
+            const msgDate = new Date(m.time * 1000);
+            const dateKey = msgDate.toLocaleDateString('hy-AM');
+            
+            if (dateKey !== lastDate) {
+                lastDate = dateKey;
+                
+                const today = new Date().toLocaleDateString('hy-AM');
+                const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('hy-AM');
+                
+                let label = dateKey;
+                if (dateKey === today) label = "Այսօր";
+                else if (dateKey === yesterday) label = "Երեկ";
+                
+                box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
+            }
+            
+            // ... շարունակում է նույնը
             const isMe = String(m.sender) === String(CURRENT_UID);
 
             const wrapper = document.createElement("div");
@@ -1703,140 +1743,69 @@ function renderMessageText(text) {
     return escapeHtml(text);
 }
 
-function renderChatMessage(msg, isMe) {
-    // 🔧 FIX: ապահովում ենք reply-ի համար id
-    if (!msg.id) {
-        msg.id = `${msg.sender}_${msg.created_at}`;
-    }
+function renderChatMessage(msg, isMe = false) {
+    const align = isMe ? "right" : "left";
+    const bgColor = isMe ? "#1e3a8a" : "#1f2937";
+    
+    const statusClass = `status-${msg.status_level || 0}`;
+    const username = msg.username || `User ${msg.sender}`;
+    const avatar = msg.avatar || "/portal/default.png";
+    
+    const time = new Date((msg.created_at || msg.time) * 1000);
+    const timeStr = time.toLocaleTimeString('hy-AM', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
 
     let replyHtml = "";
-
-    if (msg.reply_to_text) {
+    if (msg.reply_to && msg.reply_to_text) {
         replyHtml = `
             <div style="
-                font-size:11px;
-                opacity:0.7;
-                padding:4px 8px;
-                border-left:2px solid #4da3ff;
-                margin-bottom:4px;
+                background: rgba(58,139,255,0.2);
+                border-left: 3px solid #3a8bff;
+                padding: 6px 10px;
+                margin-bottom: 6px;
+                border-radius: 6px;
+                font-size: 12px;
+                opacity: 0.8;
             ">
-                Reply: ${escapeHtml(msg.reply_to_text)}
+                ${msg.reply_to_text.slice(0, 60)}${msg.reply_to_text.length > 60 ? '...' : ''}
             </div>
         `;
     }
 
-    let avatar = "/portal/default.png";
-
-    if (msg.avatar && msg.avatar !== "") {
-        avatar = msg.avatar;
-    } else if (String(msg.sender) === String(CURRENT_UID)) {
-        const myAvatar = document.getElementById("user-avatar")?.src;
-        if (myAvatar) avatar = myAvatar;
-    }
-
-
-    const username = msg.username || msg.sender_username || "User";
-
-    const align = isMe ? "flex-end" : "flex-start";
-    const bubbleBg = isMe ? "#2563eb" : "#111827";
-    const textColor = "#fff";
-    setTimeout(() => {
-        const el = document.querySelector(
-            `.global-message[data-mid="${msg.id}"]`
-        );
-        if (!el) return;
-
-        let startX = 0;
-        let currentX = 0;
-        let dragging = false;
-
-        el.style.transition = "transform 0.2s ease";
-
-        el.addEventListener("touchstart", e => {
-            startX = e.touches[0].clientX;
-            dragging = true;
-            el.style.transition = "none";
-            el.style.willChange = "transform";
-        });
-
-        el.addEventListener("touchmove", e => {
-            if (!dragging) return;
-
-            currentX = e.touches[0].clientX;
-            const diff = currentX - startX;
-
-            if (diff > 0) {
-                e.preventDefault(); // 🔥 ԱՅՍ ՏՈՂԸ Է ԼՈՒԾՈՒՄ ԽՆԴԻՐԸ
-            }
-
-            if (diff > 0 && diff < 120) {
-                el.style.transform = `translateX(${diff}px)`;
-            }
-        }, { passive: false });
-
-
-        el.addEventListener("touchend", () => {
-            dragging = false;
-            el.style.transition = "transform 0.2s ease";
-
-            const diff = currentX - startX;
-
-            if (diff > 60) {
-                setReply(msg);
-            }
-
-            el.style.transform = "translateX(0)";
-        });
-    }, 0);
-
-
-
     return `
-            <div class="global-message"
-                data-mid="${msg.id || ""}"
-                data-text="${escapeHtml(msg.text || "")}"
-                style="
-                    display:flex;
-                    justify-content:${isMe ? "flex-end" : "flex-start"};
-                    margin-bottom:10px;
-                ">
-
-
+        <div class="chat-message-wrapper" 
+             data-time="${timeStr}"
+             style="margin-bottom: 12px; text-align: ${align};">
+            
             <div style="
-                display:flex;
-                gap:8px;
-                max-width:70%;
-                ${isMe ? "flex-direction:row-reverse;" : ""}
+                display: inline-block;
+                max-width: 70%;
+                background: ${bgColor};
+                padding: 10px 14px;
+                border-radius: 14px;
+                text-align: left;
+                position: relative;
             ">
-                <img src="${avatar}"
-                     style="width:32px;height:32px;border-radius:50%;flex-shrink:0;">
-
-                <div>
-                    <div style="font-size:12px;margin-bottom:2px;">
-                        ${renderUsernameLabel(
-                            msg.sender,
-                            msg.username || msg.sender_username,
-                            msg.status_level || 0
-                        )}
+                ${!isMe ? `
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <img src="${avatar}" 
+                             style="width:24px;height:24px;border-radius:50%;">
+                        <span class="${statusClass}" style="font-weight:bold;font-size:13px;">
+                            ${username}
+                        </span>
                     </div>
-
-                        <div
-                            data-mid="${msg.id || ""}"
-                            data-text="${escapeHtml(msg.text || "")}"
-                            style="
-                                background:${bubbleBg};
-                                color:${textColor};
-                                padding:8px 12px;
-                                border-radius:12px;
-                                word-break:break-word;
-                                cursor:pointer;
-                            ">
-
-                            ${replyHtml}
-                            ${renderMessageText(msg.text)}
-                        </div>
+                ` : ''}
+                
+                ${replyHtml}
+                
+                <div style="color:#fff;font-size:14px;word-wrap:break-word;">
+                    ${msg.text || msg.message || ""}
                 </div>
             </div>
+
+            <span class="chat-message-time">${timeStr}</span>
         </div>
     `;
 }
@@ -2151,3 +2120,38 @@ function cancelReply() {
     const box = document.getElementById("reply-box");
     if (box) box.style.display = "none";
 }
+
+// ========== SWIPE TO SHOW TIME ==========
+document.addEventListener("DOMContentLoaded", () => {
+    let startX = 0;
+    let currentWrapper = null;
+
+    document.addEventListener("touchstart", (e) => {
+        const wrapper = e.target.closest(".chat-message-wrapper");
+        if (!wrapper) return;
+        
+        currentWrapper = wrapper;
+        startX = e.touches[0].clientX;
+    });
+
+    document.addEventListener("touchmove", (e) => {
+        if (!currentWrapper) return;
+        
+        const deltaX = startX - e.touches[0].clientX;
+        
+        if (deltaX > 50) {
+            currentWrapper.classList.add("swiped");
+        } else {
+            currentWrapper.classList.remove("swiped");
+        }
+    });
+
+    document.addEventListener("touchend", () => {
+        setTimeout(() => {
+            if (currentWrapper) {
+                currentWrapper.classList.remove("swiped");
+            }
+            currentWrapper = null;
+        }, 2000);
+    });
+});

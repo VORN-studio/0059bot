@@ -789,3 +789,57 @@ body {
     overscroll-behavior-x: none;
     touch-action: pan-y;
 }
+
+/* ========== SWIPE TO SHOW TIME ========== */
+.chat-message-wrapper {
+    position: relative;
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+.chat-message-time {
+    position: absolute;
+    right: 10px;
+    font-size: 11px;
+    color: #888;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.chat-message-wrapper.swiped .chat-message-time {
+    opacity: 1;
+}
+
+.chat-message-wrapper.swiped {
+    transform: translateX(-60px);
+}
+
+/* Date separator */
+.chat-date-separator {
+    text-align: center;
+    padding: 8px;
+    margin: 12px 0;
+    font-size: 12px;
+    color: #888;
+    position: relative;
+}
+
+.chat-date-separator::before,
+.chat-date-separator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+}
+
+.chat-date-separator::before {
+    left: 5%;
+}
+
+.chat-date-separator::after {
+    right: 5%;
+}
