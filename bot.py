@@ -304,8 +304,8 @@ def api_global_hot_user():
     if not rows:
         return jsonify({"ok": True, "hot_user": None})
     
-    # Filter only status 6+ users
-    eligible = [r for r in rows if int(r[4] or 0) >= 6]
+    
+    eligible = [r for r in rows if int(r[4] or 0) >= 0]  # Show any user
     
     if not eligible:
         return jsonify({"ok": True, "hot_user": None})
