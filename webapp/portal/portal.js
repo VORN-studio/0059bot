@@ -58,6 +58,15 @@ socket.on("global_new", (msg) => {
     box.appendChild(wrapper);
     box.scrollTop = box.scrollHeight;
 
+    box.scrollTop = box.scrollHeight;
+
+    LOG.ui("🖥️ Global message rendered");
+
+    // ✅ Update hot user when new high-status user sends message
+    if (fixedMsg.status_level >= 6) {
+        loadHotUser();
+    }
+
     LOG.ui("🖥️ Global message rendered");
 });
 
@@ -350,7 +359,10 @@ function initTabs() {
             const dmBox = document.getElementById("dm-chat");
 
                 if (tabId === "social") {
-                    loadGlobalChat(); 
+                    loadGlobalChat();
+                    startHotUserRefresh(); // ✅ Start auto-refresh
+                } else {
+                    stopHotUserRefresh(); // ✅ Stop when leaving
                 }
 
         });
@@ -503,6 +515,11 @@ async function loadGlobalChat() {
             const isMe = String(m.user_id) === String(CURRENT_UID);
             box.innerHTML += renderChatMessage(m, isMe, false);
         });
+
+        box.scrollTop = box.scrollHeight;
+
+        // ✅ Load hot user
+        loadHotUser();
 
         box.scrollTop = box.scrollHeight;
     } catch (e) {
@@ -2283,5 +2300,55 @@ function updateCharCounter() {
     if (length > maxLength) {
         input.value = input.value.slice(0, maxLength);
         counter.innerText = `${maxLength}/${maxLength}`;
+    }
+}
+
+// ========== HOT USER DISPLAY ==========
+let hotUserInterval = null;
+
+async function loadHotUser() {
+    try {
+        const res = await fetch("/api/global/hot-user");
+        const data = await res.json();
+        
+        const banner = document.getElementById("hot-user-banner");
+        const avatar = document.getElementById("hot-user-avatar");
+        const name = document.getElementById("hot-user-name");
+        
+        if (!banner || !avatar || !name) return;
+        
+        if (data.ok && data.hot_user) {
+            const user = data.hot_user;
+            
+            avatar.src = user.avatar;
+            name.innerText = user.username;
+            name.className = `status-${user.status_level}`;
+            
+            banner.style.display = "flex";
+        } else {
+            banner.style.display = "none";
+        }
+        
+    } catch (e) {
+        console.error("❌ loadHotUser error:", e);
+    }
+}
+
+function startHotUserRefresh() {
+    // Clear previous interval
+    if (hotUserInterval) {
+        clearInterval(hotUserInterval);
+    }
+    
+    // Refresh every 60 seconds
+    hotUserInterval = setInterval(() => {
+        loadHotUser();
+    }, 60000);
+}
+
+function stopHotUserRefresh() {
+    if (hotUserInterval) {
+        clearInterval(hotUserInterval);
+        hotUserInterval = null;
     }
 }

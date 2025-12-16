@@ -274,6 +274,63 @@ def api_global_messages():
     messages.reverse()  # oldest first
     return jsonify({"ok": True, "messages": messages})
 
+@app_web.route("/api/global/hot-user")
+def api_global_hot_user():
+    """Global chat-ում ներկա ամենա բարձր status ունեցող user-ը"""
+    conn = db()
+    c = conn.cursor()
+    
+    # Get all users who sent messages in last 5 minutes (considered "active")
+    five_mins_ago = int(time.time()) - 300
+    
+    c.execute("""
+        SELECT DISTINCT
+            g.user_id,
+            u.username,
+            u.avatar,
+            u.avatar_data,
+            (SELECT COALESCE(MAX(pl.tier), 0)
+             FROM dom_user_miners m
+             JOIN dom_mining_plans pl ON pl.id = m.plan_id
+             WHERE m.user_id = u.user_id) AS status_level
+        FROM dom_global_chat g
+        LEFT JOIN dom_users u ON u.user_id = g.user_id
+        WHERE g.created_at > %s
+    """, (five_mins_ago,))
+    
+    rows = c.fetchall()
+    release_db(conn)
+    
+    if not rows:
+        return jsonify({"ok": True, "hot_user": None})
+    
+    # Filter only status 6+ users
+    eligible = [r for r in rows if int(r[4] or 0) >= 6]
+    
+    if not eligible:
+        return jsonify({"ok": True, "hot_user": None})
+    
+    # Find highest status
+    max_status = max(int(r[4] or 0) for r in eligible)
+    
+    # Get all users with max status
+    top_users = [r for r in eligible if int(r[4] or 0) == max_status]
+    
+    # Random choice if multiple
+    import random
+    chosen = random.choice(top_users)
+    
+    avatar_url = chosen[3] or chosen[2] or "/portal/default.png"
+    
+    return jsonify({
+        "ok": True,
+        "hot_user": {
+            "user_id": chosen[0],
+            "username": chosen[1] or f"User {chosen[0]}",
+            "avatar": avatar_url,
+            "status_level": int(chosen[4] or 0)
+        }
+    })
 
 @app_web.route("/api/global/send", methods=["POST"])
 def api_global_send():
