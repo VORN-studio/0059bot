@@ -313,7 +313,7 @@ function closeConfirm() {
         initAvatarUpload();
         initTabs();
         initChatEvents();
-
+        initSubTabs();
 
 
 
@@ -360,17 +360,16 @@ function initTabs() {
             const dmBox = document.getElementById("dm-chat");
 
                 if (tabId === "social") {
-                    loadGlobalChat();
-                    startHotUserRefresh();
-                    pingOnline(); // ✅ Instant ping when entering
+                    // Don't auto-start, sub-tabs will handle it
                 } else {
                     stopHotUserRefresh();
-                    pingOffline(); // ✅ Mark offline when leaving
+                    pingOffline();
                 }
 
         });
     });
 }
+
 
 
 function initChatEvents() {
@@ -389,6 +388,8 @@ function initChatEvents() {
         });
     }
 
+    
+    
 
     if (globalInput) {
         globalInput.addEventListener("keypress", e => {
@@ -412,6 +413,32 @@ function initChatEvents() {
             if (e.key === "Enter") sendDM();
         });
     }
+}
+
+// ✅ ՆՈՐ ՖՈՒՆԿՑԻԱ - Sub-tab switching
+function initSubTabs() {
+    document.querySelectorAll(".sub-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".sub-btn").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".sub-page").forEach(p => p.classList.remove("active"));
+
+            btn.classList.add("active");
+            const subId = btn.dataset.sub;
+
+            const subPage = document.getElementById(subId);
+            if (subPage) subPage.classList.add("active");
+
+            // ✅ Hot User tracking միայն Global Chat-ի համար
+            if (subId === "chat") {
+                loadGlobalChat();
+                startHotUserRefresh();
+                pingOnline();
+            } else {
+                stopHotUserRefresh();
+                pingOffline();
+            }
+        });
+    });
 }
 
 async function loadDMList() {
