@@ -174,6 +174,7 @@ let REPLY_TO_USERNAME = null;
 let CURRENT_TAB = "feed";
 let CURRENT_DM_TARGET = null;
 let CONFIRM_ACTION = null;
+let CURRENT_USER_STATUS = 0;
 
 socket.on("global_trim", (data) => {
   const keep = data.keep || 30;
@@ -366,7 +367,10 @@ function initChatEvents() {
     const globalInput = document.getElementById("global-input");
     if (globalInput) {
         globalInput.addEventListener("keypress", e => {
-            if (e.key === "Enter") sendGlobalMessage();
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendGlobalMessage();
+            }
         });
     }
 
@@ -457,6 +461,8 @@ async function loadProfile() {
                 setUsername(user.username || "");
 
         decorateUsername(user.status_level || 0, user.status_name || "None");
+        CURRENT_USER_STATUS = user.status_level || 0;
+        updateCharCounter(); // Update counter with correct limit
     } catch (e) {
         console.error("loadProfile error:", e);
     }
@@ -2253,15 +2259,29 @@ function cancelReply() {
 
 function updateCharCounter() {
     const input = document.getElementById("global-input");
-    if (!input) return;
+    const counter = document.getElementById("global-char-count");
+    
+    if (!input || !counter) return;
     
     const length = input.value.length;
     
     // Get user status (պետք է global variable լինի)
     const maxLength = CURRENT_USER_STATUS >= 5 ? 500 : 200;
     
-    // Show warning if approaching limit
+    counter.innerText = `${length}/${maxLength}`;
+    
+    // Change color if approaching limit
+    if (length > maxLength * 0.9) {
+        counter.style.color = "#ef4444"; // red
+    } else if (length > maxLength * 0.7) {
+        counter.style.color = "#f59e0b"; // orange
+    } else {
+        counter.style.color = "#888"; // gray
+    }
+    
+    // Prevent typing beyond limit
     if (length > maxLength) {
         input.value = input.value.slice(0, maxLength);
+        counter.innerText = `${maxLength}/${maxLength}`;
     }
 }
