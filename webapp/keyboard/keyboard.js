@@ -91,14 +91,27 @@ console.log('🎹 Custom Keyboard loading...');
 
     function handleCopy() {
         if (!currentInput) return;
+        
+        const value = currentInput.value || '';
+        
+        // If no selection, copy all text
+        if (value.length === 0) {
+            showToast('⚠️ Nothing to copy');
+            return;
+        }
+        
         const start = currentInput.selectionStart || 0;
         const end = currentInput.selectionEnd || 0;
+        
         if (start !== end) {
-            clipboardText = currentInput.value.substring(start, end);
-            showToast('📋 Copied');
+            // Copy selected text
+            clipboardText = value.substring(start, end);
         } else {
-            showToast('⚠️ Select text first');
+            // Copy all text if nothing selected
+            clipboardText = value;
         }
+        
+        showToast('📋 Copied: ' + clipboardText.substring(0, 20) + (clipboardText.length > 20 ? '...' : ''));
     }
 
     function handlePaste() {
@@ -112,17 +125,25 @@ console.log('🎹 Custom Keyboard loading...');
 
     function handleCut() {
         if (!currentInput) return;
+        
+        const value = currentInput.value || '';
         const start = currentInput.selectionStart || 0;
         const end = currentInput.selectionEnd || 0;
+        
         if (start !== end) {
-            clipboardText = currentInput.value.substring(start, end);
-            currentInput.value = currentInput.value.substring(0, start) + currentInput.value.substring(end);
+            // Cut selected text
+            clipboardText = value.substring(start, end);
+            currentInput.value = value.substring(0, start) + value.substring(end);
             currentInput.selectionStart = currentInput.selectionEnd = start;
-            currentInput.dispatchEvent(new Event('input', { bubbles: true }));
-            showToast('✂️ Cut');
         } else {
-            showToast('⚠️ Select text first');
+            // Cut all text if nothing selected
+            clipboardText = value;
+            currentInput.value = '';
+            currentInput.selectionStart = currentInput.selectionEnd = 0;
         }
+        
+        currentInput.dispatchEvent(new Event('input', { bubbles: true }));
+        showToast('✂️ Cut: ' + clipboardText.substring(0, 20) + (clipboardText.length > 20 ? '...' : ''));
     }
 
     function showToast(message) {
@@ -339,6 +360,40 @@ console.log('🎹 Custom Keyboard loading...');
         setTimeout(() => {
             openKeyboard(target);
         }, 100);
+    });
+
+    document.addEventListener('focusin', (e) => {
+        const target = e.target;
+        
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') return;
+        if (target.type === 'password') return;
+        if (target.readOnly || target.disabled) return;
+
+        e.preventDefault();
+        target.blur();
+        
+        setTimeout(() => {
+            openKeyboard(target);
+        }, 100);
+    });
+
+    // Block system context menu
+    document.addEventListener('contextmenu', (e) => {
+        const target = e.target;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    });
+
+    // Block long press selection
+    document.addEventListener('selectstart', (e) => {
+        const target = e.target;
+        if ((target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && currentInput) {
+            e.preventDefault();
+            return false;
+        }
     });
 
     if (document.readyState === 'loading') {
