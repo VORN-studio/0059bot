@@ -847,3 +847,25 @@ body {
 .chat-date-separator::after {
     right: 5%;
 }
+
+/* ========== CONTEXT MENU ========== */
+.context-menu-btn {
+    width: 100%;
+    padding: 12px;
+    margin: 6px 0;
+    border: none;
+    border-radius: 10px;
+    background: #3a8bff;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.context-menu-btn:hover {
+    background: #508dff;
+}
+
+.context-menu-btn:active {
+    transform: scale(0.95);
+}

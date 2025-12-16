@@ -2102,20 +2102,7 @@ function startReply(el) {
     }
 }
 
-function setReply(msg) {
-    REPLY_TO = msg.id;
 
-    const box = document.getElementById("reply-box");
-    const text = document.getElementById("reply-text");
-
-    if (!box || !text) return;
-
-    text.innerText = msg.text.slice(0, 80);
-    box.style.display = "block";
-
-    const input = document.getElementById("dm-input");
-    if (input) input.focus();
-}
 
 function cancelReply() {
     REPLY_TO = null;
@@ -2123,25 +2110,38 @@ function cancelReply() {
     if (box) box.style.display = "none";
 }
 
-// ========== SWIPE TO SHOW TIME + REPLY ==========
+// ========== SWIPE + LONG PRESS MENU ==========
 document.addEventListener("DOMContentLoaded", () => {
     let startX = 0;
     let currentWrapper = null;
+    let longPressTimer = null;
+    let isLongPress = false;
 
+    // Touch start
     document.addEventListener("touchstart", (e) => {
         const wrapper = e.target.closest(".chat-message-wrapper");
         if (!wrapper) return;
         
         currentWrapper = wrapper;
         startX = e.touches[0].clientX;
+        isLongPress = false;
+
+        // Long press detection (500ms)
+        longPressTimer = setTimeout(() => {
+            isLongPress = true;
+            showContextMenu(wrapper);
+        }, 500);
     });
 
+    // Touch move
     document.addEventListener("touchmove", (e) => {
+        clearTimeout(longPressTimer);
+        
         if (!currentWrapper) return;
         
         const deltaX = e.touches[0].clientX - startX;
-
-        // Swipe RIGHT → նամակը գնում է աջ, ժամը երևում է ձախից
+        
+        // Swipe RIGHT → ցույց տալ ժամը
         if (deltaX > 50) {
             currentWrapper.classList.add("swiped");
         } else {
@@ -2149,21 +2149,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Touch end
     document.addEventListener("touchend", () => {
-        if (!currentWrapper) return;
-
-        const canReply = currentWrapper.dataset.canReply === "true";
+        clearTimeout(longPressTimer);
         
-        // DM-ում reply trigger
-        if (canReply && currentWrapper.classList.contains("swiped")) {
-            const msgId = currentWrapper.dataset.msgId;
-            const msgText = currentWrapper.dataset.msgText;
-            const sender = currentWrapper.dataset.sender;
-            const username = currentWrapper.dataset.username;
-            
-            if (msgId && msgText) {
-                setReply(msgId, msgText, username);
-            }
+        if (!currentWrapper || isLongPress) {
+            currentWrapper = null;
+            return;
         }
 
         setTimeout(() => {
@@ -2174,3 +2166,85 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 2000);
     });
 });
+
+// ========== CONTEXT MENU FUNCTIONS ==========
+function showContextMenu(wrapper) {
+    const menu = document.getElementById("message-context-menu");
+    if (!menu) return;
+
+    const canReply = wrapper.dataset.canReply === "true";
+    const msgId = wrapper.dataset.msgId;
+    const msgText = wrapper.dataset.msgText;
+    const username = wrapper.dataset.username;
+
+    // Reply button visibility
+    const replyBtn = document.getElementById("ctx-reply");
+    if (replyBtn) {
+        replyBtn.style.display = canReply ? "block" : "none";
+        replyBtn.onclick = () => {
+            if (msgId && msgText) {
+                setReply(msgId, msgText, username);
+            }
+            closeContextMenu();
+        };
+    }
+
+    // Copy button
+    const copyBtn = document.getElementById("ctx-copy");
+    if (copyBtn) {
+        copyBtn.onclick = () => {
+            copyToClipboard(msgText || "");
+            closeContextMenu();
+        };
+    }
+
+    // Cancel button
+    const cancelBtn = document.getElementById("ctx-cancel");
+    if (cancelBtn) {
+        cancelBtn.onclick = closeContextMenu;
+    }
+
+    menu.classList.remove("hidden");
+}
+
+function closeContextMenu() {
+    const menu = document.getElementById("message-context-menu");
+    if (menu) menu.classList.add("hidden");
+}
+
+function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log("✅ Copied to clipboard");
+        });
+    } else {
+        // Fallback
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+    }
+}
+
+function setReply(msgId, text, username) {
+    REPLY_TO = msgId;
+    REPLY_TO_USERNAME = username;
+    
+    const box = document.getElementById("reply-box");
+    const replyText = document.getElementById("reply-text");
+    
+    if (box && replyText) {
+        replyText.innerText = `↩️ ${username}: ${text.slice(0, 50)}${text.length > 50 ? '...' : ''}`;
+        box.style.display = "block";
+    }
+}
+
+function cancelReply() {
+    REPLY_TO = null;
+    REPLY_TO_USERNAME = null;
+    
+    const box = document.getElementById("reply-box");
+    if (box) box.style.display = "none";
+}
