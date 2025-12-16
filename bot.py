@@ -289,6 +289,54 @@ def api_global_send():
     conn = db()
     c = conn.cursor()
     
+    # Get user status
+    c.execute("""
+        SELECT COALESCE(MAX(pl.tier), 0)
+        FROM dom_user_miners m
+        JOIN dom_mining_plans pl ON pl.id = m.plan_id
+        WHERE m.user_id = %s
+    """, (user_id,))
+    
+    status_level = int(c.fetchone()[0] or 0)
+    
+    # ✅ CHECK LENGTH LIMIT
+    max_length = 500 if status_level >= 5 else 200
+    if len(message) > max_length:
+        release_db(conn)
+        return jsonify({
+            "ok": False,
+            "error": "too_long",
+            "max_length": max_length
+        }), 400
+    
+    # ✅ CHECK COOLDOWN (Status 0-4 only)
+    if status_level < 5:
+        c.execute("""
+            SELECT last_message_at FROM dom_global_chat_cooldowns
+            WHERE user_id = %s
+        """, (user_id,))
+        
+        row = c.fetchone()
+        if row:
+            last_time = int(row[0])
+            elapsed = now - last_time
+            
+            if elapsed < 10:  # 10 second cooldown
+                release_db(conn)
+                return jsonify({
+                    "ok": False,
+                    "error": "cooldown",
+                    "wait": 10 - elapsed
+                }), 429
+        
+        # Update cooldown
+        c.execute("""
+            INSERT INTO dom_global_chat_cooldowns (user_id, last_message_at)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id) DO UPDATE SET last_message_at = %s
+        """, (user_id, now, now))
+        conn.commit()
+    
     # Insert message
     c.execute("""
         INSERT INTO dom_global_chat (user_id, message, created_at)
@@ -300,18 +348,13 @@ def api_global_send():
     
     # Get user info
     c.execute("""
-        SELECT username, avatar, avatar_data,
-               (SELECT COALESCE(MAX(pl.tier),0)
-                FROM dom_user_miners m
-                JOIN dom_mining_plans pl ON pl.id = m.plan_id
-                WHERE m.user_id = %s) AS status_level
+        SELECT username, avatar, avatar_data
         FROM dom_users WHERE user_id = %s
-    """, (user_id, user_id))
+    """, (user_id,))
     
     u = c.fetchone()
     username = u[0] if u else f"User {user_id}"
     avatar = (u[2] or u[1] or "/portal/default.png") if u else "/portal/default.png"
-    status_level = int(u[3] or 0) if u else 0
     
     conn.commit()
     
@@ -328,7 +371,7 @@ def api_global_send():
     conn.commit()
     release_db(conn)
     
-    
+    # Broadcast to all
     realtime_emit("global_new", {
         "id": msg_id,
         "user_id": user_id,
@@ -1492,6 +1535,14 @@ def init_db():
             status TEXT DEFAULT 'auto_credited',
             created_at BIGINT,
             processed_at BIGINT
+        )
+    """)
+
+    # Global chat cooldowns table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_global_chat_cooldowns (
+            user_id BIGINT PRIMARY KEY,
+            last_message_at BIGINT NOT NULL
         )
     """)
 

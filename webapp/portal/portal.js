@@ -370,6 +370,18 @@ function initChatEvents() {
         });
     }
 
+
+    if (globalInput) {
+        globalInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") sendGlobalMessage();
+        });
+        
+        // ✅ Character counter
+        globalInput.addEventListener("input", () => {
+            updateCharCounter();
+        });
+    }
+
     const dmSend = document.getElementById("dm-send");
     if (dmSend) {
         dmSend.addEventListener("click", sendDM);
@@ -500,8 +512,6 @@ async function sendGlobalMessage() {
     const text = input.value.trim();
     if (!text || !viewerId) return;
 
-    input.value = "";
-
     try {
         const res = await fetch("/api/global/send", {
             method: "POST",
@@ -513,15 +523,25 @@ async function sendGlobalMessage() {
         });
 
         const data = await res.json();
+        
         if (!data.ok) {
-            console.error("❌ Failed to send global message");
+            if (data.error === "cooldown") {
+                openInfo("⏱️ Cooldown", `Please wait ${data.wait} seconds before sending another message.`);
+            } else if (data.error === "too_long") {
+                openInfo("📏 Too Long", `Message too long! Max ${data.max_length} characters.`);
+            } else {
+                console.error("❌ Failed to send:", data.error);
+            }
+            return;
         }
+
+        // Success - clear input
+        input.value = "";
+
     } catch (e) {
         console.error("❌ sendGlobalMessage error:", e);
     }
 }
-
-
 
 
 async function openDM(targetId) {
@@ -2229,4 +2249,19 @@ function cancelReply() {
     
     const box = document.getElementById("reply-box");
     if (box) box.style.display = "none";
+}
+
+function updateCharCounter() {
+    const input = document.getElementById("global-input");
+    if (!input) return;
+    
+    const length = input.value.length;
+    
+    // Get user status (պետք է global variable լինի)
+    const maxLength = CURRENT_USER_STATUS >= 5 ? 500 : 200;
+    
+    // Show warning if approaching limit
+    if (length > maxLength) {
+        input.value = input.value.slice(0, maxLength);
+    }
 }
