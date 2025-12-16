@@ -46,7 +46,8 @@ socket.on("global_new", (msg) => {
         username: msg.username || ("User " + (msg.user_id ?? msg.sender)),
         status_level: msg.status_level || 0,
         avatar: msg.avatar || "",
-        created_at: msg.time || Date.now() / 1000
+        created_at: msg.time || Date.now() / 1000,
+        highlighted: msg.highlighted || false  // ✅ Add highlighted
     };
 
     LOG.event("✅ normalized global msg:", fixedMsg);
@@ -504,7 +505,20 @@ async function loadProfile() {
 
         decorateUsername(user.status_level || 0, user.status_name || "None");
         CURRENT_USER_STATUS = user.status_level || 0;
-        updateCharCounter(); // Update counter with correct limit
+        updateCharCounter();
+
+        // ✅ Show highlight checkbox for Status 7+
+        const highlightCheckbox = document.getElementById("highlight-checkbox");
+        const highlightLabel = document.getElementById("highlight-label");
+
+        if (CURRENT_USER_STATUS >= 7) {
+            if (highlightCheckbox) highlightCheckbox.style.display = "inline-block";
+            if (highlightLabel) highlightLabel.style.display = "inline-block";
+        } else {
+            if (highlightCheckbox) highlightCheckbox.style.display = "none";
+            if (highlightLabel) highlightLabel.style.display = "none";
+        }
+        
     } catch (e) {
         console.error("loadProfile error:", e);
     }
@@ -563,16 +577,22 @@ async function sendGlobalMessage() {
     if (!input) return;
 
     const text = input.value.trim();
-    if (!text || !viewerId) return;
+if (!text || !viewerId) return;
+
+    // ✅ Get highlight checkbox
+    const highlightCheckbox = document.getElementById("highlight-checkbox");
+    const highlight = highlightCheckbox ? highlightCheckbox.checked : false;
 
     try {
         const res = await fetch("/api/global/send", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            
             body: JSON.stringify({
                 user_id: viewerId,
-                message: text
-            })
+                message: text,
+                highlight: highlight
+            })  
         });
 
         const data = await res.json();
@@ -590,7 +610,7 @@ async function sendGlobalMessage() {
 
         // Success - clear input
         input.value = "";
-
+        if (highlightCheckbox) highlightCheckbox.checked = false;
     } catch (e) {
         console.error("❌ sendGlobalMessage error:", e);
     }
@@ -1804,6 +1824,9 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
         minute: '2-digit' 
     });
 
+    // ✅ Highlight class
+    const highlightClass = msg.highlighted ? "highlighted-message" : "";
+
     let replyHtml = "";
     if (msg.reply_to && msg.reply_to_text) {
         replyHtml = `
@@ -1821,11 +1844,10 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
         `;
     }
 
-    // DM-ում reply կա, Global-ում չկա
     const canReply = isDM;
 
     return `
-    <div class="chat-message-wrapper" 
+    <div class="chat-message-wrapper ${highlightClass}" 
          data-time="${timeStr}"
          data-can-reply="${canReply}"
          data-msg-id="${msg.id || ''}"

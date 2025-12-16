@@ -248,6 +248,7 @@ def api_global_messages():
              WHERE m.user_id = u.user_id) AS status_level,
             g.message,
             g.created_at
+            g.highlighted
         FROM dom_global_chat g
         LEFT JOIN dom_users u ON u.user_id = g.user_id
         ORDER BY g.id DESC
@@ -268,7 +269,8 @@ def api_global_messages():
             "avatar": avatar_url,
             "status_level": int(r[5] or 0),
             "message": r[6],
-            "created_at": int(r[7])
+            "created_at": int(r[7]),
+            "highlighted": bool(r[8] if len(r) > 8 else False)
         })
     
     messages.reverse()  # oldest first
@@ -444,11 +446,19 @@ def api_global_send():
         conn.commit()
     
     # Insert message
+    # ✅ Check if highlight is requested
+    highlight = data.get("highlight", False)
+
+    # Only Status 7+ can highlight
+    if highlight and status_level < 7:
+        highlight = False
+
+    # Insert message
     c.execute("""
-        INSERT INTO dom_global_chat (user_id, message, created_at)
-        VALUES (%s, %s, %s)
+        INSERT INTO dom_global_chat (user_id, message, created_at, highlighted)
+        VALUES (%s, %s, %s, %s)
         RETURNING id
-    """, (user_id, message, now))
+    """, (user_id, message, now, highlight))
     
     msg_id = c.fetchone()[0]
     
@@ -667,7 +677,7 @@ def api_message_history():
             "username": r[2] or f"User {r[1]}",
             "avatar": sender_avatar,
             "status_level": int(r[5] or 0),
-
+            
             "receiver": r[6],
             "receiver_username": r[7] or f"User {r[6]}",
             "receiver_avatar": receiver_avatar,
@@ -677,6 +687,7 @@ def api_message_history():
             "reply_to": r[12],
             "reply_to_text": r[13],
             "time": r[14],
+            "highlighted": bool(r[15] if len(r) > 8 else False),
         })
 
     messages.reverse()
@@ -1661,6 +1672,12 @@ def init_db():
         )
     """)
     
+    # Add highlight column to global chat
+    c.execute("""
+        ALTER TABLE dom_global_chat 
+        ADD COLUMN IF NOT EXISTS highlighted BOOLEAN DEFAULT FALSE
+    """)
+
     # Global chat online users
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_global_chat_online (
