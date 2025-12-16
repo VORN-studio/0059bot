@@ -328,7 +328,7 @@ def api_global_send():
     conn.commit()
     release_db(conn)
     
-    # Broadcast to all
+    
     realtime_emit("global_new", {
         "id": msg_id,
         "user_id": user_id,
@@ -337,7 +337,7 @@ def api_global_send():
         "status_level": status_level,
         "message": message,
         "time": now
-    }, room="global_chat")
+    }, room="global")
     
     return jsonify({"ok": True, "id": msg_id})
 
@@ -735,80 +735,6 @@ def on_join_user(data):
     if uid:
         join_room(f"user_{uid}")
         logger.info(f"👤 joined user_{uid}")
-
-
-@socketio.on("global_send")
-def handle_global_send(data):
-    try:
-        logger.info("🌍 global_send received:")
-        logger.info(data)
-
-        user_id = int(data.get("user_id", 0))
-        message = (data.get("message") or "").strip()
-
-        if not user_id or not message:
-            logger.warning("⚠️ global_send missing fields")
-            return
-
-        now = int(time.time())
-
-        # 1️⃣ Պահում ենք DB-ում
-        conn = db()
-        c = conn.cursor()
-
-        c.execute("""
-            INSERT INTO dom_global_chat (user_id, message, created_at)
-            VALUES (%s, %s, %s)
-        """, (user_id, message, now))
-        conn.commit()
-
-        # 2️⃣ Թրիմ՝ պահում ենք միայն վերջին 30-ը
-        trim_global_chat(30)
-
-        # 3️⃣ Վերցնում ենք user info
-        c.execute("""
-            SELECT 
-                u.username,
-                u.avatar,
-                u.avatar_data,
-                COALESCE(
-                    (SELECT MAX(pl.tier)
-                     FROM dom_user_miners m
-                     JOIN dom_mining_plans pl ON pl.id = m.plan_id
-                     WHERE m.user_id = u.user_id),
-                0)
-            FROM dom_users u
-            WHERE u.user_id = %s
-        """, (user_id,))
-
-        row = c.fetchone()
-        release_db(conn)
-
-        if row:
-            username, avatar, avatar_data, status_level = row
-        else:
-            username = f"User {user_id}"
-            avatar = "/portal/default.png"
-            avatar_data = None
-            status_level = 0
-
-        msg = {
-            "user_id": user_id,
-            "username": username,
-            "avatar": avatar_data or avatar or "/portal/default.png",
-            "status_level": int(status_level),
-            "text": message,
-            "time": now,
-        }
-
-        # 4️⃣ Realtime broadcast
-        socketio.emit("global_new", msg, room="global")
-
-        logger.info("📢 global_new emitted")
-
-    except Exception:
-        logger.exception("❌ ERROR in global_send")
-
 
 
 
