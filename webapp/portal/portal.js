@@ -178,6 +178,7 @@ const isOwner =
     profileId &&
     String(viewerId) === String(profileId);
 
+let hotUserInterval = null;
 let REPLY_TO = null;
 let REPLY_TO_USERNAME = null;
 let CURRENT_TAB = "feed";
@@ -2303,69 +2304,22 @@ function updateCharCounter() {
     }
 }
 
-// ========== HOT USER DISPLAY ==========
-let hotUserInterval = null;
-
 async function loadHotUser() {
     try {
         const res = await fetch("/api/global/hot-user");
         const data = await res.json();
         
+        console.log("🔥 Hot user data:", data);
+        
         const banner = document.getElementById("hot-user-banner");
         const avatar = document.getElementById("hot-user-avatar");
         const name = document.getElementById("hot-user-name");
         
-        if (!banner || !avatar || !name) return;
-        
-        if (data.ok && data.hot_user) {
-            const user = data.hot_user;
-            
-            avatar.src = user.avatar;
-            name.innerText = user.username;
-            name.className = `status-${user.status_level}`;
-            
-            banner.style.display = "flex";
-        } else {
-            banner.style.display = "none";
+        if (!banner || !avatar || !name) {
+            console.error("❌ Hot user elements not found");
+            return;
         }
         
-    } catch (e) {
-        console.error("❌ loadHotUser error:", e);
-    }
-}
-
-function startHotUserRefresh() {
-    // Clear previous interval
-    if (hotUserInterval) {
-        clearInterval(hotUserInterval);
-    }
-    
-    // Refresh every 60 seconds
-    hotUserInterval = setInterval(() => {
-        loadHotUser();
-    }, 60000);
-}
-
-function stopHotUserRefresh() {
-    if (hotUserInterval) {
-        clearInterval(hotUserInterval);
-        hotUserInterval = null;
-    }
-}
-
-
-
-async function loadHotUser() {
-    try {
-        const res = await fetch("/api/global/hot-user");
-        const data = await res.json();
-        
-        const banner = document.getElementById("hot-user-banner");
-        const avatar = document.getElementById("hot-user-avatar");
-        const name = document.getElementById("hot-user-name");
-        
-        if (!banner || !avatar || !name) return;
-        
         if (data.ok && data.hot_user) {
             const user = data.hot_user;
             
@@ -2374,8 +2328,10 @@ async function loadHotUser() {
             name.className = `status-${user.status_level}`;
             
             banner.style.display = "flex";
+            console.log("✅ Hot user displayed:", user.username);
         } else {
             banner.style.display = "none";
+            console.log("ℹ️ No hot user found");
         }
         
     } catch (e) {
@@ -2388,14 +2344,22 @@ function startHotUserRefresh() {
         clearInterval(hotUserInterval);
     }
     
+    loadHotUser(); // Initial load
+    
     hotUserInterval = setInterval(() => {
         loadHotUser();
     }, 60000);
+    
+    console.log("🔄 Hot user refresh started");
 }
 
 function stopHotUserRefresh() {
     if (hotUserInterval) {
         clearInterval(hotUserInterval);
         hotUserInterval = null;
+        console.log("⏹️ Hot user refresh stopped");
     }
 }
+
+
+
