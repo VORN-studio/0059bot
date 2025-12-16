@@ -800,7 +800,7 @@ body {
 
 .chat-message-time {
     position: absolute;
-    left: 0;
+    left: -50px;
     top: 50%;
     transform: translateY(-50%);
     font-size: 11px;
@@ -809,6 +809,7 @@ body {
     transition: opacity 0.3s ease;
     pointer-events: none;
     z-index: 1;
+    white-space: nowrap;
 }
 
 .chat-message-wrapper.swiped {
