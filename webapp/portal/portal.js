@@ -451,92 +451,74 @@ async function loadProfile() {
 }
 
 async function loadGlobalChat() {
-    const chatPage = document.getElementById("social");
-    if (!chatPage || !chatPage.classList.contains("active")) {
-        LOG.warn("Global chat load skipped (tab inactive)");
-        return;
-    }
-
-    LOG.info("🔄 Loading global chat history");
+    const box = document.getElementById("global-messages");
+    if (!box) return;
 
     try {
-        const res = await fetch(`/api/global/history`);
+        const res = await fetch("/api/global/messages");
         const data = await res.json();
 
-        if (!data.ok) {
-            LOG.error("❌ global history api failed", data);
-            return;
-        }
-
-        const box = document.getElementById("global-messages");
-        if (!box) {
-            LOG.error("❌ global-messages not found");
-            return;
-        }
+        if (!data.ok || !data.messages) return;
 
         box.innerHTML = "";
 
-        
-
+        const messages = data.messages;
         let lastDate = null;
 
         messages.forEach(m => {
             const msgDate = new Date(m.created_at * 1000);
             const dateKey = msgDate.toLocaleDateString('hy-AM');
-            
+
             if (dateKey !== lastDate) {
                 lastDate = dateKey;
-                
+
                 const today = new Date().toLocaleDateString('hy-AM');
                 const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('hy-AM');
-                
+
                 let label = dateKey;
                 if (dateKey === today) label = "Այսօր";
                 else if (dateKey === yesterday) label = "Երեկ";
-                
+
                 box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
             }
-            
+
             const isMe = String(m.user_id) === String(CURRENT_UID);
             box.innerHTML += renderChatMessage(m, isMe, false);
         });
 
         box.scrollTop = box.scrollHeight;
-        LOG.ui("✅ Global history rendered");
     } catch (e) {
-        LOG.error("❌ loadGlobalChat error:", e);
+        console.error("❌ loadGlobalChat error:", e);
     }
 }
 
 
 async function sendGlobalMessage() {
     const input = document.getElementById("global-input");
-    if (!input) {
-        LOG.error("❌ global-input not found");
-        return;
-    }
+    if (!input) return;
 
     const text = input.value.trim();
-    if (!text) {
-        LOG.warn("⚠️ empty global message");
-        return;
-    }
-
-    if (!CURRENT_UID) {
-        LOG.error("❌ CURRENT_UID missing");
-        return;
-    }
-
-    const payload = {
-        user_id: CURRENT_UID,
-        message: text
-    };
-
-    LOG.event("📤 sending global message:", payload);
-
-    socket.emit("global_send", payload);
+    if (!text || !viewerId) return;
 
     input.value = "";
+
+    try {
+        const res = await fetch("/api/global/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: viewerId,
+                message: text
+            })
+        });
+
+        const data = await res.json();
+        if (!data.ok) {
+            console.error("❌ Failed to send global message");
+        }
+    } catch (e) {
+        console.error("❌ sendGlobalMessage error:", e);
+    }
 }
 
 

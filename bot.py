@@ -227,6 +227,119 @@ def api_message_partners():
     release_db(conn)
     return jsonify({"ok": True, "users": users})
 
+# ========== GLOBAL CHAT API ==========
+
+@app_web.route("/api/global/messages")
+def api_global_messages():
+    """Վերջին 30 global chat նամակները"""
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        SELECT 
+            g.id,
+            g.user_id,
+            u.username,
+            u.avatar,
+            u.avatar_data,
+            (SELECT COALESCE(MAX(pl.tier),0)
+             FROM dom_user_miners m
+             JOIN dom_mining_plans pl ON pl.id = m.plan_id
+             WHERE m.user_id = u.user_id) AS status_level,
+            g.message,
+            g.created_at
+        FROM dom_global_chat g
+        LEFT JOIN dom_users u ON u.user_id = g.user_id
+        ORDER BY g.id DESC
+        LIMIT 30
+    """)
+    
+    rows = c.fetchall()
+    release_db(conn)
+    
+    messages = []
+    for r in rows:
+        avatar_url = r[4] or r[3] or "/portal/default.png"
+        
+        messages.append({
+            "id": r[0],
+            "user_id": r[1],
+            "username": r[2] or f"User {r[1]}",
+            "avatar": avatar_url,
+            "status_level": int(r[5] or 0),
+            "message": r[6],
+            "created_at": int(r[7])
+        })
+    
+    messages.reverse()  # oldest first
+    return jsonify({"ok": True, "messages": messages})
+
+
+@app_web.route("/api/global/send", methods=["POST"])
+def api_global_send():
+    """Global chat նամակ ուղարկել"""
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    message = data.get("message", "").strip()
+    
+    if user_id == 0 or message == "":
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+    
+    now = int(time.time())
+    conn = db()
+    c = conn.cursor()
+    
+    # Insert message
+    c.execute("""
+        INSERT INTO dom_global_chat (user_id, message, created_at)
+        VALUES (%s, %s, %s)
+        RETURNING id
+    """, (user_id, message, now))
+    
+    msg_id = c.fetchone()[0]
+    
+    # Get user info
+    c.execute("""
+        SELECT username, avatar, avatar_data,
+               (SELECT COALESCE(MAX(pl.tier),0)
+                FROM dom_user_miners m
+                JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                WHERE m.user_id = %s) AS status_level
+        FROM dom_users WHERE user_id = %s
+    """, (user_id, user_id))
+    
+    u = c.fetchone()
+    username = u[0] if u else f"User {user_id}"
+    avatar = (u[2] or u[1] or "/portal/default.png") if u else "/portal/default.png"
+    status_level = int(u[3] or 0) if u else 0
+    
+    conn.commit()
+    
+    # Clean old messages (keep last 30)
+    c.execute("""
+        DELETE FROM dom_global_chat
+        WHERE id NOT IN (
+            SELECT id FROM dom_global_chat
+            ORDER BY id DESC
+            LIMIT 30
+        )
+    """)
+    
+    conn.commit()
+    release_db(conn)
+    
+    # Broadcast to all
+    realtime_emit("global_new", {
+        "id": msg_id,
+        "user_id": user_id,
+        "username": username,
+        "avatar": avatar,
+        "status_level": status_level,
+        "message": message,
+        "time": now
+    }, room="global_chat")
+    
+    return jsonify({"ok": True, "id": msg_id})
 
 @app_web.route("/api/post/<int:post_id>")
 def api_get_single_post(post_id):
@@ -1455,6 +1568,16 @@ def init_db():
             processed_at BIGINT
         )
     """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_global_chat (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            message TEXT NOT NULL,
+            created_at BIGINT NOT NULL
+        )
+    """)
+    
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_dm_last_seen (
