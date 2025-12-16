@@ -688,7 +688,6 @@ def api_message_history():
             "reply_to": r[12],
             "reply_to_text": r[13],
             "time": r[14],
-            "highlighted": bool(r[15] if len(r) > 8 else False),
         })
 
     messages.reverse()
