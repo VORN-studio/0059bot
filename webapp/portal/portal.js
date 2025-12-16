@@ -361,9 +361,11 @@ function initTabs() {
 
                 if (tabId === "social") {
                     loadGlobalChat();
-                    startHotUserRefresh(); // ✅ Start auto-refresh
+                    startHotUserRefresh();
+                    pingOnline(); // ✅ Instant ping when entering
                 } else {
-                    stopHotUserRefresh(); // ✅ Stop when leaving
+                    stopHotUserRefresh();
+                    pingOffline(); // ✅ Mark offline when leaving
                 }
 
         });
@@ -2369,12 +2371,29 @@ async function pingOnline() {
     }
 }
 
+async function pingOffline() {
+    if (!viewerId) return;
+    
+    try {
+        await fetch("/api/global/offline", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: viewerId })
+        });
+        console.log("📴 Marked offline");
+    } catch (e) {
+        console.error("❌ Offline ping error:", e);
+    }
+}
+
 function stopHotUserRefresh() {
     if (hotUserInterval) {
         clearInterval(hotUserInterval);
         hotUserInterval = null;
         console.log("⏹️ Hot user refresh stopped");
     }
+    
+    pingOffline(); // ✅ Mark offline immediately
 }
 
 

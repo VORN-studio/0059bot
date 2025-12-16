@@ -302,7 +302,7 @@ def api_global_hot_user():
         return jsonify({"ok": True, "hot_user": None})
     
     # Filter only status 6+ users
-    eligible = [r for r in rows if int(r[4] or 0) >= 6]
+    eligible = [r for r in rows if int(r[4] or 0) >= 0]
     
     if not eligible:
         return jsonify({"ok": True, "hot_user": None})
@@ -353,6 +353,28 @@ def api_global_ping():
         DELETE FROM dom_global_chat_online
         WHERE last_ping < %s
     """, (now - 15,))
+    
+    conn.commit()
+    release_db(conn)
+    
+    return jsonify({"ok": True})
+
+@app_web.route("/api/global/offline", methods=["POST"])
+def api_global_offline():
+    """User-ը հեռանում է global chat-ից"""
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    
+    if user_id == 0:
+        return jsonify({"ok": False}), 400
+    
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        DELETE FROM dom_global_chat_online
+        WHERE user_id = %s
+    """, (user_id,))
     
     conn.commit()
     release_db(conn)
