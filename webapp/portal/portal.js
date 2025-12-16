@@ -53,7 +53,7 @@ socket.on("global_new", (msg) => {
 
     const isMe = String(fixedMsg.sender) === String(CURRENT_UID);
     const wrapper = document.createElement("div");
-    wrapper.innerHTML = renderChatMessage(fixedMsg, isMe);
+    wrapper.innerHTML = renderChatMessage(fixedMsg, isMe, false);
 
     box.appendChild(wrapper);
     box.scrollTop = box.scrollHeight;
@@ -75,7 +75,7 @@ socket.on("dm_new", (msg) => {
 
     const isMe = String(msg.sender) === String(CURRENT_UID);
     const wrapper = document.createElement("div");
-    wrapper.innerHTML = renderChatMessage(msg, isMe);
+    wrapper.innerHTML = renderChatMessage(msg, isMe, true);
 
     box.appendChild(wrapper);
     box.scrollTop = box.scrollHeight;
@@ -497,11 +497,8 @@ async function loadGlobalChat() {
                 box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
             }
             
-            // ... սա մնում է նույնը
-            const isMe = String(msg.sender) === String(CURRENT_UID);
-            const wrapper = document.createElement("div");
-            wrapper.innerHTML = renderChatMessage(msg, isMe);
-            box.appendChild(wrapper);
+            const isMe = String(m.user_id) === String(CURRENT_UID);
+            box.innerHTML += renderChatMessage(m, isMe, false);
         });
 
         box.scrollTop = box.scrollHeight;
@@ -688,13 +685,8 @@ async function loadDM() {
                 box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
             }
             
-            // ... շարունակում է նույնը
             const isMe = String(m.sender) === String(CURRENT_UID);
-
-            const wrapper = document.createElement("div");
-            wrapper.innerHTML = renderChatMessage(m, isMe);
-
-            box.appendChild(wrapper);
+            box.innerHTML += renderChatMessage(m, isMe, true);
         });
 
 
@@ -1743,7 +1735,7 @@ function renderMessageText(text) {
     return escapeHtml(text);
 }
 
-function renderChatMessage(msg, isMe = false) {
+function renderChatMessage(msg, isMe = false, isDM = false) {
     const align = isMe ? "right" : "left";
     const bgColor = isMe ? "#1e3a8a" : "#1f2937";
     
@@ -1774,9 +1766,17 @@ function renderChatMessage(msg, isMe = false) {
         `;
     }
 
+    // DM-ում reply կա, Global-ում չկա
+    const canReply = isDM;
+
     return `
         <div class="chat-message-wrapper" 
              data-time="${timeStr}"
+             data-can-reply="${canReply}"
+             data-msg-id="${msg.id || ''}"
+             data-msg-text="${(msg.text || msg.message || '').replace(/"/g, '&quot;')}"
+             data-sender="${msg.sender || ''}"
+             data-username="${username.replace(/"/g, '&quot;')}"
              style="margin-bottom: 12px; text-align: ${align};">
             
             <div style="
@@ -2121,7 +2121,7 @@ function cancelReply() {
     if (box) box.style.display = "none";
 }
 
-// ========== SWIPE TO SHOW TIME ==========
+// ========== SWIPE TO SHOW TIME + REPLY ==========
 document.addEventListener("DOMContentLoaded", () => {
     let startX = 0;
     let currentWrapper = null;
@@ -2137,8 +2137,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("touchmove", (e) => {
         if (!currentWrapper) return;
         
-        const deltaX = startX - e.touches[0].clientX;
+        const deltaX = e.touches[0].clientX - startX;
         
+        // Swipe RIGHT (դեպի աջ)
         if (deltaX > 50) {
             currentWrapper.classList.add("swiped");
         } else {
@@ -2147,6 +2148,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.addEventListener("touchend", () => {
+        if (!currentWrapper) return;
+
+        const canReply = currentWrapper.dataset.canReply === "true";
+        
+        // DM-ում reply trigger
+        if (canReply && currentWrapper.classList.contains("swiped")) {
+            const msgId = currentWrapper.dataset.msgId;
+            const msgText = currentWrapper.dataset.msgText;
+            const sender = currentWrapper.dataset.sender;
+            const username = currentWrapper.dataset.username;
+            
+            if (msgId && msgText) {
+                setReply(msgId, msgText, username);
+            }
+        }
+
         setTimeout(() => {
             if (currentWrapper) {
                 currentWrapper.classList.remove("swiped");
