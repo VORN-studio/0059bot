@@ -247,7 +247,7 @@ def api_global_messages():
              JOIN dom_mining_plans pl ON pl.id = m.plan_id
              WHERE m.user_id = u.user_id) AS status_level,
             g.message,
-            g.created_at
+            g.created_at,
             g.highlighted
         FROM dom_global_chat g
         LEFT JOIN dom_users u ON u.user_id = g.user_id
