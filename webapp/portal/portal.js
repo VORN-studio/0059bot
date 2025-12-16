@@ -1770,15 +1770,18 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
     const canReply = isDM;
 
     return `
-        <div class="chat-message-wrapper" 
-             data-time="${timeStr}"
-             data-can-reply="${canReply}"
-             data-msg-id="${msg.id || ''}"
-             data-msg-text="${(msg.text || msg.message || '').replace(/"/g, '&quot;')}"
-             data-sender="${msg.sender || ''}"
-             data-username="${username.replace(/"/g, '&quot;')}"
-             style="margin-bottom: 12px; text-align: ${align};">
-            
+    <div class="chat-message-wrapper" 
+         data-time="${timeStr}"
+         data-can-reply="${canReply}"
+         data-msg-id="${msg.id || ''}"
+         data-msg-text="${(msg.text || msg.message || '').replace(/"/g, '&quot;')}"
+         data-sender="${msg.sender || ''}"
+         data-username="${username.replace(/"/g, '&quot;')}"
+         style="position:relative;">
+        
+        <span class="chat-message-time">${timeStr}</span>
+        
+        <div style="text-align: ${align};">
             <div style="
                 display: inline-block;
                 max-width: 70%;
@@ -1804,10 +1807,9 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                     ${msg.text || msg.message || ""}
                 </div>
             </div>
-
-            <span class="chat-message-time">${timeStr}</span>
         </div>
-    `;
+    </div>
+`;
 }
 
 
@@ -2137,9 +2139,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("touchmove", (e) => {
         if (!currentWrapper) return;
         
-        const deltaX = startX - e.touches[0].clientX;
+        const deltaX = e.touches[0].clientX - startX;
 
-        // Swipe LEFT (քաշում ես աջ, նամակը գնում է ձախ)
+        // Swipe RIGHT → նամակը գնում է աջ, ժամը երևում է ձախից
         if (deltaX > 50) {
             currentWrapper.classList.add("swiped");
         } else {

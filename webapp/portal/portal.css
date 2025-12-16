@@ -794,26 +794,29 @@ body {
 .chat-message-wrapper {
     position: relative;
     transition: transform 0.3s ease;
-    display: flex;
-    align-items: center;
+    display: block;
+    margin-bottom: 12px;
 }
 
 .chat-message-time {
     position: absolute;
-    left: 10px;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
     font-size: 11px;
     color: #888;
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
-}
-
-.chat-message-wrapper.swiped .chat-message-time {
-    opacity: 1;
+    z-index: 1;
 }
 
 .chat-message-wrapper.swiped {
     transform: translateX(60px);
+}
+
+.chat-message-wrapper.swiped .chat-message-time {
+    opacity: 1;
 }
 
 /* Date separator */
