@@ -50,9 +50,9 @@ console.log('🎹 Custom Keyboard loading...');
         kb.id = 'custom-keyboard';
         kb.innerHTML = `
             <div class="keyboard-toolbar">
-                <button class="keyboard-tool-btn" id="kb-copy">📋</button>
-                <button class="keyboard-tool-btn" id="kb-paste">📄</button>
-                <button class="keyboard-tool-btn" id="kb-cut">✂️</button>
+                <button class="keyboard-tool-btn" id="kb-copy">📋 Copy</button>
+                <button class="keyboard-tool-btn" id="kb-paste">📄 Paste</button>
+                <button class="keyboard-tool-btn" id="kb-cut">✂️ Cut</button>
             </div>
             <div class="keyboard-header">
                 <div class="keyboard-lang-switcher">
@@ -94,23 +94,12 @@ console.log('🎹 Custom Keyboard loading...');
         
         const value = currentInput.value || '';
         
-        // If no selection, copy all text
         if (value.length === 0) {
             showToast('⚠️ Nothing to copy');
             return;
         }
         
-        const start = currentInput.selectionStart || 0;
-        const end = currentInput.selectionEnd || 0;
-        
-        if (start !== end) {
-            // Copy selected text
-            clipboardText = value.substring(start, end);
-        } else {
-            // Copy all text if nothing selected
-            clipboardText = value;
-        }
-        
+        clipboardText = value;
         showToast('📋 Copied: ' + clipboardText.substring(0, 20) + (clipboardText.length > 20 ? '...' : ''));
     }
 
@@ -127,28 +116,22 @@ console.log('🎹 Custom Keyboard loading...');
         if (!currentInput) return;
         
         const value = currentInput.value || '';
-        const start = currentInput.selectionStart || 0;
-        const end = currentInput.selectionEnd || 0;
         
-        if (start !== end) {
-            // Cut selected text
-            clipboardText = value.substring(start, end);
-            currentInput.value = value.substring(0, start) + value.substring(end);
-            currentInput.selectionStart = currentInput.selectionEnd = start;
-        } else {
-            // Cut all text if nothing selected
-            clipboardText = value;
-            currentInput.value = '';
-            currentInput.selectionStart = currentInput.selectionEnd = 0;
+        if (value.length === 0) {
+            showToast('⚠️ Nothing to cut');
+            return;
         }
         
+        clipboardText = value;
+        currentInput.value = '';
+        currentInput.selectionStart = currentInput.selectionEnd = 0;
         currentInput.dispatchEvent(new Event('input', { bubbles: true }));
         showToast('✂️ Cut: ' + clipboardText.substring(0, 20) + (clipboardText.length > 20 ? '...' : ''));
     }
 
     function showToast(message) {
         const toast = document.createElement('div');
-        toast.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:20px;z-index:999999;font-size:14px;`;
+        toast.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);color:white;padding:16px 24px;border-radius:12px;z-index:9999999;font-size:15px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.5);`;
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 1500);
