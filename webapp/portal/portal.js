@@ -2137,9 +2137,9 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("touchmove", (e) => {
         if (!currentWrapper) return;
         
-        const deltaX = e.touches[0].clientX - startX;
-        
-        // Swipe RIGHT (դեպի աջ)
+        const deltaX = startX - e.touches[0].clientX;
+
+        // Swipe LEFT (քաշում ես աջ, նամակը գնում է ձախ)
         if (deltaX > 50) {
             currentWrapper.classList.add("swiped");
         } else {

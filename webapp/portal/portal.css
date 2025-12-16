@@ -800,7 +800,7 @@ body {
 
 .chat-message-time {
     position: absolute;
-    right: 10px;
+    left: 10px;
     font-size: 11px;
     color: #888;
     opacity: 0;
@@ -813,7 +813,7 @@ body {
 }
 
 .chat-message-wrapper.swiped {
-    transform: translateX(-60px);
+    transform: translateX(60px);
 }
 
 /* Date separator */
