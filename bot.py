@@ -564,12 +564,28 @@ def api_message_react():
             "reactions": reactions
         }, room="global")
     else:
-        # DM room emit
-        socketio.emit("message_reaction", {
-            "message_id": message_id,
-            "chat_type": chat_type,
-            "reactions": reactions
-        }, room=f"dm_{user_id}")
+        # DM - send to both users
+        conn2 = db()
+        c2 = conn2.cursor()
+        c2.execute("SELECT sender, receiver FROM dom_messages WHERE id=%s", (message_id,))
+        msg_row = c2.fetchone()
+        release_db(conn2)
+        
+        if msg_row:
+            sender_id = int(msg_row[0])
+            receiver_id = int(msg_row[1])
+            
+            socketio.emit("message_reaction", {
+                "message_id": message_id,
+                "chat_type": chat_type,
+                "reactions": reactions
+            }, room=f"user_{sender_id}")
+            
+            socketio.emit("message_reaction", {
+                "message_id": message_id,
+                "chat_type": chat_type,
+                "reactions": reactions
+            }, room=f"user_{receiver_id}")
     
     return jsonify({"ok": True, "action": action, "reactions": reactions})
 
