@@ -3030,7 +3030,7 @@ async function sendDominoStar(messageId, chatType, receiverId) {
         
         const balanceSpan = document.getElementById('domino-star-user-balance');
         if (balanceSpan && data.ok && data.user) {
-            balanceSpan.textContent = (data.user.balance || 0).toFixed(2);
+            balanceSpan.textContent = (data.user.balance_usd || 0).toFixed(2);
         }
     } catch (e) {
         console.error("Failed to load balance:", e);
