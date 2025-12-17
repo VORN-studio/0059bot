@@ -3007,25 +3007,50 @@ function formatMessageTime(timestamp) {
 
 // ========== DOMINO STAR REACTION ==========
 
+let PENDING_DOMINO_STAR = null;
 async function sendDominoStar(messageId, chatType, receiverId) {
     if (!CURRENT_UID) {
         showToast("❌ Please log in first");
         return;
     }
-    
     if (!receiverId || receiverId == CURRENT_UID) {
         showToast("❌ Cannot send Domino Star to yourself");
         return;
     }
-    
-    // Confirmation
-    const confirmed = await confirm(
-        "Send Domino Star?",
-        `This will cost 0.20 USD.\n\n• 0.10 USD goes to the user\n• 0.10 USD goes to burn account`
-    );
-    
-    if (!confirmed) return;
-    
+    // Store pending data
+    PENDING_DOMINO_STAR = {
+        messageId,
+        chatType,
+        receiverId
+    };
+    // Load user balance
+    try {
+        const res = await fetch(`/api/balance?user_id=${CURRENT_UID}`);
+        const data = await res.json();
+        
+        const balanceSpan = document.getElementById('domino-star-user-balance');
+        if (balanceSpan && data.ok) {
+            balanceSpan.textContent = data.balance.toFixed(2);
+        }
+    } catch (e) {
+        console.error("Failed to load balance:", e);
+    }
+    // Show modal
+    const modal = document.getElementById('domino-star-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeDominoStarModal() {
+    const modal = document.getElementById('domino-star-modal');
+    if (modal) modal.classList.add('hidden');
+    PENDING_DOMINO_STAR = null;
+}
+
+async function confirmDominoStar() {
+    if (!PENDING_DOMINO_STAR) return;
+    const { messageId, chatType, receiverId } = PENDING_DOMINO_STAR;
+    // Close modal first
+    closeDominoStarModal();
     try {
         const res = await fetch("/api/fire/add", {
             method: "POST",
@@ -3037,9 +3062,7 @@ async function sendDominoStar(messageId, chatType, receiverId) {
                 receiver_id: receiverId
             })
         });
-        
         const data = await res.json();
-        
         if (!data.ok) {
             if (data.error === "insufficient_balance") {
                 showToast("❌ Insufficient balance");
@@ -3050,16 +3073,12 @@ async function sendDominoStar(messageId, chatType, receiverId) {
             }
             return;
         }
-        
         // Update fire counter
         updateFireCounter(messageId, data.fire_count);
-        
         // Show success with animation
         showToast(`✨ Domino Star sent! New balance: ${data.new_balance.toFixed(2)} USD`);
-        
         // Trigger animation
         triggerDominoStarAnimation(messageId);
-        
     } catch (e) {
         console.error("sendDominoStar error:", e);
         showToast("❌ Network error");
