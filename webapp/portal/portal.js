@@ -1890,8 +1890,9 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
         minute: '2-digit' 
     });
 
-    // ✅ Highlight class
     const highlightClass = msg.highlighted ? "highlighted-message" : "";
+    const messageId = msg.id || Math.random().toString(36).substr(2, 9);
+    const chatType = isDM ? "dm" : "global";
 
     let replyHtml = "";
     if (msg.reply_to && msg.reply_to_text) {
@@ -1910,19 +1911,34 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
         `;
     }
 
+    // ✅ Reactions HTML
+    const reactionsHtml = `
+        <div class="message-reactions" id="reactions-${messageId}" style="display:none;">
+            <!-- Reactions will be added here dynamically -->
+        </div>
+    `;
+
     const canReply = isDM;
 
     return `
     <div class="chat-message-wrapper ${highlightClass}" 
          data-time="${timeStr}"
          data-can-reply="${canReply}"
-         data-msg-id="${msg.id || ''}"
+         data-msg-id="${messageId}"
+         data-chat-type="${chatType}"
          data-msg-text="${(msg.text || msg.message || '').replace(/"/g, '&quot;')}"
          data-sender="${msg.sender || ''}"
          data-username="${username.replace(/"/g, '&quot;')}"
          style="position:relative;">
         
         <span class="chat-message-time">${timeStr}</span>
+        
+        <!-- ✅ Reaction trigger button -->
+        <div class="message-actions">
+            <button class="react-trigger" onclick="toggleReactionPicker('${messageId}', '${chatType}')">
+                😊
+            </button>
+        </div>
         
         <div style="text-align: ${align};">
             <div style="
@@ -1949,8 +1965,19 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                 <div style="color:#fff;font-size:14px;word-wrap:break-word;">
                     ${msg.text || msg.message || ""}
                 </div>
+                
+                <!-- ✅ Reaction picker (hidden by default) -->
+                <div class="reaction-picker" id="picker-${messageId}" style="display:none;">
+                    <span class="reaction-btn" onclick="addReaction('${messageId}', '${chatType}', '❤️')">❤️</span>
+                    <span class="reaction-btn" onclick="addReaction('${messageId}', '${chatType}', '👍')">👍</span>
+                    <span class="reaction-btn" onclick="addReaction('${messageId}', '${chatType}', '😂')">😂</span>
+                    <span class="reaction-btn" onclick="addReaction('${messageId}', '${chatType}', '🔥')">🔥</span>
+                    <span class="reaction-btn" onclick="addReaction('${messageId}', '${chatType}', '⭐')">⭐</span>
+                </div>
             </div>
         </div>
+        
+        ${reactionsHtml}
     </div>
 `;
 }
@@ -2604,3 +2631,93 @@ function showTypingIndicator(username, chatType) {
         indicator.remove();
     }, 3000);
 }
+
+// =============================
+// MESSAGE REACTIONS
+// =============================
+
+function toggleReactionPicker(messageId, chatType) {
+    const picker = document.getElementById(`picker-${messageId}`);
+    
+    if (!picker) return;
+    
+    // Close all other pickers
+    document.querySelectorAll('.reaction-picker').forEach(p => {
+        if (p.id !== `picker-${messageId}`) {
+            p.style.display = 'none';
+        }
+    });
+    
+    // Toggle this picker
+    picker.style.display = picker.style.display === 'none' ? 'flex' : 'none';
+}
+
+async function addReaction(messageId, chatType, emoji) {
+    // Close picker
+    const picker = document.getElementById(`picker-${messageId}`);
+    if (picker) picker.style.display = 'none';
+    
+    try {
+        const res = await fetch('/api/message/react', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message_id: parseInt(messageId),
+                chat_type: chatType,
+                user_id: CURRENT_UID,
+                emoji: emoji
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (data.ok) {
+            // Reactions will be updated via socket
+            LOG.info(`Reaction ${data.action}:`, emoji);
+        }
+    } catch (err) {
+        LOG.error('Failed to add reaction:', err);
+    }
+}
+
+function updateMessageReactions(messageId, chatType, reactions) {
+    const container = document.getElementById(`reactions-${messageId}`);
+    
+    if (!container) return;
+    
+    // Clear existing reactions
+    container.innerHTML = '';
+    
+    // If no reactions, hide container
+    if (!reactions || Object.keys(reactions).length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    // Show container
+    container.style.display = 'flex';
+    
+    // Add each reaction
+    for (const [emoji, count] of Object.entries(reactions)) {
+        const item = document.createElement('div');
+        item.className = 'reaction-item';
+        item.innerHTML = `
+            <span class="reaction-emoji">${emoji}</span>
+            <span class="reaction-count">${count}</span>
+        `;
+        
+        // Click to toggle reaction
+        item.onclick = () => addReaction(messageId, chatType, emoji);
+        
+        container.appendChild(item);
+    }
+}
+
+// Close reaction pickers when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.react-trigger') && !e.target.closest('.reaction-picker')) {
+        document.querySelectorAll('.reaction-picker').forEach(p => {
+            p.style.display = 'none';
+        });
+    }
+});
