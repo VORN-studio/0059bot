@@ -89,7 +89,7 @@ console.log('🎹 Custom Keyboard loading...');
         renderKeyboard();
     }
 
-    async function handleCopy() {
+    function handleCopy() {
         if (!currentInput) return;
         
         const value = currentInput.value || '';
@@ -102,62 +102,30 @@ console.log('🎹 Custom Keyboard loading...');
         const start = currentInput.selectionStart || 0;
         const end = currentInput.selectionEnd || 0;
         
-        let textToCopy = '';
-        
         if (start !== end) {
-            textToCopy = value.substring(start, end);
+            clipboardText = value.substring(start, end);
+            showToast('📋 Copied: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
         } else {
-            textToCopy = value;
-        }
-        
-        // Save to internal clipboard
-        clipboardText = textToCopy;
-        
-        // Try to copy to system clipboard
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            try {
-                await navigator.clipboard.writeText(textToCopy);
-                showToast('📋 Copied to system clipboard');
-            } catch (err) {
-                showToast('📋 Copied (internal only)');
-            }
-        } else {
-            showToast('📋 Copied (internal only)');
+            clipboardText = value;
+            showToast('📋 Copied all (' + value.length + ' chars)');
         }
     }
 
-    async function handlePaste() {
+    function handlePaste() {
         if (!currentInput) {
             showToast('⚠️ No input field');
             return;
         }
         
-        let textToPaste = '';
-        
-        // Try system clipboard first
-        if (navigator.clipboard && navigator.clipboard.readText) {
-            try {
-                textToPaste = await navigator.clipboard.readText();
-                
-                if (textToPaste && textToPaste.length > 0) {
-                    insertText(textToPaste);
-                    showToast('📄 Pasted from system clipboard');
-                    return;
-                }
-            } catch (err) {
-                console.log('System clipboard read failed, using internal');
-            }
-        }
-        
-        // Fallback to internal clipboard
+        // Use internal clipboard only (Telegram WebApp doesn't allow system clipboard)
         if (clipboardText && clipboardText.length > 0) {
             insertText(clipboardText);
-            showToast('📄 Pasted from internal clipboard');
+            showToast('📄 Pasted: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
         } else {
-            showToast('⚠️ Clipboard is empty');
+            showToast('⚠️ Clipboard is empty. Use Copy button first.');
         }
     }
-    async function handleCut() {
+    function handleCut() {
         if (!currentInput) return;
         
         const value = currentInput.value || '';
@@ -170,30 +138,16 @@ console.log('🎹 Custom Keyboard loading...');
         const start = currentInput.selectionStart || 0;
         const end = currentInput.selectionEnd || 0;
         
-        let textToCut = '';
-        
         if (start !== end) {
-            textToCut = value.substring(start, end);
+            clipboardText = value.substring(start, end);
             currentInput.value = value.substring(0, start) + value.substring(end);
             currentInput.selectionStart = currentInput.selectionEnd = start;
+            showToast('✂️ Cut: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
         } else {
-            textToCut = value;
+            clipboardText = value;
             currentInput.value = '';
             currentInput.selectionStart = currentInput.selectionEnd = 0;
-        }
-        
-        clipboardText = textToCut;
-        
-        // Try to copy to system clipboard
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            try {
-                await navigator.clipboard.writeText(textToCut);
-                showToast('✂️ Cut to system clipboard');
-            } catch (err) {
-                showToast('✂️ Cut (internal only)');
-            }
-        } else {
-            showToast('✂️ Cut (internal only)');
+            showToast('✂️ Cut all (' + clipboardText.length + ' chars)');
         }
         
         currentInput.dispatchEvent(new Event('input', { bubbles: true }));
