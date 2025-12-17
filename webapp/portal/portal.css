@@ -1138,29 +1138,6 @@ body {
     animation: slideUp 0.3s ease-out;
 }
 
-/* =============================
-   MESSAGE REACTIONS
-   ============================= */
-
-.message-reactions {
-    display: flex;
-    gap: 6px;
-    margin-top: 6px;
-    flex-wrap: wrap;
-}
-
-.reaction-item {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 12px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-    user-select: none;
-}
 
 .reaction-item:hover {
     background: rgba(255,255,255,0.15);
@@ -1303,6 +1280,7 @@ body {
     gap: 6px;
     margin-top: 6px;
     flex-wrap: wrap;
+    text-align: right;
 }
 
 .reaction-item {

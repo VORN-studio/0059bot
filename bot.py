@@ -525,7 +525,7 @@ def api_message_react():
     """, (message_id, chat_type, user_id, emoji))
     
     existing = c.fetchone()
-    
+
     if existing:
         # Remove reaction
         c.execute("""
@@ -534,7 +534,13 @@ def api_message_react():
         """, (message_id, chat_type, user_id, emoji))
         action = "removed"
     else:
-        # Add reaction
+        # ✅ First, remove any other reaction from this user
+        c.execute("""
+            DELETE FROM dom_message_reactions
+            WHERE message_id=%s AND chat_type=%s AND user_id=%s
+        """, (message_id, chat_type, user_id))
+        
+        # Then add new reaction
         c.execute("""
             INSERT INTO dom_message_reactions (message_id, chat_type, user_id, emoji, created_at)
             VALUES (%s, %s, %s, %s, %s)
