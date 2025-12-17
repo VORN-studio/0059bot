@@ -811,38 +811,34 @@ async function loadDM() {
 
         let lastDate = null;
 
-        // Existing code
-        const isMe = String(msg.sender) === String(CURRENT_UID);
-        box.innerHTML += renderChatMessage(msg, isMe, true);
-
-        // ✅ ADD THIS
-        if (msg.id) {
-            loadMessageReactions(msg.id, 'dm');
-        }
-
         data.messages.forEach(m => {
             const msgDate = new Date(m.time * 1000);
             const dateKey = msgDate.toLocaleDateString('hy-AM');
-            
+
             if (dateKey !== lastDate) {
                 lastDate = dateKey;
-                
+
                 const today = new Date().toLocaleDateString('hy-AM');
                 const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('hy-AM');
-                
+
                 let label = dateKey;
                 if (dateKey === today) label = "Այսօր";
                 else if (dateKey === yesterday) label = "Երեկ";
-                
+
                 box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
             }
-            
+
             const isMe = String(m.sender) === String(CURRENT_UID);
             box.innerHTML += renderChatMessage(m, isMe, true);
+            
+            // ✅ Load reactions for this message
+            if (m.id) {
+                loadMessageReactions(m.id, 'dm');
+            }
         });
 
-
         box.scrollTop = box.scrollHeight;
+        
         // 🔧 FIX: attach post link clicks in DM
         box.querySelectorAll(".portal-post-link").forEach(el => {
             el.onclick = () => {
@@ -854,7 +850,6 @@ async function loadDM() {
                     `/portal/portal.html?uid=${uid}&viewer=${uid}&open_post=${postId}`;
             };
         });
-
 
     } catch (e) {
         console.error("loadDM error:", e);
