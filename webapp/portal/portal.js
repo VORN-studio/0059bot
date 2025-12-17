@@ -91,6 +91,12 @@ socket.on("dm_new", (msg) => {
     box.scrollTop = box.scrollHeight;
 });
 
+
+socket.on("fire_update", (data) => {
+    LOG.event("🔥 FIRE UPDATE:", data);
+    updateFireCounter(data.message_id, data.fire_count);
+});
+
 socket.on("dm_notify", (d) => {
     LOG.event("🔔 DM NOTIFY:", d);
 
@@ -1929,6 +1935,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                     ${tierReactions}
                 </div>
                 <div class="inline-actions">
+                    ${!isMe ? `<div class="inline-action domino-star-btn" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${msg.sender || msg.user_id});closeAllInlineMenus();"><span class="domino-star-icon">🌟💎</span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 USD)</span></div>` : ''}
                     ${isDM ? `<div class="inline-action" onclick="event.stopPropagation();setReply('${messageId}', \`${escapedText}\`, '${username.replace(/'/g, "\\'")}');closeAllInlineMenus();"><span style="font-size:18px;">↩️</span> Reply</div>` : ''}
                     <div class="inline-action" onclick="event.stopPropagation();copyMessage(\`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">📋</span> Copy</div>
                     <div class="inline-action" onclick="event.stopPropagation();forwardMessage('${messageId}', \`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">↗️</span> Forward</div>
@@ -1939,6 +1946,9 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
 
         <div style="text-align:${align};">
             <div class="message-reactions" id="reactions-${messageId}" style="display:none;justify-content:${isMe ? 'flex-end' : 'flex-start'};"></div>
+            <div class="fire-counter" id="fire-counter-${messageId}" style="display:none;text-align:${align};margin-top:4px;">
+                <span class="fire-badge"><span class="domino-star-icon-small">🌟💎</span> <span id="fire-count-${messageId}">0</span></span>
+            </div>
         </div>
     </div>`;
 }
@@ -3045,4 +3055,87 @@ function formatMessageTime(timestamp) {
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         return `${day}.${month} ${hours}:${mins}`;
     }
+}
+
+
+// ========== DOMINO STAR REACTION ==========
+
+async function sendDominoStar(messageId, chatType, receiverId) {
+    if (!CURRENT_UID) {
+        showToast("❌ Please log in first");
+        return;
+    }
+    
+    if (!receiverId || receiverId == CURRENT_UID) {
+        showToast("❌ Cannot send Domino Star to yourself");
+        return;
+    }
+    
+    // Confirmation
+    const confirmed = await confirm(
+        "Send Domino Star?",
+        `This will cost 0.20 USD.\n\n• 0.10 USD goes to the user\n• 0.10 USD goes to burn account`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+        const res = await fetch("/api/fire/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message_id: messageId,
+                chat_type: chatType,
+                giver_id: CURRENT_UID,
+                receiver_id: receiverId
+            })
+        });
+        
+        const data = await res.json();
+        
+        if (!data.ok) {
+            if (data.error === "insufficient_balance") {
+                showToast("❌ Insufficient balance");
+            } else if (data.error === "cannot_fire_yourself") {
+                showToast("❌ Cannot send to yourself");
+            } else {
+                showToast("❌ Failed to send Domino Star");
+            }
+            return;
+        }
+        
+        // Update fire counter
+        updateFireCounter(messageId, data.fire_count);
+        
+        // Show success with animation
+        showToast(`✨ Domino Star sent! New balance: ${data.new_balance.toFixed(2)} USD`);
+        
+        // Trigger animation
+        triggerDominoStarAnimation(messageId);
+        
+    } catch (e) {
+        console.error("sendDominoStar error:", e);
+        showToast("❌ Network error");
+    }
+}
+
+function updateFireCounter(messageId, count) {
+    const counter = document.getElementById(`fire-counter-${messageId}`);
+    const countSpan = document.getElementById(`fire-count-${messageId}`);
+    
+    if (counter && countSpan) {
+        countSpan.textContent = count;
+        counter.style.display = count > 0 ? 'block' : 'none';
+    }
+}
+
+function triggerDominoStarAnimation(messageId) {
+    const wrapper = document.querySelector(`[data-msg-id="${messageId}"]`);
+    if (!wrapper) return;
+    
+    wrapper.classList.add('domino-star-flash');
+    
+    setTimeout(() => {
+        wrapper.classList.remove('domino-star-flash');
+    }, 1000);
 }
