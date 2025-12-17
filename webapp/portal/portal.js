@@ -1917,8 +1917,24 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
             </div>
         </div>
 
-        <!-- INLINE MENU -->
-        <div class="inline-message-menu" id="inline-menu-${messageId}" style="display:none;">
+        <!-- INLINE MENU WRAPPER -->
+            <div style="text-align:${align};margin-top:4px;">
+                <div class="inline-message-menu" id="inline-menu-${messageId}" style="display:none;">
+                    <div class="inline-reactions">
+                        <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','❤️');">❤️</span>
+                        <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','👍');">👍</span>
+                        <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','😂');">😂</span>
+                        <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','🔥');">🔥</span>
+                        <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','⭐');">⭐</span>
+                    </div>
+                    <div class="inline-actions">
+                        ${isDM ? `<div class="inline-action" onclick="event.stopPropagation();setReply('${messageId}', \`${escapedText}\`, '${username.replace(/'/g, "\\'")}');closeAllInlineMenus();"><span style="font-size:18px;">↩️</span> Reply</div>` : ''}
+                        <div class="inline-action" onclick="event.stopPropagation();copyMessage(\`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">📋</span> Copy</div>
+                        <div class="inline-action" onclick="event.stopPropagation();forwardMessage('${messageId}', \`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">↗️</span> Forward</div>
+                        ${isMe ? `<div class="inline-action danger" onclick="event.stopPropagation();deleteMessage('${messageId}', '${chatType}');closeAllInlineMenus();"><span style="font-size:18px;">🗑️</span> Delete</div>` : ''}
+                    </div>
+                </div>
+            </div>
             <div class="inline-reactions">
                 <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','❤️');">❤️</span>
                 <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','👍');">👍</span>
