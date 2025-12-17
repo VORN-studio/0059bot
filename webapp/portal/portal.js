@@ -1920,12 +1920,11 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
 
     const msgText = (msg.text || msg.message || '').replace(/"/g, '&quot;');
     const escapedText = msgText.replace(/`/g, '\\`').replace(/\$/g, '\\$');
-
-    // ✨ TIER-BASED REACTIONS
-    const tierReactions = getTierReactions(messageId, chatType);  // ← ԱՅՍ ԱՎԵԼԱՑՐՈՒ
+    const tierReactions = getTierReactions(messageId, chatType);
+    const highlightClass = msg.highlighted ? 'highlighted-message' : '';
 
     return `
-    <div class="chat-message-wrapper" 
+    <div class="chat-message-wrapper ${msg.highlighted ? 'highlighted-message' : ''}" 
          data-msg-id="${messageId}" 
          data-chat-type="${chatType}" 
          data-msg-text="${msgText}" 
