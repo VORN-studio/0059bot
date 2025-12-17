@@ -564,10 +564,21 @@ def api_message_react():
     release_db(conn)
     
     if chat_type == "global":
+        # Get fire count
+        conn_fire = db()
+        c_fire = conn_fire.cursor()
+        c_fire.execute("""
+            SELECT COUNT(*) FROM dom_fire_reactions 
+            WHERE message_id=%s
+        """, (message_id,))
+        fire_count = c_fire.fetchone()[0]
+        release_db(conn_fire)
+        
         socketio.emit("message_reaction", {
             "message_id": message_id,
             "chat_type": chat_type,
-            "reactions": reactions
+            "reactions": reactions,
+            "fire_count": fire_count
         }, room="global")
     else:
         # DM - send to both users
@@ -581,16 +592,28 @@ def api_message_react():
             sender_id = int(msg_row[0])
             receiver_id = int(msg_row[1])
             
+            # Get fire count
+            conn_fire = db()
+            c_fire = conn_fire.cursor()
+            c_fire.execute("""
+                SELECT COUNT(*) FROM dom_fire_reactions 
+                WHERE message_id=%s
+            """, (message_id,))
+            fire_count = c_fire.fetchone()[0]
+            release_db(conn_fire)
+            
             socketio.emit("message_reaction", {
                 "message_id": message_id,
                 "chat_type": chat_type,
-                "reactions": reactions
+                "reactions": reactions,
+                "fire_count": fire_count
             }, room=f"user_{sender_id}")
             
             socketio.emit("message_reaction", {
                 "message_id": message_id,
                 "chat_type": chat_type,
-                "reactions": reactions
+                "reactions": reactions,
+                "fire_count": fire_count
             }, room=f"user_{receiver_id}")
     
     return jsonify({"ok": True, "action": action, "reactions": reactions})

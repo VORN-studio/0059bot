@@ -237,7 +237,7 @@ socket.on("user_typing_dm", (data) => {
 });
 
 socket.on("message_reaction", (data) => {
-    updateMessageReactions(data.message_id, data.chat_type, data.reactions);
+    updateMessageReactions(data.message_id, data.chat_type, data.reactions, data.fire_count || 0);
 });
 
 socket.on("disconnect", () => {
