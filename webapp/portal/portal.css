@@ -3676,3 +3676,59 @@ div[style*="background: rgba(255,255,255,0.06)"][style*="padding: 16px"] > * {
     justify-content: center !important;
     flex-wrap: wrap !important;
 }
+
+/* ==================== PORTAL PROFILE FIX ==================== */
+.portal-profile {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: var(--spacing-md) !important;
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+/* Avatar centered */
+.avatar-frame {
+    margin: 0 auto;
+}
+
+/* Follow stats - horizontal but centered */
+.follow-stats {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}
+
+/* Domino Stars - full width card */
+.domino-star-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    background: linear-gradient(135deg, 
+        rgba(251, 191, 36, 0.15), 
+        rgba(245, 158, 11, 0.1)
+    );
+    border: 2px solid rgba(251, 191, 36, 0.3);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    width: 100%;
+    max-width: 300px;
+}
+
+/* Profile info - centered */
+.profile-info {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: var(--spacing-sm);
+    width: 100%;
+}
+
+#follow-btn {
+    margin-top: var(--spacing-sm);
+}
