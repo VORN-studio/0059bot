@@ -619,9 +619,21 @@ def api_message_reactions():
     for row in c.fetchall():
         reactions[row[0]] = int(row[1])
     
+    # Get fire count from dom_fire_reactions
+    c.execute("""
+        SELECT COUNT(*) FROM dom_fire_reactions
+        WHERE message_id=%s AND chat_type=%s
+    """, (message_id, chat_type))
+    
+    fire_count = int(c.fetchone()[0] or 0)
+    
     release_db(conn)
     
-    return jsonify({"ok": True, "reactions": reactions})
+    return jsonify({
+        "ok": True, 
+        "reactions": reactions,
+        "fire_count": fire_count
+    })
 
 
 @app_web.route("/api/fire/add", methods=["POST"])
