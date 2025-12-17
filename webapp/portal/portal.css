@@ -3656,44 +3656,23 @@ body {
     animation: domino-star-spin 0.5s ease-in-out;
 }
 
-/* ==================== PROFILE CONTAINER ==================== */
-[style*="display: flex"][style*="align-items: center"]:has(img[style*="80px"]) {
+/* FORCE VERTICAL LAYOUT ON PROFILE */
+.profile-section,
+#user-profile-section,
+div[style*="background: rgba(255,255,255,0.06)"][style*="padding: 16px"] {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    gap: var(--spacing-lg) !important;
-    padding: var(--spacing-lg) !important;
+    gap: 16px !important;
 }
 
-/* Avatar stays centered */
-[style*="display: flex"][style*="align-items: center"]:has(img[style*="80px"]) > img {
-    flex-shrink: 0;
-    margin-bottom: var(--spacing-md);
-}
-
-/* Stats row - wrap if needed */
-[style*="display: flex"][style*="align-items: center"]:has(img[style*="80px"]) > div {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: center !important;
-    align-items: center !important;
-    gap: var(--spacing-md) !important;
+/* Each child element takes full width */
+.profile-section > *,
+#user-profile-section > *,
+div[style*="background: rgba(255,255,255,0.06)"][style*="padding: 16px"] > * {
     width: 100% !important;
-}
-
-/* Individual stat items - prevent overflow */
-[style*="display: flex"][style*="align-items: center"]:has(img[style*="80px"]) > div > div,
-[style*="display: flex"][style*="align-items: center"]:has(img[style*="80px"]) > div > span {
-    flex-shrink: 1 !important;
-    min-width: 0 !important;
-    text-align: center !important;
-}
-
-/* Domino Stars badge - force new line if needed */
-[style*="Domino Stars"],
-[class*="domino-star"],
-.fire-badge {
-    flex-basis: 100% !important;
     max-width: 100% !important;
-    margin-top: var(--spacing-sm) !important;
+    display: flex !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
 }
