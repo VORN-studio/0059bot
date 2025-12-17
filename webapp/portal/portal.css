@@ -256,15 +256,63 @@ body {
 }
 
 .domino-star-stats {
-    margin-top: 8px;
-    font-size: 13px;
+    margin-top: 12px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,140,0,0.1));
-    border-radius: 10px;
-    border: 1px solid rgba(255,215,0,0.3);
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, 
+        rgba(255, 215, 0, 0.15) 0%, 
+        rgba(255, 140, 0, 0.1) 50%,
+        rgba(138, 43, 226, 0.1) 100%
+    );
+    border-radius: 16px;
+    border: 1.5px solid rgba(255, 215, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.domino-star-stats::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle,
+        rgba(255, 215, 0, 0.1) 0%,
+        transparent 70%
+    );
+    animation: domino-glow 3s ease-in-out infinite;
+}
+
+@keyframes domino-glow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+#profile-domino-stars {
+    font-weight: 900;
+    color: #FFD700;
+    font-size: 20px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    z-index: 1;
+}
+
+.domino-star-stats span:last-child {
+    opacity: 0.85;
+    font-size: 13px;
+    font-weight: 600;
+    color: #FFA500;
+    z-index: 1;
+}
+
+.domino-star-stats .domino-star-animated {
+    font-size: 22px;
+    z-index: 1;
 }
 
 #profile-domino-stars {
