@@ -496,7 +496,8 @@ def api_global_send():
         "status_level": status_level,
         "message": message,
         "time": now,
-        "highlighted": highlight
+        "highlighted": highlight,
+        "id": msg_id
     }, room="global")
     
     return jsonify({"ok": True, "id": msg_id})

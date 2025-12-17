@@ -624,13 +624,15 @@ async function loadGlobalChat() {
 
             const isMe = String(m.user_id) === String(CURRENT_UID);
             box.innerHTML += renderChatMessage(m, isMe, false);
+            
+            // ✅ Load reactions for this message
+            if (m.id) {
+                loadMessageReactions(m.id, 'global');
+            }
         });
 
         box.scrollTop = box.scrollHeight;
-
-        // ✅ Load hot user
         loadHotUser();
-
         box.scrollTop = box.scrollHeight;
     } catch (e) {
         console.error("❌ loadGlobalChat error:", e);
@@ -808,6 +810,15 @@ async function loadDM() {
         box.innerHTML = "";
 
         let lastDate = null;
+
+        // Existing code
+        const isMe = String(msg.sender) === String(CURRENT_UID);
+        box.innerHTML += renderChatMessage(msg, isMe, true);
+
+        // ✅ ADD THIS
+        if (msg.id) {
+            loadMessageReactions(msg.id, 'dm');
+        }
 
         data.messages.forEach(m => {
             const msgDate = new Date(m.time * 1000);
@@ -1882,7 +1893,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
     const statusClass = `status-${msg.status_level || 0}`;
     const username = msg.username || `User ${msg.sender}`;
     const avatar = msg.avatar || "/portal/default.png";
-    const messageId = msg.id || Math.random().toString(36).substr(2, 9);
+    const messageId = msg.id || msg.sender + '_' + Date.now();
     const chatType = isDM ? "dm" : "global";
 
     let replyHtml = "";
@@ -2758,3 +2769,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (menu) menu.addEventListener('click', (e) => { if (e.target === menu) closeMessageMenu(); });
     if (closeBtn) closeBtn.addEventListener('click', closeMessageMenu);
 });
+
+// =============================
+// LOAD MESSAGE REACTIONS
+// =============================
+
+async function loadMessageReactions(messageId, chatType) {
+    try {
+        const res = await fetch(`/api/message/reactions?message_id=${messageId}&chat_type=${chatType}`);
+        const data = await res.json();
+        
+        if (data.ok && data.reactions) {
+            updateMessageReactions(messageId, chatType, data.reactions);
+        }
+    } catch (err) {
+        LOG.error('Failed to load reactions:', err);
+    }
+}
