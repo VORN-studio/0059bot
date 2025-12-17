@@ -3025,12 +3025,12 @@ async function sendDominoStar(messageId, chatType, receiverId) {
     };
     // Load user balance
     try {
-        const res = await fetch(`/api/balance?user_id=${CURRENT_UID}`);
+        const res = await fetch(`/api/user/${CURRENT_UID}`);
         const data = await res.json();
         
         const balanceSpan = document.getElementById('domino-star-user-balance');
-        if (balanceSpan && data.ok) {
-            balanceSpan.textContent = data.balance.toFixed(2);
+        if (balanceSpan && data.ok && data.user) {
+            balanceSpan.textContent = (data.user.balance || 0).toFixed(2);
         }
     } catch (e) {
         console.error("Failed to load balance:", e);
