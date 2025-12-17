@@ -3843,3 +3843,63 @@ input[type="checkbox"][id*="highlight"]:checked::before {
     font-weight: 700;
     color: #facc15;
 }
+
+/* ==================== HIGHLIGHTED MESSAGE - ELEGANT ==================== */
+.highlighted-message {
+    background: linear-gradient(90deg,
+        rgba(250, 204, 21, 0.08) 0%,
+        transparent 30%
+    ) !important;
+    border-left: 4px solid #facc15 !important;
+    border-radius: var(--radius-md) !important;
+    position: relative;
+    overflow: visible !important;
+}
+
+/* Glowing effect on left border */
+.highlighted-message::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: #facc15;
+    box-shadow: 
+        0 0 10px rgba(250, 204, 21, 0.6),
+        0 0 20px rgba(250, 204, 21, 0.4),
+        0 0 30px rgba(250, 204, 21, 0.2);
+    animation: borderPulse 2s ease-in-out infinite;
+    border-radius: 4px 0 0 4px;
+}
+
+@keyframes borderPulse {
+    0%, 100% {
+        box-shadow: 
+            0 0 10px rgba(250, 204, 21, 0.6),
+            0 0 20px rgba(250, 204, 21, 0.4);
+    }
+    50% {
+        box-shadow: 
+            0 0 15px rgba(250, 204, 21, 0.8),
+            0 0 30px rgba(250, 204, 21, 0.6),
+            0 0 45px rgba(250, 204, 21, 0.3);
+    }
+}
+
+/* Subtle star icon on top-right */
+.highlighted-message::after {
+    content: '⭐';
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    font-size: 16px;
+    opacity: 0.7;
+    filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8));
+    animation: starTwinkle 3s ease-in-out infinite;
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.15); }
+}
