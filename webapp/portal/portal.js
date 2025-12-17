@@ -2652,7 +2652,7 @@ async function addReaction(messageId, chatType, emoji) {
     }
 }
 
-function updateMessageReactions(messageId, chatType, reactions) {
+function updateMessageReactions(messageId, chatType, reactions, fireCount = 0) {
     const container = document.getElementById(`reactions-${messageId}`);
     
     if (!container) return;
@@ -2660,8 +2660,8 @@ function updateMessageReactions(messageId, chatType, reactions) {
     // Clear existing reactions
     container.innerHTML = '';
     
-    // If no reactions, hide container
-    if (!reactions || Object.keys(reactions).length === 0) {
+    // If no reactions and no fires, hide container
+    if ((!reactions || Object.keys(reactions).length === 0) && fireCount === 0) {
         container.style.display = 'none';
         return;
     }
@@ -2669,8 +2669,8 @@ function updateMessageReactions(messageId, chatType, reactions) {
     // Show container
     container.style.display = 'flex';
     
-    // Add each reaction
-    for (const [emoji, count] of Object.entries(reactions)) {
+    // Add each normal reaction
+    for (const [emoji, count] of Object.entries(reactions || {})) {
         const item = document.createElement('div');
         item.className = 'reaction-item';
         item.innerHTML = `
@@ -2682,6 +2682,17 @@ function updateMessageReactions(messageId, chatType, reactions) {
         item.onclick = () => addReaction(messageId, chatType, emoji);
         
         container.appendChild(item);
+    }
+    
+    // Add fire reaction if exists
+    if (fireCount > 0) {
+        const fireItem = document.createElement('div');
+        fireItem.className = 'reaction-item fire-reaction';
+        fireItem.innerHTML = `
+            <span class="reaction-emoji">🔥</span>
+            <span class="reaction-count">${fireCount}</span>
+        `;
+        container.appendChild(fireItem);
     }
 }
 
@@ -2777,26 +2788,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (menu) menu.addEventListener('click', (e) => { if (e.target === menu) closeMessageMenu(); });
     if (closeBtn) closeBtn.addEventListener('click', closeMessageMenu);
 });
-
-// =============================
-// LOAD MESSAGE REACTIONS
-// =============================
-
-async function loadMessageReactions(messageId, chatType) {
-    try {
-        const res = await fetch(`/api/message/reactions?message_id=${messageId}&chat_type=${chatType}`);
-        const data = await res.json();
-        
-        if (data.ok && data.reactions) {
-            updateMessageReactions(messageId, chatType, data.reactions);
-        }
-    } catch (err) {
-        LOG.error('Failed to load reactions:', err);
-    }
-}
-
-
-// ========== ADVANCED MESSAGE INTERACTIONS ==========
 
 let lastTapTime = 0;
 let longPressTimer = null;
