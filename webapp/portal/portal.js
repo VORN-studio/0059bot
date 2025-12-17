@@ -2677,39 +2677,36 @@ function updateMessageReactions(messageId, chatType, reactions, fireCount = 0) {
     // Clear existing reactions
     container.innerHTML = '';
     
-    // If no reactions and no fires, hide container
-    if ((!reactions || Object.keys(reactions).length === 0) && fireCount === 0) {
+    // If no reactions, hide container
+    if (!reactions || Object.keys(reactions).length === 0) {
         container.style.display = 'none';
-        return;
+    } else {
+        // Show container
+        container.style.display = 'flex';
+        
+        // Add each normal reaction
+        for (const [emoji, count] of Object.entries(reactions)) {
+            const item = document.createElement('div');
+            item.className = 'reaction-item';
+            item.innerHTML = `
+                <span class="reaction-emoji">${emoji}</span>
+                <span class="reaction-count">${count}</span>
+            `;
+            
+            // Click to toggle reaction
+            item.onclick = () => addReaction(messageId, chatType, emoji);
+            
+            container.appendChild(item);
+        }
     }
     
-    // Show container
-    container.style.display = 'flex';
+    // Update fire counter (separate element)
+    const fireCounter = document.getElementById(`fire-counter-${messageId}`);
+    const fireCountSpan = document.getElementById(`fire-count-${messageId}`);
     
-    // Add each normal reaction
-    for (const [emoji, count] of Object.entries(reactions || {})) {
-        const item = document.createElement('div');
-        item.className = 'reaction-item';
-        item.innerHTML = `
-            <span class="reaction-emoji">${emoji}</span>
-            <span class="reaction-count">${count}</span>
-        `;
-        
-        // Click to toggle reaction
-        item.onclick = () => addReaction(messageId, chatType, emoji);
-        
-        container.appendChild(item);
-    }
-    
-    // Add fire reaction if exists
-    if (fireCount > 0) {
-        const fireItem = document.createElement('div');
-        fireItem.className = 'reaction-item fire-reaction';
-        fireItem.innerHTML = `
-            <span class="reaction-emoji">🔥</span>
-            <span class="reaction-count">${fireCount}</span>
-        `;
-        container.appendChild(fireItem);
+    if (fireCounter && fireCountSpan) {
+        fireCountSpan.textContent = fireCount;
+        fireCounter.style.display = fireCount > 0 ? 'block' : 'none';
     }
 }
 
