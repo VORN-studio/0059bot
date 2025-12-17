@@ -1312,6 +1312,26 @@ body {
     background: rgba(248, 113, 113, 0.15);
 }
 
+.hidden-reactions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 8px 4px;
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+}
+
+.more-reactions-btn {
+    background: rgba(59, 130, 246, 0.2) !important;
+    border: 1px dashed rgba(59, 130, 246, 0.5);
+}
+
+.more-reactions-btn:hover {
+    background: rgba(59, 130, 246, 0.3) !important;
+    transform: scale(1.2) rotate(0deg) !important;
+}
+
 .chat-message-wrapper {
     cursor: pointer;
     user-select: none;

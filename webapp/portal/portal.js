@@ -2701,19 +2701,41 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM, userS
         const tier5Reactions = ['💯', '🎉', '😍', '👏', '🚀'];
         const tier7Reactions = ['💎', '⚡', '🌟', '🎯', '🔱'];
         
-        let reactions = [...basicReactions];
+        let allReactions = [...basicReactions];
         
         if (userStatus >= 5) {
-            reactions = [...reactions, ...tier5Reactions];
+            allReactions = [...allReactions, ...tier5Reactions];
         }
         
         if (userStatus >= 7) {
-            reactions = [...reactions, ...tier7Reactions];
+            allReactions = [...allReactions, ...tier7Reactions];
         }
         
-        reactionsContainer.innerHTML = reactions.map(emoji => 
+        // Show first 5 + "more" button
+        const displayReactions = allReactions.slice(0, 5);
+        const hasMore = allReactions.length > 5;
+        
+        let html = displayReactions.map(emoji => 
             `<span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','${emoji}');">${emoji}</span>`
         ).join('');
+        
+        if (hasMore) {
+            html += `<span class="inline-emoji more-reactions-btn" onclick="event.stopPropagation();showAllReactions('${messageId}','${chatType}',${userStatus});">➕</span>`;
+        }
+        
+        reactionsContainer.innerHTML = html;
+        
+        // Add hidden reactions container
+        if (hasMore) {
+            const hiddenReactions = allReactions.slice(5);
+            let hiddenHtml = `<div class="hidden-reactions" id="hidden-reactions-${messageId}" style="display:none;">`;
+            hiddenHtml += hiddenReactions.map(emoji => 
+                `<span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','${emoji}');">${emoji}</span>`
+            ).join('');
+            hiddenHtml += `</div>`;
+            
+            reactionsContainer.insertAdjacentHTML('afterend', hiddenHtml);
+        }
     }
     
     menu.style.display = 'block';
@@ -2927,17 +2949,53 @@ function getTierReactions(messageId, chatType, userStatus) {
     const tier5Reactions = ['💯', '🎉', '😍', '👏', '🚀'];
     const tier7Reactions = ['💎', '⚡', '🌟', '🎯', '🔱'];
     
-    let reactions = [...basicReactions];
+    let allReactions = [...basicReactions];
     
     if (userStatus >= 5) {
-        reactions = [...reactions, ...tier5Reactions];
+        allReactions = [...allReactions, ...tier5Reactions];
     }
     
     if (userStatus >= 7) {
-        reactions = [...reactions, ...tier7Reactions];
+        allReactions = [...allReactions, ...tier7Reactions];
     }
     
-    return reactions.map(emoji => 
+    // Show first 5 + "more" button
+    const displayReactions = allReactions.slice(0, 5);
+    const hasMore = allReactions.length > 5;
+    
+    let html = displayReactions.map(emoji => 
         `<span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','${emoji}');">${emoji}</span>`
     ).join('');
+    
+    if (hasMore) {
+        html += `<span class="inline-emoji more-reactions-btn" onclick="event.stopPropagation();showAllReactions('${messageId}','${chatType}',${userStatus});">➕</span>`;
+    }
+    
+    // Hidden reactions container
+    if (hasMore) {
+        const hiddenReactions = allReactions.slice(5);
+        html += `<div class="hidden-reactions" id="hidden-reactions-${messageId}" style="display:none;">`;
+        html += hiddenReactions.map(emoji => 
+            `<span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','${emoji}');">${emoji}</span>`
+        ).join('');
+        html += `</div>`;
+    }
+    
+    return html;
+}
+
+
+function showAllReactions(messageId, chatType, userStatus) {
+    const hiddenContainer = document.getElementById(`hidden-reactions-${messageId}`);
+    const moreBtn = event.target;
+    
+    if (hiddenContainer) {
+        if (hiddenContainer.style.display === 'none') {
+            hiddenContainer.style.display = 'flex';
+            moreBtn.textContent = '➖';
+        } else {
+            hiddenContainer.style.display = 'none';
+            moreBtn.textContent = '➕';
+        }
+    }
 }
