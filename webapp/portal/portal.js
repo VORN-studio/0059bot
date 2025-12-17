@@ -1901,7 +1901,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
     const escapedText = msgText.replace(/`/g, '\\`').replace(/\$/g, '\\$');
 
     // ✨ TIER-BASED REACTIONS
-    const tierReactions = getTierReactions(messageId, chatType, userStatus);  // ← ԱՅՍ ԱՎԵԼԱՑՐՈՒ
+    const tierReactions = getTierReactions(messageId, chatType);  // ← ԱՅՍ ԱՎԵԼԱՑՐՈՒ
 
     return `
     <div class="chat-message-wrapper" 
@@ -1912,7 +1912,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
          data-username="${username.replace(/"/g, '&quot;')}"
          data-is-me="${isMe}"
          data-user-status="${userStatus}"
-         onclick="handleMessageClick('${messageId}', '${chatType}', '${username.replace(/'/g, "\\'")}', \`${escapedText}\`, ${isMe}, ${isDM}, ${userStatus})">
+         onclick="handleMessageClick('${messageId}', '${chatType}', '${username.replace(/'/g, "\\'")}', \`${escapedText}\`, ${isMe}, ${isDM})">
 
         <div style="text-align:${align};">
             <div style="display:inline-block;max-width:70%;background:${bgColor};padding:10px 14px;border-radius:14px;text-align:left;position:relative;">
@@ -2688,26 +2688,28 @@ let CURRENT_MENU_MESSAGE = null;
 
 
 // INLINE MESSAGE MENU
-function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM, userStatus) {
+function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
     closeAllInlineMenus();
     
     const menu = document.getElementById(`inline-menu-${messageId}`);
     if (!menu) return;
     
-    // Regenerate reactions based on current user's status
+    // Regenerate reactions based on CURRENT USER's status
     const reactionsContainer = menu.querySelector('.inline-reactions');
-    if (reactionsContainer && userStatus !== undefined) {
+    if (reactionsContainer) {
         const basicReactions = ['❤️', '👍', '😂', '🔥', '⭐'];
         const tier5Reactions = ['💯', '🎉', '😍', '👏', '🚀'];
         const tier7Reactions = ['💎', '⚡', '🌟', '🎯', '🔱'];
         
+        const myStatus = CURRENT_USER_STATUS || 0;
+        
         let allReactions = [...basicReactions];
         
-        if (userStatus >= 5) {
+        if (myStatus >= 5) {
             allReactions = [...allReactions, ...tier5Reactions];
         }
         
-        if (userStatus >= 7) {
+        if (myStatus >= 7) {
             allReactions = [...allReactions, ...tier7Reactions];
         }
         
@@ -2720,7 +2722,7 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM, userS
         ).join('');
         
         if (hasMore) {
-            html += `<span class="inline-emoji more-reactions-btn" onclick="event.stopPropagation();showAllReactions('${messageId}','${chatType}',${userStatus});">➕</span>`;
+            html += `<span class="inline-emoji more-reactions-btn" onclick="event.stopPropagation();showAllReactions('${messageId}','${chatType}');">➕</span>`;
         }
         
         reactionsContainer.innerHTML = html;
@@ -2846,7 +2848,7 @@ async function loadMessageReactions(messageId, chatType) {
 let lastTapTime = 0;
 let longPressTimer = null;
 
-function handleMessageClick(messageId, chatType, username, text, isMe, isDM, userStatus) {
+function handleMessageClick(messageId, chatType, username, text, isMe, isDM) {
     const now = Date.now();
     
     // DOUBLE TAP = Quick ❤️ reaction
@@ -2857,7 +2859,7 @@ function handleMessageClick(messageId, chatType, username, text, isMe, isDM, use
     }
     
     lastTapTime = now;
-    toggleInlineMenu(messageId, chatType, username, text, isMe, isDM, userStatus);
+    toggleInlineMenu(messageId, chatType, username, text, isMe, isDM);
 }
 
 function quickReaction(messageId, chatType, emoji) {
@@ -2944,18 +2946,21 @@ function showToast(message) {
 
 // ========== TIER-BASED REACTIONS ==========
 
-function getTierReactions(messageId, chatType, userStatus) {
+function getTierReactions(messageId, chatType) {
     const basicReactions = ['❤️', '👍', '😂', '🔥', '⭐'];
     const tier5Reactions = ['💯', '🎉', '😍', '👏', '🚀'];
     const tier7Reactions = ['💎', '⚡', '🌟', '🎯', '🔱'];
     
+    // Use CURRENT_USER_STATUS instead of message sender's status
+    const myStatus = CURRENT_USER_STATUS || 0;
+    
     let allReactions = [...basicReactions];
     
-    if (userStatus >= 5) {
+    if (myStatus >= 5) {
         allReactions = [...allReactions, ...tier5Reactions];
     }
     
-    if (userStatus >= 7) {
+    if (myStatus >= 7) {
         allReactions = [...allReactions, ...tier7Reactions];
     }
     
@@ -2968,7 +2973,7 @@ function getTierReactions(messageId, chatType, userStatus) {
     ).join('');
     
     if (hasMore) {
-        html += `<span class="inline-emoji more-reactions-btn" onclick="event.stopPropagation();showAllReactions('${messageId}','${chatType}',${userStatus});">➕</span>`;
+        html += `<span class="inline-emoji more-reactions-btn" onclick="event.stopPropagation();showAllReactions('${messageId}','${chatType}');">➕</span>`;
     }
     
     // Hidden reactions container
@@ -2985,7 +2990,7 @@ function getTierReactions(messageId, chatType, userStatus) {
 }
 
 
-function showAllReactions(messageId, chatType, userStatus) {
+function showAllReactions(messageId, chatType) {
     const hiddenContainer = document.getElementById(`hidden-reactions-${messageId}`);
     const moreBtn = event.target;
     
