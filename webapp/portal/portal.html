@@ -440,5 +440,41 @@
         </div>
     </div>
 
+    <!-- Domino Star Modal -->
+        <div id="domino-star-modal" class="popup hidden">
+            <div class="popup-box domino-star-box">
+                <div class="domino-star-header">
+                    <div class="domino-star-icon-big">🌟💎</div>
+                    <h3>Send Domino Star</h3>
+                </div>
+                
+                <div class="domino-star-info">
+                    <div class="domino-star-row">
+                        <span>💰 Total Cost:</span>
+                        <span class="domino-star-price">0.20 USD</span>
+                    </div>
+                    <div class="domino-star-row">
+                        <span>👤 To User:</span>
+                        <span class="domino-star-amount">0.10 USD</span>
+                    </div>
+                    <div class="domino-star-row">
+                        <span>🔥 To Burn:</span>
+                        <span class="domino-star-amount">0.10 USD</span>
+                    </div>
+                </div>
+                
+                <div class="domino-star-balance">
+                    Your Balance: <span id="domino-star-user-balance">0.00</span> USD
+                </div>
+                
+                <div style="display:flex;gap:10px;margin-top:16px;">
+                    <button class="domino-star-btn-cancel" onclick="closeDominoStarModal()">Cancel</button>
+                    <button class="domino-star-btn-confirm" onclick="confirmDominoStar()">
+                        <span style="font-size:16px;">🌟💎</span> Send
+                    </button>
+                </div>
+            </div>
+        </div>
+
 </body>
 </html>

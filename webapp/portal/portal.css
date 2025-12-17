@@ -1548,3 +1548,112 @@ body {
 .domino-star-icon-small {
     font-size: 16px;
 }
+
+/* ===========================
+   DOMINO STAR MODAL
+   =========================== */
+
+.domino-star-box {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    border: 2px solid #fbbf24 !important;
+    max-width: 360px;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.domino-star-header {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    padding: 20px;
+    text-align: center;
+    color: #000;
+}
+
+.domino-star-header h3 {
+    margin: 8px 0 0 0;
+    font-size: 18px;
+    color: #000;
+}
+
+.domino-star-icon-big {
+    font-size: 42px;
+    animation: dominoStarPulse 2s infinite;
+}
+
+@keyframes dominoStarPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.domino-star-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 10px;
+    padding: 14px;
+    margin: 16px;
+}
+
+.domino-star-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    color: #e2e8f0;
+    font-size: 13px;
+}
+
+.domino-star-row:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.domino-star-price {
+    font-size: 15px;
+    font-weight: bold;
+    color: #fbbf24;
+}
+
+.domino-star-amount {
+    font-weight: 600;
+    color: #22c55e;
+}
+
+.domino-star-balance {
+    text-align: center;
+    padding: 10px;
+    margin: 0 16px;
+    background: rgba(251, 191, 36, 0.15);
+    border-radius: 8px;
+    color: #fbbf24;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.domino-star-btn-cancel,
+.domino-star-btn-confirm {
+    flex: 1;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.domino-star-btn-cancel {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+}
+
+.domino-star-btn-cancel:hover {
+    background: rgba(148, 163, 184, 0.3);
+}
+
+.domino-star-btn-confirm {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #000;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.domino-star-btn-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(251, 191, 36, 0.6);
+}
