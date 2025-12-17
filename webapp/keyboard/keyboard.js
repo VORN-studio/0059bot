@@ -11,7 +11,6 @@ console.log('🎹 Custom Keyboard loading...');
     let capsLock = false;
     let shiftPressed = false;
     let lastShiftTime = 0;
-    let clipboardText = '';
 
     const layouts = {
         en: [
@@ -49,12 +48,7 @@ console.log('🎹 Custom Keyboard loading...');
         const kb = document.createElement('div');
         kb.id = 'custom-keyboard';
         kb.innerHTML = `
-            <div class="keyboard-toolbar">
-                <button class="keyboard-tool-btn" id="kb-copy">📋 Copy</button>
-                <button class="keyboard-tool-btn" id="kb-paste">📄 Paste</button>
-                <button class="keyboard-tool-btn" id="kb-cut">✂️ Cut</button>
-            </div>
-            <div class="keyboard-header">
+                <div class="keyboard-header">
                 <div class="keyboard-lang-switcher">
                     <button class="keyboard-lang-btn active" data-lang="en">EN</button>
                     <button class="keyboard-lang-btn" data-lang="ru">RU</button>
@@ -67,9 +61,7 @@ console.log('🎹 Custom Keyboard loading...');
         `;
         document.body.appendChild(kb);
 
-        document.getElementById('kb-copy').addEventListener('click', handleCopy);
-        document.getElementById('kb-paste').addEventListener('click', handlePaste);
-        document.getElementById('kb-cut').addEventListener('click', handleCut);
+        
 
         kb.querySelectorAll('.keyboard-lang-btn').forEach(btn => {
             btn.addEventListener('click', () => {
