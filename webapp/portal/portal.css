@@ -925,6 +925,44 @@ body {
     margin: 0;
     border-radius: 0;
     animation: slideUp 0.3s ease-out;
+    padding: 0;
+}
+
+/* Hide portal root when chat is fullscreen */
+.chat-box.fullscreen ~ * {
+    display: none;
+}
+
+body:has(.chat-box.fullscreen) #portal-root > *:not(.tab-page) {
+    display: none !important;
+}
+
+body:has(.chat-box.fullscreen) .portal-topbar,
+body:has(.chat-box.fullscreen) .portal-profile,
+body:has(.chat-box.fullscreen) .portal-tabs {
+    display: none !important;
+}
+
+/* Fullscreen chat spacing */
+.chat-box.fullscreen {
+    padding: 10px;
+    padding-top: env(safe-area-inset-top, 10px);
+    padding-bottom: env(safe-area-inset-bottom, 10px);
+}
+
+.chat-box.fullscreen .chat-messages {
+    padding: 10px;
+}
+
+.chat-box.fullscreen .chat-input-row {
+    padding: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+/* Hot user banner in fullscreen */
+.chat-box.fullscreen #hot-user-banner {
+    margin: 10px;
+    margin-top: max(10px, env(safe-area-inset-top));
 }
 
 @keyframes slideUp {
