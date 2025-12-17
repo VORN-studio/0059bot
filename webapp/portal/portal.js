@@ -186,7 +186,8 @@ let CURRENT_TAB = "feed";
 let CURRENT_DM_TARGET = null;
 let CONFIRM_ACTION = null;
 let CURRENT_USER_STATUS = 0;
-
+let typingTimeouts = {};
+let typingUsers = new Set();
 socket.on("global_trim", (data) => {
   const keep = data.keep || 30;
 
@@ -216,6 +217,16 @@ socket.on("connect", () => {
 
     if (SINGLE_POST_MODE && OPEN_POST_ID) {
         socket.emit("join_post", { post_id: OPEN_POST_ID });
+    }
+});
+
+socket.on("user_typing_global", (data) => {
+    showTypingIndicator(data.username, "global");
+});
+
+socket.on("user_typing_dm", (data) => {
+    if (CURRENT_DM_TARGET && String(data.sender) === String(CURRENT_DM_TARGET)) {
+        showTypingIndicator(data.username, "dm");
     }
 });
 
@@ -388,8 +399,20 @@ function initChatEvents() {
             }
         });
         
+        let globalTypingTimeout = null;
         globalInput.addEventListener("input", () => {
             updateCharCounter();
+            
+            // Send typing indicator
+            socket.emit("typing_global", { user_id: CURRENT_UID });
+            
+            // Clear previous timeout
+            if (globalTypingTimeout) clearTimeout(globalTypingTimeout);
+            
+            // Stop typing after 2 seconds
+            globalTypingTimeout = setTimeout(() => {
+                socket.emit("stop_typing_global", { user_id: CURRENT_UID });
+            }, 2000);
         });
     }
 
@@ -402,6 +425,28 @@ function initChatEvents() {
     if (dmInput) {
         dmInput.addEventListener("keypress", e => {
             if (e.key === "Enter") sendDM();
+        });
+        
+        let dmTypingTimeout = null;
+        dmInput.addEventListener("input", () => {
+            if (!CURRENT_DM_TARGET) return;
+            
+            // Send typing indicator
+            socket.emit("typing_dm", { 
+                sender: CURRENT_UID,
+                receiver: CURRENT_DM_TARGET
+            });
+            
+            // Clear previous timeout
+            if (dmTypingTimeout) clearTimeout(dmTypingTimeout);
+            
+            // Stop typing after 2 seconds
+            dmTypingTimeout = setTimeout(() => {
+                socket.emit("stop_typing_dm", { 
+                    sender: CURRENT_UID,
+                    receiver: CURRENT_DM_TARGET
+                });
+            }, 2000);
         });
     }
 
@@ -2516,3 +2561,42 @@ function toggleDMFullscreen() {
     }
 }
 
+// =============================
+// TYPING INDICATOR
+// =============================
+
+function showTypingIndicator(username, chatType) {
+    const boxId = chatType === "global" ? "global-messages" : "dm-messages";
+    const box = document.getElementById(boxId);
+    
+    if (!box) return;
+    
+    // Remove existing typing indicator
+    const existing = box.querySelector(".typing-indicator");
+    if (existing) existing.remove();
+    
+    // Create new typing indicator
+    const indicator = document.createElement("div");
+    indicator.className = "typing-indicator";
+    indicator.innerHTML = `
+        <div style="
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            margin: 6px 0;
+            font-size: 13px;
+            color: #9ca3af;
+            font-style: italic;
+        ">
+            ${username} գրում է<span class="typing-dots">...</span>
+        </div>
+    `;
+    
+    box.appendChild(indicator);
+    box.scrollTop = box.scrollHeight;
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        indicator.remove();
+    }, 3000);
+}

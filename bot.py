@@ -924,6 +924,55 @@ def on_join_dm(data):
         join_room(room)
         logger.info(f"✉️ joined {room}")
 
+@socketio.on("typing_global")
+def handle_typing_global(data):
+    """User-ը գրում է global chat-ում"""
+    user_id = int(data.get("user_id", 0))
+    
+    if user_id == 0:
+        return
+    
+    conn = db()
+    c = conn.cursor()
+    
+    # Get username
+    c.execute("SELECT username FROM dom_users WHERE user_id = %s", (user_id,))
+    row = c.fetchone()
+    username = row[0] if row else f"User {user_id}"
+    
+    release_db(conn)
+    
+    # Broadcast to all in global chat (except sender)
+    emit("user_typing_global", {
+        "user_id": user_id,
+        "username": username
+    }, room="global", skip_sid=request.sid, broadcast=True)
+
+
+@socketio.on("typing_dm")
+def handle_typing_dm(data):
+    """User-ը գրում է DM-ում"""
+    sender = int(data.get("sender", 0))
+    receiver = int(data.get("receiver", 0))
+    
+    if sender == 0 or receiver == 0:
+        return
+    
+    conn = db()
+    c = conn.cursor()
+    
+    # Get username
+    c.execute("SELECT username FROM dom_users WHERE user_id = %s", (sender,))
+    row = c.fetchone()
+    username = row[0] if row else f"User {sender}"
+    
+    release_db(conn)
+    
+    # Send only to receiver
+    emit("user_typing_dm", {
+        "sender": sender,
+        "username": username
+    }, room=f"user_{receiver}", broadcast=True)
 
 @app_web.route("/webapp/games/<path:filename>")
 def serve_games(filename):
