@@ -2763,25 +2763,6 @@ function closeAllInlineMenus() {
 }
 
 
-
-function updateMessageReactions(messageId, chatType, reactions) {
-    const container = document.getElementById(`reactions-${messageId}`);
-    if (!container) return;
-    container.innerHTML = '';
-    if (!reactions || Object.keys(reactions).length === 0) {
-        container.style.display = 'none';
-        return;
-    }
-    container.style.display = 'flex';
-    for (const [emoji, count] of Object.entries(reactions)) {
-        const item = document.createElement('div');
-        item.className = 'reaction-item';
-        item.innerHTML = `<span>${emoji}</span><span class="reaction-count">${count}</span>`;
-        item.onclick = (e) => { e.stopPropagation(); addReaction(messageId, chatType, emoji); };
-        container.appendChild(item);
-    }
-}
-
 // Close menus when clicking outside
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.chat-message-wrapper')) {
@@ -2789,25 +2770,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-
-
-function updateMessageReactions(messageId, chatType, reactions) {
-    const container = document.getElementById(`reactions-${messageId}`);
-    if (!container) return;
-    container.innerHTML = '';
-    if (!reactions || Object.keys(reactions).length === 0) {
-        container.style.display = 'none';
-        return;
-    }
-    container.style.display = 'flex';
-    for (const [emoji, count] of Object.entries(reactions)) {
-        const item = document.createElement('div');
-        item.className = 'reaction-item';
-        item.innerHTML = `<span>${emoji}</span><span class="reaction-count">${count}</span>`;
-        item.onclick = (e) => { e.stopPropagation(); addReaction(messageId, chatType, emoji); };
-        container.appendChild(item);
-    }
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     const menu = document.getElementById('message-menu');
