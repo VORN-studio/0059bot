@@ -3598,6 +3598,52 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(msg)
 
+async def burn_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        await update.message.reply_text("❌ admin չես")
+        return
+
+    conn = db()
+    c = conn.cursor()
+
+    now = int(time.time())
+    today_start = now - 86400
+
+    # Get total burned from unified account
+    c.execute("SELECT total_burned, last_updated FROM dom_burn_account WHERE id = 1")
+    row = c.fetchone()
+    total_burned = float(row[0] or 0) if row else 0.0
+    last_updated = int(row[1] or 0) if row else 0
+
+    # Get today's burns from ledger
+    c.execute(
+        "SELECT COALESCE(SUM(amount),0) FROM dom_burn_ledger WHERE created_at >= %s",
+        (today_start,)
+    )
+    today_burn = float(c.fetchone()[0])
+
+    # Get total Domino Stars sent
+    c.execute("SELECT COUNT(*) FROM dom_fire_reactions")
+    total_fires = int(c.fetchone()[0] or 0)
+
+    release_db(conn)
+
+    # Format last updated
+    from datetime import datetime
+    if last_updated > 0:
+        dt = datetime.fromtimestamp(last_updated)
+        last_update_str = dt.strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        last_update_str = "Never"
+
+    await update.message.reply_text(
+        f"🔥 Burn վիճակ\n\n"
+        f"💰 Ընդհանուր burned: {total_burned:.2f} USD\n"
+        f"📅 Այսօր: {today_burn:.2f} USD\n"
+        f"🌟 Domino Stars: {total_fires}\n"
+        f"⏰ Թարմացում: {last_update_str}"
+    )    
+
 async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
         await update.message.reply_text("❌ admin չես")
