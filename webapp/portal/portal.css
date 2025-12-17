@@ -928,23 +928,88 @@ body {
     padding: 0;
 }
 
-/* Hide portal root when chat is fullscreen */
-.chat-box.fullscreen ~ * {
-    display: none;
-}
-
-body:has(.chat-box.fullscreen) #portal-root > *:not(.tab-page) {
-    display: none !important;
-}
-
-body:has(.chat-box.fullscreen) .portal-topbar,
-body:has(.chat-box.fullscreen) .portal-profile,
-body:has(.chat-box.fullscreen) .portal-tabs {
-    display: none !important;
-}
 
 /* Fullscreen chat spacing */
 .chat-box.fullscreen {
+    padding: 10px;
+    padding-top: env(safe-area-inset-top, 10px);
+    padding-bottom: env(safe-area-inset-bottom, 10px);
+}
+
+.chat-box.fullscreen .chat-messages {
+    padding: 10px;
+}
+
+.chat-box.fullscreen .chat-input-row {
+    padding: 10px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+/* Hot user banner in fullscreen */
+.chat-box.fullscreen #hot-user-banner {
+    margin: 10px;
+    margin-top: max(10px, env(safe-area-inset-top));
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* DM fullscreen */
+.dm-overlay.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0;
+    animation: slideUp 0.3s ease-out;
+}
+
+/* =============================
+   FULLSCREEN CHAT
+   ============================= */
+
+.chat-fullscreen-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #9ca3af;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+}
+
+.chat-fullscreen-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+.chat-fullscreen-btn:active {
+    transform: scale(0.95);
+}
+
+/* Fullscreen mode */
+.chat-box.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0;
+    animation: slideUp 0.3s ease-out;
     padding: 10px;
     padding-top: env(safe-area-inset-top, 10px);
     padding-bottom: env(safe-area-inset-bottom, 10px);
