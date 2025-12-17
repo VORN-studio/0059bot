@@ -1919,6 +1919,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                 ${!isMe ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><img src="${avatar}" style="width:24px;height:24px;border-radius:50%;"><span class="${statusClass}" style="font-weight:bold;font-size:13px;">${username}</span></div>` : ''}
                 ${replyHtml}
                 <div style="color:#fff;font-size:14px;word-wrap:break-word;">${msg.text || msg.message || ""}</div>
+                <div style="color:rgba(255,255,255,0.5);font-size:11px;margin-top:4px;text-align:right;">${formatMessageTime(msg.time || msg.created_at)}</div>
             </div>
         </div>
 
@@ -3002,5 +3003,46 @@ function showAllReactions(messageId, chatType) {
             hiddenContainer.style.display = 'none';
             moreBtn.textContent = '➕';
         }
+    }
+}
+
+
+// ========== FORMAT MESSAGE TIME ==========
+
+function formatMessageTime(timestamp) {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp * 1000);
+    const now = new Date();
+    
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    // Մինչև 1 րոպե
+    if (diffMins < 1) return 'հենց նոր';
+    
+    // Մինչև 60 րոպե
+    if (diffMins < 60) return `${diffMins} րոպե առաջ`;
+    
+    // Մինչև 24 ժամ
+    if (diffHours < 24) return `${diffHours} ժամ առաջ`;
+    
+    // Ավելի քան 24 ժամ - ցույց տալ ժամը
+    const hours = date.getHours().toString().padStart(2, '0');
+    const mins = date.getMinutes().toString().padStart(2, '0');
+    
+    if (diffDays === 0) {
+        return `${hours}:${mins}`;
+    } else if (diffDays === 1) {
+        return `Երեկ ${hours}:${mins}`;
+    } else if (diffDays < 7) {
+        const days = ['Կիր', 'Երկ', 'Երք', 'Չոր', 'Հինգ', 'Ուրբ', 'Շաբ'];
+        return `${days[date.getDay()]} ${hours}:${mins}`;
+    } else {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        return `${day}.${month} ${hours}:${mins}`;
     }
 }
