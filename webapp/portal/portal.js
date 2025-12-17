@@ -1896,9 +1896,19 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
         replyHtml = `<div style="background:rgba(58,139,255,0.2);border-left:3px solid #3a8bff;padding:6px 10px;margin-bottom:6px;border-radius:6px;font-size:12px;opacity:0.8;">${msg.reply_to_text.slice(0, 60)}${msg.reply_to_text.length > 60 ? '...' : ''}</div>`;
     }
 
+    const msgText = (msg.text || msg.message || '').replace(/"/g, '&quot;');
+    const escapedText = msgText.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+
     return `
-    <div class="chat-message-wrapper" data-msg-id="${messageId}" data-chat-type="${chatType}" data-msg-text="${(msg.text || msg.message || '').replace(/"/g, '&quot;')}" data-sender="${msg.sender || ''}" data-username="${username.replace(/"/g, '&quot;')}" onclick="toggleInlineMenu('${messageId}', '${chatType}', '${username.replace(/'/g, "\\'")}', \`${(msg.text || msg.message || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
-        
+    <div class="chat-message-wrapper" 
+         data-msg-id="${messageId}" 
+         data-chat-type="${chatType}" 
+         data-msg-text="${msgText}" 
+         data-sender="${msg.sender || ''}" 
+         data-username="${username.replace(/"/g, '&quot;')}"
+         data-is-me="${isMe}"
+         onclick="handleMessageClick('${messageId}', '${chatType}', '${username.replace(/'/g, "\\'")}', \`${escapedText}\`, ${isMe}, ${isDM})">
+
         <div style="text-align:${align};">
             <div style="display:inline-block;max-width:70%;background:${bgColor};padding:10px 14px;border-radius:14px;text-align:left;position:relative;">
                 ${!isMe ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><img src="${avatar}" style="width:24px;height:24px;border-radius:50%;"><span class="${statusClass}" style="font-weight:bold;font-size:13px;">${username}</span></div>` : ''}
@@ -1906,22 +1916,24 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                 <div style="color:#fff;font-size:14px;word-wrap:break-word;">${msg.text || msg.message || ""}</div>
             </div>
         </div>
-        
-        <!-- INLINE MENU (hidden by default) -->
+
+        <!-- INLINE MENU -->
         <div class="inline-message-menu" id="inline-menu-${messageId}" style="display:none;">
             <div class="inline-reactions">
-                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','❤️');closeAllInlineMenus();">❤️</span>
-                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','👍');closeAllInlineMenus();">👍</span>
-                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','😂');closeAllInlineMenus();">😂</span>
-                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','🔥');closeAllInlineMenus();">🔥</span>
-                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','⭐');closeAllInlineMenus();">⭐</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','❤️');">❤️</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','👍');">👍</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','😂');">😂</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','🔥');">🔥</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();quickReaction('${messageId}','${chatType}','⭐');">⭐</span>
             </div>
             <div class="inline-actions">
-                <div class="inline-action" onclick="event.stopPropagation();${isDM ? `setReply('${messageId}', \`${(msg.text || msg.message || '').replace(/`/g, '\\`')}\`, '${username.replace(/'/g, "\\'")}')` : 'null'};closeAllInlineMenus();">🔄 Reply</div>
-                <div class="inline-action" onclick="event.stopPropagation();navigator.clipboard.writeText(\`${(msg.text || msg.message || '').replace(/`/g, '\\`')}\`);closeAllInlineMenus();">📋 Copy</div>
+                ${isDM ? `<div class="inline-action" onclick="event.stopPropagation();setReply('${messageId}', \`${escapedText}\`, '${username.replace(/'/g, "\\'")}');closeAllInlineMenus();">🔄 Reply</div>` : ''}
+                <div class="inline-action" onclick="event.stopPropagation();copyMessage(\`${escapedText}\`);closeAllInlineMenus();">📋 Copy</div>
+                <div class="inline-action" onclick="event.stopPropagation();forwardMessage('${messageId}', \`${escapedText}\`);closeAllInlineMenus();">↗️ Forward</div>
+                ${isMe ? `<div class="inline-action danger" onclick="event.stopPropagation();deleteMessage('${messageId}', '${chatType}');closeAllInlineMenus();">🗑️ Delete</div>` : ''}
             </div>
         </div>
-        
+
         <div style="text-align:${align};">
             <div class="message-reactions" id="reactions-${messageId}" style="display:none;justify-content:${isMe ? 'flex-end' : 'flex-start'};"></div>
         </div>
@@ -2782,4 +2794,105 @@ async function loadMessageReactions(messageId, chatType) {
     } catch (err) {
         LOG.error('Failed to load reactions:', err);
     }
+}
+
+
+// ========== ADVANCED MESSAGE INTERACTIONS ==========
+
+let lastTapTime = 0;
+let longPressTimer = null;
+
+function handleMessageClick(messageId, chatType, username, text, isMe, isDM) {
+    const now = Date.now();
+    
+    // DOUBLE TAP = Quick ❤️ reaction
+    if (now - lastTapTime < 300) {
+        quickReaction(messageId, chatType, '❤️');
+        lastTapTime = 0;
+        return;
+    }
+    
+    lastTapTime = now;
+    toggleInlineMenu(messageId, chatType, username, text, isMe, isDM);
+}
+
+function quickReaction(messageId, chatType, emoji) {
+    // Haptic feedback
+    if (window.Telegram && window.Telegram.WebApp) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+    }
+    
+    addReaction(messageId, chatType, emoji);
+    closeAllInlineMenus();
+}
+
+function copyMessage(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 Copied!');
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
+    });
+}
+
+function forwardMessage(messageId, text) {
+    // TODO: Implement forward functionality
+    showToast('↗️ Forward feature coming soon!');
+}
+
+async function deleteMessage(messageId, chatType) {
+    if (!confirm('Delete this message?')) return;
+    
+    try {
+        const endpoint = chatType === 'dm' ? '/api/dm/delete' : '/api/chat/delete';
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message_id: messageId,
+                user_id: viewerId
+            })
+        });
+        
+        if (res.ok) {
+            // Remove from DOM
+            const wrapper = document.querySelector(`[data-msg-id="${messageId}"]`);
+            if (wrapper) {
+                wrapper.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => wrapper.remove(), 300);
+            }
+            
+            showToast('🗑️ Message deleted');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+        }
+    } catch (err) {
+        console.error('Delete failed:', err);
+        showToast('❌ Failed to delete');
+    }
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 24px;
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 10000;
+        animation: toastPop 2s ease;
+        backdrop-filter: blur(10px);
+    `;
+    
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
 }
