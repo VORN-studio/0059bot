@@ -502,6 +502,75 @@ def api_global_send():
     
     return jsonify({"ok": True, "id": msg_id})
 
+# ==================== DELETE GLOBAL CHAT MESSAGE ====================
+@app_web.route("/api/chat/delete", methods=["POST"])
+def delete_chat_message():
+    try:
+        data = request.json
+        message_id = data.get("message_id")
+        user_id = data.get("user_id")
+        
+        if not message_id or not user_id:
+            return jsonify({"error": "Missing parameters"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            DELETE FROM messages 
+            WHERE id = %s AND user_id = %s
+        """, (message_id, user_id))
+        conn.commit()
+        
+        deleted = cursor.rowcount > 0
+        cursor.close()
+        conn.close()
+        
+        if not deleted:
+            return jsonify({"error": "Not found or unauthorized"}), 404
+        
+        logger.info(f"User {user_id} deleted global message {message_id}")
+        return jsonify({"success": True}), 200
+        
+    except Exception as e:
+        logger.error(f"Delete chat message error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+# ==================== DELETE DM MESSAGE ====================
+@app_web.route("/api/dm/delete", methods=["POST"])
+def delete_dm_message():
+    try:
+        data = request.json
+        message_id = data.get("message_id")
+        user_id = data.get("user_id")
+        
+        if not message_id or not user_id:
+            return jsonify({"error": "Missing parameters"}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            DELETE FROM dm_messages 
+            WHERE id = %s AND sender_id = %s
+        """, (message_id, user_id))
+        conn.commit()
+        
+        deleted = cursor.rowcount > 0
+        cursor.close()
+        conn.close()
+        
+        if not deleted:
+            return jsonify({"error": "Not found or unauthorized"}), 404
+        
+        logger.info(f"User {user_id} deleted DM {message_id}")
+        return jsonify({"success": True}), 200
+        
+    except Exception as e:
+        logger.error(f"Delete DM error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app_web.route("/api/message/react", methods=["POST"])
 def api_message_react():
     """Նամակի վրա emoji react անել"""
@@ -1280,7 +1349,6 @@ def webapp_tasks(filename):
 @app_web.route("/portal/")
 def portal_page():
     return send_from_directory(PORTAL_DIR, "portal.html")
-
 
 @app_web.route("/portal/<path:filename>")
 def serve_portal(filename):
