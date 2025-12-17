@@ -2727,9 +2727,9 @@ def api_user_domino_stars():
     c = conn.cursor()
     
     c.execute("""
-        SELECT COALESCE(SUM(fire_count), 0)
+        SELECT COUNT(*)
         FROM dom_fire_reactions
-        WHERE receiver_id = %s
+        WHERE receiver_user_id = %s
     """, (uid,))
     
     count = int(c.fetchone()[0] or 0)
