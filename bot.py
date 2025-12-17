@@ -501,6 +501,99 @@ def api_global_send():
     
     return jsonify({"ok": True, "id": msg_id})
 
+@app_web.route("/api/message/react", methods=["POST"])
+def api_message_react():
+    """Նամակի վրա emoji react անել"""
+    data = request.get_json(force=True, silent=True) or {}
+    message_id = int(data.get("message_id", 0))
+    chat_type = data.get("chat_type", "")  # "global" or "dm"
+    user_id = int(data.get("user_id", 0))
+    emoji = data.get("emoji", "").strip()
+    
+    if message_id == 0 or user_id == 0 or emoji == "" or chat_type not in ["global", "dm"]:
+        return jsonify({"ok": False}), 400
+    
+    now = int(time.time())
+    conn = db()
+    c = conn.cursor()
+    
+    # Toggle reaction (եթե կա՝ հեռացնի, եթե չկա՝ ավելացնի)
+    c.execute("""
+        SELECT id FROM dom_message_reactions
+        WHERE message_id=%s AND chat_type=%s AND user_id=%s AND emoji=%s
+    """, (message_id, chat_type, user_id, emoji))
+    
+    existing = c.fetchone()
+    
+    if existing:
+        # Remove reaction
+        c.execute("""
+            DELETE FROM dom_message_reactions
+            WHERE message_id=%s AND chat_type=%s AND user_id=%s AND emoji=%s
+        """, (message_id, chat_type, user_id, emoji))
+        action = "removed"
+    else:
+        # Add reaction
+        c.execute("""
+            INSERT INTO dom_message_reactions (message_id, chat_type, user_id, emoji, created_at)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (message_id, chat_type, user_id, emoji, now))
+        action = "added"
+    
+    conn.commit()
+    
+    # Get total reactions for this message
+    c.execute("""
+        SELECT emoji, COUNT(*) as count
+        FROM dom_message_reactions
+        WHERE message_id=%s AND chat_type=%s
+        GROUP BY emoji
+    """, (message_id, chat_type))
+    
+    reactions = {}
+    for row in c.fetchall():
+        reactions[row[0]] = int(row[1])
+    
+    release_db(conn)
+    
+    # Broadcast to all users
+    room = "global" if chat_type == "global" else f"dm_{min(user_id, message_id)}_{max(user_id, message_id)}"
+    socketio.emit("message_reaction", {
+        "message_id": message_id,
+        "chat_type": chat_type,
+        "reactions": reactions
+    }, room=room, broadcast=True)
+    
+    return jsonify({"ok": True, "action": action, "reactions": reactions})
+
+
+@app_web.route("/api/message/reactions")
+def api_message_reactions():
+    """Նամակի reactions-ները ստանալ"""
+    message_id = request.args.get("message_id", type=int)
+    chat_type = request.args.get("chat_type", "")
+    
+    if not message_id or chat_type not in ["global", "dm"]:
+        return jsonify({"ok": False}), 400
+    
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        SELECT emoji, COUNT(*) as count
+        FROM dom_message_reactions
+        WHERE message_id=%s AND chat_type=%s
+        GROUP BY emoji
+    """, (message_id, chat_type))
+    
+    reactions = {}
+    for row in c.fetchall():
+        reactions[row[0]] = int(row[1])
+    
+    release_db(conn)
+    
+    return jsonify({"ok": True, "reactions": reactions})
+
 @app_web.route("/api/post/<int:post_id>")
 def api_get_single_post(post_id):
     conn = db(); c = conn.cursor()
@@ -1745,6 +1838,18 @@ def init_db():
         )
     """)
     
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_message_reactions (
+            id SERIAL PRIMARY KEY,
+            message_id INT NOT NULL,
+            chat_type VARCHAR(10) NOT NULL,
+            user_id BIGINT NOT NULL,
+            emoji VARCHAR(10) NOT NULL,
+            created_at INT NOT NULL,
+            UNIQUE(message_id, chat_type, user_id, emoji)
+        )
+    """)
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_comments (
             id SERIAL PRIMARY KEY,

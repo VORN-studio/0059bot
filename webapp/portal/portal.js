@@ -230,6 +230,10 @@ socket.on("user_typing_dm", (data) => {
     }
 });
 
+socket.on("message_reaction", (data) => {
+    updateMessageReactions(data.message_id, data.chat_type, data.reactions);
+});
+
 socket.on("disconnect", () => {
     console.warn("🔴 Realtime disconnected");
 });
