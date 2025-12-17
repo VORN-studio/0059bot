@@ -89,7 +89,7 @@ console.log('🎹 Custom Keyboard loading...');
         renderKeyboard();
     }
 
-    function handleCopy() {
+    async function handleCopy() {
         if (!currentInput) return;
         
         const value = currentInput.value || '';
@@ -99,38 +99,65 @@ console.log('🎹 Custom Keyboard loading...');
             return;
         }
         
-        // Try to get selected text first
         const start = currentInput.selectionStart || 0;
         const end = currentInput.selectionEnd || 0;
         
+        let textToCopy = '';
+        
         if (start !== end) {
-            // User has selected text
-            clipboardText = value.substring(start, end);
-            showToast('📋 Copied: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
+            textToCopy = value.substring(start, end);
         } else {
-            // No selection, copy all
-            clipboardText = value;
-            showToast('📋 Copied all (' + value.length + ' chars)');
+            textToCopy = value;
+        }
+        
+        // Save to internal clipboard
+        clipboardText = textToCopy;
+        
+        // Try to copy to system clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                showToast('📋 Copied to system clipboard');
+            } catch (err) {
+                showToast('📋 Copied (internal only)');
+            }
+        } else {
+            showToast('📋 Copied (internal only)');
         }
     }
 
-    function handlePaste() {
+    async function handlePaste() {
         if (!currentInput) {
             showToast('⚠️ No input field');
             return;
         }
         
-        // Check our internal clipboard first
-        if (!clipboardText || clipboardText.length === 0) {
-            showToast('⚠️ Clipboard is empty');
-            return;
+        let textToPaste = '';
+        
+        // Try system clipboard first
+        if (navigator.clipboard && navigator.clipboard.readText) {
+            try {
+                textToPaste = await navigator.clipboard.readText();
+                
+                if (textToPaste && textToPaste.length > 0) {
+                    insertText(textToPaste);
+                    showToast('📄 Pasted from system clipboard');
+                    return;
+                }
+            } catch (err) {
+                console.log('System clipboard read failed, using internal');
+            }
         }
         
-        insertText(clipboardText);
-        showToast('📄 Pasted: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
+        // Fallback to internal clipboard
+        if (clipboardText && clipboardText.length > 0) {
+            insertText(clipboardText);
+            showToast('📄 Pasted from internal clipboard');
+        } else {
+            showToast('⚠️ Clipboard is empty');
+        }
     }
-
-    function handleCut() {
+    async function handleCut() {
         if (!currentInput) return;
         
         const value = currentInput.value || '';
@@ -140,22 +167,33 @@ console.log('🎹 Custom Keyboard loading...');
             return;
         }
         
-        // Try to get selected text first
         const start = currentInput.selectionStart || 0;
         const end = currentInput.selectionEnd || 0;
         
+        let textToCut = '';
+        
         if (start !== end) {
-            // User has selected text
-            clipboardText = value.substring(start, end);
+            textToCut = value.substring(start, end);
             currentInput.value = value.substring(0, start) + value.substring(end);
             currentInput.selectionStart = currentInput.selectionEnd = start;
-            showToast('✂️ Cut: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
         } else {
-            // No selection, cut all
-            clipboardText = value;
+            textToCut = value;
             currentInput.value = '';
             currentInput.selectionStart = currentInput.selectionEnd = 0;
-            showToast('✂️ Cut all (' + clipboardText.length + ' chars)');
+        }
+        
+        clipboardText = textToCut;
+        
+        // Try to copy to system clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(textToCut);
+                showToast('✂️ Cut to system clipboard');
+            } catch (err) {
+                showToast('✂️ Cut (internal only)');
+            }
+        } else {
+            showToast('✂️ Cut (internal only)');
         }
         
         currentInput.dispatchEvent(new Event('input', { bubbles: true }));
