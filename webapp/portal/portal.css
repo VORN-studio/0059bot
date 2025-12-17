@@ -2349,88 +2349,6 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
-/* =============================
-   HIGHLIGHTED MESSAGE
-   ============================= */
-/* ==================== HIGHLIGHTED MESSAGE ==================== */
-.highlighted-message {
-    background: linear-gradient(135deg, 
-        rgba(250, 204, 21, 0.15) 0%, 
-        rgba(234, 179, 8, 0.1) 100%
-    ) !important;
-    border-left: 4px solid #facc15 !important;
-    border-radius: var(--radius-md) !important;
-    box-shadow: 0 0 20px rgba(250, 204, 21, 0.35);
-    animation: highlightPulse 2.5s ease-in-out infinite;
-    position: relative;
-    overflow: hidden;
-}
-
-.highlighted-message::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(250, 204, 21, 0.2), 
-        transparent
-    );
-    animation: highlightShimmer 3s ease-in-out infinite;
-}
-
-@keyframes highlightPulse {
-    0%, 100% {
-        box-shadow: 0 0 20px rgba(250, 204, 21, 0.35),
-                    0 0 30px rgba(250, 204, 21, 0.15);
-    }
-    50% {
-        box-shadow: 0 0 30px rgba(250, 204, 21, 0.5),
-                    0 0 40px rgba(250, 204, 21, 0.25);
-    }
-}
-
-@keyframes highlightShimmer {
-    0% {
-        left: -100%;
-    }
-    50%, 100% {
-        left: 100%;
-    }
-}
-
-/* Highlighted message indicator */
-.highlighted-message .highlight-indicator {
-    position: absolute;
-    right: var(--spacing-sm);
-    top: var(--spacing-sm);
-    background: rgba(250, 204, 21, 0.3);
-    color: #facc15;
-    font-size: var(--font-xs);
-    font-weight: 700;
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(250, 204, 21, 0.5);
-    backdrop-filter: blur(5px);
-}
-
-/* Fade out highlight after some time */
-.highlighted-message.fading {
-    animation: highlightFadeOut 1s ease-out forwards;
-}
-
-@keyframes highlightFadeOut {
-    to {
-        background: transparent !important;
-        border-left-color: transparent !important;
-        box-shadow: none;
-    }
-}
-
-
-
 /* ==================== CHAT FULLSCREEN BUTTON ==================== */
 .chat-fullscreen-btn {
     background: var(--bg-card);
@@ -3844,62 +3762,79 @@ input[type="checkbox"][id*="highlight"]:checked::before {
     color: #facc15;
 }
 
-/* ==================== HIGHLIGHTED MESSAGE - ELEGANT ==================== */
+/* ==================== HIGHLIGHTED MESSAGE - REFINED ==================== */
 .highlighted-message {
     background: linear-gradient(90deg,
-        rgba(250, 204, 21, 0.08) 0%,
-        transparent 30%
+        rgba(250, 204, 21, 0.05) 0%,
+        rgba(250, 204, 21, 0.02) 50%,
+        transparent 100%
     ) !important;
-    border-left: 4px solid #facc15 !important;
+    border-left: 3px solid transparent !important;
     border-radius: var(--radius-md) !important;
     position: relative;
     overflow: visible !important;
+    padding-left: 8px !important;
 }
 
-/* Glowing effect on left border */
+/* Glowing gradient border */
 .highlighted-message::before {
     content: '';
     position: absolute;
-    left: -4px;
+    left: 0;
     top: 0;
-    width: 4px;
+    width: 3px;
     height: 100%;
-    background: #facc15;
-    box-shadow: 
-        0 0 10px rgba(250, 204, 21, 0.6),
-        0 0 20px rgba(250, 204, 21, 0.4),
-        0 0 30px rgba(250, 204, 21, 0.2);
-    animation: borderPulse 2s ease-in-out infinite;
-    border-radius: 4px 0 0 4px;
+    background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(250, 204, 21, 0.4) 10%,
+        #facc15 50%,
+        rgba(250, 204, 21, 0.4) 90%,
+        transparent 100%
+    );
+    border-radius: 3px;
+    box-shadow:
+        0 0 8px rgba(250, 204, 21, 0.5),
+        0 0 16px rgba(250, 204, 21, 0.3),
+        0 0 24px rgba(250, 204, 21, 0.15);
+    animation: softGlow 3s ease-in-out infinite;
 }
 
-@keyframes borderPulse {
+@keyframes softGlow {
     0%, 100% {
-        box-shadow: 
-            0 0 10px rgba(250, 204, 21, 0.6),
-            0 0 20px rgba(250, 204, 21, 0.4);
+        opacity: 0.7;
+        box-shadow:
+            0 0 8px rgba(250, 204, 21, 0.5),
+            0 0 16px rgba(250, 204, 21, 0.3);
     }
     50% {
-        box-shadow: 
-            0 0 15px rgba(250, 204, 21, 0.8),
-            0 0 30px rgba(250, 204, 21, 0.6),
-            0 0 45px rgba(250, 204, 21, 0.3);
+        opacity: 1;
+        box-shadow:
+            0 0 12px rgba(250, 204, 21, 0.7),
+            0 0 24px rgba(250, 204, 21, 0.5),
+            0 0 36px rgba(250, 204, 21, 0.25);
     }
 }
 
-/* Subtle star icon on top-right */
+/* Star icon */
 .highlighted-message::after {
     content: '⭐';
     position: absolute;
-    right: 8px;
-    top: 8px;
-    font-size: 16px;
-    opacity: 0.7;
-    filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.8));
-    animation: starTwinkle 3s ease-in-out infinite;
+    right: 10px;
+    top: 10px;
+    font-size: 18px;
+    opacity: 0.8;
+    filter: drop-shadow(0 2px 8px rgba(250, 204, 21, 0.6));
+    animation: starFloat 4s ease-in-out infinite;
+    z-index: 10;
 }
 
-@keyframes starTwinkle {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 0.9; transform: scale(1.15); }
+@keyframes starFloat {
+    0%, 100% { 
+        opacity: 0.6; 
+        transform: translateY(0) rotate(0deg) scale(1); 
+    }
+    50% { 
+        opacity: 1; 
+        transform: translateY(-3px) rotate(10deg) scale(1.1); 
+    }
 }
