@@ -2652,6 +2652,23 @@ async function addReaction(messageId, chatType, emoji) {
     }
 }
 
+// =============================
+// LOAD MESSAGE REACTIONS
+// =============================
+
+async function loadMessageReactions(messageId, chatType) {
+    try {
+        const res = await fetch(`/api/message/reactions?message_id=${messageId}&chat_type=${chatType}`);
+        const data = await res.json();
+
+        if (data.ok) {
+            updateMessageReactions(messageId, chatType, data.reactions || {}, data.fire_count || 0);
+        }
+    } catch (err) {
+        LOG.error('Failed to load reactions:', err);
+    }
+}
+
 function updateMessageReactions(messageId, chatType, reactions, fireCount = 0) {
     const container = document.getElementById(`reactions-${messageId}`);
     
