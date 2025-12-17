@@ -1897,6 +1897,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
     const messageId = msg.id || msg.sender + '_' + Date.now();
     const chatType = isDM ? "dm" : "global";
     const userStatus = msg.status_level || 0;  // ← ԱՅՍ ԱՎԵԼԱՑՐՈՒ
+    const senderId = msg.sender || msg.user_id || 0;
 
     let replyHtml = "";
     if (msg.reply_to && msg.reply_to_text) {
@@ -1935,7 +1936,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                     ${tierReactions}
                 </div>
                 <div class="inline-actions">
-                    ${!isMe ? `<div class="inline-action domino-star-btn" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${msg.sender || msg.user_id});closeAllInlineMenus();"><span class="domino-star-icon">🌟💎</span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 USD)</span></div>` : ''}
+                    ${!isMe ? `<div class="inline-action domino-star-btn" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${senderId});closeAllInlineMenus();"><span class="domino-star-icon">🌟💎</span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 USD)</span></div>` : ''}
                     ${isDM ? `<div class="inline-action" onclick="event.stopPropagation();setReply('${messageId}', \`${escapedText}\`, '${username.replace(/'/g, "\\'")}');closeAllInlineMenus();"><span style="font-size:18px;">↩️</span> Reply</div>` : ''}
                     <div class="inline-action" onclick="event.stopPropagation();copyMessage(\`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">📋</span> Copy</div>
                     <div class="inline-action" onclick="event.stopPropagation();forwardMessage('${messageId}', \`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">↗️</span> Forward</div>
@@ -2756,21 +2757,12 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
 
 function closeAllInlineMenus() {
     document.querySelectorAll('.inline-message-menu').forEach(m => m.style.display = 'none');
+    
+    // ✅ Remove all hidden-reactions to prevent duplication
+    document.querySelectorAll('.hidden-reactions').forEach(hr => hr.remove());
 }
 
-async function addReaction(messageId, chatType, emoji) {
-    try {
-        const res = await fetch('/api/message/react', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message_id: parseInt(messageId), chat_type: chatType, user_id: CURRENT_UID, emoji })
-        });
-        const data = await res.json();
-        if (data.ok) LOG.info(`Reaction ${data.action}:`, emoji);
-    } catch (err) {
-        LOG.error('Failed to add reaction:', err);
-    }
-}
+
 
 function updateMessageReactions(messageId, chatType, reactions) {
     const container = document.getElementById(`reactions-${messageId}`);
@@ -2797,19 +2789,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
-async function addReaction(messageId, chatType, emoji) {
-    try {
-        const res = await fetch('/api/message/react', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message_id: parseInt(messageId), chat_type: chatType, user_id: CURRENT_UID, emoji })
-        });
-        const data = await res.json();
-        if (data.ok) LOG.info(`Reaction ${data.action}:`, emoji);
-    } catch (err) {
-        LOG.error('Failed to add reaction:', err);
-    }
-}
+
 
 function updateMessageReactions(messageId, chatType, reactions) {
     const container = document.getElementById(`reactions-${messageId}`);
