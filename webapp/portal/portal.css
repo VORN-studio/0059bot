@@ -888,3 +888,64 @@ body {
         box-shadow: 0 0 25px rgba(250, 204, 21, 0.5);
     }
 }
+
+/* =============================
+   FULLSCREEN CHAT
+   ============================= */
+
+.chat-fullscreen-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #9ca3af;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+}
+
+.chat-fullscreen-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+.chat-fullscreen-btn:active {
+    transform: scale(0.95);
+}
+
+/* Fullscreen mode */
+.chat-box.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* DM fullscreen */
+.dm-overlay.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    z-index: 9999;
+    margin: 0;
+    border-radius: 0;
+    animation: slideUp 0.3s ease-out;
+}

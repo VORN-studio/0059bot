@@ -387,17 +387,7 @@ function initChatEvents() {
                 sendGlobalMessage();
             }
         });
-    }
-
-    
-    
-
-    if (globalInput) {
-        globalInput.addEventListener("keypress", e => {
-            if (e.key === "Enter") sendGlobalMessage();
-        });
         
-        // ✅ Character counter
         globalInput.addEventListener("input", () => {
             updateCharCounter();
         });
@@ -414,6 +404,33 @@ function initChatEvents() {
             if (e.key === "Enter") sendDM();
         });
     }
+
+    // ✅ FULLSCREEN BUTTONS
+    const globalFullscreen = document.getElementById("global-fullscreen");
+    if (globalFullscreen) {
+        globalFullscreen.addEventListener("click", toggleGlobalFullscreen);
+    }
+
+    const dmFullscreen = document.getElementById("dm-fullscreen");
+    if (dmFullscreen) {
+        dmFullscreen.addEventListener("click", toggleDMFullscreen);
+    }
+
+    // ✅ ESC KEY SUPPORT
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const globalChat = document.getElementById("global-chat");
+            const dmChat = document.getElementById("dm-chat");
+            
+            if (globalChat && globalChat.classList.contains("fullscreen")) {
+                toggleGlobalFullscreen();
+            }
+            
+            if (dmChat && dmChat.classList.contains("fullscreen")) {
+                toggleDMFullscreen();
+            }
+        }
+    });
 }
 
 // ✅ ՆՈՐ ՖՈՒՆԿՑԻԱ - Sub-tab switching
@@ -2445,5 +2462,57 @@ function stopHotUserRefresh() {
     pingOffline(); // ✅ Mark offline immediately
 }
 
+// =============================
+// FULLSCREEN CHAT FUNCTIONS
+// =============================
 
+function toggleGlobalFullscreen() {
+    const chatBox = document.getElementById("global-chat");
+    const btn = document.getElementById("global-fullscreen");
+    
+    if (!chatBox || !btn) return;
+    
+    if (chatBox.classList.contains("fullscreen")) {
+        // Exit fullscreen
+        chatBox.classList.remove("fullscreen");
+        btn.innerText = "⛶";
+        
+        // Scroll to bottom
+        const messages = document.getElementById("global-messages");
+        if (messages) messages.scrollTop = messages.scrollHeight;
+    } else {
+        // Enter fullscreen
+        chatBox.classList.add("fullscreen");
+        btn.innerText = "✕";
+        
+        // Scroll to bottom
+        const messages = document.getElementById("global-messages");
+        if (messages) messages.scrollTop = messages.scrollHeight;
+    }
+}
+
+function toggleDMFullscreen() {
+    const chatBox = document.getElementById("dm-chat");
+    const btn = document.getElementById("dm-fullscreen");
+    
+    if (!chatBox || !btn) return;
+    
+    if (chatBox.classList.contains("fullscreen")) {
+        // Exit fullscreen
+        chatBox.classList.remove("fullscreen");
+        btn.innerText = "⛶";
+        
+        // Scroll to bottom
+        const messages = document.getElementById("dm-messages");
+        if (messages) messages.scrollTop = messages.scrollHeight;
+    } else {
+        // Enter fullscreen
+        chatBox.classList.add("fullscreen");
+        btn.innerText = "✕";
+        
+        // Scroll to bottom
+        const messages = document.getElementById("dm-messages");
+        if (messages) messages.scrollTop = messages.scrollHeight;
+    }
+}
 
