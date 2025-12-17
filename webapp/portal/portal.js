@@ -1178,7 +1178,7 @@ async function loadFollowStats() {
 
         // Load Domino Stars count
         const starsSpan = document.getElementById("profile-domino-stars");
-        if (starsSpan && data.user) {
+        if (starsSpan) {
             // Get fire reactions received count from backend
             fetch(`/api/user/domino-stars?uid=${profileId}`)
                 .then(r => r.json())
