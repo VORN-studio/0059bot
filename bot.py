@@ -623,6 +623,137 @@ def api_message_reactions():
     
     return jsonify({"ok": True, "reactions": reactions})
 
+
+@app_web.route("/api/fire/add", methods=["POST"])
+def api_fire_add():
+    """Add Domino Star reaction (paid, 0.20 coin)"""
+    data = request.get_json(force=True, silent=True) or {}
+    message_id = int(data.get("message_id", 0))
+    chat_type = data.get("chat_type", "")
+    giver_id = int(data.get("giver_id", 0))
+    receiver_id = int(data.get("receiver_id", 0))
+    
+    if message_id == 0 or giver_id == 0 or receiver_id == 0:
+        return jsonify({"ok": False, "error": "missing_params"}), 400
+    
+    if chat_type not in ["global", "dm"]:
+        return jsonify({"ok": False, "error": "invalid_chat_type"}), 400
+    
+    # Can't fire yourself
+    if giver_id == receiver_id:
+        return jsonify({"ok": False, "error": "cannot_fire_yourself"}), 400
+    
+    FIRE_PRICE = 0.20
+    now = int(time.time())
+    
+    conn = db()
+    c = conn.cursor()
+    
+    # Check giver balance
+    c.execute("SELECT balance_usd FROM dom_users WHERE user_id = %s", (giver_id,))
+    row = c.fetchone()
+    
+    if not row:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "user_not_found"}), 404
+    
+    balance = float(row[0] or 0)
+    
+    if balance < FIRE_PRICE:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "insufficient_balance"}), 400
+    
+    # Deduct from giver
+    c.execute("""
+        UPDATE dom_users 
+        SET balance_usd = balance_usd - %s,
+            fires_given = fires_given + 1
+        WHERE user_id = %s
+    """, (FIRE_PRICE, giver_id))
+    
+    # Add 0.10 to receiver
+    c.execute("""
+        UPDATE dom_users 
+        SET balance_usd = balance_usd + 0.10,
+            fires_received = fires_received + 1
+        WHERE user_id = %s
+    """, (receiver_id,))
+    
+    # Add 0.10 to burn account
+    c.execute("""
+        UPDATE dom_burn_account 
+        SET total_burned = total_burned + 0.10,
+            last_updated = %s
+    """, (now,))
+    
+    # Record fire reaction
+    c.execute("""
+        INSERT INTO dom_fire_reactions 
+        (message_id, chat_type, giver_user_id, receiver_user_id, amount, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (message_id, chat_type, giver_id, receiver_id, FIRE_PRICE, now))
+    
+    conn.commit()
+    
+    # Get total fires for this message
+    c.execute("""
+        SELECT COUNT(*) FROM dom_fire_reactions
+        WHERE message_id = %s AND chat_type = %s
+    """, (message_id, chat_type))
+    
+    fire_count = int(c.fetchone()[0] or 0)
+    
+    release_db(conn)
+    
+    # Broadcast fire update via socket
+    if chat_type == "global":
+        socketio.emit("fire_update", {
+            "message_id": message_id,
+            "chat_type": chat_type,
+            "fire_count": fire_count
+        }, room="global")
+    else:
+        socketio.emit("fire_update", {
+            "message_id": message_id,
+            "chat_type": chat_type,
+            "fire_count": fire_count
+        }, room=f"user_{giver_id}")
+        socketio.emit("fire_update", {
+            "message_id": message_id,
+            "chat_type": chat_type,
+            "fire_count": fire_count
+        }, room=f"user_{receiver_id}")
+    
+    return jsonify({
+        "ok": True,
+        "fire_count": fire_count,
+        "new_balance": balance - FIRE_PRICE
+    })
+
+
+@app_web.route("/api/fire/count")
+def api_fire_count():
+    """Get fire count for a message"""
+    message_id = request.args.get("message_id", type=int)
+    chat_type = request.args.get("chat_type", "")
+    
+    if not message_id or chat_type not in ["global", "dm"]:
+        return jsonify({"ok": False}), 400
+    
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        SELECT COUNT(*) FROM dom_fire_reactions
+        WHERE message_id = %s AND chat_type = %s
+    """, (message_id, chat_type))
+    
+    fire_count = int(c.fetchone()[0] or 0)
+    
+    release_db(conn)
+    
+    return jsonify({"ok": True, "fire_count": fire_count})
+
 @app_web.route("/api/post/<int:post_id>")
 def api_get_single_post(post_id):
     conn = db(); c = conn.cursor()
