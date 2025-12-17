@@ -556,13 +556,19 @@ def api_message_react():
     
     release_db(conn)
     
-    # Broadcast to all users
-    room = "global" if chat_type == "global" else f"dm_{min(user_id, message_id)}_{max(user_id, message_id)}"
-    socketio.emit("message_reaction", {
-        "message_id": message_id,
-        "chat_type": chat_type,
-        "reactions": reactions
-    }, room=room, broadcast=True)
+    if chat_type == "global":
+        socketio.emit("message_reaction", {
+            "message_id": message_id,
+            "chat_type": chat_type,
+            "reactions": reactions
+        }, room="global")
+    else:
+        # DM room emit
+        socketio.emit("message_reaction", {
+            "message_id": message_id,
+            "chat_type": chat_type,
+            "reactions": reactions
+        }, room=f"dm_{user_id}")
     
     return jsonify({"ok": True, "action": action, "reactions": reactions})
 
