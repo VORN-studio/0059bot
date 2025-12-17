@@ -2739,9 +2739,16 @@ let CURRENT_MENU_MESSAGE = null;
 
 // INLINE MESSAGE MENU
 function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
+    const menu = document.getElementById(`inline-menu-${messageId}`);
+    
+    // ✅ Եթե այս menu-ն արդեն բաց է, փակել
+    if (menu && menu.style.display === 'flex') {
+        menu.style.display = 'none';
+        return;
+    }
+    
     closeAllInlineMenus();
     
-    const menu = document.getElementById(`inline-menu-${messageId}`);
     if (!menu) return;
     
     // Regenerate reactions based on CURRENT USER's status
