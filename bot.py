@@ -513,18 +513,17 @@ def delete_chat_message():
         if not message_id or not user_id:
             return jsonify({"error": "Missing parameters"}), 400
         
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        conn = db()
+        c = conn.cursor()
         
-        cursor.execute("""
+        c.execute("""
             DELETE FROM messages 
             WHERE id = %s AND user_id = %s
         """, (message_id, user_id))
         conn.commit()
         
-        deleted = cursor.rowcount > 0
-        cursor.close()
-        conn.close()
+        deleted = c.rowcount > 0
+        release_db(conn)
         
         if not deleted:
             return jsonify({"error": "Not found or unauthorized"}), 404
@@ -548,18 +547,17 @@ def delete_dm_message():
         if not message_id or not user_id:
             return jsonify({"error": "Missing parameters"}), 400
         
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        conn = db()
+        c = conn.cursor()
         
-        cursor.execute("""
+        c.execute("""
             DELETE FROM dm_messages 
             WHERE id = %s AND sender_id = %s
         """, (message_id, user_id))
         conn.commit()
         
-        deleted = cursor.rowcount > 0
-        cursor.close()
-        conn.close()
+        deleted = c.rowcount > 0
+        release_db(conn)
         
         if not deleted:
             return jsonify({"error": "Not found or unauthorized"}), 404
