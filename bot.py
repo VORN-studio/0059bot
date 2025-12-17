@@ -517,7 +517,7 @@ def delete_chat_message():
         c = conn.cursor()
         
         c.execute("""
-            DELETE FROM messages 
+            DELETE FROM dom_global_chat 
             WHERE id = %s AND user_id = %s
         """, (message_id, user_id))
         conn.commit()
@@ -551,8 +551,8 @@ def delete_dm_message():
         c = conn.cursor()
         
         c.execute("""
-            DELETE FROM dm_messages 
-            WHERE id = %s AND sender_id = %s
+            DELETE FROM dom_messages
+            WHERE id = %s AND sender = %s 
         """, (message_id, user_id))
         conn.commit()
         
