@@ -998,6 +998,19 @@ body {
     transform: scale(0.95);
 }
 
+/* When chat is fullscreen, make parent sub-page also fullscreen */
+.sub-page:has(.chat-box.fullscreen) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9998;
+    background: #0d1117;
+    margin: 0;
+    padding: 0;
+}
+
 /* Fullscreen mode */
 .chat-box.fullscreen {
     position: fixed;

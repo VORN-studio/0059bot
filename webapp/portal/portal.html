@@ -156,50 +156,50 @@
 
             <div id="chat" class="sub-page">
 
-            <div id="global-chat" class="chat-box">
+                <div id="global-chat" class="chat-box">
     
-                <!-- ✅ HOT USER DISPLAY -->
-                <div id="hot-user-banner" style="
-                    display: flex;
-                    padding: 10px;
-                    background: linear-gradient(135deg, #1e3a8a, #7c3aed);
-                    border-radius: 10px;
-                    margin-bottom: 10px;
-                    align-items: center;
-                    gap: 10px;
-                ">
-                    <img id="hot-user-avatar" src="/portal/default.png" 
-                        style="width: 36px; height: 36px; border-radius: 50%;">
-                    <div style="flex: 1;">
-                        <div style="font-size: 11px; opacity: 0.8;">🔥 Hot User</div>
-                        <div id="hot-user-name" style="font-size: 14px; font-weight: bold;"></div>
+                    <!-- ✅ HOT USER DISPLAY -->
+                    <div id="hot-user-banner" style="
+                        display: flex;
+                        padding: 10px;
+                        background: linear-gradient(135deg, #1e3a8a, #7c3aed);
+                        border-radius: 10px;
+                        margin-bottom: 10px;
+                        align-items: center;
+                        gap: 10px;
+                    ">
+                        <img id="hot-user-avatar" src="/portal/default.png" 
+                            style="width: 36px; height: 36px; border-radius: 50%;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; opacity: 0.8;">🔥 Hot User</div>
+                            <div id="hot-user-name" style="font-size: 14px; font-weight: bold;"></div>
+                        </div>
+                    </div>
+                
+                    <div id="global-messages" class="chat-messages"></div>
+
+                    <div style="padding: 0 10px 4px; text-align: right;">
+                        <span id="global-char-count" style="font-size: 11px; color: #888;">0/200</span>
+                    </div>
+
+                    <div style="display: flex; gap: 6px; align-items: center; padding: 0 10px 6px;">
+                        <input type="checkbox" id="highlight-checkbox" style="display: none;">
+                        <label id="highlight-label" for="highlight-checkbox" style="
+                            display: none;
+                            font-size: 11px;
+                            color: #facc15;
+                            cursor: pointer;
+                            user-select: none;
+                        ">⭐ Highlight (Status 7+)</label>
+                    </div>
+
+                    <div class="chat-input-row">
+                        <input id="global-input" class="chat-input"
+                            placeholder="Write to global chat..." />
+                        <button id="global-fullscreen" class="chat-fullscreen-btn">⛶</button>
+                        <button id="global-send" class="chat-send-btn">Send</button>
                     </div>
                 </div>
-                
-                <div id="global-messages" class="chat-messages"></div>
-
-                <div style="padding: 0 10px 4px; text-align: right;">
-                    <span id="global-char-count" style="font-size: 11px; color: #888;">0/200</span>
-                </div>
-
-                <div style="display: flex; gap: 6px; align-items: center; padding: 0 10px 6px;">
-                    <input type="checkbox" id="highlight-checkbox" style="display: none;">
-                    <label id="highlight-label" for="highlight-checkbox" style="
-                        display: none;
-                        font-size: 11px;
-                        color: #facc15;
-                        cursor: pointer;
-                        user-select: none;
-                    ">⭐ Highlight (Status 7+)</label>
-                </div>
-
-                <div class="chat-input-row">
-                    <input id="global-input" class="chat-input"
-                        placeholder="Write to global chat..." />
-                    <button id="global-fullscreen" class="chat-fullscreen-btn">⛶</button>
-                    <button id="global-send" class="chat-send-btn">Send</button>
-                </div>
-            </div>
 
         </div>
         </div>
