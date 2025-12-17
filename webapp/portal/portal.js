@@ -1922,9 +1922,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
             </div>
         </div>
         
-        <div style="text-align:${align};">
-            <div class="message-reactions" id="reactions-${messageId}" style="display:none;"></div>
-        </div>
+        <div class="message-reactions" id="reactions-${messageId}" style="display:none;text-align:${align};"></div>
     </div>`;
 }
 

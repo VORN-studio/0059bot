@@ -1280,7 +1280,6 @@ body {
     gap: 6px;
     margin-top: 6px;
     flex-wrap: wrap;
-    text-align: right;
 }
 
 .reaction-item {
