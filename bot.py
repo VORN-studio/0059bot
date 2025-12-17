@@ -1783,6 +1783,8 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS usd_balance NUMERIC(20,2) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_rate NUMERIC(20,6) DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar TEXT",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS fires_received INT DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS fires_given INT DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT"    
 ]
 
@@ -1856,6 +1858,33 @@ def init_db():
             last_ping BIGINT NOT NULL
         )
     """)
+
+        # Fire Reactions Table (unlimited per user)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_fire_reactions (
+            id SERIAL PRIMARY KEY,
+            message_id INT NOT NULL,
+            chat_type VARCHAR(10) NOT NULL,
+            giver_user_id BIGINT NOT NULL,
+            receiver_user_id BIGINT NOT NULL,
+            amount NUMERIC(5,2) DEFAULT 0.20,
+            created_at INT NOT NULL
+        )
+    """)
+
+    # Burn Account Tracking
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_burn_account (
+            id SERIAL PRIMARY KEY,
+            total_burned NUMERIC(10,2) DEFAULT 0,
+            last_updated BIGINT
+        )
+    """)
+    
+    # Initialize burn account if empty
+    c.execute("SELECT COUNT(*) FROM dom_burn_account")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO dom_burn_account (total_burned, last_updated) VALUES (0, %s)", (int(time.time()),))
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_dm_last_seen (
