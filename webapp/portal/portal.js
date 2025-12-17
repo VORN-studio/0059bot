@@ -1176,6 +1176,20 @@ async function loadFollowStats() {
         const followersSpan = document.getElementById("followers-count");
         const followingSpan = document.getElementById("following-count");
 
+        // Load Domino Stars count
+        const starsSpan = document.getElementById("profile-domino-stars");
+        if (starsSpan && data.user) {
+            // Get fire reactions received count from backend
+            fetch(`/api/user/domino-stars?uid=${profileId}`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.ok) {
+                        starsSpan.textContent = d.count || 0;
+                    }
+                })
+                .catch(e => console.error("Failed to load domino stars:", e));
+        }
+
         if (followersSpan) {
             followersSpan.innerText = data.followers + " Followers";
         }

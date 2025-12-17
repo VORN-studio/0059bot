@@ -2716,6 +2716,27 @@ def api_user(user_id):
 
     return jsonify({"ok": True, "user": stats})
 
+@app_web.route("/api/user/domino-stars")
+def api_user_domino_stars():
+    """Վերադարձնում է user-ի ստացած Domino Stars քանակը"""
+    uid = request.args.get("uid", type=int)
+    if not uid:
+        return jsonify({"ok": False, "error": "no uid"}), 400
+    
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        SELECT COALESCE(SUM(fire_count), 0)
+        FROM dom_fire_reactions
+        WHERE receiver_id = %s
+    """, (uid,))
+    
+    count = int(c.fetchone()[0] or 0)
+    release_db(conn)
+    
+    return jsonify({"ok": True, "count": count})
+
 @app_web.route("/api/deposit", methods=["POST"])
 def api_deposit():
     """
