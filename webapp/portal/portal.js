@@ -1882,38 +1882,37 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
     const statusClass = `status-${msg.status_level || 0}`;
     const username = msg.username || `User ${msg.sender}`;
     const avatar = msg.avatar || "/portal/default.png";
-    const time = new Date((msg.created_at || msg.time) * 1000);
-    const timeStr = time.toLocaleTimeString('hy-AM', { hour: '2-digit', minute: '2-digit' });
-    const highlightClass = msg.highlighted ? "highlighted-message" : "";
     const messageId = msg.id || Math.random().toString(36).substr(2, 9);
     const chatType = isDM ? "dm" : "global";
 
     let replyHtml = "";
     if (msg.reply_to && msg.reply_to_text) {
-        replyHtml = `
-            <div style="background:rgba(58,139,255,0.2);border-left:3px solid #3a8bff;padding:6px 10px;margin-bottom:6px;border-radius:6px;font-size:12px;opacity:0.8;">
-                ${msg.reply_to_text.slice(0, 60)}${msg.reply_to_text.length > 60 ? '...' : ''}
-            </div>`;
+        replyHtml = `<div style="background:rgba(58,139,255,0.2);border-left:3px solid #3a8bff;padding:6px 10px;margin-bottom:6px;border-radius:6px;font-size:12px;opacity:0.8;">${msg.reply_to_text.slice(0, 60)}${msg.reply_to_text.length > 60 ? '...' : ''}</div>`;
     }
 
     return `
-    <div class="chat-message-wrapper ${highlightClass}" 
-         data-msg-id="${messageId}"
-         data-chat-type="${chatType}"
-         data-msg-text="${(msg.text || msg.message || '').replace(/"/g, '&quot;')}"
-         data-sender="${msg.sender || ''}"
-         data-username="${username.replace(/"/g, '&quot;')}"
-         onclick="showMessageMenu('${messageId}', '${chatType}', '${username.replace(/'/g, "\\'")}', \`${(msg.text || msg.message || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+    <div class="chat-message-wrapper" data-msg-id="${messageId}" data-chat-type="${chatType}" data-msg-text="${(msg.text || msg.message || '').replace(/"/g, '&quot;')}" data-sender="${msg.sender || ''}" data-username="${username.replace(/"/g, '&quot;')}" onclick="toggleInlineMenu('${messageId}', '${chatType}', '${username.replace(/'/g, "\\'")}', \`${(msg.text || msg.message || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
         
         <div style="text-align:${align};">
-            <div style="display:inline-block;max-width:70%;background:${bgColor};padding:10px 14px;border-radius:14px;text-align:left;">
-                ${!isMe ? `
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-                        <img src="${avatar}" style="width:24px;height:24px;border-radius:50%;">
-                        <span class="${statusClass}" style="font-weight:bold;font-size:13px;">${username}</span>
-                    </div>` : ''}
+            <div style="display:inline-block;max-width:70%;background:${bgColor};padding:10px 14px;border-radius:14px;text-align:left;position:relative;">
+                ${!isMe ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><img src="${avatar}" style="width:24px;height:24px;border-radius:50%;"><span class="${statusClass}" style="font-weight:bold;font-size:13px;">${username}</span></div>` : ''}
                 ${replyHtml}
                 <div style="color:#fff;font-size:14px;word-wrap:break-word;">${msg.text || msg.message || ""}</div>
+            </div>
+        </div>
+        
+        <!-- INLINE MENU (hidden by default) -->
+        <div class="inline-message-menu" id="inline-menu-${messageId}" style="display:none;">
+            <div class="inline-reactions">
+                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','❤️');closeAllInlineMenus();">❤️</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','👍');closeAllInlineMenus();">👍</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','😂');closeAllInlineMenus();">😂</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','🔥');closeAllInlineMenus();">🔥</span>
+                <span class="inline-emoji" onclick="event.stopPropagation();addReaction('${messageId}','${chatType}','⭐');closeAllInlineMenus();">⭐</span>
+            </div>
+            <div class="inline-actions">
+                <div class="inline-action" onclick="event.stopPropagation();${isDM ? `setReply('${messageId}', \`${(msg.text || msg.message || '').replace(/`/g, '\\`')}\`, '${username.replace(/'/g, "\\'")}')` : 'null'};closeAllInlineMenus();">🔄 Reply</div>
+                <div class="inline-action" onclick="event.stopPropagation();navigator.clipboard.writeText(\`${(msg.text || msg.message || '').replace(/`/g, '\\`')}\`);closeAllInlineMenus();">📋 Copy</div>
             </div>
         </div>
         
@@ -2664,39 +2663,62 @@ document.addEventListener('click', (e) => {
 // MESSAGE MENU
 let CURRENT_MENU_MESSAGE = null;
 
-function showMessageMenu(messageId, chatType, username, text) {
-    const menu = document.getElementById('message-menu');
-    const preview = document.getElementById('menu-message-preview');
-    if (!menu || !preview) return;
+
+
+// INLINE MESSAGE MENU
+function toggleInlineMenu(messageId, chatType, username, text) {
+    const menu = document.getElementById(`inline-menu-${messageId}`);
+    if (!menu) return;
     
-    CURRENT_MENU_MESSAGE = { messageId, chatType, username, text };
-    const shortText = text.length > 50 ? text.substring(0, 50) + '...' : text;
-    preview.innerHTML = `<strong>${username}:</strong> ${shortText}`;
-    menu.classList.remove('hidden');
+    // Close all other menus
+    closeAllInlineMenus();
     
-    document.querySelectorAll('.reaction-btn-large').forEach(btn => {
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            addReaction(messageId, chatType, btn.dataset.emoji);
-            closeMessageMenu();
-        };
-    });
-    
-    document.getElementById('menu-reply').onclick = () => {
-        if (chatType === 'dm') setReply(messageId, text, username);
-        closeMessageMenu();
-    };
-    
-    document.getElementById('menu-copy').onclick = () => {
-        navigator.clipboard.writeText(text);
-        closeMessageMenu();
-    };
+    // Toggle this menu
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
 }
 
-function closeMessageMenu() {
-    const menu = document.getElementById('message-menu');
-    if (menu) menu.classList.add('hidden');
+function closeAllInlineMenus() {
+    document.querySelectorAll('.inline-message-menu').forEach(m => m.style.display = 'none');
 }
+
+async function addReaction(messageId, chatType, emoji) {
+    try {
+        const res = await fetch('/api/message/react', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message_id: parseInt(messageId), chat_type: chatType, user_id: CURRENT_UID, emoji })
+        });
+        const data = await res.json();
+        if (data.ok) LOG.info(`Reaction ${data.action}:`, emoji);
+    } catch (err) {
+        LOG.error('Failed to add reaction:', err);
+    }
+}
+
+function updateMessageReactions(messageId, chatType, reactions) {
+    const container = document.getElementById(`reactions-${messageId}`);
+    if (!container) return;
+    container.innerHTML = '';
+    if (!reactions || Object.keys(reactions).length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+    for (const [emoji, count] of Object.entries(reactions)) {
+        const item = document.createElement('div');
+        item.className = 'reaction-item';
+        item.innerHTML = `<span>${emoji}</span><span class="reaction-count">${count}</span>`;
+        item.onclick = (e) => { e.stopPropagation(); addReaction(messageId, chatType, emoji); };
+        container.appendChild(item);
+    }
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.chat-message-wrapper')) {
+        closeAllInlineMenus();
+    }
+});
 
 async function addReaction(messageId, chatType, emoji) {
     try {
