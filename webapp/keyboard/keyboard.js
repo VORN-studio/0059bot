@@ -99,17 +99,35 @@ console.log('🎹 Custom Keyboard loading...');
             return;
         }
         
-        clipboardText = value;
-        showToast('📋 Copied: ' + clipboardText.substring(0, 20) + (clipboardText.length > 20 ? '...' : ''));
+        // Try to get selected text first
+        const start = currentInput.selectionStart || 0;
+        const end = currentInput.selectionEnd || 0;
+        
+        if (start !== end) {
+            // User has selected text
+            clipboardText = value.substring(start, end);
+            showToast('📋 Copied: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
+        } else {
+            // No selection, copy all
+            clipboardText = value;
+            showToast('📋 Copied all (' + value.length + ' chars)');
+        }
     }
 
     function handlePaste() {
-        if (!currentInput || !clipboardText) {
+        if (!currentInput) {
+            showToast('⚠️ No input field');
+            return;
+        }
+        
+        // Check our internal clipboard first
+        if (!clipboardText || clipboardText.length === 0) {
             showToast('⚠️ Clipboard is empty');
             return;
         }
+        
         insertText(clipboardText);
-        showToast('📄 Pasted');
+        showToast('📄 Pasted: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
     }
 
     function handleCut() {
@@ -122,11 +140,25 @@ console.log('🎹 Custom Keyboard loading...');
             return;
         }
         
-        clipboardText = value;
-        currentInput.value = '';
-        currentInput.selectionStart = currentInput.selectionEnd = 0;
+        // Try to get selected text first
+        const start = currentInput.selectionStart || 0;
+        const end = currentInput.selectionEnd || 0;
+        
+        if (start !== end) {
+            // User has selected text
+            clipboardText = value.substring(start, end);
+            currentInput.value = value.substring(0, start) + value.substring(end);
+            currentInput.selectionStart = currentInput.selectionEnd = start;
+            showToast('✂️ Cut: "' + clipboardText.substring(0, 15) + (clipboardText.length > 15 ? '..."' : '"'));
+        } else {
+            // No selection, cut all
+            clipboardText = value;
+            currentInput.value = '';
+            currentInput.selectionStart = currentInput.selectionEnd = 0;
+            showToast('✂️ Cut all (' + clipboardText.length + ' chars)');
+        }
+        
         currentInput.dispatchEvent(new Event('input', { bubbles: true }));
-        showToast('✂️ Cut: ' + clipboardText.substring(0, 20) + (clipboardText.length > 20 ? '...' : ''));
     }
 
     function showToast(message) {
