@@ -2800,6 +2800,22 @@ function closeAllInlineMenus() {
     document.querySelectorAll('.hidden-reactions').forEach(hr => hr.remove());
 }
 
+// ==================== CLOSE MENU ON CLICK OUTSIDE ====================
+document.addEventListener('click', (e) => {
+    // Check if any inline menu is open
+    const openMenus = document.querySelectorAll('.inline-message-menu[style*="display: flex"], .inline-message-menu[style*="display:flex"]');
+    
+    if (openMenus.length === 0) return; // No menus open
+    
+    // Check if click is inside any menu or on a message wrapper
+    const clickedInsideMenu = e.target.closest('.inline-message-menu');
+    const clickedOnMessage = e.target.closest('.message-wrapper');
+    
+    // If clicked outside menu (but not on another message to toggle), close all menus
+    if (!clickedInsideMenu && !clickedOnMessage) {
+        closeAllInlineMenus();
+    }
+});
 
 // Close menus when clicking outside
 document.addEventListener('click', (e) => {
