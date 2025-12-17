@@ -2467,10 +2467,11 @@ def apply_burn_transaction(
         """, (from_user, burn_amount, reason, now))
 
         c.execute("""
-            UPDATE dom_admin_fund
-            SET balance = balance + %s
+            UPDATE dom_burn_account
+            SET total_burned = total_burned + %s,
+                last_updated = %s
             WHERE id = 1
-        """, (burn_amount,))
+        """, (burn_amount, now))
 
     conn.commit()
     release_db(conn)
@@ -3596,37 +3597,6 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Team deposit: {stats['team_deposit_usd']:.2f}$"
     )
     await update.message.reply_text(msg)
-
-async def burn_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMIN_IDS:
-        await update.message.reply_text("❌ admin չես")
-        return
-
-    conn = db(); c = conn.cursor()
-
-    now = int(time.time())
-    today_start = now - 86400
-
-    c.execute("SELECT COALESCE(SUM(amount),0) FROM dom_burn_ledger")
-    total_burn = float(c.fetchone()[0])
-
-    c.execute(
-        "SELECT COALESCE(SUM(amount),0) FROM dom_burn_ledger WHERE created_at >= %s",
-        (today_start,)
-    )
-    today_burn = float(c.fetchone()[0])
-
-    c.execute("SELECT balance FROM dom_admin_fund WHERE id=1")
-    fund = float(c.fetchone()[0])
-
-    release_db(conn)
-
-    await update.message.reply_text(
-        f"🔥 Burn վիճակ\n\n"
-        f"Այսօր: {today_burn:.2f} DOMIT\n"
-        f"Ընդհանուր: {total_burn:.2f} DOMIT\n"
-        f"Burn ֆոնդ: {fund:.2f} DOMIT"
-    )
 
 async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
