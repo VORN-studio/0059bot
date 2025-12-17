@@ -1541,3 +1541,53 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(251, 191, 36, 0.6);
 }
+
+/* ========== DOMINO STAR ANIMATION ========== */
+
+@keyframes domino-star-pulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.3);
+        filter: brightness(1.5) drop-shadow(0 0 8px #FFD700);
+    }
+}
+
+@keyframes domino-star-spin {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    25% {
+        transform: rotate(10deg) scale(1.2);
+    }
+    50% {
+        transform: rotate(-10deg) scale(1.3);
+    }
+    75% {
+        transform: rotate(5deg) scale(1.2);
+    }
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+.domino-star-animated {
+    display: inline-block;
+    animation: domino-star-pulse 1.5s ease-in-out infinite;
+}
+
+.domino-star-animated:hover {
+    animation: domino-star-spin 0.6s ease-in-out;
+}
+
+.domino-star-button {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+.domino-star-button:active {
+    transform: scale(0.9);
+    animation: domino-star-spin 0.4s ease-in-out;
+}

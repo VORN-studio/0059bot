@@ -1936,7 +1936,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                     ${tierReactions}
                 </div>
                 <div class="inline-actions">
-                    ${!isMe ? `<div class="inline-action domino-star-btn" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${senderId});closeAllInlineMenus();"><span class="domino-star-icon">🌟💎</span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 USD)</span></div>` : ''}
+                    ${!isMe ? `<div class="inline-action domino-star-btn domino-star-button" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${senderId});closeAllInlineMenus();"><span class="domino-star-icon domino-star-animated"> 👾 </span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 USD)</span></div>` : ''}
                     ${isDM ? `<div class="inline-action" onclick="event.stopPropagation();setReply('${messageId}', \`${escapedText}\`, '${username.replace(/'/g, "\\'")}');closeAllInlineMenus();"><span style="font-size:18px;">↩️</span> Reply</div>` : ''}
                     <div class="inline-action" onclick="event.stopPropagation();copyMessage(\`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">📋</span> Copy</div>
                     <div class="inline-action" onclick="event.stopPropagation();forwardMessage('${messageId}', \`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">↗️</span> Forward</div>
@@ -1948,7 +1948,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
         <div style="text-align:${align};">
             <div class="message-reactions" id="reactions-${messageId}" style="display:none;justify-content:${isMe ? 'flex-end' : 'flex-start'};"></div>
             <div class="fire-counter" id="fire-counter-${messageId}" style="display:none;text-align:${align};margin-top:4px;">
-                <span class="fire-badge"><span class="domino-star-icon-small">🌟💎</span> <span id="fire-count-${messageId}">0</span></span>
+                <span class="fire-badge"><span class="domino-star-icon-small domino-star-animated"> 👾 </span> <span id="fire-count-${messageId}">0</span></span>
             </div>
         </div>
     </div>`;
