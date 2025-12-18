@@ -29,5 +29,7 @@ jobs:
             source venv/bin/activate
             pip install -q -r requirements.txt
             systemctl stop 0059bot
+            sleep 2
             killall -9 python || true
+            sleep 1
             systemctl start 0059bot
