@@ -3193,10 +3193,11 @@ function openForwardModal(messageId, chatType) {
 }
 
 // Load forward targets
+// Load forward targets
 function loadForwardTargets() {
     const forwardTargetList = document.getElementById("forward-target-list");
     if (!forwardTargetList) return;
-    
+
     forwardTargetList.innerHTML = '<div style="text-align:center;color:#999;">Loading...</div>';
 
     fetch(`/api/message/partners?uid=${CURRENT_UID}`)
@@ -3212,25 +3213,13 @@ function loadForwardTargets() {
             // Add Global Chat option if forwarding from DM
             if (currentForwardChatType === "dm") {
                 const globalDiv = document.createElement("div");
-                globalDiv.style.cssText = `
-                    display:flex;align-items:center;gap:12px;padding:12px;
-                    background:rgba(255,255,255,0.05);border-radius:12px;
-                    margin-bottom:8px;cursor:pointer;transition:all 0.2s;
-                `;
+                globalDiv.className = "forward-target-item";
                 globalDiv.innerHTML = `
                     <span style="font-size:24px;">🌍</span>
                     <span style="color:white;flex:1;">Global Chat</span>
                     <span style="color:#999;font-size:12px;">➜</span>
                 `;
-                globalDiv.addEventListener("mouseenter", () => {
-                    globalDiv.style.background = "rgba(255,255,255,0.1)";
-                });
-                globalDiv.addEventListener("mouseleave", () => {
-                    globalDiv.style.background = "rgba(255,255,255,0.05)";
-                });
-                globalDiv.addEventListener("click", () => {
-                    forwardToTarget(null, true);
-                });
+                globalDiv.onclick = () => sendForwardMessage(null, true);
                 forwardTargetList.appendChild(globalDiv);
             }
 
@@ -3239,94 +3228,63 @@ function loadForwardTargets() {
                 if (window.currentForwardExcludeUserId && p.user_id == window.currentForwardExcludeUserId) {
                     return;
                 }
-                // Skip current DM partner when forwarding from DM
-                if (window.currentForwardExcludeUserId && p.user_id == window.currentForwardExcludeUserId) {
-                    return;
-                }
+                
                 const div = document.createElement("div");
-                div.style.cssText = `
-                    display:flex;align-items:center;gap:12px;padding:12px;
-                    background:rgba(255,255,255,0.05);border-radius:12px;
-                    margin-bottom:8px;cursor:pointer;transition:all 0.2s;
-                `;
+                div.className = "forward-target-item";
                 div.innerHTML = `
-                    <img src="${p.avatar || '/portal/default.png'}"
+                    <img src="${p.avatar || '/portal/default.png'}" 
                          style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                     <span style="color:white;flex:1;">@${p.username || 'User ' + p.user_id}</span>
                     <span style="color:#999;font-size:12px;">➜</span>
                 `;
-
-                div.addEventListener("mouseenter", () => {
-                    div.style.background = "rgba(255,255,255,0.1)";
-                });
-                div.addEventListener("mouseleave", () => {
-                    div.style.background = "rgba(255,255,255,0.05)";
-                });
-
-                div.addEventListener("click", () => {
-                    forwardMessageTo(p.user_id);
-                });
-
+                div.onclick = () => sendForwardMessage(p.user_id, false);
                 forwardTargetList.appendChild(div);
             });
-        })
-        .catch(err => {
-            console.error("Failed to load forward targets:", err);
-            forwardTargetList.innerHTML = '<div style="text-align:center;color:#e11d48;">Error loading contacts</div>';
         });
 }
 
-function initForwardFeature() {
-    const forwardBtn = document.getElementById("ctx-forward");
+// Send forward message
+function sendForwardMessage(targetUserId, toGlobal) {
     const forwardModal = document.getElementById("forward-modal");
-    const forwardCancel = document.getElementById("forward-cancel");
-    const forwardTargetList = document.getElementById("forward-target-list");
+    if (!forwardModal) return;
 
-    if (!forwardBtn || !forwardModal) {
-        console.error("❌ Forward elements missing:", {forwardBtn, forwardModal, forwardCancel});
-        return;
-    }
-    console.log("✅ Forward modal elements found");
+    const payload = {
+        user_id: CURRENT_UID,
+        message_id: currentForwardMessageId,
+        target_user_id: targetUserId,
+        to_global: toGlobal
+    };
 
-    // Open forward modal
-    forwardBtn.addEventListener("click", () => {
-        const contextMenu = document.getElementById("message-context-menu");
-        if (contextMenu) contextMenu.classList.add("hidden");
+    const endpoint = currentForwardChatType === "global" ? "/api/global/forward" : "/api/dm/forward";
 
-        // Determine chat type and message ID
-        const activeChat = document.querySelector(".chat-section:not(.hidden)");
-        if (!activeChat) return;
+    console.log("🚀 Forward payload:", payload);
+    console.log("📍 Endpoint:", endpoint);
 
-        if (activeChat.id === "global-chat-section") {
-            currentForwardChatType = "global";
-            currentForwardMessageId = window.currentContextMessageId;
-        } else if (activeChat.id === "dm-section") {
-            currentForwardChatType = "dm";
-            currentForwardMessageId = window.currentContextMessageId;
-            window.currentForwardExcludeUserId = CURRENT_PARTNER_ID; // Exclude current DM chat
-        } else {
-            window.currentForwardExcludeUserId = null;
-        }
-
-        if (!currentForwardMessageId) return;
-
-        // Load user list (followed users)
-        loadForwardTargets();
-        forwardModal.classList.remove("hidden");
-    });
-
-    // Cancel forward
-    if (forwardCancel) {
-        forwardCancel.addEventListener("click", () => {
-            console.log("🔴 Cancel clicked");
+    fetch(endpoint, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.ok) {
+            console.log("✅ Message forwarded successfully");
             forwardModal.classList.add("hidden");
-        currentForwardMessageId = null;
+            currentForwardMessageId = null;
             currentForwardChatType = null;
-        });
-    } else {
-        console.error("❌ Cancel button not found");
-    }
+            window.currentForwardExcludeUserId = null;
+        } else {
+            console.error("❌ Forward failed:", d.error);
+            alert("Forward failed: " + (d.error || "Unknown error"));
+        }
+    })
+    .catch(err => {
+        console.error("❌ Forward error:", err);
+        alert("Network error");
+    });
 }
+
+
 
 // Forward message
 function forwardMessageTo(targetUserId) {
@@ -3385,5 +3343,5 @@ function showToast(message) {
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", () => {
-    initForwardFeature();
+   
 });
