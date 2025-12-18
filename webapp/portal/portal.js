@@ -3142,11 +3142,8 @@ async function confirmDominoStar() {
             }
             return;
         }
-        // Update fire counter
         updateFireCounter(messageId, data.fire_count);
-        // Show success with animation
         showToast(`✨ Domino Star sent! New balance: ${data.new_balance.toFixed(2)} USD`);
-        // Trigger animation
         triggerDominoStarAnimation(messageId);
     } catch (e) {
         console.error("sendDominoStar error:", e);
@@ -3175,25 +3172,26 @@ function triggerDominoStarAnimation(messageId) {
     }, 1000);
 }
 
-// ==================== FORWARD MESSAGE ====================
-
 let currentForwardMessageId = null;
-let currentForwardChatType = null; // 'global' or 'dm'
+let currentForwardChatType = null; 
 
-// Open forward modal from inline menu
 function openForwardModal(messageId, chatType) {
     currentForwardMessageId = messageId;
     currentForwardChatType = chatType;
-    
+
+    if (chatType === "dm") {
+        window.currentForwardExcludeUserId = CURRENT_PARTNER_ID;
+    } else {
+        window.currentForwardExcludeUserId = null;
+    }
+
     const forwardModal = document.getElementById("forward-modal");
     if (!forwardModal) return;
-    
+
     loadForwardTargets();
     forwardModal.classList.remove("hidden");
 }
 
-// Load forward targets
-// Load forward targets
 function loadForwardTargets() {
     const forwardTargetList = document.getElementById("forward-target-list");
     if (!forwardTargetList) return;
