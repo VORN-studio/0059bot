@@ -302,22 +302,22 @@ def api_global_hot_user():
         return jsonify({"ok": True, "hot_user": None})
     
     # Filter only status 6+ users
-    eligible = [r for r in rows if int(r[4] or 0) >= 6]
+    eligible = [r for r in rows if int(r[3] or 0) >= 6]
     
     if not eligible:
         return jsonify({"ok": True, "hot_user": None})
     
     # Find highest status
-    max_status = max(int(r[4] or 0) for r in eligible)
+    max_status = max(int(r[3] or 0) for r in eligible)
     
     # Get all users with max status
-    top_users = [r for r in eligible if int(r[4] or 0) == max_status]
+    top_users = [r for r in eligible if int(r[3] or 0) == max_status]
     
     # Random choice if multiple
     import random
     chosen = random.choice(top_users)
     
-    avatar_url = chosen[3] or chosen[2] or "/portal/default.png"
+    avatar_url = chosen[2] or "/portal/default.png"
     
     return jsonify({
         "ok": True,
@@ -325,7 +325,7 @@ def api_global_hot_user():
             "user_id": chosen[0],
             "username": chosen[1] or f"User {chosen[0]}",
             "avatar": avatar_url,
-            "status_level": int(chosen[4] or 0)
+            "status_level": int(chosen[3] or 0)
         }
     })
 
