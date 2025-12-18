@@ -180,7 +180,7 @@ def api_message_partners():
     for u in rows:
         partner_id = int(u[0])
 
-        avatar_url = u[3] or u[2] or "/portal/default.png"
+        avatar_url = u[2] or "/portal/default.png"
         username = u[1] or f"User {partner_id}"
 
         # --- last message preview (այստեղ partner_id արդեն կա) ---
