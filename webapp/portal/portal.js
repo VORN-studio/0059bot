@@ -3219,7 +3219,7 @@ function loadForwardTargets() {
                 div.innerHTML = `
                     <img src="${p.avatar || '/portal/default.png'}"
                          style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-                    <span style="color:white;flex:1;">@${p.username || 'User ' + p.partner_id}</span>
+                    <span style="color:white;flex:1;">@${p.username || 'User ' + p.user_id}</span>
                     <span style="color:#999;font-size:12px;">➜</span>
                 `;
 
@@ -3231,7 +3231,7 @@ function loadForwardTargets() {
                 });
 
                 div.addEventListener("click", () => {
-                    forwardMessageTo(p.partner_id);
+                    forwardMessageTo(p.user_id);
                 });
 
                 forwardTargetList.appendChild(div);
