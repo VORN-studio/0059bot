@@ -3296,6 +3296,9 @@ function forwardMessageTo(targetUserId) {
         to_global: (targetUserId === "global")
     };
 
+    console.log("🚀 Forward payload:", payload);
+    console.log("📍 Endpoint:", endpoint);
+
     fetch(endpoint, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
