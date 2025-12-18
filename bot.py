@@ -258,16 +258,16 @@ def api_global_messages():
     messages = []
     for r in rows:
         avatar_url = r[3] or "/portal/default.png"
-        
+
         messages.append({
             "id": r[0],
             "user_id": r[1],
             "username": r[2] or f"User {r[1]}",
             "avatar": avatar_url,
-            "status_level": int(r[5] or 0),
-            "message": r[6],
-            "created_at": int(r[7]),
-            "highlighted": bool(r[8] if len(r) > 8 else False)
+            "status_level": int(r[4] or 0),
+            "message": r[5],
+            "created_at": int(r[6]),
+            "highlighted": bool(r[7] if len(r) > 7 else False)
         })
     
     messages.reverse()  # oldest first
