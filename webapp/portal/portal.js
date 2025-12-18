@@ -240,8 +240,14 @@ socket.on("message_reaction", (data) => {
     updateMessageReactions(data.message_id, data.chat_type, data.reactions, data.fire_count || 0);
 });
 
-socket.on("disconnect", () => {
-    console.warn("🔴 Realtime disconnected");
+socket.on("user_online", (data) => {
+    console.log("🟢 User online:", data.user_id);
+    updateUserOnlineStatus(data.user_id, true);
+});
+
+socket.on("user_offline", (data) => {
+    console.log("🔴 User offline:", data.user_id);
+    updateUserOnlineStatus(data.user_id, false);
 });
 
 
@@ -579,9 +585,24 @@ async function loadProfile() {
         CURRENT_USER_STATUS = user.status_level || 0;
         updateCharCounter();
 
+        
+        
         // ✅ Show highlight checkbox for Status 7+
         const highlightCheckbox = document.getElementById("highlight-checkbox");
         const highlightLabel = document.getElementById("highlight-label");
+
+        
+        // ✅ Online status indicator
+        const profileStatus = document.getElementById("profile-status");
+        if (profileStatus) {
+            if (user.is_online) {
+                profileStatus.textContent = "🟢 Օնլայն";
+                profileStatus.style.color = "#22c55e";
+            } else {
+                profileStatus.textContent = "⚫ Օֆլայն";
+                profileStatus.style.color = "#6b7280";
+            }
+        }
 
         if (CURRENT_USER_STATUS >= 7) {
             if (highlightCheckbox) highlightCheckbox.style.display = "inline-block";
@@ -3393,3 +3414,20 @@ function showToast(message) {
 document.addEventListener("DOMContentLoaded", () => {
    
 });
+
+
+// ✅ Update user online status dynamically
+function updateUserOnlineStatus(userId, isOnline) {
+    if (String(userId) === String(profileId)) {
+        const profileStatus = document.getElementById("profile-status");
+        if (profileStatus) {
+            if (isOnline) {
+                profileStatus.textContent = "🟢 Օնլայն";
+                profileStatus.style.color = "#22c55e";
+            } else {
+                profileStatus.textContent = "⚫ Օֆլայն";
+                profileStatus.style.color = "#6b7280";
+            }
+        }
+    }
+}
