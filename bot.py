@@ -1367,7 +1367,7 @@ def upload_avatar():
         c = conn.cursor()
         c.execute("""
             UPDATE dom_users
-            SET avatar_data = %s
+            SET avatar = %s 
             WHERE user_id = %s
         """, (avatar_data, uid))
         conn.commit()
