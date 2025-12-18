@@ -3285,14 +3285,15 @@ function initForwardFeature() {
 
 // Forward message
 function forwardMessageTo(targetUserId) {
-    const endpoint = currentForwardChatType === "global" 
-        ? "/api/chat/forward" 
+    const endpoint = currentForwardChatType === "global"
+        ? "/api/chat/forward"
         : "/api/dm/forward";
 
     const payload = {
         user_id: CURRENT_UID,
         message_id: currentForwardMessageId,
-        target_user_id: targetUserId
+        target_user_id: targetUserId,
+        to_global: (targetUserId === "global")
     };
 
     fetch(endpoint, {
