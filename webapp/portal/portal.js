@@ -1289,11 +1289,17 @@ async function loadFollowStats() {
         }
 
         const followBtn = document.getElementById("follow-btn");
-        if (followBtn && viewerId && !isOwner) {
-            const sRes = await fetch(`/api/is_following/${viewerId}/${profileId}`);
-            const sData = await sRes.json();
-            if (sData.ok) {
-                followBtn.innerText = sData.is_following ? "Following" : "Follow";
+        if (followBtn) {
+            if (!viewerId || isOwner) {
+                // ✅ Թաքցնել follow կոճակը եթե դու ինքդ քեզ ես նայում
+                followBtn.style.display = "none";
+            } else {
+                followBtn.style.display = "block";
+                const sRes = await fetch(`/api/is_following/${viewerId}/${profileId}`);
+                const sData = await sRes.json();
+                if (sData.ok) {
+                    followBtn.innerText = sData.is_following ? "Following" : "Follow";
+                }
             }
         }
     } catch (e) {
