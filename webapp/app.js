@@ -566,21 +566,75 @@ initFromTelegram();
 initReferralLink();
 updateBalanceDisplay();
 
-function loadTonChart() {
-  new TradingView.widget({
-    "width": "100%",
-    "height": 250,
-    "symbol": "TONUSD",
-    "interval": "30",
-    "timezone": "Etc/UTC",
-    "theme": "dark",
-    "style": "1",
-    "locale": "en",
-    "container_id": "ton-chart"
+// ═══════════════════════════════════════════
+// DOMIT/TON CHART (Lightweight Charts)
+// ═══════════════════════════════════════════
+
+let domitChart;
+let domitCandleSeries;
+
+function loadDomitChart() {
+  domitChart = LightweightCharts.createChart(document.getElementById('domit-chart'), {
+    width: document.getElementById('domit-chart').offsetWidth,
+    height: 250,
+    layout: {
+      backgroundColor: '#0f172a',
+      textColor: '#d1d4dc',
+    },
+    grid: {
+      vertLines: { color: '#1e293b' },
+      horzLines: { color: '#1e293b' },
+    },
+    timeScale: {
+      timeVisible: true,
+      secondsVisible: false,
+    },
   });
+
+  domitCandleSeries = domitChart.addCandlestickSeries({
+    upColor: '#26a69a',
+    downColor: '#ef5350',
+    borderVisible: false,
+    wickUpColor: '#26a69a',
+    wickDownColor: '#ef5350',
+  });
+
+  // Load initial data
+  fetchDomitPrices();
+  
+  // Update every 5 seconds
+  setInterval(fetchDomitPrices, 5000);
 }
 
-loadTonChart();
+async function fetchDomitPrices() {
+  try {
+    const response = await fetch('/api/get_domit_prices');
+    const data = await response.json();
+    
+    if (data.candles && data.candles.length > 0) {
+      domitCandleSeries.setData(data.candles);
+      
+      // Update current price display
+      const current = data.candles[data.candles.length - 1];
+      document.getElementById('domit-current').textContent = current.close.toFixed(4);
+      
+      // Update 24h change
+      if (data.candles.length > 1) {
+        const first = data.candles[0].open;
+        const last = current.close;
+        const change = ((last - first) / first * 100).toFixed(2);
+        const changeEl = document.getElementById('domit-change');
+        changeEl.textContent = (change >= 0 ? '+' : '') + change + '%';
+        changeEl.style.color = change >= 0 ? '#26a69a' : '#ef5350';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading DOMIT prices:', error);
+    document.getElementById('domit-current').textContent = '—';
+  }
+}
+
+loadDomitChart();
 
 document.getElementById("portal-orb").addEventListener("click", () => {
     if (!CURRENT_USER_ID) return;

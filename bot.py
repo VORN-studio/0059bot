@@ -1616,6 +1616,42 @@ def api_set_username():
 
     return jsonify({"ok": True})
 
+def api_get_domit_prices():
+    """Get DOMIT/TON price history for chart"""
+    try:
+        conn_obj = db()
+        c = conn_obj.cursor()
+        
+        c.execute("""
+            SELECT timestamp, open, high, low, close
+            FROM domit_price_history
+            ORDER BY timestamp ASC
+            LIMIT 288
+        """)
+        
+        rows = c.fetchall()
+        candles = []
+        
+        from datetime import datetime
+        for row in rows:
+            dt = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
+            unix_time = int(dt.timestamp())
+            
+            candles.append({
+                'time': unix_time,
+                'open': float(row[1]),
+                'high': float(row[2]),
+                'low': float(row[3]),
+                'close': float(row[4])
+            })
+        
+        conn_obj.close()
+        return jsonify({'candles': candles})
+    
+    except Exception as e:
+        logger.error(f"❌ Error in api_get_domit_prices: {e}")
+        return jsonify({'candles': []})
+
 @app_web.route("/api/settings/toggle-forward", methods=["POST"])
 def api_toggle_forward():
     """Toggle allow_forward setting"""
@@ -2574,6 +2610,38 @@ def init_db():
             created_at BIGINT,
             UNIQUE(user_id, post_id)
         )
+    """)
+
+        # DOMIT/TON Trading System Tables
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS domit_price_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            open REAL NOT NULL,
+            high REAL NOT NULL,
+            low REAL NOT NULL,
+            close REAL NOT NULL,
+            volume INTEGER DEFAULT 0
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS domit_config (
+            id INTEGER PRIMARY KEY DEFAULT 1,
+            min_price REAL DEFAULT 0.50,
+            max_price REAL DEFAULT 1.50,
+            current_price REAL DEFAULT 1.00,
+            trend TEXT DEFAULT 'sideways',
+            volatility TEXT DEFAULT 'medium',
+            last_update TEXT,
+            CHECK (id = 1)
+        )
+    """)
+
+    # Insert default DOMIT config
+    c.execute("""
+        INSERT OR IGNORE INTO domit_config (id, current_price, last_update) 
+        VALUES (1, 1.0000, datetime('now'))
     """)
 
     c.execute("SELECT COUNT(*) FROM dom_mining_plans")
@@ -4085,6 +4153,90 @@ async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🎁 {amount} DOMIT փոխանցվեց օգտատեր {target}-ին burn ֆոնդից"
     )
 
+async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Admin command: Generate initial 24h DOMIT price data"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+    
+    try:
+        import random
+        from datetime import datetime, timedelta
+        
+        conn_obj = db()
+        c = conn_obj.cursor()
+        
+        # Clear old data
+        c.execute("DELETE FROM domit_price_history")
+        
+        # Generate 24 hours of candles
+        base_time = datetime.now() - timedelta(hours=24)
+        current_price = 1.00
+        
+        for i in range(288):  # 288 × 5min = 24h
+            time = base_time + timedelta(minutes=i*5)
+            
+            open_price = current_price
+            change = random.uniform(-0.02, 0.02)
+            close_price = max(0.50, min(1.50, open_price + change))
+            high_price = max(open_price, close_price) + random.uniform(0, 0.01)
+            low_price = min(open_price, close_price) - random.uniform(0, 0.01)
+            
+            c.execute("""
+                INSERT INTO domit_price_history (timestamp, open, high, low, close, volume)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                time.strftime('%Y-%m-%d %H:%M:%S'),
+                round(open_price, 4),
+                round(high_price, 4),
+                round(low_price, 4),
+                round(close_price, 4),
+                random.randint(1000, 5000)
+            ))
+            
+            current_price = close_price
+        
+        conn_obj.commit()
+        release_db(conn_obj)
+        
+        await update.message.reply_text("✅ DOMIT գրաֆիկի տվյալները ստեղծվեցին!\n📊 288 candles (24 ժամ)")
+    
+    except Exception as e:
+        logger.error(f"❌ Error in init_domit_data: {e}")
+        await update.message.reply_text(f"❌ Սխալ: {e}")
+
+
+async def set_domit_range(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Admin: /set_domit_range 0.50 1.50"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+    
+    try:
+        if len(context.args) < 2:
+            await update.message.reply_text("Օգտագործում՝ /set_domit_range 0.50 1.50")
+            return
+        
+        min_price = float(context.args[0])
+        max_price = float(context.args[1])
+        
+        conn_obj = db()
+        c = conn_obj.cursor()
+        c.execute("""
+            UPDATE domit_config 
+            SET min_price = %s, max_price = %s
+            WHERE id = 1
+        """, (min_price, max_price))
+        conn_obj.commit()
+        release_db(conn_obj)
+        
+        await update.message.reply_text(f"✅ DOMIT range: {min_price} - {max_price} TON")
+    
+    except Exception as e:
+        logger.error(f"❌ Error in set_domit_range: {e}")
+        await update.message.reply_text(f"❌ Սխալ: {e}")
 
 async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -4136,6 +4288,8 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("burn_stats", burn_stats))
     application.add_handler(CommandHandler("burn_reward", burn_reward))
     application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
+    application.add_handler(CommandHandler("init_domit_data", init_domit_data))
+    application.add_handler(CommandHandler("set_domit_range", set_domit_range))
     await application.initialize()
     await application.start()
 

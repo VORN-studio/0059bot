@@ -22,21 +22,22 @@
     <header class="top">
       <h1>👾 Domino</h1>
       <div class="user-info">
-        <div id="ton-chart" style="
+        <div id="domit-chart" style="
           height:250px;
           margin-top:12px;
           background:#0f172a;
           border-radius:10px;
           overflow:hidden;
         "></div>
-        <div id="ton-rate-box" style="
+        <div id="domit-rate-box" style="
           margin-top:10px;
           background:#0f172a;
           padding:10px;
           border-radius:10px;
           font-size:14px;
         ">
-         <strong>TON:</strong> <span id="ton-current">—</span>
+          <strong>DOMIT/TON:</strong> <span id="domit-current">1.0000</span>
+          <span id="domit-change" style="margin-left:10px; color:#26a69a;">+0.00%</span>
         </div>
 
         <div><strong>ID:</strong> <span id="user-id">-</span></div>
@@ -144,6 +145,7 @@
     </main>
   </div>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <script src="/webapp/app.js"></script>
 </body>
