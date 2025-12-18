@@ -2742,7 +2742,7 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
     const menu = document.getElementById(`inline-menu-${messageId}`);
     
     // ✅ Եթե այս menu-ն արդեն բաց է, փակել
-    if (menu && menu.style.display === 'flex') {
+    if (menu && window.getComputedStyle(menu).display !== 'none') {
         menu.style.display = 'none';
         return;
     }
