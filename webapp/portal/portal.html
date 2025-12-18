@@ -287,6 +287,14 @@
             Փոխել Username
         </button>
 
+        <div class="settings-item" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Թույլատրել հաղորդագրությունների տարածումը</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="allow-forward-toggle" checked>
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
         <button class="settings-close" id="settings-close">Փակել</button>
     </div>
 </div>
@@ -370,6 +378,24 @@
   </div>
 </div>
 
+    <!-- FORWARD MODAL -->
+    <div id="forward-modal" class="popup hidden">
+        <div class="popup-box" style="width:80%;max-width:400px;padding:20px;">
+            <h3 style="margin:0 0 16px 0;color:white;font-size:18px;">📩 Forward Message</h3>
+            
+            <div id="forward-target-list" style="max-height:300px;overflow-y:auto;margin-bottom:16px;">
+                <!-- Dynamic list of users -->
+            </div>
+            
+            <div style="display:flex;gap:10px;">
+                <button id="forward-cancel" 
+                    style="flex:1;padding:12px;border-radius:12px;
+                    background:rgba(255,255,255,0.1);color:white;border:none;font-size:14px;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- DELETE CONFIRM MODAL -->
     <div id="confirm-modal" class="popup hidden">
@@ -401,6 +427,9 @@
             </button>
             <button class="context-menu-btn" id="ctx-copy">
                 📋 Copy
+            </button>
+            <button class="context-menu-btn" id="ctx-forward">
+                📩 Forward
             </button>
             <button class="context-menu-btn" id="ctx-cancel" style="background:rgba(255,255,255,0.1);">
                 ✕ Cancel

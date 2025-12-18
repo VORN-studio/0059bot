@@ -971,6 +971,202 @@ def api_message_send():
 
     return jsonify({"ok": True})
 
+@app_web.route("/api/chat/forward", methods=["POST"])
+def api_forward_global():
+    """Forward message from Global Chat to DM"""
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    message_id = int(data.get("message_id", 0))
+    target_user_id = int(data.get("target_user_id", 0))
+    
+    if user_id == 0 or message_id == 0 or target_user_id == 0:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+    
+    conn = db()
+    c = conn.cursor()
+    
+    # Get original message
+    c.execute("""
+        SELECT g.message, g.user_id, u.username 
+        FROM dom_global_chat g
+        LEFT JOIN dom_users u ON u.user_id = g.user_id
+        WHERE g.id = %s
+    """, (message_id,))
+    
+    row = c.fetchone()
+    if not row:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "message_not_found"}), 404
+    
+    original_text, original_sender, original_username = row
+    original_username = original_username or f"User {original_sender}"
+    
+    # Check if original sender allows forwarding
+    c.execute("SELECT allow_forward FROM dom_users WHERE user_id = %s", (original_sender,))
+    allow_row = c.fetchone()
+    if allow_row and int(allow_row[0] or 1) == 0:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "forwarding_disabled"}), 403
+    
+    # Check if user follows target
+    c.execute("SELECT 1 FROM dom_follows WHERE follower=%s AND target=%s", (user_id, target_user_id))
+    if not c.fetchone():
+        release_db(conn)
+        return jsonify({"ok": False, "error": "need_follow"}), 403
+    
+    # Create forwarded message
+    now = int(time.time())
+    forward_text = f"📩 Forwarded from @{original_username}:\n\n{original_text}"
+    
+    c.execute("""
+        INSERT INTO dom_messages (sender, receiver, text, created_at)
+        VALUES (%s, %s, %s, %s)
+        RETURNING id
+    """, (user_id, target_user_id, forward_text, now))
+    
+    new_msg_id = c.fetchone()[0]
+    conn.commit()
+    
+    # Send realtime notification
+    room = f"dm_{min(user_id, target_user_id)}_{max(user_id, target_user_id)}"
+    realtime_emit("dm_new", {
+        "id": new_msg_id,
+        "sender": user_id,
+        "receiver": target_user_id,
+        "text": forward_text,
+        "time": now
+    }, room=room)
+    
+    realtime_emit("dm_notify", {
+        "partner_id": user_id,
+        "sender": user_id,
+        "text": forward_text[:120],
+        "time": now
+    }, room=f"user_{target_user_id}")
+    
+    release_db(conn)
+    return jsonify({"ok": True})
+
+
+@app_web.route("/api/dm/forward", methods=["POST"])
+def api_forward_dm():
+    """Forward message from DM to another DM or Global Chat"""
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    message_id = int(data.get("message_id", 0))
+    target_user_id = data.get("target_user_id")  # None if forwarding to global
+    to_global = data.get("to_global", False)
+    
+    if user_id == 0 or message_id == 0:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+    
+    if not to_global and not target_user_id:
+        return jsonify({"ok": False, "error": "no_target"}), 400
+    
+    conn = db()
+    c = conn.cursor()
+    
+    # Get original message
+    c.execute("""
+        SELECT m.text, m.sender, u.username 
+        FROM dom_messages m
+        LEFT JOIN dom_users u ON u.user_id = m.sender
+        WHERE m.id = %s
+    """, (message_id,))
+    
+    row = c.fetchone()
+    if not row:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "message_not_found"}), 404
+    
+    original_text, original_sender, original_username = row
+    original_username = original_username or f"User {original_sender}"
+    
+    # Check if original sender allows forwarding
+    c.execute("SELECT allow_forward FROM dom_users WHERE user_id = %s", (original_sender,))
+    allow_row = c.fetchone()
+    if allow_row and int(allow_row[0] or 1) == 0:
+        release_db(conn)
+        return jsonify({"ok": False, "error": "forwarding_disabled"}), 403
+    
+    now = int(time.time())
+    forward_text = f"📩 Forwarded from @{original_username}:\n\n{original_text}"
+    
+    if to_global:
+        # Forward to Global Chat
+        c.execute("""
+            INSERT INTO dom_global_chat (user_id, message, created_at)
+            VALUES (%s, %s, %s)
+            RETURNING id
+        """, (user_id, forward_text, now))
+        
+        new_msg_id = c.fetchone()[0]
+        conn.commit()
+        
+        # Get user info for realtime
+        c.execute("""
+            SELECT username, avatar, avatar_data,
+                   (SELECT COALESCE(MAX(pl.tier),0)
+                    FROM dom_user_miners m
+                    JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                    WHERE m.user_id = %s) AS status_level
+            FROM dom_users WHERE user_id = %s
+        """, (user_id, user_id))
+        
+        user_row = c.fetchone()
+        username = user_row[0] if user_row else f"User {user_id}"
+        avatar = (user_row[2] or user_row[1] or "/portal/default.png") if user_row else "/portal/default.png"
+        status_level = int(user_row[3]) if user_row else 0
+        
+        realtime_emit("global_new", {
+            "id": new_msg_id,
+            "user_id": user_id,
+            "username": username,
+            "avatar": avatar,
+            "status_level": status_level,
+            "message": forward_text,
+            "time": now,
+            "highlighted": False
+        }, room="global")
+        
+    else:
+        # Forward to DM
+        target_user_id = int(target_user_id)
+        
+        # Check if user follows target
+        c.execute("SELECT 1 FROM dom_follows WHERE follower=%s AND target=%s", (user_id, target_user_id))
+        if not c.fetchone():
+            release_db(conn)
+            return jsonify({"ok": False, "error": "need_follow"}), 403
+        
+        c.execute("""
+            INSERT INTO dom_messages (sender, receiver, text, created_at)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
+        """, (user_id, target_user_id, forward_text, now))
+        
+        new_msg_id = c.fetchone()[0]
+        conn.commit()
+        
+        room = f"dm_{min(user_id, target_user_id)}_{max(user_id, target_user_id)}"
+        realtime_emit("dm_new", {
+            "id": new_msg_id,
+            "sender": user_id,
+            "receiver": target_user_id,
+            "text": forward_text,
+            "time": now
+        }, room=room)
+        
+        realtime_emit("dm_notify", {
+            "partner_id": user_id,
+            "sender": user_id,
+            "text": forward_text[:120],
+            "time": now
+        }, room=f"user_{target_user_id}")
+    
+    release_db(conn)
+    return jsonify({"ok": True})
+
 @app_web.route("/api/message/history")
 def api_message_history():
     u1 = int(request.args.get("u1", 0))
@@ -1374,6 +1570,30 @@ def api_set_username():
     release_db(conn)
 
     return jsonify({"ok": True})
+
+@app_web.route("/api/settings/toggle-forward", methods=["POST"])
+def api_toggle_forward():
+    """Toggle allow_forward setting"""
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    allow = int(data.get("allow", 1))
+    
+    if user_id == 0:
+        return jsonify({"ok": False, "error": "no user_id"}), 400
+    
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        UPDATE dom_users 
+        SET allow_forward = %s 
+        WHERE user_id = %s
+    """, (allow, user_id))
+    
+    conn.commit()
+    release_db(conn)
+    
+    return jsonify({"ok": True, "allow_forward": allow})
 
 @app_web.route("/api/follow", methods=["POST"])
 def api_follow():
@@ -2017,7 +2237,8 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar TEXT",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS fires_received INT DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS fires_given INT DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT"    
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS allow_forward INTEGER DEFAULT 1"    
 ]
 
 def init_db():
