@@ -3285,6 +3285,21 @@ function sendForwardMessage(targetUserId, toGlobal) {
 }
 
 
+// Initialize forward modal cancel button
+document.addEventListener("DOMContentLoaded", () => {
+    const forwardCancel = document.getElementById("forward-cancel");
+    const forwardModal = document.getElementById("forward-modal");
+    
+    if (forwardCancel && forwardModal) {
+        forwardCancel.addEventListener("click", () => {
+            console.log("🔴 Cancel clicked");
+            forwardModal.classList.add("hidden");
+            currentForwardMessageId = null;
+            currentForwardChatType = null;
+            window.currentForwardExcludeUserId = null;
+        });
+    }
+});
 
 // Forward message
 function forwardMessageTo(targetUserId) {
