@@ -2913,11 +2913,6 @@ function copyMessage(text) {
     });
 }
 
-function forwardMessage(messageId, text) {
-    // TODO: Implement forward functionality
-    showToast('↗️ Forward feature coming soon!');
-}
-
 async function deleteMessage(messageId, chatType) {
     if (!confirm('Delete this message?')) return;
     
