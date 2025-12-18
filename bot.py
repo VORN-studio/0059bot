@@ -4286,6 +4286,55 @@ def telegram_webhook():
         logger.exception("Webhook error")
         return jsonify({"ok": False, "error": str(e)}), 500
 
+
+
+@app_web.route("/api/get_user_data", methods=["POST"])
+def api_get_user_data():
+    data = request.get_json()
+    telegram_id = data.get("telegram_id")
+    if not telegram_id:
+        return jsonify({"error": "Missing telegram_id"}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT telegram_id, username, status_level, ton_balance, usd_balance, 
+               avatar_data, fires_received, fires_given, total_games, total_wins
+        FROM dom_users
+        WHERE telegram_id = %s
+    """, (telegram_id,))
+    row = cur.fetchone()
+    cur.close()
+    put_db(conn)
+
+    if not row:
+        return jsonify({"error": "User not found"}), 404
+
+    total_games = row[8] or 0
+    total_wins = row[9] or 0
+    
+    # 🧠 Intellect Score հաշվարկ
+    intellect_score = round((total_wins / total_games * 10), 1) if total_games > 0 else 0.0
+    
+    # Progress bar (10 սիմվոլ)
+    filled = int(intellect_score)  # 0-10
+    progress_bar = "━" * filled + "░" * (10 - filled)
+
+    return jsonify({
+        "telegram_id": row[0],
+        "username": row[1],
+        "status_level": row[2],
+        "ton_balance": float(row[3]),
+        "usd_balance": float(row[4]),
+        "avatar_data": row[5],
+        "fires_received": row[6],
+        "fires_given": row[7],
+        "total_games": total_games,
+        "total_wins": total_wins,
+        "intellect_score": intellect_score,
+        "intellect_bar": progress_bar
+    })
+
 @app_web.route("/api/game/bet", methods=["POST"])
 def api_game_bet():
     data = request.get_json(force=True, silent=True) or {}
