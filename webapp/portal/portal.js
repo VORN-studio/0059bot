@@ -1990,7 +1990,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                     ${!isMe ? `<div class="inline-action domino-star-btn domino-star-button" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${senderId});closeAllInlineMenus();"><span class="domino-star-icon domino-star-animated"> 👾 </span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 USD)</span></div>` : ''}
                     ${isDM ? `<div class="inline-action" onclick="event.stopPropagation();setReply('${messageId}', \`${escapedText}\`, '${username.replace(/'/g, "\\'")}');closeAllInlineMenus();"><span style="font-size:18px;">↩️</span> Reply</div>` : ''}
                     <div class="inline-action" onclick="event.stopPropagation();copyMessage(\`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">📋</span> Copy</div>
-                    
+                                        <div class="inline-action" onclick="event.stopPropagation();openForwardModal('${messageId}', '${chatType}');closeAllInlineMenus();"><span style="font-size:18px;">📩</span> Forward</div>
                     ${isMe ? `<div class="inline-action danger" onclick="event.stopPropagation();deleteMessage('${messageId}', '${chatType}');closeAllInlineMenus();"><span style="font-size:18px;">🗑️</span> Delete</div>` : ''}
                 </div>
             </div>
