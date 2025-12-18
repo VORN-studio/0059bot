@@ -1,6 +1,9 @@
 import os
 from PIL import Image
 import io
+from PIL import Image
+from io import BytesIO
+import base64
 from dotenv import load_dotenv
 import eventlet
 eventlet.monkey_patch()
@@ -1355,7 +1358,6 @@ def upload_avatar():
         buffer.seek(0)
         
         # Convert to base64
-        import base64
         b64 = base64.b64encode(buffer.read()).decode("utf-8")
         avatar_data = f"data:image/webp;base64,{b64}"
         
@@ -2195,7 +2197,7 @@ def api_upload_post_media():
     if not uid or not file:
         return jsonify({"ok": False, "error": "missing"}), 400
 
-    import base64
+    
     raw = file.read()
     b64 = base64.b64encode(raw).decode("utf-8")
     content_type = file.mimetype
@@ -4040,6 +4042,22 @@ async def burn_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"⏰ Թարմացում: {last_update_str}"
     )    
 
+@bot.message_handler(commands=['migrate_posts'])
+def migrate_posts_command(message):
+    """Admin command to migrate posts media"""
+    if message.from_user.id != ADMIN_ID:
+        bot.reply_to(message, "❌ Միայն ադմինի համար")
+        return
+    
+    bot.reply_to(message, "🔄 Սկսում եմ migration...")
+    
+    try:
+        migrate_posts_to_files()
+        bot.send_message(message.chat.id, "✅ Migration ավարտված!")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"❌ Սխալ: {e}")
+        print(f"Migration error: {e}")
+
 async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
         await update.message.reply_text("❌ admin չես")
@@ -4131,7 +4149,7 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("task_toggle", task_toggle))
     application.add_handler(CommandHandler("burn_stats", burn_stats))
     application.add_handler(CommandHandler("burn_reward", burn_reward))
-
+    
     await application.initialize()
     await application.start()
 
@@ -4459,6 +4477,84 @@ def api_task_attempt_create():
     release_db(conn)
 
     return jsonify({"ok": True})
+
+def migrate_posts_to_files():
+    """Migrate posts media from base64 to file system"""
+    print("🔍 Starting posts media migration...")
+    
+    MEDIA_DIR = "webapp/static/media/posts"
+    os.makedirs(MEDIA_DIR, exist_ok=True)
+    
+    # Get posts with base64 media
+    cursor.execute("""
+        SELECT id, user_id, media_url
+        FROM dom_posts
+        WHERE media_url LIKE 'data:%'
+        ORDER BY id
+    """)
+    
+    posts = cursor.fetchall()
+    print(f"✅ Found {len(posts)} posts with base64 media\n")
+    
+    for post_id, user_id, media_url in posts:
+        print(f"📦 Processing post {post_id}...")
+        
+        if ";base64," not in media_url:
+            print(f"⚠️  Skipping: invalid format")
+            continue
+        
+        header, b64_data = media_url.split(";base64,", 1)
+        content_type = header.replace("data:", "")
+        
+        try:
+            file_bytes = base64.b64decode(b64_data)
+        except Exception as e:
+            print(f"❌ Decode error: {e}")
+            continue
+        
+        if "image" in content_type:
+            try:
+                img = Image.open(BytesIO(file_bytes))
+                img.thumbnail((800, 800), Image.Resampling.LANCZOS)
+                
+                filename = f"post_{post_id}.webp"
+                filepath = os.path.join(MEDIA_DIR, filename)
+                img.save(filepath, "WEBP", quality=85)
+                
+                file_url = f"/static/media/posts/{filename}"
+                old_size = len(file_bytes)
+                new_size = os.path.getsize(filepath)
+                print(f"   ✅ Image: {old_size} → {new_size} bytes")
+                
+            except Exception as e:
+                print(f"   ❌ Image error: {e}")
+                continue
+        
+        elif "video" in content_type:
+            ext = content_type.split("/")[1].split(";")[0]
+            filename = f"post_{post_id}.{ext}"
+            filepath = os.path.join(MEDIA_DIR, filename)
+            
+            with open(filepath, "wb") as f:
+                f.write(file_bytes)
+            
+            file_url = f"/static/media/posts/{filename}"
+            print(f"   ✅ Video: {len(file_bytes)} bytes")
+        
+        else:
+            print(f"   ⚠️  Unknown type: {content_type}")
+            continue
+        
+        cursor.execute("""
+            UPDATE dom_posts
+            SET media_url = %s
+            WHERE id = %s
+        """, (file_url, post_id))
+        conn.commit()
+        
+        print(f"   ✅ Updated DB: {file_url}\n")
+    
+    print("🎉 Migration complete!")
 
 if __name__ == "__main__":
     print("✅ Domino bot script loaded.")
