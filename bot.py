@@ -4151,7 +4151,7 @@ async def start_bot_webhook():
 
 async def migrate_posts_cmd(update: Update, context):
     """Admin command to migrate posts media"""
-    if update.effective_user.id != ADMIN_ID:
+    if update.effective_user.id not in ADMIN_IDS:  # ← ՓՈԽԻՐ ԱՅՍ
         await update.message.reply_text("❌ Միայն ադմինի համար")
         return
     
