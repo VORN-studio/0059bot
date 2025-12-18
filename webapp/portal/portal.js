@@ -2797,7 +2797,7 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
         }
     }
     
-    menu.style.display = 'block';
+    menu.style.display = 'flex';
 }
 
 function closeAllInlineMenus() {
