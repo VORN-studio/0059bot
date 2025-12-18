@@ -3210,6 +3210,10 @@ function loadForwardTargets() {
             forwardTargetList.innerHTML = "";
 
             d.users.forEach(p => {
+                // Skip current DM partner when forwarding from DM
+                if (window.currentForwardExcludeUserId && p.user_id == window.currentForwardExcludeUserId) {
+                    return;
+                }
                 const div = document.createElement("div");
                 div.style.cssText = `
                     display:flex;align-items:center;gap:12px;padding:12px;
@@ -3249,7 +3253,11 @@ function initForwardFeature() {
     const forwardCancel = document.getElementById("forward-cancel");
     const forwardTargetList = document.getElementById("forward-target-list");
 
-    if (!forwardBtn || !forwardModal) return;
+    if (!forwardBtn || !forwardModal) {
+        console.error("❌ Forward elements missing:", {forwardBtn, forwardModal, forwardCancel});
+        return;
+    }
+    console.log("✅ Forward modal elements found");
 
     // Open forward modal
     forwardBtn.addEventListener("click", () => {
@@ -3266,6 +3274,9 @@ function initForwardFeature() {
         } else if (activeChat.id === "dm-section") {
             currentForwardChatType = "dm";
             currentForwardMessageId = window.currentContextMessageId;
+            window.currentForwardExcludeUserId = CURRENT_PARTNER_ID; // Exclude current DM chat
+        } else {
+            window.currentForwardExcludeUserId = null;
         }
 
         if (!currentForwardMessageId) return;
@@ -3276,11 +3287,16 @@ function initForwardFeature() {
     });
 
     // Cancel forward
-    forwardCancel.addEventListener("click", () => {
-        forwardModal.classList.add("hidden");
+    if (forwardCancel) {
+        forwardCancel.addEventListener("click", () => {
+            console.log("🔴 Cancel clicked");
+            forwardModal.classList.add("hidden");
         currentForwardMessageId = null;
-        currentForwardChatType = null;
-    });
+            currentForwardChatType = null;
+        });
+    } else {
+        console.error("❌ Cancel button not found");
+    }
 }
 
 // Forward message
