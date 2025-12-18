@@ -4042,21 +4042,7 @@ async def burn_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"⏰ Թարմացում: {last_update_str}"
     )    
 
-@bot.message_handler(commands=['migrate_posts'])
-def migrate_posts_command(message):
-    """Admin command to migrate posts media"""
-    if message.from_user.id != ADMIN_ID:
-        bot.reply_to(message, "❌ Միայն ադմինի համար")
-        return
-    
-    bot.reply_to(message, "🔄 Սկսում եմ migration...")
-    
-    try:
-        migrate_posts_to_files()
-        bot.send_message(message.chat.id, "✅ Migration ավարտված!")
-    except Exception as e:
-        bot.send_message(message.chat.id, f"❌ Սխալ: {e}")
-        print(f"Migration error: {e}")
+
 
 async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
@@ -4149,7 +4135,7 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("task_toggle", task_toggle))
     application.add_handler(CommandHandler("burn_stats", burn_stats))
     application.add_handler(CommandHandler("burn_reward", burn_reward))
-    
+    application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
     await application.initialize()
     await application.start()
 
@@ -4162,6 +4148,21 @@ async def start_bot_webhook():
     print("🟢 BOT_READY = True")
 
     print(f"✅ Webhook set to {webhook_url}")
+
+async def migrate_posts_cmd(update: Update, context):
+    """Admin command to migrate posts media"""
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("❌ Միայն ադմինի համար")
+        return
+    
+    await update.message.reply_text("🔄 Սկսում եմ migration...")
+    
+    try:
+        migrate_posts_to_files()
+        await update.message.reply_text("✅ Migration ավարտված!")
+    except Exception as e:
+        await update.message.reply_text(f"❌ Սխալ: {e}")
+        print(f"Migration error: {e}")
 
 async def task_add_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await add_task_with_category(update, context, "video")
