@@ -2267,7 +2267,9 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS fires_received INT DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS fires_given INT DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS allow_forward INTEGER DEFAULT 1"    
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS allow_forward INTEGER DEFAULT 1",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS total_games INTEGER DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS total_wins INTEGER DEFAULT 0"    
 ]
 
 def init_db():
@@ -2689,7 +2691,9 @@ def get_user_stats(user_id: int):
                COALESCE(total_deposit_usd,0),
                COALESCE(total_withdraw_usd,0),
                COALESCE(ton_balance,0),
-               COALESCE(last_rate,0)
+               COALESCE(last_rate,0),
+               COALESCE(total_games,0),
+               COALESCE(total_wins,0)
         FROM dom_users
         WHERE user_id=%s
     """, (user_id,))
@@ -2699,7 +2703,7 @@ def get_user_stats(user_id: int):
         release_db(conn)
         return None
 
-    (username, avatar, avatar_data, balance_usd, total_dep, total_wd, ton_balance, last_rate) = row
+    (username, avatar, avatar_data, balance_usd, total_dep, total_wd, ton_balance, last_rate, total_games, total_wins) = row
 
     c.execute("""
         SELECT COALESCE(MAX(p.tier), 0)
@@ -2746,6 +2750,11 @@ def get_user_stats(user_id: int):
     """, (user_id,))
     team_dep = c.fetchone()[0] or 0
 
+    if total_games > 0:
+        intellect_score = round((total_wins / total_games) * 10, 1)
+    else:
+        intellect_score = 0.0
+
     release_db(conn)
 
     return {
@@ -2762,6 +2771,9 @@ def get_user_stats(user_id: int):
         "team_deposit_usd": float(team_dep),
         "status_level": int(status_level),
         "status_name": status_name,
+        "intellect_score": float(intellect_score),
+        "total_games": int(total_games),
+        "total_wins": int(total_wins),
     }
 
 
