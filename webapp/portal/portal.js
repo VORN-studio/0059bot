@@ -226,6 +226,15 @@ socket.on("connect", () => {
     }
 });
 
+socket.on("disconnect", () => {
+    console.log("🔴 Socket disconnected");
+    pingOffline();
+});
+// ✅ Mark offline when user closes/leaves page
+window.addEventListener("beforeunload", () => {
+    pingOffline();
+});
+
 socket.on("user_typing_global", (data) => {
     showTypingIndicator(data.username, "global");
 });
@@ -2616,8 +2625,6 @@ function stopHotUserRefresh() {
         hotUserInterval = null;
         console.log("⏹️ Hot user refresh stopped");
     }
-    
-    pingOffline(); // ✅ Mark offline immediately
 }
 
 // =============================
