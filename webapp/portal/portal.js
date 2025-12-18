@@ -592,6 +592,17 @@ async function loadProfile() {
 
         decorateUsername(user.status_level || 0, user.status_name || "None");
         CURRENT_USER_STATUS = user.status_level || 0;
+                // Intellect score ցուցադրում
+        const intellectScore = user.intellect_score || 0.0;
+        const barLength = 10;
+        const filledBars = Math.round((intellectScore / 10) * barLength);
+        const emptyBars = barLength - filledBars;
+        const progressBar = '━'.repeat(filledBars) + '─'.repeat(emptyBars);
+        
+        const intellectDiv = document.getElementById("profile-intellect");
+        if (intellectDiv) {
+            intellectDiv.innerHTML = `🧠 ${progressBar} x${intellectScore.toFixed(1)}`;
+        }
         updateCharCounter();
 
         
