@@ -242,19 +242,18 @@ def api_global_messages():
             u.username,
             u.avatar,
             u.avatar_data,
-            (SELECT COALESCE(MAX(pl.tier),0)
-             FROM dom_user_miners m
-             JOIN dom_mining_plans pl ON pl.id = m.plan_id
-             WHERE m.user_id = u.user_id) AS status_level,
+            COALESCE(MAX(pl.tier), 0) AS status_level,
             g.message,
             g.created_at,
             g.highlighted
         FROM dom_global_chat g
         LEFT JOIN dom_users u ON u.user_id = g.user_id
+        LEFT JOIN dom_user_miners m ON m.user_id = u.user_id
+        LEFT JOIN dom_mining_plans pl ON pl.id = m.plan_id
+        GROUP BY g.id, g.user_id, u.username, u.avatar, u.avatar_data, g.message, g.created_at, g.highlighted
         ORDER BY g.id DESC
         LIMIT 30
     """)
-    
     rows = c.fetchall()
     release_db(conn)
     
