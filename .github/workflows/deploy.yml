@@ -28,4 +28,6 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
             pip install -q -r requirements.txt
-            systemctl restart 0059bot
+            systemctl stop 0059bot
+            killall -9 python || true
+            systemctl start 0059bot
