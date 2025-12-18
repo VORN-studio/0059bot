@@ -1,4 +1,6 @@
 import os
+from PIL import Image
+import io
 from dotenv import load_dotenv
 import eventlet
 eventlet.monkey_patch()
@@ -1338,25 +1340,46 @@ def upload_avatar():
     if not uid or not file:
         return jsonify({"ok": False, "error": "missing"}), 400
 
-    content_type = file.mimetype 
-
-    import base64
-    raw = file.read()
-    b64 = base64.b64encode(raw).decode("utf-8")
-
-    avatar_data = f"data:{content_type};base64,{b64}"
-
-    conn = db(); 
-    c = conn.cursor()
-    c.execute("""
-        UPDATE dom_users
-        SET avatar_data = %s
-        WHERE user_id = %s
-    """, (avatar_data, uid))
-    conn.commit()
-    release_db(conn)
-
-    return jsonify({"ok": True})
+    try:
+        # Read image
+        img = Image.open(file.stream)
+        
+        # Convert to RGB if necessary (PNG with transparency)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        
+        # Resize to 100x100
+        img.thumbnail((100, 100), Image.Resampling.LANCZOS)
+        
+        # Convert to WebP
+        buffer = io.BytesIO()
+        img.save(buffer, format="WEBP", quality=85)
+        buffer.seek(0)
+        
+        # Convert to base64
+        import base64
+        b64 = base64.b64encode(buffer.read()).decode("utf-8")
+        avatar_data = f"data:image/webp;base64,{b64}"
+        
+        # Save to database
+        conn = db()
+        c = conn.cursor()
+        c.execute("""
+            UPDATE dom_users
+            SET avatar_data = %s
+            WHERE user_id = %s
+        """, (avatar_data, uid))
+        conn.commit()
+        release_db(conn)
+        
+        return jsonify({"ok": True})
+        
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 @app_web.route("/api/search_users")
 def api_search_users():
