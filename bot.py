@@ -1416,7 +1416,7 @@ def api_search_users():
         if viewer:
             c.execute("""
                 SELECT 1 FROM dom_follows 
-                WHERE follower = %s AND followed = %s
+                WHERE follower = %s AND target = %s
             """, (viewer, u[0]))
             is_following = c.fetchone() is not None
 
