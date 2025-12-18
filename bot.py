@@ -4482,7 +4482,7 @@ def api_task_attempt_create():
 def migrate_posts_to_files():
     """Migrate posts media from base64 to file system"""
     print("🔍 Starting posts media migration...")
-    
+    global cursor, conn
     MEDIA_DIR = "webapp/static/media/posts"
     os.makedirs(MEDIA_DIR, exist_ok=True)
     
