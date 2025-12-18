@@ -3209,7 +3209,36 @@ function loadForwardTargets() {
 
             forwardTargetList.innerHTML = "";
 
+            // Add Global Chat option if forwarding from DM
+            if (currentForwardChatType === "dm") {
+                const globalDiv = document.createElement("div");
+                globalDiv.style.cssText = `
+                    display:flex;align-items:center;gap:12px;padding:12px;
+                    background:rgba(255,255,255,0.05);border-radius:12px;
+                    margin-bottom:8px;cursor:pointer;transition:all 0.2s;
+                `;
+                globalDiv.innerHTML = `
+                    <span style="font-size:24px;">🌍</span>
+                    <span style="color:white;flex:1;">Global Chat</span>
+                    <span style="color:#999;font-size:12px;">➜</span>
+                `;
+                globalDiv.addEventListener("mouseenter", () => {
+                    globalDiv.style.background = "rgba(255,255,255,0.1)";
+                });
+                globalDiv.addEventListener("mouseleave", () => {
+                    globalDiv.style.background = "rgba(255,255,255,0.05)";
+                });
+                globalDiv.addEventListener("click", () => {
+                    forwardToTarget(null, true);
+                });
+                forwardTargetList.appendChild(globalDiv);
+            }
+
             d.users.forEach(p => {
+                // Skip current DM partner when forwarding from DM
+                if (window.currentForwardExcludeUserId && p.user_id == window.currentForwardExcludeUserId) {
+                    return;
+                }
                 // Skip current DM partner when forwarding from DM
                 if (window.currentForwardExcludeUserId && p.user_id == window.currentForwardExcludeUserId) {
                     return;
