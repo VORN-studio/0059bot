@@ -1121,7 +1121,7 @@ async function loadUsers(search = "") {
 
         box.innerHTML = "";
 
-        data.users.forEach(u => {
+                data.users.forEach(u => {
             const div = document.createElement("div");
             div.className = "user-row";
             div.style.cssText = `
@@ -1135,20 +1135,52 @@ async function loadUsers(search = "") {
 
             const avatarUrl = u.avatar && u.avatar !== "" ? u.avatar : "/portal/default.png";
 
+            // Check if viewer follows this user
+            const isFollowing = u.is_following === true || u.is_following === 1;
+
+            const buttons = isFollowing 
+                ? `
+                    <button class="dm-button" data-id="${u.user_id}"
+                        style="padding:6px 12px;border-radius:8px;background:#34c759;color:white;margin-right:8px;">
+                        💬 Գրել
+                    </button>
+                    <button class="profile-button" data-id="${u.user_id}"
+                        style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
+                        Բացել
+                    </button>
+                `
+                : `
+                    <button class="profile-button" data-id="${u.user_id}"
+                        style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
+                        Բացել
+                    </button>
+                `;
+
             div.innerHTML = `
                 <img src="${avatarUrl}" style="width:40px;height:40px;border-radius:50%;margin-right:10px;">
                 <div style="flex-grow:1;font-size:16px;">
                     ${renderUsernameLabel(u.user_id, u.username, u.status_level)}
                 </div>
-                <button data-id="${u.user_id}"
-                    style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
-                    Բացել
-                </button>
+                ${buttons}
             `;
 
-            div.querySelector("button").onclick = () => {
-                window.location.href = `/portal/portal.html?uid=${u.user_id}&viewer=${viewerId}`;
-            };
+            // DM button click handler
+            const dmBtn = div.querySelector(".dm-button");
+            if (dmBtn) {
+                dmBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openDM(u.user_id);
+                };
+            }
+
+            // Profile button click handler
+            const profileBtn = div.querySelector(".profile-button");
+            if (profileBtn) {
+                profileBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window.location.href = `/portal/portal.html?uid=${u.user_id}&viewer=${viewerId}`;
+                };
+            }
 
             box.appendChild(div);
         });
