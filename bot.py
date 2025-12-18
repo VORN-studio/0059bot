@@ -1364,12 +1364,13 @@ def upload_avatar():
 @app_web.route("/api/search_users")
 def api_search_users():
     q = request.args.get("q", "").strip().lower()
+    viewer = request.args.get("viewer")
 
     conn = db(); c = conn.cursor()
 
     if q == "":
         c.execute("""
-            SELECT 
+            SELECT
                 u.user_id,
                 u.username,
                 u.avatar,
@@ -1380,39 +1381,54 @@ def api_search_users():
                     WHERE m.user_id = u.user_id
                 ) AS status_level
             FROM dom_users u
-
         """)
     else:
         c.execute("""
-            SELECT user_id, username, avatar
-            FROM dom_users
-            WHERE LOWER(username) LIKE %s
-            ORDER BY user_id DESC
+            SELECT 
+                u.user_id, 
+                u.username, 
+                u.avatar,
+                (
+                    SELECT COALESCE(MAX(pl.tier),0)
+                    FROM dom_user_miners m
+                    JOIN dom_mining_plans pl ON pl.id = m.plan_id
+                    WHERE m.user_id = u.user_id
+                ) AS status_level
+            FROM dom_users u
+            WHERE LOWER(u.username) LIKE %s
+            ORDER BY u.user_id DESC
             LIMIT 50
         """, (f"%{q}%",))
 
     rows = c.fetchall()
-    release_db(conn)
-
-    viewer = request.args.get("viewer")
 
     users = []
     for u in rows:
         if viewer and str(u[0]) == str(viewer):
-            continue  
+            continue
 
         status_level = 0
         if len(u) > 3:
             status_level = int(u[3] or 0)
 
+        # Check if viewer follows this user
+        is_following = False
+        if viewer:
+            c.execute("""
+                SELECT 1 FROM dom_follows 
+                WHERE follower_id = %s AND followed_id = %s
+            """, (viewer, u[0]))
+            is_following = c.fetchone() is not None
+
         users.append({
             "user_id": u[0],
             "status_level": status_level,
             "username": u[1] or "",
-            "avatar": u[2] or "/portal/default.png"
+            "avatar": u[2] or "/portal/default.png",
+            "is_following": is_following
         })
 
-
+    release_db(conn)
     return jsonify({"ok": True, "users": users})
 
 @socketio.on("join")
