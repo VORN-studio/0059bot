@@ -1215,26 +1215,23 @@ def api_message_history():
     messages = []
 
     for r in rows:
-        sender_avatar = r[4] or r[3] or "/portal/default.png"
-        receiver_avatar = r[9] or r[8] or "/portal/default.png"
+        sender_avatar = r[3] or "/portal/default.png"
+        receiver_avatar = r[7] or "/portal/default.png"
 
         messages.append({
             "id": r[0],
-
             "sender": r[1],
             "username": r[2] or f"User {r[1]}",
             "avatar": sender_avatar,
-            "status_level": int(r[5] or 0),
-            
-            "receiver": r[6],
-            "receiver_username": r[7] or f"User {r[6]}",
+            "status_level": int(r[4] or 0),
+            "receiver": r[5],
+            "receiver_username": r[6] or f"User {r[5]}",
             "receiver_avatar": receiver_avatar,
-            "receiver_status_level": int(r[10] or 0),
-            
-            "text": r[11] or "",
-            "reply_to": r[12],
-            "reply_to_text": r[13],
-            "time": r[14],
+            "receiver_status_level": int(r[8] or 0),
+            "text": r[9] or "",
+            "reply_to": r[10],
+            "reply_to_text": r[11],
+            "time": r[12],
         })
 
     messages.reverse()
