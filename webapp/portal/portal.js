@@ -3200,7 +3200,7 @@ function closeDominoStarModal() {
 async function confirmDominoStar() {
     if (!PENDING_DOMINO_STAR) return;
     const { messageId, chatType, receiverId } = PENDING_DOMINO_STAR;
-    // Close modal first
+    // Close modal firsta
     closeDominoStarModal();
     try {
         const res = await fetch("/api/fire/add", {
