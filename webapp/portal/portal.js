@@ -3192,6 +3192,57 @@ function openForwardModal(messageId, chatType) {
     forwardModal.classList.remove("hidden");
 }
 
+// Load forward targets
+function loadForwardTargets() {
+    const forwardTargetList = document.getElementById("forward-target-list");
+    if (!forwardTargetList) return;
+    
+    forwardTargetList.innerHTML = '<div style="text-align:center;color:#999;">Loading...</div>';
+
+    fetch(`/api/message/partners?uid=${CURRENT_UID}`)
+        .then(r => r.json())
+        .then(d => {
+            if (!d.ok || !d.partners || d.partners.length === 0) {
+                forwardTargetList.innerHTML = '<div style="text-align:center;color:#999;">No contacts found</div>';
+                return;
+            }
+
+            forwardTargetList.innerHTML = "";
+
+            d.partners.forEach(p => {
+                const div = document.createElement("div");
+                div.style.cssText = `
+                    display:flex;align-items:center;gap:12px;padding:12px;
+                    background:rgba(255,255,255,0.05);border-radius:12px;
+                    margin-bottom:8px;cursor:pointer;transition:all 0.2s;
+                `;
+                div.innerHTML = `
+                    <img src="${p.avatar || '/portal/default.png'}"
+                         style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                    <span style="color:white;flex:1;">@${p.username || 'User ' + p.partner_id}</span>
+                    <span style="color:#999;font-size:12px;">➜</span>
+                `;
+
+                div.addEventListener("mouseenter", () => {
+                    div.style.background = "rgba(255,255,255,0.1)";
+                });
+                div.addEventListener("mouseleave", () => {
+                    div.style.background = "rgba(255,255,255,0.05)";
+                });
+
+                div.addEventListener("click", () => {
+                    forwardMessageTo(p.partner_id);
+                });
+
+                forwardTargetList.appendChild(div);
+            });
+        })
+        .catch(err => {
+            console.error("Failed to load forward targets:", err);
+            forwardTargetList.innerHTML = '<div style="text-align:center;color:#e11d48;">Error loading contacts</div>';
+        });
+}
+
 function initForwardFeature() {
     const forwardBtn = document.getElementById("ctx-forward");
     const forwardModal = document.getElementById("forward-modal");
@@ -3230,46 +3281,43 @@ function initForwardFeature() {
         currentForwardMessageId = null;
         currentForwardChatType = null;
     });
-
-    // Load forward targets
-
-
-    // Forward message
-function forwardMessageTo(targetUserId) {
-        const endpoint = currentForwardChatType === "global" 
-            ? "/api/chat/forward" 
-            : "/api/dm/forward";
-
-        const payload = {
-            user_id: CURRENT_UID,
-            message_id: currentForwardMessageId,
-            target_user_id: targetUserId
-        };
-
-        fetch(endpoint, {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify(payload)
-        })
-        .then(r => r.json())
-        .then(d => {
-            if (d.ok) {
-                LOG.info("✅ Message forwarded successfully");
-                forwardModal.classList.add("hidden");
-                showToast("📩 Message forwarded!");
-            } else if (d.error === "forwarding_disabled") {
-                showToast("❌ User disabled forwarding");
-            } else if (d.error === "need_follow") {
-                showToast("❌ You need to follow this user first");
-            } else {
-                showToast("❌ Failed to forward message");
-            }
-        })
-        .catch(err => {
-            LOG.error("Forward error:", err);
-            showToast("❌ Network error");
-        });
 }
+
+// Forward message
+function forwardMessageTo(targetUserId) {
+    const endpoint = currentForwardChatType === "global" 
+        ? "/api/chat/forward" 
+        : "/api/dm/forward";
+
+    const payload = {
+        user_id: CURRENT_UID,
+        message_id: currentForwardMessageId,
+        target_user_id: targetUserId
+    };
+
+    fetch(endpoint, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.ok) {
+            LOG.info("✅ Message forwarded successfully");
+            forwardModal.classList.add("hidden");
+            showToast("📩 Message forwarded!");
+        } else if (d.error === "forwarding_disabled") {
+            showToast("❌ User disabled forwarding");
+        } else if (d.error === "need_follow") {
+            showToast("❌ You need to follow this user first");
+        } else {
+            showToast("❌ Failed to forward message");
+        }
+    })
+    .catch(err => {
+        LOG.error("Forward error:", err);
+        showToast("❌ Network error");
+    });
 }
 
 // Toast notification helper
