@@ -3180,6 +3180,18 @@ function triggerDominoStarAnimation(messageId) {
 let currentForwardMessageId = null;
 let currentForwardChatType = null; // 'global' or 'dm'
 
+// Open forward modal from inline menu
+function openForwardModal(messageId, chatType) {
+    currentForwardMessageId = messageId;
+    currentForwardChatType = chatType;
+    
+    const forwardModal = document.getElementById("forward-modal");
+    if (!forwardModal) return;
+    
+    loadForwardTargets();
+    forwardModal.classList.remove("hidden");
+}
+
 function initForwardFeature() {
     const forwardBtn = document.getElementById("ctx-forward");
     const forwardModal = document.getElementById("forward-modal");
