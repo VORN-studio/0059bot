@@ -462,13 +462,13 @@ def api_global_send():
     
     # Get user info
     c.execute("""
-        SELECT username, avatar, avatar_data
+        SELECT username, avatar
         FROM dom_users WHERE user_id = %s
     """, (user_id,))
     
     u = c.fetchone()
     username = u[0] if u else f"User {user_id}"
-    avatar = (u[2] or u[1] or "/portal/default.png") if u else "/portal/default.png"
+    avatar = (u[1] or "/portal/default.png") if u else "/portal/default.png"
     
     conn.commit()
     
@@ -1103,7 +1103,7 @@ def api_forward_dm():
         
         # Get user info for realtime
         c.execute("""
-            SELECT username, avatar, avatar_data,
+            SELECT username, avatar,
                    (SELECT COALESCE(MAX(pl.tier),0)
                     FROM dom_user_miners m
                     JOIN dom_mining_plans pl ON pl.id = m.plan_id
@@ -1113,8 +1113,8 @@ def api_forward_dm():
         
         user_row = c.fetchone()
         username = user_row[0] if user_row else f"User {user_id}"
-        avatar = (user_row[2] or user_row[1] or "/portal/default.png") if user_row else "/portal/default.png"
-        status_level = int(user_row[3]) if user_row else 0
+        avatar = (user_row[1] or "/portal/default.png") if user_row else "/portal/default.png"
+        status_level = int(user_row[2]) if user_row else 0
         
         realtime_emit("global_new", {
             "id": new_msg_id,
