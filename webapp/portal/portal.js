@@ -2749,10 +2749,7 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
     
     closeAllInlineMenus();
     
-    if (!menu) {
-        console.error('Menu not found:', messageId);
-        return;
-    }
+    if (!menu) return;
     
     // Regenerate reactions based on CURRENT USER's status
     const reactionsContainer = menu.querySelector('.inline-reactions');
@@ -2800,7 +2797,7 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
         }
     }
     
-    menu.style.display = 'flex';  // ← ՓՈԽԻՐ block-ից flex
+    menu.style.display = 'block';
 }
 
 function closeAllInlineMenus() {
