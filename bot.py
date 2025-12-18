@@ -248,7 +248,7 @@ def api_global_messages():
             g.highlighted
         FROM dom_global_chat g
         LEFT JOIN dom_users u ON u.user_id = g.user_id
-        LEFT JOIN dom_user_miners m ON m.user_id = u.user_id AND m.is_active = true
+        LEFT JOIN dom_user_miners m ON m.user_id = u.user_id
         LEFT JOIN dom_mining_plans pl ON pl.id = m.plan_id
         ORDER BY g.id DESC
         LIMIT 30
