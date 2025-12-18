@@ -170,7 +170,7 @@ def api_message_partners():
 
     # 2) partner users info
     c.execute("""
-        SELECT user_id, username, avatar, avatar_data
+        SELECT user_id, username, avatar
         FROM dom_users
         WHERE user_id = ANY(%s)
     """, (partner_ids,))
@@ -287,7 +287,6 @@ def api_global_hot_user():
             o.user_id,
             u.username,
             u.avatar,
-            u.avatar_data,
             (SELECT COALESCE(MAX(pl.tier), 0)
              FROM dom_user_miners m
              JOIN dom_mining_plans pl ON pl.id = m.plan_id
@@ -860,7 +859,7 @@ def api_get_single_post(post_id):
     conn = db(); c = conn.cursor()
 
     c.execute("""
-        SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
+        SELECT p.id, p.user_id, u.username, u.avatar,
                (SELECT COALESCE(MAX(pl.tier),0)
                 FROM dom_user_miners m
                 JOIN dom_mining_plans pl ON pl.id = m.plan_id
@@ -1183,7 +1182,6 @@ def api_message_history():
             m.sender,
             su.username,
             su.avatar,
-            su.avatar_data,
             (SELECT COALESCE(MAX(pl.tier),0)
                 FROM dom_user_miners mm
                 JOIN dom_mining_plans pl ON pl.id = mm.plan_id
@@ -1192,7 +1190,6 @@ def api_message_history():
             m.receiver,
             ru.username,
             ru.avatar,
-            ru.avatar_data,
             (SELECT COALESCE(MAX(pl.tier),0)
                 FROM dom_user_miners mm
                 JOIN dom_mining_plans pl ON pl.id = mm.plan_id
@@ -1312,7 +1309,7 @@ def api_follows_list():
 
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT u.user_id, u.username, u.avatar, u.avatar_data
+        SELECT u.user_id, u.username, u.avatar
         FROM dom_follows f
         JOIN dom_users u ON u.user_id = f.target
         WHERE f.follower = %s
@@ -1969,7 +1966,7 @@ def api_posts_feed():
 
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
+        SELECT p.id, p.user_id, u.username, u.avatar,
             (SELECT COALESCE(MAX(pl.tier),0)
                 FROM dom_user_miners m
                 JOIN dom_mining_plans pl ON pl.id = m.plan_id
@@ -2032,7 +2029,7 @@ def api_posts_user(user_id):
 
     conn = db(); c = conn.cursor()
     c.execute("""
-        SELECT p.id, p.user_id, u.username, u.avatar, u.avatar_data,
+        SELECT p.id, p.user_id, u.username, u.avatar,
             (SELECT COALESCE(MAX(pl.tier),0)
                 FROM dom_user_miners m
                 JOIN dom_mining_plans pl ON pl.id = m.plan_id
