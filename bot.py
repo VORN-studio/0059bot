@@ -1994,17 +1994,13 @@ def api_posts_feed():
 
     posts = []
     for r in rows:
-        pid, uid, username, avatar, avatar_data, status_level, text, media_url, likes, created_at = r
-        if avatar_data:
-            avatar_url = avatar_data
-        else:
-            avatar_url = avatar or "/portal/default.png"
+        pid, uid, username, avatar, status_level, text, media_url, likes, created_at = r
 
         posts.append({
             "id": pid,
             "user_id": uid,
             "username": username or "",
-            "avatar": avatar_url,
+            "avatar": avatar or "/portal/default.png",
             "text": text,
             "status_level": int(status_level or 0),
             "media_url": media_url,
