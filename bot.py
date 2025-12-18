@@ -98,7 +98,7 @@ PORTAL_DIR = os.path.join(WEBAPP_DIR, "portal")
 TASKS_DIR = os.path.join(WEBAPP_DIR, "tasks")
 GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
 BOT_READY = False
-
+ONLINE_USERS = {}
 
 app_web = Flask(__name__, static_folder=None)
 CORS(app_web)
@@ -1444,6 +1444,16 @@ def on_connect():
 @socketio.on("disconnect")
 def on_disconnect():
     logger.info(f"🔴 Socket disconnected | sid={request.sid}")
+    
+    offline_uid = None
+    for uid, sid in list(ONLINE_USERS.items()):
+        if sid == request.sid:
+            offline_uid = uid
+            del ONLINE_USERS[uid]
+            break
+    
+    if offline_uid:
+        emit("user_offline", {"user_id": offline_uid}, room=f"user_{offline_uid}", include_self=False)
 
 @socketio.on("join_user")
 def on_join_user(data):
@@ -1461,7 +1471,10 @@ def on_join_user(data):
 
     if uid:
         join_room(f"user_{uid}")
+        ONLINE_USERS[uid] = request.sid
         logger.info(f"👤 joined user_{uid}")
+        
+        emit("user_online", {"user_id": uid}, room=f"user_{uid}", include_self=False)
 
 
 
@@ -3016,6 +3029,8 @@ def api_user(user_id):
     else:
         stats["avatar"] = "/portal/default.png"
 
+    # Add online status
+    stats["is_online"] = user_id in ONLINE_USERS
 
     return jsonify({"ok": True, "user": stats})
 
