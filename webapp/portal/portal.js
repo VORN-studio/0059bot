@@ -2742,9 +2742,8 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
     const menu = document.getElementById(`inline-menu-${messageId}`);
     
     // ✅ Եթե այս menu-ն արդեն բաց է, փակել
-    if (menu && menu.dataset.isOpen === 'true') {
+    if (menu && menu.style.display === 'flex') {
         menu.style.display = 'none';
-        menu.dataset.isOpen = 'false';
         return;
     }
     
@@ -2798,8 +2797,7 @@ function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
         }
     }
     
-    menu.style.display = 'flex';
-    menu.dataset.isOpen = 'true';
+    menu.style.display = 'block';
 }
 
 function closeAllInlineMenus() {
