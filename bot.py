@@ -1616,6 +1616,7 @@ def api_set_username():
 
     return jsonify({"ok": True})
 
+@app_web.route("/api/get_domit_prices")
 def api_get_domit_prices():
     """Get DOMIT/TON price history for chart"""
     try:
