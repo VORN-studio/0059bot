@@ -3232,52 +3232,7 @@ function initForwardFeature() {
     });
 
     // Load forward targets
-function loadForwardTargets() {
-        forwardTargetList.innerHTML = '<div style="text-align:center;color:#999;">Loading...</div>';
 
-        fetch(`/api/message/partners?uid=${CURRENT_UID}`)
-            .then(r => r.json())
-            .then(d => {
-                if (!d.ok || !d.partners || d.partners.length === 0) {
-                    forwardTargetList.innerHTML = '<div style="text-align:center;color:#999;">No contacts found</div>';
-                    return;
-                }
-
-                forwardTargetList.innerHTML = "";
-
-                d.partners.forEach(p => {
-                    const div = document.createElement("div");
-                    div.style.cssText = `
-                        display:flex;align-items:center;gap:12px;padding:12px;
-                        background:rgba(255,255,255,0.05);border-radius:12px;
-                        margin-bottom:8px;cursor:pointer;transition:all 0.2s;
-                    `;
-                    div.innerHTML = `
-                        <img src="${p.avatar || '/portal/default.png'}" 
-                             style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
-                        <span style="color:white;flex:1;">@${p.username || 'User ' + p.partner_id}</span>
-                        <span style="color:#999;font-size:12px;">➜</span>
-                    `;
-
-                    div.addEventListener("mouseenter", () => {
-                        div.style.background = "rgba(255,255,255,0.1)";
-                    });
-                    div.addEventListener("mouseleave", () => {
-                        div.style.background = "rgba(255,255,255,0.05)";
-                    });
-
-                    div.addEventListener("click", () => {
-                        forwardMessageTo(p.partner_id);
-                    });
-
-                    forwardTargetList.appendChild(div);
-                });
-            })
-            .catch(err => {
-                LOG.error("Failed to load forward targets:", err);
-                forwardTargetList.innerHTML = '<div style="text-align:center;color:#e11d48;">Error loading contacts</div>';
-            });
-}
 
     // Forward message
 function forwardMessageTo(targetUserId) {
