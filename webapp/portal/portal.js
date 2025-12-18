@@ -3308,7 +3308,7 @@ function forwardMessageTo(targetUserId) {
     .then(d => {
         if (d.ok) {
             LOG.info("✅ Message forwarded successfully");
-            forwardModal.classList.add("hidden");
+            document.getElementById("forward-modal").classList.add("hidden");
             showToast("📩 Message forwarded!");
         } else if (d.error === "forwarding_disabled") {
             showToast("❌ User disabled forwarding");
