@@ -634,7 +634,14 @@ async function fetchDomitPrices() {
   }
 }
 
-loadDomitChart();
+// Wait for DOM and library to load
+window.addEventListener('load', function() {
+  if (typeof LightweightCharts !== 'undefined') {
+    loadDomitChart();
+  } else {
+    console.error('❌ LightweightCharts library not loaded');
+  }
+});
 
 document.getElementById("portal-orb").addEventListener("click", () => {
     if (!CURRENT_USER_ID) return;
