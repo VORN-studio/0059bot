@@ -4482,7 +4482,11 @@ def api_task_attempt_create():
 def migrate_posts_to_files():
     """Migrate posts media from base64 to file system"""
     print("🔍 Starting posts media migration...")
-    global cursor, conn
+    
+    # ← ՍՏԵՂԾԻՐ ՆՈՐ CONNECTION
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    
     MEDIA_DIR = "webapp/static/media/posts"
     os.makedirs(MEDIA_DIR, exist_ok=True)
     
@@ -4554,6 +4558,10 @@ def migrate_posts_to_files():
         conn.commit()
         
         print(f"   ✅ Updated DB: {file_url}\n")
+    
+    # ← ՓԱԿԻՐ CONNECTION-Ը
+    cursor.close()
+    conn.close()
     
     print("🎉 Migration complete!")
 
