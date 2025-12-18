@@ -1453,7 +1453,7 @@ def on_disconnect():
             break
     
     if offline_uid:
-        emit("user_offline", {"user_id": offline_uid}, room=f"user_{offline_uid}", include_self=False)
+        emit("user_offline", {"user_id": offline_uid}, broadcast=True)
 
 @socketio.on("join_user")
 def on_join_user(data):
@@ -1474,7 +1474,7 @@ def on_join_user(data):
         ONLINE_USERS[uid] = request.sid
         logger.info(f"👤 joined user_{uid}")
         
-        emit("user_online", {"user_id": uid}, room=f"user_{uid}", include_self=False)
+        emit("user_online", {"user_id": uid}, broadcast=True)
 
 
 
