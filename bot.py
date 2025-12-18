@@ -225,7 +225,7 @@ def api_message_partners():
         })
 
     release_db(conn)
-    return jsonify({"ok": True, "partners": users})
+    return jsonify({"ok": True, "users": users})
 
 # ========== GLOBAL CHAT API ==========
 

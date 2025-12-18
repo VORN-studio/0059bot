@@ -3202,14 +3202,14 @@ function loadForwardTargets() {
     fetch(`/api/message/partners?uid=${CURRENT_UID}`)
         .then(r => r.json())
         .then(d => {
-            if (!d.ok || !d.partners || d.partners.length === 0) {
+            if (!d.ok || !d.users || d.users.length === 0) {
                 forwardTargetList.innerHTML = '<div style="text-align:center;color:#999;">No contacts found</div>';
                 return;
             }
 
             forwardTargetList.innerHTML = "";
 
-            d.partners.forEach(p => {
+            d.users.forEach(p => {
                 const div = document.createElement("div");
                 div.style.cssText = `
                     display:flex;align-items:center;gap:12px;padding:12px;
