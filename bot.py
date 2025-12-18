@@ -2616,7 +2616,7 @@ def init_db():
         # DOMIT/TON Trading System Tables
     c.execute("""
         CREATE TABLE IF NOT EXISTS domit_price_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             timestamp TEXT NOT NULL,
             open REAL NOT NULL,
             high REAL NOT NULL,
@@ -2628,21 +2628,21 @@ def init_db():
 
     c.execute("""
         CREATE TABLE IF NOT EXISTS domit_config (
-            id INTEGER PRIMARY KEY DEFAULT 1,
-            min_price REAL DEFAULT 0.50,
-            max_price REAL DEFAULT 1.50,
-            current_price REAL DEFAULT 1.00,
+            id INTEGER PRIMARY KEY,
+            min_price NUMERIC(10,4) DEFAULT 0.5000,
+            max_price NUMERIC(10,4) DEFAULT 1.5000,
+            current_price NUMERIC(10,4) DEFAULT 1.0000,
             trend TEXT DEFAULT 'sideways',
             volatility TEXT DEFAULT 'medium',
-            last_update TEXT,
-            CHECK (id = 1)
+            last_update TIMESTAMP
         )
     """)
 
     # Insert default DOMIT config
     c.execute("""
-        INSERT OR IGNORE INTO domit_config (id, current_price, last_update) 
-        VALUES (1, 1.0000, datetime('now'))
+        INSERT INTO domit_config (id, current_price, last_update) 
+        VALUES (1, 1.0000, NOW())
+        ON CONFLICT (id) DO NOTHING
     """)
 
     c.execute("SELECT COUNT(*) FROM dom_mining_plans")
