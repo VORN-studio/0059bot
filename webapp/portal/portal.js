@@ -586,6 +586,11 @@ async function loadProfile() {
             }
 
             profileAvatar.src = avatarUrl;
+                    // Թարմացնել վերևի avatar-ը նույնպես
+            const topAvatar = document.getElementById("user-avatar");
+            if (topAvatar) {
+                topAvatar.src = avatarUrl;
+            }
         }
 
                 setUsername(user.username || "");
