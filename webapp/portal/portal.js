@@ -3175,12 +3175,15 @@ function triggerDominoStarAnimation(messageId) {
 let currentForwardMessageId = null;
 let currentForwardChatType = null; 
 
+// Open forward modal from inline menu
 function openForwardModal(messageId, chatType) {
     currentForwardMessageId = messageId;
     currentForwardChatType = chatType;
 
-    if (chatType === "dm") {
-        window.currentForwardExcludeUserId = CURRENT_PARTNER_ID;
+    // Set exclude user ID for DM forward
+    if (chatType === "dm" && CURRENT_DM_TARGET) {
+        window.currentForwardExcludeUserId = CURRENT_DM_TARGET;
+        console.log("🔒 Excluding current DM partner:", CURRENT_DM_TARGET);
     } else {
         window.currentForwardExcludeUserId = null;
     }
