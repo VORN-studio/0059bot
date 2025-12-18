@@ -4457,5 +4457,4 @@ if __name__ == "__main__":
     run_flask()
     print("🚀 Domino Flask + Telegram bot started.")
 
-    while True:
-        time.sleep(60)
+    
