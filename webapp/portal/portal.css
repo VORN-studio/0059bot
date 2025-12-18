@@ -126,8 +126,8 @@ body {
 
 /* ==================== AVATAR ==================== */
 .avatar-frame {
-    width: 64px;
-    height: 64px;
+    width: 94px;
+    height: 94px;
     min-width: 64px;
     min-height: 64px;
     border-radius: 50%;
