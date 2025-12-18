@@ -241,7 +241,6 @@ def api_global_messages():
             g.user_id,
             u.username,
             u.avatar,
-            u.avatar_data,
             COALESCE(pl.tier, 0) AS status_level,
             g.message,
             g.created_at,
@@ -258,7 +257,7 @@ def api_global_messages():
     
     messages = []
     for r in rows:
-        avatar_url = r[4] or r[3] or "/portal/default.png"
+        avatar_url = r[3] or "/portal/default.png"
         
         messages.append({
             "id": r[0],
