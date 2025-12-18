@@ -3232,7 +3232,7 @@ function initForwardFeature() {
     });
 
     // Load forward targets
-    function loadForwardTargets() {
+function loadForwardTargets() {
         forwardTargetList.innerHTML = '<div style="text-align:center;color:#999;">Loading...</div>';
 
         fetch(`/api/message/partners?uid=${CURRENT_UID}`)
@@ -3277,10 +3277,10 @@ function initForwardFeature() {
                 LOG.error("Failed to load forward targets:", err);
                 forwardTargetList.innerHTML = '<div style="text-align:center;color:#e11d48;">Error loading contacts</div>';
             });
-    }
+}
 
     // Forward message
-    function forwardMessageTo(targetUserId) {
+function forwardMessageTo(targetUserId) {
         const endpoint = currentForwardChatType === "global" 
             ? "/api/chat/forward" 
             : "/api/dm/forward";
@@ -3314,7 +3314,7 @@ function initForwardFeature() {
             LOG.error("Forward error:", err);
             showToast("❌ Network error");
         });
-    }
+}
 }
 
 // Toast notification helper
