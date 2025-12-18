@@ -391,7 +391,7 @@ function initTabs() {
                     // Don't auto-start, sub-tabs will handle it
                 } else {
                     stopHotUserRefresh();
-                    pingOffline();
+                    // Offline tracking removed - user stays online
                 }
 
         });
@@ -514,7 +514,7 @@ function initSubTabs() {
                 pingOnline();
             } else {
                 stopHotUserRefresh();
-                pingOffline();
+                // Offline tracking removed - user stays online
             }
         });
     });
