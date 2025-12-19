@@ -9,8 +9,6 @@ from PIL import Image
 from io import BytesIO
 import base64
 from dotenv import load_dotenv
-import eventlet
-eventlet.monkey_patch()
 load_dotenv()
 import time
 import sys
@@ -117,9 +115,20 @@ CORS(app_web)
 socketio = SocketIO(
     app_web,
     cors_allowed_origins="*",
-    async_mode="eventlet"
+    async_mode="threading"
 )
 
+@socketio.on('join_chart')
+def handle_join_chart():
+    """Օգտատերը միանում է chart room-ին"""
+    join_room('chart_viewers')
+    logger.info("👤 User joined chart_viewers room")
+
+@socketio.on('leave_chart')
+def handle_leave_chart():
+    """Օգտատերը դուրս է գալիս chart room-ից"""
+    leave_room('chart_viewers')
+    logger.info("👋 User left chart_viewers room")
 
 @app_web.route("/")
 def index():
@@ -2379,7 +2388,7 @@ def db():
     if _db_pool is None:
         _db_pool = pool.SimpleConnectionPool(
             minconn=1,
-            maxconn=20,
+            maxconn=1000,
             dsn=DATABASE_URL
         )
         logger.info("PostgreSQL pool initialized (20 connections)")
@@ -2734,6 +2743,12 @@ def init_db():
             close REAL NOT NULL,
             volume INTEGER DEFAULT 0
         )
+    """)
+
+        # Create index for fast timestamp queries (critical for millions of users)
+    c.execute("""
+        CREATE INDEX IF NOT EXISTS idx_domit_timestamp 
+        ON domit_price_history(timestamp DESC)
     """)
 
     c.execute("""
@@ -4167,6 +4182,7 @@ from decimal import Decimal
 async def create_new_candle():
     """Ստեղծել նոր 1-րոպեանոց candle (ամեն րոպե)"""
     conn = None
+    cur = None
     try:
         conn = db()
         cur = conn.cursor()
@@ -4214,21 +4230,24 @@ async def create_new_candle():
             'high': high_price,
             'low': low_price,
             'close': close_price
-        })
+        }, room='chart_viewers')  # ✅ Միայն chart viewers-ին
         
     except Exception as e:
         logger.error(f"❌ Error creating candle: {e}")
-        if conn:
+    finally:  # ✅ ՓՈԽԻՐ
+        if cur:
             try:
                 cur.close()
             except:
                 pass
+        if conn:
             release_db(conn)
 
 
 async def update_current_candle():
     """Թարմացնել ընթացիկ candle-ը (ամեն 5 վրկ)"""
     conn = None
+    cur = None
     try:
         conn = db()
         cur = conn.cursor()
@@ -4287,15 +4306,17 @@ async def update_current_candle():
             'high': new_high,
             'low': new_low,
             'close': new_close
-        })
+        }, room='chart_viewers')  # ✅ Միայն chart viewers-ին
         
     except Exception as e:
         logger.error(f"❌ Error updating candle: {e}")
-        if conn:
+    finally:  # ✅ ՓՈԽԻՐ except-ի finally
+        if cur:  # ✅ ADD
             try:
                 cur.close()
             except:
                 pass
+        if conn:
             release_db(conn)
 
 

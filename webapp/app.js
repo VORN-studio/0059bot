@@ -736,6 +736,8 @@ let lastCandleTime = 0;  // ✅ Track վերջին candle-ի ժամանակը
 
 socket.on('connect', () => {
   console.log('🟢 Realtime connected');
+  socket.emit('join_chart');  // ✅ Join chart room
+  console.log('📊 Joined chart_viewers room');
 });
 
 socket.on('domit_update', (data) => {
