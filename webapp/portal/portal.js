@@ -1595,6 +1595,9 @@ function renderPostCard(post) {
         if (!mediaUrl.startsWith('http')) {
             mediaUrl = window.location.origin + mediaUrl;
         }
+        
+        // 🔍 DEBUG - տեսնենք ինչ URL ենք ստանում
+        console.log("🖼️ MEDIA URL:", mediaUrl);
     }
 
     const div = document.createElement("div");
