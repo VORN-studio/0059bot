@@ -24,6 +24,17 @@ jobs:
             cd ${{ secrets.APP_PATH }}
             git fetch origin
             git reset --hard origin/main
+            
+            # Install FFmpeg if not present
+            if ! command -v ffmpeg &> /dev/null; then
+              echo "📦 Installing FFmpeg..."
+              apt update -qq
+              apt install -y -qq ffmpeg
+              echo "✅ FFmpeg installed"
+            else
+              echo "✅ FFmpeg already installed"
+            fi
+            
             rm -rf venv
             python3 -m venv venv
             source venv/bin/activate

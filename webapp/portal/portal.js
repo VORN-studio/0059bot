@@ -1483,7 +1483,7 @@ async function createPost() {
         try {
             // 60 second timeout for large videos
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            const timeoutId = setTimeout(() => controller.abort(), 120000);
 
             const up = await fetch("/api/upload_post_media", {
                 method: "POST",
