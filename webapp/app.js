@@ -624,7 +624,6 @@ function loadDomitChart() {
     });
 
     fetchDomitPrices();
-    setInterval(fetchDomitPrices, 5000);
 
     window.addEventListener('resize', function() {
       if (domitChart && container) {
@@ -733,6 +732,7 @@ if (portalOrb) {
 
 // 🔌 Socket.IO Real-time Connection
 const socket = io();
+let lastCandleTime = 0;  // ✅ Track վերջին candle-ի ժամանակը
 
 socket.on('connect', () => {
   console.log('🟢 Realtime connected');
@@ -741,19 +741,28 @@ socket.on('connect', () => {
 socket.on('domit_update', (data) => {
   console.log('📊 DOMIT Update:', data);
   if (domitCandleSeries) {
+    // ✅ Update գոյություն ունեցող candle
     domitCandleSeries.update(data);
+    lastCandleTime = data.time;
+    
+    // ✅ Update price display
+    const currentEl = document.getElementById('domit-current');
+    if (currentEl) {
+      currentEl.textContent = Number(data.close).toFixed(4);
+    }
   }
 });
 
 socket.on('new_candle', (data) => {
   console.log('🕐 New Candle:', data);
-  if (domitCandleSeries) {
-    // Use update() which will add a new candle if time is different
+  if (domitCandleSeries && data.time !== lastCandleTime) {
+    // ✅ Ավելացնել նոր candle
     domitCandleSeries.update(data);
+    lastCandleTime = data.time;
     
-    // Scroll to the latest candle
+    // ✅ Auto-scroll դեպի վերջին candle
     if (domitChart) {
-      domitChart.timeScale().scrollToRealTime();
+      domitChart.timeScale().scrollToPosition(0, false);
     }
   }
 });

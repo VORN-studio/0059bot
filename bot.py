@@ -4283,7 +4283,7 @@ async def update_current_candle():
         logger.info(f"📊 DOMIT updated: {new_close:.4f} TON (H:{new_high:.4f} L:{new_low:.4f})")
         socketio.emit('domit_update', {
             'time': timestamp,
-            'open': new_close,
+            'open': open_price,
             'high': new_high,
             'low': new_low,
             'close': new_close
