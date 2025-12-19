@@ -1639,8 +1639,7 @@ def api_get_domit_prices():
         
         from datetime import datetime
         for row in rows:
-            dt = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
-            unix_time = int(dt.timestamp())
+            unix_time = int(row[0])  # timestamp-ը արդեն Unix timestamp է (BIGINT)
             
             candles.append({
                 'time': unix_time,
