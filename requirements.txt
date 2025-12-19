@@ -8,3 +8,4 @@ python-dotenv
 flask-socketio
 eventlet
 Pillow
+APScheduler==3.10.4
