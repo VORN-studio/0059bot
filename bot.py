@@ -1,3 +1,7 @@
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+import random
+from datetime import datetime, timedelta
 import os
 from PIL import Image
 import io
@@ -4034,6 +4038,80 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception:
         pass
 
+# ═══════════════════════════════════════════════════════════
+# DOMIT AUTO PRICE UPDATER
+# ═══════════════════════════════════════════════════════════
+
+scheduler = AsyncIOScheduler()
+
+async def update_domit_price():
+    """Ավտոմատ DOMIT գնի թարմացում յուրաքանչյուր 1 րոպե"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Վերցնել config
+        cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
+        row = cur.fetchone()
+        if not row:
+            logger.warning("⚠️ domit_config չկա, skip")
+            return
+        
+        min_price, max_price = row
+        
+        # Վերցնել վերջին candle-ը
+        cur.execute("""
+            SELECT close FROM domit_price_history 
+            ORDER BY timestamp DESC LIMIT 1
+        """)
+        last_row = cur.fetchone()
+        last_close = last_row[0] if last_row else (min_price + max_price) / 2
+        
+        # Ստեղծել նոր candle (ռանդոմ շարժում ±2%)
+        volatility = 0.02
+        price_change = random.uniform(-volatility, volatility)
+        new_close = last_close * (1 + price_change)
+        
+        # Սահմանափակել սահմաններում
+        new_close = max(min_price, min(max_price, new_close))
+        
+        # Ստեղծել OHLC
+        high_offset = random.uniform(0, 0.01)
+        low_offset = random.uniform(0, 0.01)
+        
+        open_price = last_close
+        high_price = max(open_price, new_close) * (1 + high_offset)
+        low_price = min(open_price, new_close) * (1 - low_offset)
+        close_price = new_close
+        volume = random.randint(1000, 5000)
+        
+        # Insert նոր candle
+        now = int(datetime.now().timestamp())
+        cur.execute("""
+            INSERT INTO domit_price_history (timestamp, open, high, low, close, volume)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (now, open_price, high_price, low_price, close_price, volume))
+        
+        # Ջնջել 24 ժամից հին candle-ները
+        cutoff = now - (24 * 3600)
+        cur.execute("DELETE FROM domit_price_history WHERE timestamp < ?", (cutoff,))
+        
+        conn.commit()
+        logger.info(f"📊 DOMIT price updated: {close_price:.4f}")
+        
+    except Exception as e:
+        logger.error(f"❌ Error updating DOMIT price: {e}")
+
+# Scheduler job - յուրաքանչյուր 1 րոպե
+scheduler.add_job(
+    update_domit_price,
+    CronTrigger(minute='*'),  # Յուրաքանչյուր րոպե
+    id='domit_price_update',
+    replace_existing=True
+)
+
+scheduler.start()
+logger.info("✅ DOMIT price scheduler started")
 
 async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """

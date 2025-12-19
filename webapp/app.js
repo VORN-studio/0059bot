@@ -578,12 +578,12 @@ function loadDomitChart() {
     width: document.getElementById('domit-chart').offsetWidth,
     height: 250,
     layout: {
-      backgroundColor: '#0f172a',
-      textColor: '#d1d4dc',
+      backgroundColor: '#000000',
+      textColor: '#ffffff',
     },
     grid: {
-      vertLines: { color: '#1e293b' },
-      horzLines: { color: '#1e293b' },
+      vertLines: { color: '#1a1a1a' },
+      horzLines: { color: '#1a1a1a' },
     },
     timeScale: {
       timeVisible: true,
