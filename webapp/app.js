@@ -645,27 +645,58 @@ async function fetchDomitPrices() {
   try {
     const response = await fetch('/api/get_domit_prices');
     const data = await response.json();
-    
+
     if (data.candles && data.candles.length > 0) {
-      domitCandleSeries.setData(data.candles);
-      
-      // Update current price display
-      const current = data.candles[data.candles.length - 1];
-      document.getElementById('domit-current').textContent = current.close.toFixed(4);
-      
+      // ✅ FORMAT data for LightweightCharts
+      const formattedCandles = data.candles.map(function(c) {
+        return {
+          time: Number(c.time),
+          open: Number(c.open),
+          high: Number(c.high),
+          low: Number(c.low),
+          close: Number(c.close)
+        };
+      });
+
+      // ✅ SORT by time ascending
+      formattedCandles.sort(function(a, b) { return a.time - b.time; });
+
+      // ✅ VALIDATE data
+      const validCandles = formattedCandles.filter(function(c) {
+        return c.time > 0 && c.open > 0 && c.high > 0 && c.low > 0 && c.close > 0;
+      });
+
+      if (validCandles.length === 0) {
+        console.warn('⚠️ No valid candles');
+        return;
+      }
+
+      console.log('📊 Setting ' + validCandles.length + ' candles');
+      domitCandleSeries.setData(validCandles);
+
+      // Update current price
+      const current = validCandles[validCandles.length - 1];
+      const currentEl = document.getElementById('domit-current');
+      if (currentEl) {
+        currentEl.textContent = current.close.toFixed(4);
+      }
+
       // Update 24h change
-      if (data.candles.length > 1) {
-        const first = data.candles[0].open;
+      if (validCandles.length > 1) {
+        const first = validCandles[0].open;
         const last = current.close;
         const change = ((last - first) / first * 100).toFixed(2);
         const changeEl = document.getElementById('domit-change');
-        changeEl.textContent = (change >= 0 ? '+' : '') + change + '%';
-        changeEl.style.color = change >= 0 ? '#26a69a' : '#ef5350';
+        if (changeEl) {
+          changeEl.textContent = (change >= 0 ? '+' : '') + change + '%';
+          changeEl.style.color = change >= 0 ? '#26a69a' : '#ef5350';
+        }
       }
     }
   } catch (error) {
-    console.error('Error loading DOMIT prices:', error);
-    document.getElementById('domit-current').textContent = '—';
+    console.error('❌ Error loading DOMIT prices:', error);
+    const currentEl = document.getElementById('domit-current');
+    if (currentEl) currentEl.textContent = '—';
   }
 }
 
@@ -686,7 +717,10 @@ window.addEventListener('load', function() {
   }, 500);
 });
 
-document.getElementById("portal-orb").addEventListener("click", () => {
+const portalOrb = document.getElementById("portal-orb");
+if (portalOrb) {
+  portalOrb.addEventListener("click", function() {
     if (!CURRENT_USER_ID) return;
-    window.location.href = `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}&viewer=${CURRENT_USER_ID}`;
-});
+    window.location.href = window.location.origin + '/portal/portal.html?uid=' + CURRENT_USER_ID + '&viewer=' + CURRENT_USER_ID;
+  });
+}
