@@ -4208,6 +4208,13 @@ async def create_new_candle():
         cur.close()
         release_db(conn)
         logger.info(f"🕐 New candle created at {now}, open={open_price:.4f}")
+        socketio.emit('new_candle', {
+            'timestamp': now,
+            'open': open_price,
+            'high': high_price,
+            'low': low_price,
+            'close': close_price
+        })
         
     except Exception as e:
         logger.error(f"❌ Error creating candle: {e}")
@@ -4274,6 +4281,12 @@ async def update_current_candle():
         cur.close()
         release_db(conn)
         logger.info(f"📊 DOMIT updated: {new_close:.4f} TON (H:{new_high:.4f} L:{new_low:.4f})")
+        socketio.emit('domit_update', {
+            'price': new_close,
+            'high': new_high,
+            'low': new_low,
+            'timestamp': timestamp
+        })
         
     except Exception as e:
         logger.error(f"❌ Error updating candle: {e}")
