@@ -1489,8 +1489,14 @@ async function createPost() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 120000);
 
+            const headers = {};
+            if (TG && TG.initData) {
+                headers['X-Telegram-Init-Data'] = TG.initData;
+            }
+
             const up = await fetch("/api/upload_post_media", {
                 method: "POST",
+                headers: headers,
                 body: formData,
                 signal: controller.signal
             });
