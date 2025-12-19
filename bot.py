@@ -4114,8 +4114,22 @@ scheduler.add_job(
     replace_existing=True
 )
 
-scheduler.start()
-print("✅ DOMIT price scheduler started")
+def run_flask():
+        # Start DOMIT price scheduler
+        scheduler.start()
+        print("✅ DOMIT price scheduler started")
+        
+        try:
+            print(f"🌍 Flask + SocketIO starting on port {port} ...")
+            socketio.run(
+                app_web,
+                host="0.0.0.0",
+                port=port,
+                use_reloader=False,
+                allow_unsafe_werkzeug=True
+            )
+        except Exception:
+            logger.exception("Flask failed")
 
 async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
