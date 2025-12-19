@@ -2246,7 +2246,6 @@ def api_comment_like():
 
 @app_web.route("/api/upload_post_media", methods=["POST"])
 def api_upload_post_media():
-    import subprocess
     import uuid
     
     uid = request.form.get("uid")
@@ -2262,38 +2261,20 @@ def api_upload_post_media():
     # Generate unique filename
     ext = os.path.splitext(file.filename)[1].lower()
     unique_name = f"{uuid.uuid4().hex}{ext}"
-    temp_path = os.path.join(media_folder, f"temp_{unique_name}")
     final_path = os.path.join(media_folder, unique_name)
 
-    # Save uploaded file
-    file.save(temp_path)
-
-    # Compress if video
-    if ext in [".mp4", ".mov", ".avi", ".webm"]:
-        try:
-            # Compress: 720p, 800kbps
-            subprocess.run([
-                "ffmpeg", "-i", temp_path,
-                "-vf", "scale=-2:720",
-                "-c:v", "libx264", "-b:v", "800k",
-                "-c:a", "aac", "-b:a", "128k",
-                "-y", final_path
-            ], check=True, capture_output=True)
-            
-            # Delete temp file
-            os.remove(temp_path)
-            logger.info(f"Compressed video: {unique_name}")
-        except Exception as e:
-            logger.error(f"FFmpeg error: {e}")
-            # Fallback: use original
-            os.rename(temp_path, final_path)
-    else:
-        # Not video, just rename
-        os.rename(temp_path, final_path)
-
-    # Return URL
-    url = f"/static/media/posts/{unique_name}"
-    return jsonify({"ok": True, "url": url})
+    try:
+        # Save file directly (no compression since FFmpeg not available)
+        file.save(final_path)
+        logger.info(f"Uploaded media: {unique_name}")
+        
+        # Return URL
+        url = f"/static/media/posts/{unique_name}"
+        return jsonify({"ok": True, "url": url})
+        
+    except Exception as e:
+        logger.error(f"Upload error: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app_web.route("/admaven-verify")
