@@ -4046,8 +4046,9 @@ scheduler = AsyncIOScheduler()
 
 async def update_domit_price():
     """Ավտոմատ DOMIT գնի թարմացում յուրաքանչյուր 1 րոպե"""
+    conn = None
     try:
-        conn = connection_pool.getconn()
+        conn = db()
         cur = conn.cursor()
         
         # Վերցնել config
@@ -4055,7 +4056,8 @@ async def update_domit_price():
         row = cur.fetchone()
         if not row:
             print("⚠️ domit_config չկա, skip")
-            connection_pool.putconn(conn)
+            cur.close()
+            release_db(conn)
             return
         
         min_price, max_price = row
@@ -4098,13 +4100,18 @@ async def update_domit_price():
         cur.execute("DELETE FROM domit_price_history WHERE timestamp < %s", (cutoff,))
         
         conn.commit()
-        connection_pool.putconn(conn)
+        cur.close()
+        release_db(conn)
         print(f"📊 DOMIT price updated: {close_price:.4f} TON")
         
     except Exception as e:
         print(f"❌ Error updating DOMIT price: {e}")
         if conn:
-            connection_pool.putconn(conn)
+            try:
+                cur.close()
+            except:
+                pass
+            release_db(conn)
 
 # Scheduler job - յուրաքանչյուր 1 րոպե
 scheduler.add_job(
