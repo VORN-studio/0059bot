@@ -1332,6 +1332,63 @@ def api_follows_list():
 
     return jsonify({"ok": True, "list": users})
 
+@app_web.route('/api/upload_post_media', methods=['POST'])
+def upload_post_media():
+    """Upload media (image/video) for portal post with FFmpeg compression"""
+    try:
+        uid = request.form.get('uid', '0')
+        file = request.files.get('file')
+        
+        if not file:
+            return jsonify({'ok': False, 'error': 'No file provided'}), 400
+        
+        filename = secure_filename(file.filename)
+        ext = os.path.splitext(filename)[1].lower()
+        
+        # Generate unique filename
+        timestamp = int(time.time() * 1000)
+        unique_name = f"post_{uid}_{timestamp}{ext}"
+        
+        # Save paths
+        upload_dir = os.path.join(os.path.dirname(__file__), 'webapp', 'static', 'media', 'posts')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        temp_path = os.path.join(upload_dir, f"temp_{unique_name}")
+        final_path = os.path.join(upload_dir, unique_name)
+        
+        # Save uploaded file temporarily
+        file.save(temp_path)
+        
+        # Compress video with FFmpeg
+        if ext in ['.mp4', '.mov', '.avi', '.mkv', '.webm']:
+            try:
+                logger.info(f"🎬 Compressing video: {filename}")
+                subprocess.run([
+                    'ffmpeg', '-i', temp_path,
+                    '-vf', 'scale=-2:480',  # 480p height
+                    '-b:v', '500k',          # 500kbps bitrate
+                    '-c:a', 'aac',
+                    '-b:a', '96k',
+                    '-y',
+                    final_path
+                ], check=True, capture_output=True)
+                
+                os.remove(temp_path)  # Remove temp file
+                logger.info(f"✅ Video compressed: {unique_name}")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"❌ FFmpeg failed: {e}")
+                os.rename(temp_path, final_path)  # Use original if compression fails
+        else:
+            # For images, just rename
+            os.rename(temp_path, final_path)
+        
+        # Return URL
+        url = f"/static/media/posts/{unique_name}"
+        return jsonify({'ok': True, 'url': url})
+        
+    except Exception as e:
+        logger.error(f"❌ upload_post_media error: {e}")
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 @app_web.route("/api/upload_avatar", methods=["POST"])
 def upload_avatar():
