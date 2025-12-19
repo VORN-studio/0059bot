@@ -740,8 +740,8 @@ socket.on('connect', () => {
 
 socket.on('domit_update', (data) => {
   console.log('📊 DOMIT Update:', data);
-  if (window.chartSeries) {
-    window.chartSeries.update({
+  if (domitCandleSeries) {
+    domitCandleSeries.update({
       time: data.timestamp,
       open: data.price,
       high: data.high,
@@ -753,7 +753,7 @@ socket.on('domit_update', (data) => {
 
 socket.on('new_candle', (data) => {
   console.log('🕐 New Candle:', data);
-  if (window.chartSeries) {
-    window.chartSeries.update(data);
+  if (domitCandleSeries) {
+    domitCandleSeries.update(data);
   }
 });
