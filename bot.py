@@ -1701,17 +1701,17 @@ def api_get_domit_prices():
         c.execute("""
             SELECT timestamp, open, high, low, close
             FROM domit_price_history
-            ORDER BY timestamp ASC
-            LIMIT 288
+            ORDER BY timestamp DESC
+            LIMIT 1440
         """)
         
         rows = c.fetchall()
         candles = []
-        
+
         from datetime import datetime
         for row in rows:
             unix_time = int(row[0])  # timestamp-ը արդեն Unix timestamp է (BIGINT)
-            
+
             candles.append({
                 'time': unix_time,
                 'open': float(row[1]),
@@ -1719,6 +1719,9 @@ def api_get_domit_prices():
                 'low': float(row[3]),
                 'close': float(row[4])
             })
+
+        # Reverse to get ascending order (oldest first)
+        candles.reverse()
         
         release_db(conn_obj)
         return jsonify({'candles': candles})
