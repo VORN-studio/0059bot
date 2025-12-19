@@ -1649,7 +1649,7 @@ def api_get_domit_prices():
                 'close': float(row[4])
             })
         
-        conn_obj.close()
+        release_db(conn_obj)
         return jsonify({'candles': candles})
     
     except Exception as e:
