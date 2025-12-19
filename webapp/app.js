@@ -748,6 +748,12 @@ socket.on('domit_update', (data) => {
 socket.on('new_candle', (data) => {
   console.log('🕐 New Candle:', data);
   if (domitCandleSeries) {
+    // Use update() which will add a new candle if time is different
     domitCandleSeries.update(data);
+    
+    // Scroll to the latest candle
+    if (domitChart) {
+      domitChart.timeScale().scrollToRealTime();
+    }
   }
 });
