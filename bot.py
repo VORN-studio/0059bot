@@ -2727,7 +2727,7 @@ def init_db():
     c.execute("""
         CREATE TABLE IF NOT EXISTS domit_price_history (
             id SERIAL PRIMARY KEY,
-            timestamp TEXT NOT NULL,
+            timestamp BIGINT NOT NULL,
             open REAL NOT NULL,
             high REAL NOT NULL,
             low REAL NOT NULL,

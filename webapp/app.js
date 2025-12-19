@@ -678,7 +678,7 @@ async function fetchDomitPrices() {
 
       console.log('📊 Setting ' + validCandles.length + ' candles');
       domitCandleSeries.setData(validCandles);
-
+      window.firstCandleOpen = validCandles[0].open;
       // Update current price
       const current = validCandles[validCandles.length - 1];
       const currentEl = document.getElementById('domit-current');
@@ -741,7 +741,6 @@ socket.on('connect', () => {
 socket.on('domit_update', (data) => {
   console.log('📊 DOMIT Update:', data);
   if (domitCandleSeries) {
-    // ✅ Update գոյություն ունեցող candle
     domitCandleSeries.update(data);
     lastCandleTime = data.time;
     
@@ -750,19 +749,28 @@ socket.on('domit_update', (data) => {
     if (currentEl) {
       currentEl.textContent = Number(data.close).toFixed(4);
     }
+    
+    // ✅ Update change % in real-time
+    const changeEl = document.getElementById('domit-change');
+    if (changeEl && window.firstCandleOpen) {
+      const change = ((data.close - window.firstCandleOpen) / window.firstCandleOpen * 100).toFixed(2);
+      changeEl.textContent = (change >= 0 ? '+' : '') + change + '%';
+      changeEl.style.color = change >= 0 ? '#26a69a' : '#ef5350';
+    }
   }
 });
 
 socket.on('new_candle', (data) => {
   console.log('🕐 New Candle:', data);
   if (domitCandleSeries && data.time !== lastCandleTime) {
-    // ✅ Ավելացնել նոր candle
+    // ✅ Add new candle
     domitCandleSeries.update(data);
     lastCandleTime = data.time;
     
-    // ✅ Auto-scroll դեպի վերջին candle
+    // ✅ Auto-scroll and fit content
     if (domitChart) {
-      domitChart.timeScale().scrollToPosition(0, false);
+      domitChart.timeScale().scrollToRealTime();
+      domitChart.timeScale().fitContent();
     }
   }
 });
