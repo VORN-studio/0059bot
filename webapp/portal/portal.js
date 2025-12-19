@@ -1450,76 +1450,117 @@ async function createPost() {
     
     const textArea = document.getElementById("post-text");
     const fileInput = document.getElementById("post-media");
-    
-    console.log("📝 textArea:", textArea);
-    console.log("📎 fileInput:", fileInput);
-    console.log("📁 files:", fileInput?.files);
+    const mediaBtn = document.getElementById("media-btn");
 
     const text = (textArea.value || "").trim();
     if (text === "" && (!fileInput.files || fileInput.files.length === 0)) {
-        openInfo(
-            "Չի ստացվում",
-            "Գրառումը չի կարող լինել լիովին դատարկ 🙂"
-        );
-        const mediaBtn = document.getElementById("media-btn");
+        openInfo("Չի ստացվում", "Գրառումը չի կարող լինել լիովին դատարկ 🙂");
         if (mediaBtn) {
             mediaBtn.classList.remove("selected");
             mediaBtn.innerText = "📎 Media";
         }
-
         return;
     }
-
 
     let mediaUrl = "";
 
     if (fileInput.files && fileInput.files.length > 0) {
-        console.log("📤 Uploading file:", fileInput.files[0].name);
+        const file = fileInput.files[0];
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
         
-        const formData = new FormData();
-        formData.append("file", fileInput.files[0]);
-        formData.append("uid", viewerId);
-
-        const up = await fetch("/api/upload_post_media", {
-            method: "POST",
-            body: formData
-        });
-
-        const upData = await up.json();
-        console.log("📥 Upload response:", upData);
-
-        if (!upData.ok) {
-            alert("Չհաջողվեց բեռնել ֆայլը");
-            return;
+        console.log(`📤 Uploading file: ${file.name} (${fileSizeMB} MB)`);
+        
+        // Show loading
+        if (mediaBtn) {
+            mediaBtn.innerText = `⏳ ${fileSizeMB} MB...`;
+            mediaBtn.disabled = true;
         }
 
-        mediaUrl = upData.url;
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("uid", viewerId);
+
+        try {
+            // 60 second timeout for large videos
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+            const up = await fetch("/api/upload_post_media", {
+                method: "POST",
+                body: formData,
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            const upData = await up.json();
+            console.log("📥 Upload response:", upData);
+
+            if (!upData.ok) {
+                throw new Error(upData.error || "Upload failed");
+            }
+
+            mediaUrl = upData.url;
+        } catch (error) {
+            console.error("❌ Upload error:", error);
+            
+            if (mediaBtn) {
+                mediaBtn.innerText = "📎 Media";
+                mediaBtn.disabled = false;
+                mediaBtn.classList.remove("selected");
+            }
+            
+            if (error.name === 'AbortError') {
+                alert("⏱️ Ֆայլը չափազանց մեծ է կամ ինտերնետը դանդաղ է։ Փորձիր ավելի փոքր ֆայլ։");
+            } else {
+                alert("❌ Չհաջողվեց բեռնել ֆայլը: " + error.message);
+            }
+            return;
+        }
     }
 
     console.log("📤 Creating post with mediaUrl:", mediaUrl);
 
-    const res = await fetch("/api/post/create", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            user_id: viewerId,
-            text,
-            media_url: mediaUrl
-        })
-    });
+    try {
+        const res = await fetch("/api/post/create", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                user_id: viewerId,
+                text,
+                media_url: mediaUrl
+            })
+        });
 
-    const data = await res.json();
-    console.log("📥 Create post response:", data);
+        const data = await res.json();
+        console.log("📥 Create post response:", data);
 
-    if (!data.ok) {
-        alert("Չհաջողվեց հրապարակել");
-        return;
+        if (!data.ok) {
+            throw new Error("Post creation failed");
+        }
+
+        // Clear inputs
+        textArea.value = "";
+        fileInput.value = "";
+        
+        // Reset media button
+        if (mediaBtn) {
+            mediaBtn.classList.remove("selected");
+            mediaBtn.innerText = "📎 Media";
+            mediaBtn.disabled = false;
+        }
+
+        // Reload feed
+        loadFeed();
+        
+    } catch (error) {
+        console.error("❌ Post creation error:", error);
+        alert("❌ Չհաջողվեց հրապարակել");
+        
+        if (mediaBtn) {
+            mediaBtn.disabled = false;
+        }
     }
-
-    textArea.value = "";
-    fileInput.value = "";
-
-    loadFeed();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
