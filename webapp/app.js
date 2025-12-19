@@ -647,8 +647,14 @@ async function fetchDomitPrices() {
     const data = await response.json();
 
     if (data.candles && data.candles.length > 0) {
+      // ✅ REMOVE duplicates by time
+      const uniqueMap = {};
+      data.candles.forEach(function(c) {
+        uniqueMap[c.time] = c;
+      });
+
       // ✅ FORMAT data for LightweightCharts
-      const formattedCandles = data.candles.map(function(c) {
+      const formattedCandles = Object.values(uniqueMap).map(function(c) {
         return {
           time: Number(c.time),
           open: Number(c.open),
