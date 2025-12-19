@@ -115,7 +115,10 @@ CORS(app_web)
 socketio = SocketIO(
     app_web,
     cors_allowed_origins="*",
-    async_mode="threading"
+    async_mode="threading",
+    logger=True,
+    engineio_logger=False,
+    transports=['polling']
 )
 
 @socketio.on('join_chart')
