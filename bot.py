@@ -4861,6 +4861,77 @@ async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if conn:
             release_db(conn)
 
+async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """TEST: Ստեղծել withdraw request ԱՌԱՆՑ validations-ի"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text("Օգտագործում՝ /admin_test_withdraw <user_id> <amount>")
+        return
+    
+    target_user_id = int(context.args[0])
+    amount = float(context.args[1])
+    
+    conn = db()
+    c = conn.cursor()
+    
+    try:
+        # Check balance
+        c.execute("SELECT balance_usd FROM dom_users WHERE user_id = %s FOR UPDATE", (target_user_id,))
+        row = c.fetchone()
+        current_balance = float(row[0]) if row else 0.0
+        
+        if current_balance < amount:
+            await update.message.reply_text(f"❌ User {target_user_id}-ը ունի միայն {current_balance:.2f} DOMIT")
+            release_db(conn)
+            return
+        
+        # Check pending withdrawals
+        c.execute("""
+            SELECT COUNT(*) FROM dom_withdrawals 
+            WHERE user_id = %s AND status = 'pending'
+        """, (target_user_id,))
+        pending_count = c.fetchone()[0]
+        
+        if pending_count > 0:
+            await update.message.reply_text(f"❌ User {target_user_id}-ը արդեն ունի pending withdraw հայտ։")
+            release_db(conn)
+            return
+        
+        # Create withdraw (skip validation)
+        now = int(time.time())
+        
+        c.execute("""
+            INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at)
+            VALUES (%s, %s, 'pending', %s)
+        """, (target_user_id, amount, now))
+        
+        c.execute("""
+            UPDATE dom_users
+               SET balance_usd = balance_usd - %s,
+                   total_withdraw_usd = COALESCE(total_withdraw_usd,0) + %s
+             WHERE user_id=%s
+        """, (amount, amount, target_user_id))
+        
+        conn.commit()
+        release_db(conn)
+        
+        await update.message.reply_text(
+            f"✅ TEST withdraw ստեղծվեց։\n"
+            f"👤 User: {target_user_id}\n"
+            f"💰 Գումար: {amount:.2f} DOMIT\n\n"
+            f"Օգտագործիր /admin_withdrawals տեսնելու համար"
+        )
+    
+    except Exception as e:
+        logger.error(f"Error in test withdraw: {e}")
+        await update.message.reply_text(f"❌ Սխալ՝ {e}")
+        if conn:
+            release_db(conn)
+
 async def start_bot_webhook():
     """
     Կարգավորում ենք Telegram–ը Webhook mode-ում,
@@ -4891,6 +4962,7 @@ async def start_bot_webhook():
     application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
     application.add_handler(CommandHandler("init_domit_data", init_domit_data))
     application.add_handler(CommandHandler("set_domit_range", set_domit_range))
+    application.add_handler(CommandHandler("admin_test_withdraw", admin_test_withdraw))
     await application.initialize()
     await application.start()
 
