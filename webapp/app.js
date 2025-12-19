@@ -730,3 +730,30 @@ if (portalOrb) {
     window.location.href = window.location.origin + '/portal/portal.html?uid=' + CURRENT_USER_ID + '&viewer=' + CURRENT_USER_ID;
   });
 }
+
+// 🔌 Socket.IO Real-time Connection
+const socket = io();
+
+socket.on('connect', () => {
+  console.log('🟢 Realtime connected');
+});
+
+socket.on('domit_update', (data) => {
+  console.log('📊 DOMIT Update:', data);
+  if (window.chartSeries) {
+    window.chartSeries.update({
+      time: data.timestamp,
+      open: data.price,
+      high: data.high,
+      low: data.low,
+      close: data.price
+    });
+  }
+});
+
+socket.on('new_candle', (data) => {
+  console.log('🕐 New Candle:', data);
+  if (window.chartSeries) {
+    window.chartSeries.update(data);
+  }
+});
