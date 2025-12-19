@@ -574,9 +574,30 @@ let domitChart;
 let domitCandleSeries;
 
 function loadDomitChart() {
-  domitChart = LightweightCharts.createChart(document.getElementById('domit-chart'), {
-    width: document.getElementById('domit-chart').offsetWidth,
-    height: 250,
+  const container = document.getElementById('domit-chart');
+  
+  // ✅ ՍՏՈՒԳԵԼ container-ը
+  if (!container) {
+    console.error('❌ domit-chart element not found');
+    return;
+  }
+
+  // ✅ ՍՏՈՒԳԵԼ dimensions-ները
+  const width = container.offsetWidth;
+  const height = container.offsetHeight;
+  
+  if (width === 0 || height === 0) {
+    console.warn(`⚠️ Chart container has 0 dimensions: ${width}x${height}`);
+    // Փորձել 100ms հետո
+    setTimeout(loadDomitChart, 100);
+    return;
+  }
+
+  console.log(`✅ Creating chart with dimensions: ${width}x${height}`);
+
+  domitChart = LightweightCharts.createChart(container, {
+    width: width,
+    height: height,
     layout: {
       backgroundColor: '#000000',
       textColor: '#ffffff',
@@ -601,9 +622,18 @@ function loadDomitChart() {
 
   // Load initial data
   fetchDomitPrices();
-  
+
   // Update every 5 seconds
   setInterval(fetchDomitPrices, 5000);
+  
+  // ✅ Resize handler
+  window.addEventListener('resize', () => {
+    if (domitChart && container) {
+      domitChart.applyOptions({
+        width: container.offsetWidth,
+      });
+    }
+  });
 }
 
 async function fetchDomitPrices() {
@@ -636,18 +666,13 @@ async function fetchDomitPrices() {
 
 // Wait for DOM and library to load
 window.addEventListener('load', function() {
-  const chartContainer = document.getElementById('domit-chart');
-  
-  if (!chartContainer) {
-    console.warn('⚠️ domit-chart element not found');
+  if (typeof LightweightCharts === 'undefined') {
+    console.error('❌ LightweightCharts library not loaded');
     return;
   }
   
-  if (typeof LightweightCharts !== 'undefined') {
-    loadDomitChart();
-  } else {
-    console.error('❌ LightweightCharts library not loaded');
-  }
+  // Telegram WebApp-ի համար ավելի ուշ սկսել
+  setTimeout(loadDomitChart, 200);
 });
 
 document.getElementById("portal-orb").addEventListener("click", () => {
