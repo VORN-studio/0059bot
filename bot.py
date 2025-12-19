@@ -2642,6 +2642,19 @@ def init_db():
         )
     """)
 
+        # === MIGRATION: timestamp TEXT → BIGINT ===
+    try:
+        cur.execute("""
+            ALTER TABLE domit_price_history 
+            ALTER COLUMN timestamp TYPE BIGINT 
+            USING timestamp::BIGINT;
+        """)
+        conn.commit()
+        print("✅ Migration: timestamp column changed to BIGINT")
+    except Exception as e:
+        print(f"⚠️ Migration skipped (already BIGINT or error): {e}")
+        conn.rollback()
+
     # Insert default DOMIT config
     c.execute("""
         INSERT INTO domit_config (id, current_price, last_update) 
