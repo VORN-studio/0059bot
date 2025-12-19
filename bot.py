@@ -1,4 +1,4 @@
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import random
 from datetime import datetime, timedelta
@@ -4176,10 +4176,10 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # DOMIT AUTO PRICE UPDATER
 # ═══════════════════════════════════════════════════════════
 
-scheduler = AsyncIOScheduler()
+scheduler = BackgroundScheduler()
 from decimal import Decimal
 
-async def create_new_candle():
+def create_new_candle():
     """Ստեղծել նոր 1-րոպեանոց candle (ամեն րոպե)"""
     conn = None
     cur = None
@@ -4244,7 +4244,7 @@ async def create_new_candle():
             release_db(conn)
 
 
-async def update_current_candle():
+def update_current_candle():
     """Թարմացնել ընթացիկ candle-ը (ամեն 5 վրկ)"""
     conn = None
     cur = None
