@@ -4244,10 +4244,7 @@ def create_new_candle():
         """, (now, open_price, high_price, low_price, close_price, volume))
         
         conn.commit()
-        cur.close()
-        release_db(conn)
         logger.info(f"🕐 New candle created at {now}, open={open_price:.4f}")
-        logger.info(f"🕯️ New candle created at {now}, open={open_price:.4f}")
         
         try:
             socketio.emit('new_candle', {
@@ -4341,13 +4338,11 @@ def update_current_candle():
             UPDATE domit_price_history 
             SET high = %s, low = %s, close = %s, volume = volume + %s
             WHERE timestamp = %s
-        """, (new_high, new_low, new_close, random.randint(100, 500), timestamp))
-        
+                """, (new_high, new_low, new_close, random.randint(100, 500), timestamp))
+
         conn.commit()
-        cur.close()
-        release_db(conn)
         logger.info(f"📊 DOMIT updated: {new_close:.4f} TON (H:{new_high:.4f} L:{new_low:.4f})")
-        
+
         try:
             socketio.emit('domit_update', {
                 'time': timestamp,
