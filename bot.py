@@ -4667,7 +4667,8 @@ async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
     c = conn.cursor()
     
     c.execute("""
-        SELECT w.id, w.user_id, w.amount_usd, w.created_at, u.username, u.wallet_address
+        SELECT w.id, w.user_id, w.amount_usd, w.created_at, u.username, 
+               COALESCE(w.wallet_address, u.wallet_address) as wallet_address
         FROM dom_withdrawals w
         LEFT JOIN dom_users u ON w.user_id = u.user_id
         WHERE w.status = 'pending'
