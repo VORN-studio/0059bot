@@ -2397,7 +2397,7 @@ def db():
         conn = _db_pool.getconn()
         # Validate connection is alive
         if conn.closed:
-            logger.warning("Got closed connection from pool, creating new one")
+            logger.debug("Got closed connection from pool, retrying")
             conn = _db_pool.getconn()
         conn.autocommit = False
         return conn
@@ -4244,13 +4244,18 @@ def create_new_candle():
         cur.close()
         release_db(conn)
         logger.info(f"🕐 New candle created at {now}, open={open_price:.4f}")
-        socketio.emit('new_candle', {
-            'time': now,
-            'open': open_price,
-            'high': high_price,
-            'low': low_price,
-            'close': close_price
-        }, room='chart_viewers')  # ✅ Միայն chart viewers-ին
+        logger.info(f"🕯️ New candle created at {now}, open={open_price:.4f}")
+        
+        try:
+            socketio.emit('new_candle', {
+                'time': now,
+                'open': open_price,
+                'high': high_price,
+                'low': low_price,
+                'close': close_price
+            }, room='chart_viewers')
+        except Exception as e:
+            logger.warning(f"Socket emit failed: {e}")
         
     except Exception as e:
         logger.error(f"❌ Error creating candle: {e}")
@@ -4339,13 +4344,17 @@ def update_current_candle():
         cur.close()
         release_db(conn)
         logger.info(f"📊 DOMIT updated: {new_close:.4f} TON (H:{new_high:.4f} L:{new_low:.4f})")
-        socketio.emit('domit_update', {
-            'time': timestamp,
-            'open': open_price,
-            'high': new_high,
-            'low': new_low,
-            'close': new_close
-        }, room='chart_viewers')  # ✅ Միայն chart viewers-ին
+        
+        try:
+            socketio.emit('domit_update', {
+                'time': timestamp,
+                'open': open_price,
+                'high': new_high,
+                'low': new_low,
+                'close': new_close
+            }, room='chart_viewers')
+        except Exception as e:
+            logger.warning(f"Socket emit failed: {e}")  # ✅ Միայն chart viewers-ին
         
     except Exception as e:
         logger.error(f"❌ Error updating candle: {e}")
