@@ -3258,10 +3258,15 @@ def create_withdraw_request(user_id: int, amount: float):
             release_db(conn)
             raise ValueError(f"Insufficient balance: {current_balance} < {amount}")
 
+        # Get user's wallet address
+        c.execute("SELECT wallet_address FROM dom_users WHERE user_id=%s", (user_id,))
+        wallet_row = c.fetchone()
+        wallet_address = wallet_row[0] if wallet_row and wallet_row[0] else None
+
         c.execute("""
-            INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at)
-            VALUES (%s, %s, 'pending', %s)
-        """, (user_id, amount, now))
+            INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at, wallet_address)
+            VALUES (%s, %s, 'pending', %s, %s)
+        """, (user_id, amount, now, wallet_address))
 
         c.execute("""
             UPDATE dom_users
@@ -4904,10 +4909,15 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         # Create withdraw (skip validation)
         now = int(time.time())
         
+        # Get user's wallet address
+        c.execute("SELECT wallet_address FROM dom_users WHERE user_id=%s", (target_user_id,))
+        wallet_row = c.fetchone()
+        wallet_address = wallet_row[0] if wallet_row and wallet_row[0] else None
+
         c.execute("""
-            INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at)
-            VALUES (%s, %s, 'pending', %s)
-        """, (target_user_id, amount, now))
+            INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at, wallet_address)
+            VALUES (%s, %s, 'pending', %s, %s)
+        """, (target_user_id, amount, now, wallet_address))
         
         c.execute("""
             UPDATE dom_users
