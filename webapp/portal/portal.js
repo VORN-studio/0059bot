@@ -23,7 +23,8 @@ TG?.ready?.();
 
 const telegramUser = TG?.initDataUnsafe?.user || null;
 
-
+console.log("🌍 TG:", TG);
+console.log("👤 telegramUser:", telegramUser);
 
 socket.on("global_new", (msg) => {
     LOG.event("🌍 global_new RAW:", msg);
@@ -178,6 +179,9 @@ const viewerId =
     (telegramUser && telegramUser.id) ||
     getUrlParam("viewer") ||
     0;
+
+console.log("🆔 viewerId:", viewerId);
+console.log("📍 URL viewer param:", getUrlParam("viewer"));
 
 const CURRENT_UID = viewerId;
 const isOwner =
