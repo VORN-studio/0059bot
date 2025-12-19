@@ -575,65 +575,70 @@ let domitCandleSeries;
 
 function loadDomitChart() {
   const container = document.getElementById('domit-chart');
-  
-  // ✅ ՍՏՈՒԳԵԼ container-ը
+
   if (!container) {
     console.error('❌ domit-chart element not found');
     return;
   }
 
-  // ✅ ՍՏՈՒԳԵԼ dimensions-ները
   const width = container.offsetWidth;
   const height = container.offsetHeight;
-  
+
   if (width === 0 || height === 0) {
-    console.warn(`⚠️ Chart container has 0 dimensions: ${width}x${height}`);
-    // Փորձել 100ms հետո
+    console.warn('⚠️ Chart container has 0 dimensions, retrying...');
     setTimeout(loadDomitChart, 100);
     return;
   }
 
-  console.log(`✅ Creating chart with dimensions: ${width}x${height}`);
+  console.log('✅ Creating chart with dimensions: ' + width + 'x' + height);
 
-  domitChart = LightweightCharts.createChart(container, {
-    width: width,
-    height: height,
-    layout: {
-      backgroundColor: '#000000',
-      textColor: '#ffffff',
-    },
-    grid: {
-      vertLines: { color: '#1a1a1a' },
-      horzLines: { color: '#1a1a1a' },
-    },
-    timeScale: {
-      timeVisible: true,
-      secondsVisible: false,
-    },
-  });
+  if (domitChart) {
+    console.warn('⚠️ Chart already exists');
+    return;
+  }
 
-  domitCandleSeries = domitChart.addCandlestickSeries({
-    upColor: '#26a69a',
-    downColor: '#ef5350',
-    borderVisible: false,
-    wickUpColor: '#26a69a',
-    wickDownColor: '#ef5350',
-  });
+  try {
+    domitChart = LightweightCharts.createChart(container, {
+      width: width,
+      height: height,
+      layout: {
+        backgroundColor: '#000000',
+        textColor: '#ffffff',
+      },
+      grid: {
+        vertLines: { color: '#1a1a1a' },
+        horzLines: { color: '#1a1a1a' },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
 
-  // Load initial data
-  fetchDomitPrices();
+    domitCandleSeries = domitChart.addCandlestickSeries({
+      upColor: '#26a69a',
+      downColor: '#ef5350',
+      borderVisible: false,
+      wickUpColor: '#26a69a',
+      wickDownColor: '#ef5350',
+    });
 
-  // Update every 5 seconds
-  setInterval(fetchDomitPrices, 5000);
-  
-  // ✅ Resize handler
-  window.addEventListener('resize', () => {
-    if (domitChart && container) {
-      domitChart.applyOptions({
-        width: container.offsetWidth,
-      });
-    }
-  });
+    fetchDomitPrices();
+    setInterval(fetchDomitPrices, 5000);
+
+    window.addEventListener('resize', function() {
+      if (domitChart && container) {
+        domitChart.applyOptions({ width: container.offsetWidth });
+      }
+    });
+
+    console.log('✅ Chart created successfully');
+
+  } catch (error) {
+    console.error('❌ Error creating chart:', error);
+    domitChart = null;
+    setTimeout(loadDomitChart, 500);
+  }
 }
 
 async function fetchDomitPrices() {
@@ -664,15 +669,21 @@ async function fetchDomitPrices() {
   }
 }
 
-// Wait for DOM and library to load
 window.addEventListener('load', function() {
   if (typeof LightweightCharts === 'undefined') {
     console.error('❌ LightweightCharts library not loaded');
     return;
   }
-  
-  // Telegram WebApp-ի համար ավելի ուշ սկսել
-  setTimeout(loadDomitChart, 200);
+
+  setTimeout(function() {
+    const container = document.getElementById('domit-chart');
+    if (container && container.offsetWidth > 0) {
+      loadDomitChart();
+    } else {
+      console.error('⚠️ Chart container not ready, retrying...');
+      setTimeout(loadDomitChart, 300);
+    }
+  }, 500);
 });
 
 document.getElementById("portal-orb").addEventListener("click", () => {
