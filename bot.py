@@ -2644,7 +2644,7 @@ def init_db():
 
         # === MIGRATION: timestamp TEXT → BIGINT ===
     try:
-        cur.execute("""
+        c.execute("""
             ALTER TABLE domit_price_history 
             ALTER COLUMN timestamp TYPE BIGINT 
             USING timestamp::BIGINT;
