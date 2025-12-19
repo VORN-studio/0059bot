@@ -636,6 +636,13 @@ async function fetchDomitPrices() {
 
 // Wait for DOM and library to load
 window.addEventListener('load', function() {
+  const chartContainer = document.getElementById('domit-chart');
+  
+  if (!chartContainer) {
+    console.warn('⚠️ domit-chart element not found');
+    return;
+  }
+  
   if (typeof LightweightCharts !== 'undefined') {
     loadDomitChart();
   } else {
