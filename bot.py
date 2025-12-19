@@ -139,7 +139,7 @@ def app_page():
     """
     Սերվում ենք WebApp–ի հիմնական էջը.
     Telegram WebApp–ի URL-ը կլինի՝
-    https://domino-backend-iavj.onrender.com/app?uid=XXXX
+    https://domino-play.online/app?uid=XXXX
     """
     return send_from_directory(WEBAPP_DIR, "index.html")
 
@@ -2381,20 +2381,24 @@ _db_pool: Optional[pool.SimpleConnectionPool] = None
 
 def db():
     """
-    SAFE PostgreSQL pooled connection getter
+    SAFE PostgreSQL pooled connection getter with validation
     """
     global _db_pool
 
     if _db_pool is None:
         _db_pool = pool.SimpleConnectionPool(
             minconn=1,
-            maxconn=1000,
+            maxconn=100,
             dsn=DATABASE_URL
         )
-        logger.info("PostgreSQL pool initialized (20 connections)")
+        logger.info("PostgreSQL pool initialized (100 connections)")
 
     try:
         conn = _db_pool.getconn()
+        # Validate connection is alive
+        if conn.closed:
+            logger.warning("Got closed connection from pool, creating new one")
+            conn = _db_pool.getconn()
         conn.autocommit = False
         return conn
     except pool.PoolError:
@@ -4184,7 +4188,23 @@ def create_new_candle():
     conn = None
     cur = None
     try:
-        conn = db()
+        # Retry logic for connection
+        for attempt in range(3):
+            try:
+                conn = db()
+                if not conn.closed:
+                    break
+                release_db(conn)
+                conn = None
+            except Exception as e:
+                logger.warning(f"Connection attempt {attempt+1} failed: {e}")
+                if attempt == 2:
+                    raise
+        
+        if conn is None or conn.closed:
+            logger.error("Failed to get valid connection after 3 attempts")
+            return
+            
         cur = conn.cursor()
         
         # Վերցնել config
@@ -4252,7 +4272,23 @@ def update_current_candle():
     conn = None
     cur = None
     try:
-        conn = db()
+        # Retry logic for connection
+        for attempt in range(3):
+            try:
+                conn = db()
+                if not conn.closed:
+                    break
+                release_db(conn)
+                conn = None
+            except Exception as e:
+                logger.warning(f"Connection attempt {attempt+1} failed: {e}")
+                if attempt == 2:
+                    raise
+        
+        if conn is None or conn.closed:
+            logger.error("Failed to get valid connection after 3 attempts")
+            return
+            
         cur = conn.cursor()
         
         # Վերցնել config
