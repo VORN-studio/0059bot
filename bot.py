@@ -4108,10 +4108,6 @@ async def update_domit_price():
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (now, open_price, high_price, low_price, close_price, volume))
         
-        # Ջնջել 24 ժամից հին candle-ները
-        cutoff = now - (24 * 3600)
-        cur.execute("DELETE FROM domit_price_history WHERE timestamp < %s", (cutoff,))
-        
         conn.commit()
         cur.close()
         release_db(conn)
