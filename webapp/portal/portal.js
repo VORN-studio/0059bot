@@ -1373,6 +1373,26 @@ function initFollowButton() {
     });
 }
 
+// 🔧 MEDIA BUTTON INIT - ԱՄԵՆՈՒՐ ՊԵՏՔ Է ԱՇԽԱՏԻ
+function initMediaButton() {
+    const mediaBtn = document.getElementById("media-btn");
+    const mediaInput = document.getElementById("post-media");
+
+    if (mediaBtn && mediaInput) {
+        mediaBtn.onclick = () => mediaInput.click();
+
+        mediaInput.onchange = () => {
+            if (mediaInput.files && mediaInput.files.length > 0) {
+                mediaBtn.classList.add("selected");
+                mediaBtn.innerText = "📎 Ընտրված է";
+            } else {
+                mediaBtn.classList.remove("selected");
+                mediaBtn.innerText = "📎 Media";
+            }
+        };
+    }
+}
+
 function initFeed() {
     if (SINGLE_POST_MODE) {
         return; // ⛔ ոչ մի feed logic single post-ի ժամանակ
@@ -1391,24 +1411,6 @@ function initFeed() {
     } else {
         console.warn("post-send button not found");
     }
-
-    const mediaBtn = document.getElementById("media-btn");
-    const mediaInput = document.getElementById("post-media");
-
-    if (mediaBtn && mediaInput) {
-        mediaBtn.onclick = () => mediaInput.click();
-
-        mediaInput.onchange = () => {
-            if (mediaInput.files && mediaInput.files.length > 0) {
-                mediaBtn.classList.add("selected");
-                mediaBtn.innerText = "📎 Ընտրված է";
-            } else {
-                mediaBtn.classList.remove("selected");
-                mediaBtn.innerText = "📎 Media";
-            }
-        };
-    }
-
 
     if (!SINGLE_POST_MODE) {
         loadFeed();
