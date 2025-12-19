@@ -3443,7 +3443,7 @@ function showToast(message) {
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", () => {
-   
+    initMediaButton();
 });
 
 
