@@ -3078,21 +3078,26 @@ def apply_deposit(user_id: int, amount: float):
     now = int(time.time())
     conn = db()
     c = conn.cursor()
+    
+    try:
+        # Lock user row to prevent race conditions
+        c.execute("SELECT balance_usd FROM dom_users WHERE user_id = %s FOR UPDATE", (user_id,))
 
-    c.execute("""
-        INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
-        VALUES (%s, %s, 'auto_credited', %s)
-    """, (user_id, amount, now))
+        c.execute("""
+            INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
+            VALUES (%s, %s, 'auto_credited', %s)
+        """, (user_id, amount, now))
 
-    c.execute("""
-        UPDATE dom_users
-           SET balance_usd = COALESCE(balance_usd,0) + %s,
-               total_deposit_usd = COALESCE(total_deposit_usd,0) + %s
-         WHERE user_id=%s
-    """, (amount, amount, user_id))
+        c.execute("""
+            UPDATE dom_users
+               SET balance_usd = COALESCE(balance_usd,0) + %s,
+                   total_deposit_usd = COALESCE(total_deposit_usd,0) + %s
+             WHERE user_id=%s
+        """, (amount, amount, user_id))
 
-    conn.commit()
-    release_db(conn)
+        conn.commit()
+    finally:
+        release_db(conn)
 
 def get_mining_plans():
     """
@@ -3241,21 +3246,33 @@ def create_withdraw_request(user_id: int, amount: float):
     now = int(time.time())
     conn = db()
     c = conn.cursor()
+    
+    try:
+        # Check current balance first
+        c.execute("SELECT balance_usd FROM dom_users WHERE user_id = %s FOR UPDATE", (user_id,))
+        row = c.fetchone()
+        current_balance = float(row[0]) if row else 0.0
+        
+        if current_balance < amount:
+            conn.rollback()
+            release_db(conn)
+            raise ValueError(f"Insufficient balance: {current_balance} < {amount}")
 
-    c.execute("""
-        INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at)
-        VALUES (%s, %s, 'pending', %s)
-    """, (user_id, amount, now))
+        c.execute("""
+            INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at)
+            VALUES (%s, %s, 'pending', %s)
+        """, (user_id, amount, now))
 
-    c.execute("""
-        UPDATE dom_users
-           SET balance_usd = COALESCE(balance_usd,0) - %s,
-               total_withdraw_usd = COALESCE(total_withdraw_usd,0) + %s
-         WHERE user_id=%s
-    """, (amount, amount, user_id))
+        c.execute("""
+            UPDATE dom_users
+               SET balance_usd = balance_usd - %s,
+                   total_withdraw_usd = COALESCE(total_withdraw_usd,0) + %s
+             WHERE user_id=%s
+        """, (amount, amount, user_id))
 
-    conn.commit()
-    release_db(conn)
+        conn.commit()
+    finally:
+        release_db(conn)
 
 @app_web.route("/api/user/<int:user_id>")
 def api_user(user_id):
@@ -3311,6 +3328,23 @@ def api_deposit():
 
     if not user_id or amount <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
+
+    # Check if user already has a pending withdraw
+    conn = db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT COUNT(*) FROM dom_withdrawals 
+        WHERE user_id = %s AND status = 'pending'
+    """, (user_id,))
+    pending_count = c.fetchone()[0]
+    release_db(conn)
+    
+    if pending_count > 0:
+        return jsonify({
+            "ok": False,
+            "error": "pending_withdraw_exists",
+            "message": "Դուք արդեն ունեք սպասման փուլում գտնվող կանխիկացման հայտ։ Խնդրում ենք սպասել նախորդ հայտի հաստատմանը։"
+        }), 200
 
     stats = get_user_stats(user_id)
     if not stats:
@@ -4617,6 +4651,216 @@ async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"✔ {amount}$ ավելացվեց օգտատեր {target}-ի հաշվին։")
 
+async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ցույց տալ բոլոր pending withdraw հայտերը"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        SELECT w.id, w.user_id, w.amount_usd, w.created_at, u.username, u.wallet_address
+        FROM dom_withdrawals w
+        LEFT JOIN dom_users u ON w.user_id = u.user_id
+        WHERE w.status = 'pending'
+        ORDER BY w.created_at ASC
+    """)
+    
+    rows = c.fetchall()
+    release_db(conn)
+    
+    if not rows:
+        await update.message.reply_text("✅ Չկան pending կանխիկացման հայտեր։")
+        return
+    
+    from datetime import datetime
+    
+    msg = "📋 PENDING ԿԱՆԽԻԿԱՑՈՒՄՆԵՐ:\n\n"
+    for row in rows:
+        withdraw_id, uid, amount_usd, created_at, username, wallet = row
+        amount_usd = float(amount_usd)
+        
+        # Calculate DOMIT/TON rate at request time
+        c2 = db()
+        cur = c2.cursor()
+        cur.execute("""
+            SELECT close FROM domit_price_history 
+            WHERE timestamp <= %s 
+            ORDER BY timestamp DESC LIMIT 1
+        """, (created_at,))
+        price_row = cur.fetchone()
+        release_db(c2)
+        
+        ton_price = float(price_row[0]) if price_row else 0.0001
+        ton_amount = amount_usd / ton_price if ton_price > 0 else 0
+        
+        date_str = datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M")
+        username_str = f"@{username}" if username else "Անանուն"
+        wallet_str = wallet if wallet else "❌ Չկա wallet"
+        
+        msg += f"🆔 ID: {withdraw_id}\n"
+        msg += f"👤 User: {username_str} ({uid})\n"
+        msg += f"💰 Գումար: {amount_usd:.2f} DOMIT (~{ton_amount:.4f} TON)\n"
+        msg += f"💳 Wallet: {wallet_str}\n"
+        msg += f"📅 Ժամանակ: {date_str}\n"
+        msg += f"━━━━━━━━━━━━━━━━\n\n"
+    
+    msg += "\n📌 Հաստատելու համար՝ /admin_approve <ID>\n"
+    msg += "📌 Մերժելու համար՝ /admin_reject <ID>"
+    
+    await update.message.reply_text(msg)
+
+
+async def admin_approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Հաստատել withdraw հայտը"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+    
+    if len(context.args) < 1:
+        await update.message.reply_text("Օգտագործում՝ /admin_approve <withdraw_id>")
+        return
+    
+    withdraw_id = int(context.args[0])
+    now = int(time.time())
+    
+    conn = db()
+    c = conn.cursor()
+    
+    try:
+        # Get withdraw details
+        c.execute("""
+            SELECT user_id, amount_usd, status 
+            FROM dom_withdrawals 
+            WHERE id = %s
+        """, (withdraw_id,))
+        
+        row = c.fetchone()
+        if not row:
+            await update.message.reply_text(f"❌ Withdraw ID {withdraw_id} չի գտնվել։")
+            release_db(conn)
+            return
+        
+        target_user_id, amount_usd, status = row
+        
+        if status != 'pending':
+            await update.message.reply_text(f"❌ Withdraw-ը արդեն {status} է։")
+            release_db(conn)
+            return
+        
+        # Update status to approved
+        c.execute("""
+            UPDATE dom_withdrawals 
+            SET status = 'approved', processed_at = %s 
+            WHERE id = %s
+        """, (now, withdraw_id))
+        
+        conn.commit()
+        release_db(conn)
+        
+        await update.message.reply_text(
+            f"✅ Withdraw #{withdraw_id} հաստատվեց։\n"
+            f"👤 User: {target_user_id}\n"
+            f"💰 Գումար: {float(amount_usd):.2f} DOMIT"
+        )
+        
+        # Send notification to user
+        try:
+            await context.bot.send_message(
+                chat_id=target_user_id,
+                text=f"✅ Ձեր կանխիկացման հայտը հաստատվել է։\n💰 Գումարը փոխանցվել է ձեր wallet-ին։"
+            )
+        except Exception as e:
+            logger.warning(f"Could not notify user {target_user_id}: {e}")
+    
+    except Exception as e:
+        logger.error(f"Error approving withdraw: {e}")
+        await update.message.reply_text(f"❌ Սխալ՝ {e}")
+        if conn:
+            release_db(conn)
+
+
+async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Մերժել withdraw հայտը և վերադարձնել գումարը"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Դու admin չես։")
+        return
+    
+    if len(context.args) < 1:
+        await update.message.reply_text("Օգտագործում՝ /admin_reject <withdraw_id>")
+        return
+    
+    withdraw_id = int(context.args[0])
+    now = int(time.time())
+    
+    conn = db()
+    c = conn.cursor()
+    
+    try:
+        # Get withdraw details
+        c.execute("""
+            SELECT user_id, amount_usd, status 
+            FROM dom_withdrawals 
+            WHERE id = %s FOR UPDATE
+        """, (withdraw_id,))
+        
+        row = c.fetchone()
+        if not row:
+            await update.message.reply_text(f"❌ Withdraw ID {withdraw_id} չի գտնվել։")
+            release_db(conn)
+            return
+        
+        target_user_id, amount_usd, status = row
+        
+        if status != 'pending':
+            await update.message.reply_text(f"❌ Withdraw-ը արդեն {status} է։")
+            release_db(conn)
+            return
+        
+        # Return money to user balance
+        c.execute("""
+            UPDATE dom_users 
+            SET balance_usd = COALESCE(balance_usd, 0) + %s,
+                total_withdraw_usd = COALESCE(total_withdraw_usd, 0) - %s
+            WHERE user_id = %s
+        """, (amount_usd, amount_usd, target_user_id))
+        
+        # Update status to rejected
+        c.execute("""
+            UPDATE dom_withdrawals 
+            SET status = 'rejected', processed_at = %s 
+            WHERE id = %s
+        """, (now, withdraw_id))
+        
+        conn.commit()
+        release_db(conn)
+        
+        await update.message.reply_text(
+            f"❌ Withdraw #{withdraw_id} մերժվեց։\n"
+            f"👤 User: {target_user_id}\n"
+            f"💰 Գումարը ({float(amount_usd):.2f} DOMIT) վերադարձվեց balance-ին։"
+        )
+        
+        # Send notification to user
+        try:
+            await context.bot.send_message(
+                chat_id=target_user_id,
+                text=f"❌ Ձեր կանխիկացման հայտը մերժվել է։\n💰 Գումարը վերադարձվել է ձեր balance-ին։"
+            )
+        except Exception as e:
+            logger.warning(f"Could not notify user {target_user_id}: {e}")
+    
+    except Exception as e:
+        logger.error(f"Error rejecting withdraw: {e}")
+        await update.message.reply_text(f"❌ Սխալ՝ {e}")
+        if conn:
+            release_db(conn)
+
 async def start_bot_webhook():
     """
     Կարգավորում ենք Telegram–ը Webhook mode-ում,
@@ -4631,6 +4875,9 @@ async def start_bot_webhook():
     application.add_handler(CallbackQueryHandler(btn_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, block_text))
     application.add_handler(CommandHandler("admin_add", admin_add))
+    application.add_handler(CommandHandler("admin_withdrawals", admin_withdrawals))
+    application.add_handler(CommandHandler("admin_approve", admin_approve))
+    application.add_handler(CommandHandler("admin_reject", admin_reject))
     application.add_handler(CommandHandler("task_add_video", task_add_video))
     application.add_handler(CommandHandler("task_add_follow", task_add_follow))
     application.add_handler(CommandHandler("task_add_invite", task_add_invite))
