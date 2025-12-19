@@ -4234,14 +4234,17 @@ def create_new_candle():
         
     except Exception as e:
         logger.error(f"❌ Error creating candle: {e}")
-    finally:  # ✅ ՓՈԽԻՐ
+    finally:
         if cur:
             try:
                 cur.close()
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Cursor close warning: {e}")
         if conn:
-            release_db(conn)
+            try:
+                release_db(conn)
+            except Exception as e:
+                logger.warning(f"Connection release warning: {e}")
 
 
 def update_current_candle():
@@ -4310,14 +4313,17 @@ def update_current_candle():
         
     except Exception as e:
         logger.error(f"❌ Error updating candle: {e}")
-    finally:  # ✅ ՓՈԽԻՐ except-ի finally
-        if cur:  # ✅ ADD
+    finally:
+        if cur:
             try:
                 cur.close()
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Cursor close warning: {e}")
         if conn:
-            release_db(conn)
+            try:
+                release_db(conn)
+            except Exception as e:
+                logger.warning(f"Connection release warning: {e}")
 
 
 # Scheduler jobs
