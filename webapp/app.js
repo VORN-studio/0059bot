@@ -741,13 +741,7 @@ socket.on('connect', () => {
 socket.on('domit_update', (data) => {
   console.log('📊 DOMIT Update:', data);
   if (domitCandleSeries) {
-    domitCandleSeries.update({
-      time: data.timestamp,
-      open: data.price,
-      high: data.high,
-      low: data.low,
-      close: data.price
-    });
+    domitCandleSeries.update(data);
   }
 });
 
