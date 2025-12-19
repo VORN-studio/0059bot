@@ -2111,11 +2111,8 @@ def api_posts_user(user_id):
 
     posts = []
     for r in rows:
-        pid, uid, username, avatar, avatar_data, status_level, text, media_url, likes, created_at = r
-        if avatar_data:
-            avatar_url = avatar_data
-        else:
-            avatar_url = avatar or "/portal/default.png"
+        pid, uid, username, avatar, status_level, text, media_url, likes, created_at = r
+        avatar_url = avatar or "/portal/default.png"
 
         posts.append({
             "id": pid,
