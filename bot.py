@@ -1776,6 +1776,24 @@ def api_post_delete():
     uid = data.get("user_id")
 
     conn = db(); c = conn.cursor()
+    
+    # Get media_url before delete
+    c.execute("SELECT media_url FROM dom_posts WHERE id=%s AND user_id=%s", (pid, uid))
+    row = c.fetchone()
+    
+    if row and row[0]:
+        media_url = row[0]
+        # Delete file if not base64
+        if not media_url.startswith("data:"):
+            file_path = f"webapp{media_url}"
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    logger.info(f"Deleted file: {file_path}")
+                except Exception as e:
+                    logger.error(f"File delete error: {e}")
+    
+    # Delete from DB
     c.execute("DELETE FROM dom_posts WHERE id=%s AND user_id=%s", (pid, uid))
     conn.commit()
     release_db(conn)
@@ -2231,23 +2249,54 @@ def api_comment_like():
 
 @app_web.route("/api/upload_post_media", methods=["POST"])
 def api_upload_post_media():
+    import subprocess
+    import uuid
+    
     uid = request.form.get("uid")
     file = request.files.get("file")
 
     if not uid or not file:
         return jsonify({"ok": False, "error": "missing"}), 400
 
-    
-    raw = file.read()
-    b64 = base64.b64encode(raw).decode("utf-8")
-    content_type = file.mimetype
+    # Create media folder
+    media_folder = "webapp/static/media/posts"
+    os.makedirs(media_folder, exist_ok=True)
 
-    media_data = f"data:{content_type};base64,{b64}"
+    # Generate unique filename
+    ext = os.path.splitext(file.filename)[1].lower()
+    unique_name = f"{uuid.uuid4().hex}{ext}"
+    temp_path = os.path.join(media_folder, f"temp_{unique_name}")
+    final_path = os.path.join(media_folder, unique_name)
 
-    return jsonify({
-        "ok": True,
-        "url": media_data
-    })
+    # Save uploaded file
+    file.save(temp_path)
+
+    # Compress if video
+    if ext in [".mp4", ".mov", ".avi", ".webm"]:
+        try:
+            # Compress: 720p, 800kbps
+            subprocess.run([
+                "ffmpeg", "-i", temp_path,
+                "-vf", "scale=-2:720",
+                "-c:v", "libx264", "-b:v", "800k",
+                "-c:a", "aac", "-b:a", "128k",
+                "-y", final_path
+            ], check=True, capture_output=True)
+            
+            # Delete temp file
+            os.remove(temp_path)
+            logger.info(f"Compressed video: {unique_name}")
+        except Exception as e:
+            logger.error(f"FFmpeg error: {e}")
+            # Fallback: use original
+            os.rename(temp_path, final_path)
+    else:
+        # Not video, just rename
+        os.rename(temp_path, final_path)
+
+    # Return URL
+    url = f"/static/media/posts/{unique_name}"
+    return jsonify({"ok": True, "url": url})
 
 
 @app_web.route("/admaven-verify")
