@@ -4047,14 +4047,15 @@ scheduler = AsyncIOScheduler()
 async def update_domit_price():
     """Ավտոմատ DOMIT գնի թարմացում յուրաքանչյուր 1 րոպե"""
     try:
-        conn = get_db()
+        conn = connection_pool.getconn()
         cur = conn.cursor()
         
         # Վերցնել config
         cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
         row = cur.fetchone()
         if not row:
-            logger.warning("⚠️ domit_config չկա, skip")
+            print("⚠️ domit_config չկա, skip")
+            connection_pool.putconn(conn)
             return
         
         min_price, max_price = row
@@ -4089,18 +4090,21 @@ async def update_domit_price():
         now = int(datetime.now().timestamp())
         cur.execute("""
             INSERT INTO domit_price_history (timestamp, open, high, low, close, volume)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (now, open_price, high_price, low_price, close_price, volume))
         
         # Ջնջել 24 ժամից հին candle-ները
         cutoff = now - (24 * 3600)
-        cur.execute("DELETE FROM domit_price_history WHERE timestamp < ?", (cutoff,))
+        cur.execute("DELETE FROM domit_price_history WHERE timestamp < %s", (cutoff,))
         
         conn.commit()
-        logger.info(f"📊 DOMIT price updated: {close_price:.4f}")
+        connection_pool.putconn(conn)
+        print(f"📊 DOMIT price updated: {close_price:.4f} TON")
         
     except Exception as e:
-        logger.error(f"❌ Error updating DOMIT price: {e}")
+        print(f"❌ Error updating DOMIT price: {e}")
+        if conn:
+            connection_pool.putconn(conn)
 
 # Scheduler job - յուրաքանչյուր 1 րոպե
 scheduler.add_job(
@@ -4111,7 +4115,7 @@ scheduler.add_job(
 )
 
 scheduler.start()
-logger.info("✅ DOMIT price scheduler started")
+print("✅ DOMIT price scheduler started")
 
 async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
