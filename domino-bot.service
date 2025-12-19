@@ -1,0 +1,15 @@
+[Unit]
+Description=Domino Telegram Bot
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/apps/0059bot
+Environment="BOT_TOKEN=8419124438:AAEjbuv8DtIb8GdmuBP5SKGtWs48qFEl1hc"
+Environment="DATABASE_URL=postgresql://domino_user:NaReK150503#@localhost:5432/domino"
+ExecStart=/root/apps/0059bot/venv/bin/python bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

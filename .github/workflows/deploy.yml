@@ -39,4 +39,16 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
             pip install -q -r requirements.txt
+            # Copy service file if changed
+            cp -f domino-bot.service /etc/systemd/system/domino-bot.service
+            systemctl daemon-reload
+            systemctl enable domino-bot
             systemctl restart domino-bot
+
+            # Remove old service if exists
+            if systemctl is-enabled 0059bot.service 2>/dev/null; then
+              systemctl stop 0059bot.service
+              systemctl disable 0059bot.service
+              rm -f /etc/systemd/system/0059bot.service
+              systemctl daemon-reload
+            fi
