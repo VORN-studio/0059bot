@@ -5,6 +5,38 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 
 let TON_WALLET = null;
 
+// Function to save wallet to backend
+async function saveWalletToBackend() {
+  if (!TON_WALLET || !CURRENT_USER_ID) {
+    console.log("⏳ Waiting for both wallet and user ID...");
+    return;
+  }
+
+  console.log("💾 Saving wallet to backend:", TON_WALLET);
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/wallet_connect`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({user_id: CURRENT_USER_ID, wallet: TON_WALLET})
+    });
+    const data = await res.json();
+    
+    if (data.ok) {
+      console.log("✅ Wallet saved successfully:", data);
+      const walletStatus = document.getElementById("wallet-status");
+      if (walletStatus) {
+        const short = TON_WALLET.slice(0, 6) + "..." + TON_WALLET.slice(-4);
+        walletStatus.textContent = "✅ Wallet connected: " + short;
+      }
+    } else {
+      console.error("❌ Wallet save failed:", data);
+    }
+  } catch (e) {
+    console.error("❌ Wallet save error:", e);
+  }
+}
+
 tonConnectUI.onStatusChange((walletInfo) => {
   if (walletInfo && walletInfo.account) {
     TON_WALLET = walletInfo.account.address;
@@ -15,6 +47,9 @@ tonConnectUI.onStatusChange((walletInfo) => {
       const short = TON_WALLET.slice(0, 6) + "..." + TON_WALLET.slice(-4);
       walletStatus.textContent = "Wallet connected: " + short;
     }
+
+    // Try to save immediately
+    saveWalletToBackend();
   }
 });
 
@@ -265,6 +300,9 @@ function initFromTelegram() {
     CURRENT_USER_ID = user.id;
     CURRENT_USERNAME =
       user.first_name + (user.username ? " (@" + user.username + ")" : "");
+    
+    // Try to save wallet if already connected
+    saveWalletToBackend();
   } else {
     console.log("⚠️ user object չկա initDataUnsafe-ից");
   }
@@ -274,7 +312,6 @@ function initFromTelegram() {
     window.DEEP_LINK_POST_ID = START_PARAM.replace("post_", "");
     console.log("📌 Deep link post id:", window.DEEP_LINK_POST_ID);
   }
-
 
   updateUserHeader();
   updateBalanceDisplay();
