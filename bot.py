@@ -109,7 +109,7 @@ GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
 BOT_READY = False
 ONLINE_USERS = {}
 
-app_web = Flask(__name__, static_folder=None)
+app_web = Flask(__name__, static_folder="webapp/static", static_url_path="/static")
 CORS(app_web)
 
 socketio = SocketIO(
