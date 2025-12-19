@@ -1415,6 +1415,7 @@ function initFeed() {
     if (!SINGLE_POST_MODE) {
         loadFeed();
     }
+    
 }
 
 async function loadSinglePost(postId) {
@@ -1445,8 +1446,14 @@ async function loadSinglePost(postId) {
 
 
 async function createPost() {
+    console.log("📤 createPost() called");
+    
     const textArea = document.getElementById("post-text");
     const fileInput = document.getElementById("post-media");
+    
+    console.log("📝 textArea:", textArea);
+    console.log("📎 fileInput:", fileInput);
+    console.log("📁 files:", fileInput?.files);
 
     const text = (textArea.value || "").trim();
     if (text === "" && (!fileInput.files || fileInput.files.length === 0)) {
@@ -1454,7 +1461,7 @@ async function createPost() {
             "Չի ստացվում",
             "Գրառումը չի կարող լինել լիովին դատարկ 🙂"
         );
-    const mediaBtn = document.getElementById("media-btn");
+        const mediaBtn = document.getElementById("media-btn");
         if (mediaBtn) {
             mediaBtn.classList.remove("selected");
             mediaBtn.innerText = "📎 Media";
@@ -1467,6 +1474,8 @@ async function createPost() {
     let mediaUrl = "";
 
     if (fileInput.files && fileInput.files.length > 0) {
+        console.log("📤 Uploading file:", fileInput.files[0].name);
+        
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
         formData.append("uid", viewerId);
@@ -1477,6 +1486,7 @@ async function createPost() {
         });
 
         const upData = await up.json();
+        console.log("📥 Upload response:", upData);
 
         if (!upData.ok) {
             alert("Չհաջողվեց բեռնել ֆայլը");
@@ -1485,6 +1495,8 @@ async function createPost() {
 
         mediaUrl = upData.url;
     }
+
+    console.log("📤 Creating post with mediaUrl:", mediaUrl);
 
     const res = await fetch("/api/post/create", {
         method: "POST",
@@ -1497,6 +1509,7 @@ async function createPost() {
     });
 
     const data = await res.json();
+    console.log("📥 Create post response:", data);
 
     if (!data.ok) {
         alert("Չհաջողվեց հրապարակել");
