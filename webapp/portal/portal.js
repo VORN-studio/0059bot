@@ -1590,8 +1590,9 @@ function renderPostCard(post) {
     let mediaUrl = "";
     if (post.media_url && post.media_url !== "") {
         mediaUrl = post.media_url;
-
-        if (mediaUrl.startsWith("/uploads/")) {
+        
+        // 🔧 Եթե relative path է, ավելացնենք origin
+        if (!mediaUrl.startsWith('http')) {
             mediaUrl = window.location.origin + mediaUrl;
         }
     }
