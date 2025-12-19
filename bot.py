@@ -4043,6 +4043,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ═══════════════════════════════════════════════════════════
 
 scheduler = AsyncIOScheduler()
+from decimal import Decimal
 
 async def update_domit_price():
     """Ավտոմատ DOMIT գնի թարմացում յուրաքանչյուր 1 րոպե"""
@@ -4060,7 +4061,7 @@ async def update_domit_price():
             release_db(conn)
             return
         
-        min_price, max_price = row
+        min_price, max_price = float(row[0]), float(row[1])
         
         # Վերցնել վերջին candle-ը
         cur.execute("""
@@ -4068,7 +4069,7 @@ async def update_domit_price():
             ORDER BY timestamp DESC LIMIT 1
         """)
         last_row = cur.fetchone()
-        last_close = last_row[0] if last_row else (min_price + max_price) / 2
+        last_close = float(last_row[0]) if last_row else (float(min_price) + float(max_price)) / 2
         
         # Ստեղծել նոր candle (ռանդոմ շարժում ±2%)
         volatility = 0.02
