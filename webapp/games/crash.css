@@ -436,8 +436,9 @@ body::-webkit-scrollbar-thumb {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  width: max-content;
-  animation: moveScene 2.8s linear infinite; /* same engine, smoother */
+  justify-content: center;
+  width: 100%;
+  /* ՀԵՌԱՑՎԵՑ moveScene animation */
 }
 
 /* ---------------------------------------------------------

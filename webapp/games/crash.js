@@ -94,13 +94,12 @@ function generateCrashPoint() {
 function buildDominoChain() {
     const chain = document.getElementById("domino-chain");
     chain.innerHTML = "";
-    // շղթայի երկարությունը
-    for (let i = 0; i < 20; i++) {   // ← դարձնում ենք 20–24 հատ
+    // Ավելի քիչ domino-ներ որ տեղավորվեն էկրանում
+    for (let i = 0; i < 12; i++) {
         const d = document.createElement("div");
         d.className = "domino";
         chain.appendChild(d);
     }
-
 }
 
 function fallEffect() {
@@ -289,10 +288,6 @@ function crashNow() {
     STOP_FALL = true;
     clearInterval(timer);
 
-    // 🆕 ՖԻՔՍ - Կանգնեցնում ենք animation-ը
-    const chain = document.getElementById("domino-chain");
-    chain.style.animation = "none";
-
     crashEffect();
 
     document.getElementById("cashout-btn").style.display = "none";
@@ -314,10 +309,6 @@ async function cashOut() {
     clearInterval(timer);
     running = false;
     STOP_FALL = true;
-
-    // 🆕 ՖԻՔՍ - Կանգնեցնում ենք animation-ը claim-ի ժամանակ էլ
-    const chain = document.getElementById("domino-chain");
-    chain.style.animation = "none";
 
     const win = currentBet * multiplier;
 
