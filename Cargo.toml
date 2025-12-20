@@ -28,4 +28,4 @@ log = "0.4"
 env_logger = "0.10"
 image = { version = "0.24", features = ["webp"] }
 tokio-cron-scheduler = "0.9"
-socketio-server = "0.2"
+actix-web-socket-io = "0.1.4"
