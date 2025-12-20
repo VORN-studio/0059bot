@@ -1756,3 +1756,31 @@ body::after + .parallax-stars {
     }
 }
 
+
+
+/* ========== Mobile Performance ========== */
+@media (max-width: 768px) {
+  
+  /* ✅ Պահել backgrounds, բայց անջատել animations */
+  body::before,
+  body::after {
+    animation: none !important;
+    opacity: 0.3 !important; /* Թույլ գույն */
+  }
+  
+  /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.1s !important;
+  }
+  
+  /* ✅ Թողնել button feedback */
+  button:active,
+  .btn:active {
+    transform: scale(0.97) !important;
+    transition: transform 0.1s ease !important;
+  }
+}
