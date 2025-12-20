@@ -1,4 +1,3 @@
-
 const tg = window.Telegram && window.Telegram.WebApp;
 const API_BASE = window.location.origin;
 const TIER_NAMES = {
