@@ -605,7 +605,13 @@ if (refCopyBtn) {
     if (!refLinkInput) return;
     refLinkInput.select();
     document.execCommand("copy");
-    if (tg) tg.showPopup({ message: "Հղումը կոպի է արված ✅" });
+    if (tg) {
+      tg.showPopup({
+        title: "🎉 Հաջողություն",
+        message: "Referral հղումը կոպի է արված։\n\nՀիմա կարող ես ուղարկել ընկերներին։",
+        buttons: [{ type: "ok", text: "Լավ" }]
+      });
+    }
   });
 }
 
