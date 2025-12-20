@@ -41,17 +41,13 @@ function showModal(icon, title, message, type = "success") {
         modalContent.style.boxShadow = "0 0 60px rgba(56, 189, 248, 0.4), 0 20px 80px rgba(0, 0, 0, 0.9)";
     }
     
-    modalOverlay.style.display = "flex";
+    // 🔥 Դնենք modal-ը USER-Ի VIEWPORT-Ի ՄԵՋՏԵՂՈՒՄ
+    const scrollY = window.scrollY || window.pageYOffset;
+    const viewportHeight = window.innerHeight;
     
-    // 🔥 SCROLL անենք modal-ը viewport center-ին
-    setTimeout(() => {
-        const scrollY = window.scrollY || window.pageYOffset;
-        const viewportHeight = window.innerHeight;
-        const modalHeight = modalContent.offsetHeight;
-        const centerPosition = scrollY + (viewportHeight / 2) - (modalHeight / 2);
-        
-        modalOverlay.scrollTop = centerPosition - scrollY;
-    }, 50);
+    modalOverlay.style.top = scrollY + 'px';
+    modalOverlay.style.height = viewportHeight + 'px';
+    modalOverlay.style.display = "flex";
 }
 
 function closeModal() {
