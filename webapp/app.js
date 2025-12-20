@@ -1,3 +1,89 @@
+// ========== FPS Monitor & Auto-Optimization ==========
+let fps = 60;
+let frameCount = 0;
+let lastTime = performance.now();
+let lowFpsDetected = false;
+
+function measureFPS() {
+  frameCount++;
+  const now = performance.now();
+  
+  if (now >= lastTime + 1000) {
+    fps = Math.round((frameCount * 1000) / (now - lastTime));
+    frameCount = 0;
+    lastTime = now;
+    
+    // ✅ Եթե FPS < 30, անջատենք ավելորդ animations
+    if (fps < 30 && !lowFpsDetected) {
+      lowFpsDetected = true;
+      disableHeavyAnimations();
+      console.log('⚠️ Low FPS detected (' + fps + '). Disabling heavy animations.');
+    }
+  }
+  
+  requestAnimationFrame(measureFPS);
+}
+
+function disableHeavyAnimations() {
+  const style = document.createElement('style');
+  style.id = 'performance-mode';
+  style.textContent = `
+    /* Disable heavy animations */
+    *[class*="Float"],
+    *[class*="Glow"],
+    *[class*="Pulse"],
+    *[class*="Shine"],
+    *[class*="Shift"],
+    *[class*="Nebula"],
+    *[class*="Particle"],
+    *[class*="Halo"],
+    *[class*="Crystal"],
+    *[class*="Energy"],
+    *[class*="Laser"],
+    *[class*="Orb"],
+    *[class*="Ring"],
+    *[class*="Star"],
+    *[class*="Glass"],
+    *[class*="Noise"],
+    *[class*="Grid"],
+    *[class*="Node"] {
+      animation: none !important;
+      transition: none !important;
+    }
+    
+    /* Keep only essential animations */
+    .modal-overlay,
+    .modal-content,
+    button:hover {
+      animation-duration: 0.2s !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// ✅ Start FPS monitoring
+setTimeout(() => {
+  requestAnimationFrame(measureFPS);
+}, 2000); // Start after 2 seconds
+
+// ========== Mobile Auto-Optimization ==========
+function isMobileOrLowEnd() {
+  // Check if mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  // Check if low-end device (< 4GB RAM or < 4 cores)
+  const isLowEnd = navigator.deviceMemory ? navigator.deviceMemory < 4 : false;
+  const isFewCores = navigator.hardwareConcurrency ? navigator.hardwareConcurrency < 4 : false;
+  
+  return isMobile || isLowEnd || isFewCores;
+}
+
+// ✅ Auto-disable animations on mobile/low-end devices
+if (isMobileOrLowEnd()) {
+  console.log('📱 Mobile/Low-end device detected. Enabling performance mode.');
+  document.addEventListener('DOMContentLoaded', disableHeavyAnimations);
+}
+
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
   manifestUrl: "https://vorn-studio.github.io/0059bot/webapp/tonconnect-manifest.json",
   buttonRootId: "ton-connect",
