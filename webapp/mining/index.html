@@ -6,6 +6,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="mining.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- ✅ Mobile Performance Optimization -->
+    <style>
+      @media (max-width: 768px), (hover: none) {
+        /* ❌ Անջատել body backgrounds */
+        body::before,
+        body::after {
+          display: none !important;
+        }
+        
+        /* ❌ Անջատել decorative elements */
+        .parallax-stars,
+        .inner-ring,
+        .glass-reflect,
+        .noise-overlay,
+        .corner-node,
+        .glow-rim,
+        *[class*="particle"],
+        *[class*="nebula"],
+        *[class*="halo"] {
+          display: none !important;
+        }
+        
+        /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+        * {
+          animation: none !important;
+        }
+        
+        /* ✅ Թողնել ՄԻԱՅՆ կարճ transitions */
+        button,
+        .btn,
+        .card {
+          transition: transform 0.15s ease, opacity 0.15s ease !important;
+        }
+        
+        /* ❌ Մնացածը - NO transition */
+        *:not(button):not(.btn):not(.card) {
+          transition: none !important;
+        }
+        
+        /* ✅ Hardware acceleration */
+        body, #mining-app, #plans-box {
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+      }
+    </style>
 </head>
 <body>
 

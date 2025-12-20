@@ -1,3 +1,32 @@
+// ========== Mobile Performance ==========
+(function() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    console.log('📱 Mining: Mobile performance mode enabled');
+    
+    const style = document.createElement('style');
+    style.textContent = `
+      *[class*="Float"],
+      *[class*="Glow"],
+      *[class*="Pulse"],
+      *[class*="Shine"],
+      *[class*="Shift"],
+      *[class*="Spin"] {
+        animation: none !important;
+      }
+    `;
+    
+    if (document.head) {
+      document.head.appendChild(style);
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.head.appendChild(style);
+      });
+    }
+  }
+})();
+
 const tg = window.Telegram && window.Telegram.WebApp;
 const API_BASE = window.location.origin;
 const TIER_NAMES = {
