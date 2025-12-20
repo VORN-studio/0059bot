@@ -9069,7 +9069,7 @@ fn process_video_migration(
 use tokio;
 use std::sync::Arc;
 use axum::{Router, Server};
-use socketio_server::SocketIo;
+use actix_web_socket_io::SocketIo;
 use tokio_cron_scheduler::{JobScheduler, Job};
 
 #[tokio::main]
