@@ -342,14 +342,13 @@ async function loadUserFromBackend() {
       console.log("⚠️ user not found");
       return;
     }
+
+    // ← ՆԱԽ սահմանիր U-ն
+    const U = data.user;
+
+    // ← ՀԵՏՈ debug log-եր
     console.log("🔍 DEBUG: U.ref_count =", U.ref_count);
     console.log("🔍 DEBUG: element exists?", $("ref-total"));
-
-    if ($("ref-total")) {
-      $("ref-total").textContent = U.ref_count;
-      console.log("✅ ref-total թարմացվեց:", U.ref_count);
-    }
-    const U = data.user;
 
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";
@@ -357,11 +356,14 @@ async function loadUserFromBackend() {
     balance = U.balance_usd;
     document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
 
-    if ($("ref-total")) $("ref-total").textContent = U.ref_count;
+    if ($("ref-total")) {
+      $("ref-total").textContent = U.ref_count;
+      console.log("✅ ref-total թարմացվեց:", U.ref_count);
+    }
     if ($("ref-active")) $("ref-active").textContent = U.active_refs;
     if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " $";
 
-    const botUsername = "doominobot"; 
+    const botUsername = "doominobot";
     $("ref-link").value =
       `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
 
