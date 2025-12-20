@@ -1756,3 +1756,50 @@ body::after + .parallax-stars {
     }
 }
 
+
+
+/* ========== Mobile Performance Optimization ========== */
+@media (max-width: 768px), (hover: none) {
+  
+  /* ❌ Անջատել body backgrounds */
+  body::before,
+  body::after {
+    display: none !important;
+  }
+  
+  /* ❌ Անջատել decorative elements */
+  .parallax-stars,
+  .inner-ring,
+  .glass-reflect,
+  .noise-overlay,
+  .corner-node,
+  .glow-rim {
+    display: none !important;
+  }
+  
+  /* ❌ Անջատել ԲՈԼՈՐ @keyframes animations-ները */
+  * {
+    animation: none !important;
+  }
+  
+  /* ✅ Թողնել ՄԻԱՅՆ button transitions */
+  button,
+  .btn {
+    transition: transform 0.1s ease, opacity 0.1s ease, background 0.1s ease !important;
+  }
+  
+  /* ❌ Մնացած ամեն ինչ - NO transition */
+  *:not(button):not(.btn) {
+    transition: none !important;
+  }
+  
+  /* ✅ Hardware acceleration */
+  body,
+  #mining-app,
+  #plans-box,
+  .card {
+    transform: translateZ(0);
+    will-change: auto;
+    backface-visibility: hidden;
+  }
+}
