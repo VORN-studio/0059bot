@@ -112,16 +112,6 @@ let app_web = HttpServer::new(|| {
 let socketio = SocketIo::builder()
     .build();
 
-socketio.on("join_chart", |socket: Socket| async move {
-    socket.join("chart_viewers").ok();
-    log::info!("👤 User joined chart_viewers room");
-});
-
-socketio.on("leave_chart", |socket: Socket| async move {
-    socket.leave("chart_viewers").ok();
-    log::info!("👋 User left chart_viewers room");
-});
-
 async fn index() -> ActixResult<HttpResponse> {
     Ok(HttpResponse::Ok()
         .body("✅ Domino backend is online. Go to /app for WebApp."))
