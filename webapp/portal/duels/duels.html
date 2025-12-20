@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+  <meta charset="UTF-8" />
+  <title>Domino Duels</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="duels.css" />
+</head>
+<body>
+  <div class="page">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <button class="btn back" onclick="goBack()">← Վերադառնալ պորտալ</button>
+      <div class="balances">
+        <div class="badge">
+          💎 DOMIT՝ <span id="domit-balance">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="card">
+      <h2 class="game-title">⚔️ DUELS</h2>
+      <p class="game-subtitle">
+        Խաղացիր բոտի կամ իրական խաղացողների հետ։ Հաղթիր և վաստակիր DOMIT։
+      </p>
+
+      <!-- BOT GAMES SECTION -->
+      <div class="section">
+        <h3 class="section-title">🤖 Բոտի հետ խաղ</h3>
+        <p class="section-desc">
+          Վճարիր <strong>2 DOMIT</strong> → Խաղացիր անվերջ մինչև logout
+        </p>
+        <div class="bot-games">
+          <button class="game-card" onclick="playBotGame('tictactoe')">
+            <span class="game-icon">❌⭕</span>
+            <span class="game-name">Tic-Tac-Toe</span>
+            <span class="game-price">2 DOMIT</span>
+          </button>
+          <button class="game-card locked">
+            <span class="game-icon">♟️</span>
+            <span class="game-name">Շախմատ</span>
+            <span class="game-price">Շուտով</span>
+          </button>
+          <button class="game-card locked">
+            <span class="game-icon">🔢</span>
+            <span class="game-name">Սուդոկու</span>
+            <span class="game-price">Շուտով</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ONLINE TABLES SECTION -->
+      <div class="section">
+        <h3 class="section-title">👥 Օնլայն սեղաններ</h3>
+        <div class="online-controls">
+          <button class="btn primary" onclick="openCreateTableModal()">
+            ➕ Ստեղծել սեղան
+          </button>
+          <div class="online-count">
+            🟢 Օնլայն՝ <span id="online-count">0</span>
+          </div>
+        </div>
+
+        <!-- TABLES LIST -->
+        <div id="tables-list" class="tables-list">
+          <div class="empty-state">
+            <span class="empty-icon">🎮</span>
+            <p>Ակտիվ սեղաններ չկան</p>
+            <p class="empty-hint">Ստեղծիր առաջին սեղանը։</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="status" class="status"></div>
+    </div>
+
+    <div class="footer">@doominobot</div>
+  </div>
+
+  <!-- CREATE TABLE MODAL -->
+  <div id="create-modal" class="modal hidden">
+    <div class="modal-box">
+      <h3 class="modal-title">Ստեղծել նոր սեղան</h3>
+      <div class="modal-underline"></div>
+
+      <label class="modal-label">Խաղ</label>
+      <select id="game-type" class="modal-select">
+        <option value="tictactoe">❌⭕ Tic-Tac-Toe</option>
+        <option value="chess" disabled>♟️ Շախմատ (շուտով)</option>
+        <option value="sudoku" disabled>🔢 Սուդոկու (շուտով)</option>
+      </select>
+
+      <label class="modal-label">Bet գումարը (DOMIT)</label>
+      <input
+        id="bet-amount"
+        type="number"
+        class="modal-input"
+        placeholder="Օրինակ՝ 10"
+        min="1"
+      />
+
+      <div id="create-error" class="modal-error"></div>
+
+      <div class="modal-actions">
+        <button class="btn modal-btn modal-cancel" onclick="closeCreateTableModal()">Չեղարկել</button>
+        <button class="btn modal-btn modal-ok" onclick="confirmCreateTable()">Ստեղծել</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN TABLE MODAL -->
+  <div id="join-modal" class="modal hidden">
+    <div class="modal-box">
+      <h3 class="modal-title">Միանալ սեղանին</h3>
+      <div class="modal-underline"></div>
+
+      <div class="join-info">
+        <p><strong>Խաղ՝</strong> <span id="join-game-type"></span></p>
+        <p><strong>Bet՝</strong> <span id="join-bet"></span> DOMIT</p>
+        <p><strong>Ստեղծող՝</strong> <span id="join-creator"></span></p>
+      </div>
+
+      <div id="join-error" class="modal-error"></div>
+
+      <div class="modal-actions">
+        <button class="btn modal-btn modal-cancel" onclick="closeJoinModal()">Չեղարկել</button>
+        <button class="btn modal-btn modal-ok" onclick="confirmJoinTable()">Միանալ</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="duels.js"></script>
+</body>
+</html>
