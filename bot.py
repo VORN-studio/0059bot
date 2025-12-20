@@ -118,7 +118,7 @@ socketio = SocketIO(
     async_mode="threading",
     logger=True,
     engineio_logger=False,
-    transports=['polling']
+    transports=['polling', 'websocket'] 
 )
 
 @socketio.on('join_chart')
