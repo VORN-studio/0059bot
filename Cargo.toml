@@ -3,29 +3,28 @@ name = "domino_bot"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "domino-bot"
+path = "src/main.rs"
+
 [dependencies]
-teloxide = { version = "0.12", features = ["macros"] }
-actix-web = "4.3"
-actix-cors = "0.6"
-sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres"] }
-reqwest = { version = "0.11", features = ["json"] }
-dotenv = "0.15"
-socketio = "0.4"
 tokio = { version = "1", features = ["full"] }
-image = "0.24"
-tokio-cron-scheduler = "0.9"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-chrono = "0.4"
-log = "0.4"
-env_logger = "0.10"
-base64 = "0.21"
-rand = "0.8"
+axum = { version = "0.7", features = ["json"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-native-tls", "postgres", "decimal"] }
+rust_decimal = "1.33"
 teloxide = { version = "0.12", features = ["macros", "webhooks"] }
 dptree = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.12", features = ["json"] }
+dotenv = "0.15"
+chrono = "0.4"
+rand = "0.8"
 url = "2.5"
-axum = "0.7"
-image = { version = "0.24", features = ["webp"] }
-tower-http = { version = "0.5", features = ["cors"] }
+base64 = "0.22"
+log = "0.4"
+env_logger = "0.11"
+image = { version = "0.25", features = ["webp"] }
 tokio-cron-scheduler = "0.10"
-socketio-server = "0.4"
