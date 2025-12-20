@@ -452,9 +452,22 @@ function openCoinflip() {
 }
 
 function showComingSoonModal(title, message) {
-    // Ստեղծիր modal
     const modal = document.createElement('div');
+    
+    // ✅ FIXED POSITION - VIEWPORT CENTER (ՈՉ ԹԵ PAGE CENTER)
     modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 99999;
+        max-width: 90%;
+        width: 340px;
+    `;
+
+    // ✅ BACKDROP
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
@@ -462,29 +475,16 @@ function showComingSoonModal(title, message) {
         bottom: 0;
         background: rgba(0, 0, 0, 0.85);
         backdrop-filter: blur(12px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
+        z-index: 99998;
         animation: fadeIn 0.3s ease;
-        overflow: auto;
     `;
 
-    // ✅ VIEWPORT-Ի ՄԵՋՏԵՂ
-    const scrollY = window.scrollY || window.pageYOffset;
-    
     modal.innerHTML = `
         <div style="
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95));
             border: 2px solid rgba(56, 189, 248, 0.4);
             border-radius: 24px;
             padding: 32px 24px;
-            max-width: 90%;
-            width: 340px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 
                         0 0 40px rgba(56, 189, 248, 0.2),
                         inset 0 0 30px rgba(56, 189, 248, 0.05);
@@ -512,7 +512,7 @@ function showComingSoonModal(title, message) {
                 white-space: pre-line;
             ">${message}</p>
             
-            <button onclick="this.closest('div').parentElement.remove()" style="
+            <button id="modal-close-btn" style="
                 background: linear-gradient(135deg, #38bdf8, #1d4ed8);
                 color: white;
                 border: none;
@@ -529,24 +529,23 @@ function showComingSoonModal(title, message) {
         </div>
     `;
 
+    document.body.appendChild(backdrop);
     document.body.appendChild(modal);
-
-    // Block scroll
     document.body.style.overflow = 'hidden';
-    
-    // Remove modal
+
     const removeModal = () => {
         document.body.style.overflow = '';
+        backdrop.style.animation = 'fadeOut 0.3s ease';
         modal.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => modal.remove(), 300);
+        setTimeout(() => {
+            backdrop.remove();
+            modal.remove();
+        }, 300);
     };
 
-    // Click outside to close
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) removeModal();
-    });
+    modal.querySelector('#modal-close-btn').addEventListener('click', removeModal);
+    backdrop.addEventListener('click', removeModal);
 
-    // Auto remove after 5s
     setTimeout(() => {
         if (modal.parentElement) removeModal();
     }, 5000);
