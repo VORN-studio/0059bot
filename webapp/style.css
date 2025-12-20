@@ -1954,28 +1954,18 @@ input[readonly] {
   to { transform: translateY(0); opacity: 1; }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-}
-
-@keyframes slideUp {
+@keyframes modalSlideUp {
     from { 
         opacity: 0;
-        transform: translateY(30px) scale(0.95);
+        transform: translate(-50%, -40%) scale(0.9);
     }
     to { 
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
-@keyframes bounce {
+@keyframes modalBounce {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.15); }
 }

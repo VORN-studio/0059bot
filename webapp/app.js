@@ -451,7 +451,6 @@ function openCoinflip() {
     showComingSoonModal("🪙 Coinflip", "Coinflip խաղը ժամանակավորապես փակ է։\n\nՀաճախ այցելեք՝ շուտով կբացվի!");
 }
 
-// ✅ CUSTOM MODAL FUNCTION
 function showComingSoonModal(title, message) {
     // Ստեղծիր modal
     const modal = document.createElement('div');
@@ -468,10 +467,18 @@ function showComingSoonModal(title, message) {
         justify-content: center;
         z-index: 99999;
         animation: fadeIn 0.3s ease;
+        overflow: auto;
     `;
 
+    // ✅ VIEWPORT-Ի ՄԵՋՏԵՂ
+    const scrollY = window.scrollY || window.pageYOffset;
+    
     modal.innerHTML = `
         <div style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95));
             border: 2px solid rgba(56, 189, 248, 0.4);
             border-radius: 24px;
@@ -482,12 +489,12 @@ function showComingSoonModal(title, message) {
                         0 0 40px rgba(56, 189, 248, 0.2),
                         inset 0 0 30px rgba(56, 189, 248, 0.05);
             text-align: center;
-            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         ">
             <div style="
                 font-size: 48px;
                 margin-bottom: 16px;
-                animation: bounce 0.6s ease 0.2s;
+                animation: modalBounce 0.6s ease 0.2s;
             ">🔒</div>
             
             <h3 style="
@@ -524,12 +531,24 @@ function showComingSoonModal(title, message) {
 
     document.body.appendChild(modal);
 
-    // Ավտոմատ հեռացնել 5 վայրկյանից
+    // Block scroll
+    document.body.style.overflow = 'hidden';
+    
+    // Remove modal
+    const removeModal = () => {
+        document.body.style.overflow = '';
+        modal.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => modal.remove(), 300);
+    };
+
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) removeModal();
+    });
+
+    // Auto remove after 5s
     setTimeout(() => {
-        if (modal.parentElement) {
-            modal.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => modal.remove(), 300);
-        }
+        if (modal.parentElement) removeModal();
     }, 5000);
 }
 
