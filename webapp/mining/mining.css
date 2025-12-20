@@ -1,64 +1,45 @@
-/* =========================================================
-   DOMINO MINING — ELITE ANIMATED CSS
-   Author: ChatGPT x Нарек 059
-   ========================================================= */
-
-/* ---------- ROOT & GLOBAL ---------- */
-
 :root {
-    /* ======= CORE BACKGROUND COLORS ======= */
     --bg-main: #020617;
     --bg-secondary: #040b1a;
     --bg-card: rgba(15, 23, 42, 0.92);
     --bg-card-soft: rgba(15, 23, 42, 0.83);
 
-    /* ======= ACCENTS WITH HOLOGRAPHIC GLOW ======= */
     --accent: #38bdf8;
     --accent-2: #a855f7;
     --accent-3: #22c55e;
 
-    /* ENERGY GLOWS */
     --accent-glow-1: rgba(56, 189, 248, 0.58);
     --accent-glow-2: rgba(168, 85, 247, 0.55);
     --accent-glow-3: rgba(34, 197, 94, 0.55);
 
-    /* ======= TEXT ======= */
     --text-main: #e5e7eb;
     --text-soft: #9ca3af;
 
-    /* ======= BORDER AND DEPTH ======= */
     --border-soft: rgba(148, 163, 184, 0.2);
     --border-strong: rgba(255, 255, 255, 0.08);
 
-    /* ======= SHADOWS - STRONGER, DEEPER ======= */
     --shadow-strong: 0 25px 80px rgba(0, 0, 0, 0.75);
     --shadow-accent: 0 0 30px rgba(56, 189, 248, 0.45);
     --shadow-purple: 0 0 30px rgba(168, 85, 247, 0.45);
     --shadow-green: 0 0 30px rgba(34, 197, 94, 0.45);
 
-    /* ======= RADII ======= */
     --radius-lg: 22px;
     --radius-md: 16px;
     --radius-sm: 12px;
 
-    /* ======= BLURS ======= */
     --blur-strong: 32px;
     --blur-soft: 18px;
 
-    /* ======= HOLOGRAPHIC GRADIENTS ======= */
     --grad-accent: linear-gradient(135deg, #38bdf8, #a855f7, #22c55e);
     --grad-soft: linear-gradient(145deg, rgba(56,189,248,0.1), rgba(168,85,247,0.12));
 
-    /* ======= ANIMATIONS ======= */
     --pulse-speed: 6s;
     --glow-pulse-speed: 8s;
     --shine-speed: 3.8s;
 
-    /* ======= INTERACTION ======= */
     --hover-scale: 1.04;
     --tap-scale: 0.96;
 
-    /* ======= SPECIAL EFFECTS ======= */
     --holo-shimmer: linear-gradient(
         120deg,
         rgba(255,255,255,0.1),
@@ -73,9 +54,6 @@
         transparent 70%
     );
 }
-
-
-/* Global background with moving gradient + stars */
 
 body {
     margin: 0;
@@ -94,7 +72,6 @@ body {
     filter: saturate(1.25);
 }
 
-/* ===== VOLCANIC-NEBULA FOG LAYER ===== */
 body::before {
     content: "";
     position: fixed;
@@ -112,7 +89,6 @@ body::before {
     z-index: -2;
 }
 
-/* ===== STARFIELD + COSMIC DUST ===== */
 body::after {
     content: "";
     position: fixed;
@@ -134,7 +110,6 @@ body::after {
     z-index: -3;
 }
 
-/* ===== DEPTH LAYER - PARALLAX PARTICLES ===== */
 body::after + .parallax-stars {
     content: "";
     position: fixed;
@@ -149,8 +124,6 @@ body::after + .parallax-stars {
     z-index: -4;
     pointer-events: none;
 }
-
-/* ====== ANIMATIONS ====== */
 
 @keyframes nebulaMove {
     0%   { transform: translate3d(-4%, -3%, 0) scale(1); filter: blur(28px); }
@@ -169,19 +142,15 @@ body::after + .parallax-stars {
 }
 
 
-/* Container for the app */
-
 #mining-app {
     position: relative;
     padding: 24px 18px 40px;
     min-height: 100vh;
     box-sizing: border-box;
 
-    /* smooth rounded canvas effect */
     backdrop-filter: blur(6px) saturate(1.15);
     -webkit-backdrop-filter: blur(6px) saturate(1.15);
 
-    /* subtle inner glow */
     box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.25),
                 inset 0 0 80px rgba(30, 58, 138, 0.12);
 
@@ -189,7 +158,6 @@ body::after + .parallax-stars {
     opacity: 0;
 }
 
-/* glossy atmospheric overlay with animated light */
 #mining-app::before {
     content: "";
     position: absolute;
@@ -208,7 +176,6 @@ body::after + .parallax-stars {
     animation: glossyFloat 14s ease-in-out infinite alternate;
 }
 
-/* Floating dust overlay for cinematic depth */
 #mining-app::after {
     content: "";
     position: absolute;
@@ -222,8 +189,6 @@ body::after + .parallax-stars {
     animation: miningDust 45s linear infinite;
     z-index: -1;
 }
-
-/* === ANIMATIONS === */
 
 @keyframes appFadeIn {
     from { opacity: 0; transform: translateY(12px); }
@@ -239,9 +204,6 @@ body::after + .parallax-stars {
     from { transform: translate3d(0,0,0); }
     to   { transform: translate3d(-60px, -40px, 0); }
 }
-
-
-/* ---------- TOP BAR ---------- */
 
 #top-bar {
     display: flex;
@@ -276,7 +238,6 @@ body::after + .parallax-stars {
     animation: topBarReveal 0.9s ease-out forwards;
 }
 
-/* animated holo border ring */
 #top-bar::before {
     content: "";
     position: absolute;
@@ -299,7 +260,6 @@ body::after + .parallax-stars {
     z-index: -2;
 }
 
-/* soft inner reflective sheen */
 #top-bar::after {
     content: "";
     position: absolute;
@@ -316,8 +276,6 @@ body::after + .parallax-stars {
     z-index: -1;
 }
 
-/* === ANIMATIONS === */
-
 @keyframes holoSpin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
@@ -328,13 +286,6 @@ body::after + .parallax-stars {
     60%  { opacity: 1; transform: translateY(0px) scale(1.02); }
     100% { opacity: 1; transform: translateY(0px) scale(1); }
 }
-
-
-/* BACK BUTTON */
-
-/* ============================
-   BACK BUTTON — HOLO PREMIUM
-   ============================ */
 
 #back-btn {
     background: radial-gradient(circle at 30% 20%, #38bdf8, #1d4ed8 70%, #0f172a 100%);
@@ -350,7 +301,6 @@ body::after + .parallax-stars {
     align-items: center;
     justify-content: center;
     
-    /* 3D physics */
     transform: translateY(0) scale(1);
     transition:
         transform 0.2s cubic-bezier(0.22,1,0.36,1),
@@ -359,7 +309,6 @@ body::after + .parallax-stars {
         background 0.3s ease,
         opacity 0.3s ease;
 
-    /* Initial glow */
     box-shadow:
         0 4px 14px rgba(56, 189, 248, 0.35),
         0 0 12px rgba(56, 189, 248, 0.25),
@@ -374,8 +323,6 @@ body::after + .parallax-stars {
     flex-shrink: 0 !important;
 }
 
-
-/* HOLOGRAPHIC RING EFFECT */
 #back-btn::before {
     content: "";
     position: absolute;
@@ -394,7 +341,6 @@ body::after + .parallax-stars {
     animation: holoSpinBtn 8s linear infinite;
 }
 
-/* internal glow pulse */
 #back-btn::after {
     content: "";
     position: absolute;
@@ -410,7 +356,6 @@ body::after + .parallax-stars {
     pointer-events: none;
 }
 
-/* Hover → प्रकाश + aura */
 #back-btn:hover {
     transform: translateY(-3px) scale(1.06);
     filter: brightness(1.08);
@@ -423,7 +368,6 @@ body::after + .parallax-stars {
     opacity: 0.5;
 }
 
-/* Press physics */
 #back-btn:active {
     transform: translateY(2px) scale(0.95);
     filter: brightness(0.92);
@@ -432,18 +376,10 @@ body::after + .parallax-stars {
         0 0 10px rgba(56,189,248,0.3);
 }
 
-/* HOLOGRAPHIC SPIN */
 @keyframes holoSpinBtn {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
-
-
-/* INFO TEXT IN TOP BAR */
-
-/* ==============================
-   ADVANCED TOP MINING INFO HUD
-   ============================== */
 
 #top-info {
     font-size: 13.4px;
@@ -469,7 +405,6 @@ body::after + .parallax-stars {
     overflow: hidden;
 }
 
-/* Floating hologram shine */
 #top-info::before {
     content: "";
     position: absolute;
@@ -496,7 +431,6 @@ body::after + .parallax-stars {
     to   { transform: translate3d(12%, 18%, 0) rotate(8deg); }
 }
 
-/* text rows */
 #top-info div {
     display: flex;
     gap: 8px;
@@ -507,7 +441,6 @@ body::after + .parallax-stars {
     position: relative;
 }
 
-/* Row glowing separator line */
 #top-info div:not(:last-child)::after {
     content: "";
     position: absolute;
@@ -523,14 +456,12 @@ body::after + .parallax-stars {
     );
 }
 
-/* numbers */
 #top-info span {
     color: #e7f2ff;
     font-weight: 700;
     text-shadow: 0 0 6px rgba(56,189,248,0.45);
 }
 
-/* ICON — upgraded dynamic pickaxe */
 #top-info div:nth-child(2)::before {
     content: "⛏";
     font-size: 15px;
@@ -558,12 +489,6 @@ body::after + .parallax-stars {
     100% { text-shadow: 0 0 4px rgba(56,189,248,0.5); }
 }
 
-
-/* ---------- TITLES ---------- */
-
-/* ===============================
-      PREMIUM MINING TITLE
-   =============================== */
 .title {
     text-align: center;
     font-size: 30px;
@@ -571,7 +496,6 @@ body::after + .parallax-stars {
     margin: 10px 0 20px;
     letter-spacing: 0.7px;
 
-    /* holographic gradient */
     background: linear-gradient(
         120deg,
         #38bdf8 0%,
@@ -588,13 +512,11 @@ body::after + .parallax-stars {
     position: relative;
     text-transform: uppercase;
 
-    /* depth & glow */
     filter: drop-shadow(0 0 6px rgba(56,189,248,0.25))
             drop-shadow(0 0 14px rgba(168,85,247,0.25))
             drop-shadow(0 0 22px rgba(34,197,94,0.25));
 }
 
-/* Moving hologram shine sweeping across letters */
 .title::before {
     content: "";
     position: absolute;
@@ -612,7 +534,6 @@ body::after + .parallax-stars {
     animation: titleShimmer 3.4s ease-in-out infinite;
 }
 
-/* Energy beam underline */
 .title::after {
     content: "";
     position: absolute;
@@ -637,36 +558,23 @@ body::after + .parallax-stars {
     animation: underlinePulse 2.6s ease-in-out infinite;
 }
 
-/* ===============================
-       KEYFRAME ANIMATIONS
-   =============================== */
-
 @keyframes titleGradientShift {
     0% { background-position: 0% center; }
     50% { background-position: 100% center; }
     100% { background-position: 0% center; }
 }
 
-/* sweeping hologram streak */
 @keyframes titleShimmer {
     0% { transform: translateX(-60%) skewX(-12deg); opacity: 0.15; }
     50% { transform: translateX(10%) skewX(-12deg); opacity: 0.35; }
     100% { transform: translateX(80%) skewX(-12deg); opacity: 0.10; }
 }
 
-/* pulsing underline beam */
 @keyframes underlinePulse {
     0% { opacity: 0.75; transform: translateX(-50%) scaleX(0.85); }
     50% { opacity: 1; transform: translateX(-50%) scaleX(1.1); }
     100% { opacity: 0.75; transform: translateX(-50%) scaleX(0.85); }
 }
-
-
-/* subtitle */
-
-/* ============================
-      PREMIUM SUBTITLE
-   ============================ */
 
 .subtitle {
     margin-top: 26px;
@@ -679,7 +587,6 @@ body::after + .parallax-stars {
     gap: 10px;
     letter-spacing: 0.4px;
 
-    /* glow depth */
     text-shadow:
         0 0 6px rgba(168,85,247,0.35),
         0 0 14px rgba(34,197,94,0.25),
@@ -690,22 +597,18 @@ body::after + .parallax-stars {
     animation: subtitlePulse 4s ease-in-out infinite;
 }
 
-/* animated lightning icon */
 .subtitle::before {
     content: "⚡";
     font-size: 20px;
     color: #fde047;
     display: inline-block;
 
-    /* shockwave glow */
     filter: drop-shadow(0 0 10px rgba(250, 204, 21, 1))
             drop-shadow(0 0 18px rgba(250, 204, 21, 0.8));
 
-    /* electric shaking animation */
     animation: lightningShake 0.85s infinite steps(2) alternate;
 }
 
-/* hologram underline effect */
 .subtitle::after {
     content: "";
     position: absolute;
@@ -729,18 +632,12 @@ body::after + .parallax-stars {
     animation: subtitleLinePulse 3s ease-in-out infinite;
 }
 
-/* ============================
-      SUBTITLE ANIMATIONS
-   ============================ */
-
-/* soft breathing glow */
 @keyframes subtitlePulse {
     0%   { opacity: 0.85; transform: translateY(0); }
     50%  { opacity: 1; transform: translateY(-1px); }
     100% { opacity: 0.85; transform: translateY(0); }
 }
 
-/* electricity vibration effect */
 @keyframes lightningShake {
     0%   { transform: translate(0, 0); }
     25%  { transform: translate(1px, -1px); }
@@ -749,19 +646,11 @@ body::after + .parallax-stars {
     100% { transform: translate(-1px, -1px); }
 }
 
-/* underline neon beam pulse */
 @keyframes subtitleLinePulse {
     0%   { transform: scaleX(0.85); opacity: 0.5; }
     50%  { transform: scaleX(1); opacity: 1; }
     100% { transform: scaleX(0.85); opacity: 0.5; }
 }
-
-
-/* ---------- BALANCE BOX ---------- */
-
-/* =======================================================
-      USER BALANCE PANEL — LUXURY CASINO EDITION
-   ======================================================= */
 
 #user-balance-box {
     position: relative;
@@ -790,18 +679,15 @@ body::after + .parallax-stars {
     overflow: hidden;
     letter-spacing: 0.3px;
 
-    /* subtle breathing animation */
     animation: balanceBreath 6s ease-in-out infinite;
 }
 
-/* smooth breathing glow */
 @keyframes balanceBreath {
     0%   { box-shadow: 0 26px 70px rgba(15,23,42,1), inset 0 0 20px rgba(56,189,248,0.12); }
     50%  { box-shadow: 0 32px 85px rgba(15,23,42,1), inset 0 0 26px rgba(56,189,248,0.20); }
     100% { box-shadow: 0 26px 70px rgba(15,23,42,1), inset 0 0 20px rgba(56,189,248,0.12); }
 }
 
-/* shimmering line passing through */
 #user-balance-box::before {
     content: "";
     position: absolute;
@@ -818,14 +704,12 @@ body::after + .parallax-stars {
     opacity: 0.9;
 }
 
-/* shimmer animation */
 @keyframes balanceShine {
     0%   { transform: translateX(-150%) rotate(8deg); }
     50%  { transform: translateX(150%) rotate(8deg); }
     100% { transform: translateX(150%) rotate(8deg); }
 }
 
-/* Floating particles inside the box */
 #user-balance-box::after {
     content: "";
     position: absolute;
@@ -848,7 +732,6 @@ body::after + .parallax-stars {
     100% { transform: translateY(0) translateX(0); }
 }
 
-/* MAIN NUMBER (balance) */
 #user-balance-box span {
     font-size: 25px;
     font-weight: 900;
@@ -859,7 +742,6 @@ body::after + .parallax-stars {
         0 0 26px rgba(56,189,248,0.55),
         0 0 38px rgba(168,85,247,0.45);
 
-    /* money pop animation */
     animation: balancePop 2.4s ease-in-out infinite;
 }
 
@@ -869,12 +751,6 @@ body::after + .parallax-stars {
     100% { transform: scale(1); opacity: 1; }
 }
 
-
-/* pulse animation for balance number */
-/* =======================================================
-      MAIN BALANCE NUMBER — HOLOGRAPHIC ENERGY PULSE
-   ======================================================= */
-
 #user-balance {
     position: relative;
     display: inline-block;
@@ -883,7 +759,6 @@ body::after + .parallax-stars {
     z-index: 1;
 }
 
-/* Main pulse animation */
 @keyframes balancePulse {
     0% {
         transform: scale(1);
@@ -910,17 +785,12 @@ body::after + .parallax-stars {
     }
 }
 
-/* Holographic color drift */
 @keyframes balanceChromatic {
     0%   { color: #ffffff; }
-    30%  { color: #dbeafe; } /* թեթև blue tint */
-    60%  { color: #f3e8ff; } /* թեթև purple tint */
+    30%  { color: #dbeafe; } 
+    60%  { color: #f3e8ff; } 
     100% { color: #ffffff; }
 }
-
-/* -------------------------------------------------------
-      ENERGY RING — circular neon ripple around the text
-   ------------------------------------------------------- */
 
 #user-balance::after {
     content: "";
@@ -955,9 +825,6 @@ body::after + .parallax-stars {
         opacity: 0;
     }
 }
-
-
-/* ---------- CARD BASE ---------- */
 
 .card {
     background: linear-gradient(
@@ -994,9 +861,6 @@ body::after + .parallax-stars {
         filter 0.25s ease;
 }
 
-/* ----------------------------------------------------------
-      HOVER EFFECT — floating, glowing, premium interaction
-   ---------------------------------------------------------- */
 .card:hover {
     transform: translateY(-4px) scale(1.01);
     box-shadow:
@@ -1006,9 +870,6 @@ body::after + .parallax-stars {
     filter: brightness(1.05);
 }
 
-/* ----------------------------------------------------------
-      MOVING HOLOGRAPHIC GLOSS — traveling light streak
-   ---------------------------------------------------------- */
 .card::before {
     content: "";
     position: absolute;
@@ -1032,9 +893,6 @@ body::after + .parallax-stars {
     100% { transform: translateX(130%) rotate(12deg); }
 }
 
-/* ----------------------------------------------------------
-      GLOW RING — soft aura behind the card
-   ---------------------------------------------------------- */
 .card::after {
     content: "";
     position: absolute;
@@ -1056,10 +914,6 @@ body::after + .parallax-stars {
     pointer-events: none;
 }
 
-
-/* ---------- ACTIVE MINER CARD ---------- */
-
-/* TITLE — strong holographic header */
 #active-miner-box h2 {
     margin: 0 0 10px;
     font-size: 20px;
@@ -1078,7 +932,6 @@ body::after + .parallax-stars {
     position: relative;
 }
 
-/* small glow underline */
 #active-miner-box h2::after {
     content: "";
     position: absolute;
@@ -1092,7 +945,6 @@ body::after + .parallax-stars {
     opacity: 0.85;
 }
 
-/* PARAGRAPHS — animated soft glow pulse */
 #active-miner-box p {
     margin: 6px 0;
     font-size: 15px;
@@ -1111,7 +963,6 @@ body::after + .parallax-stars {
     100% { opacity: 0.75; transform: translateX(0); }
 }
 
-/* STRONG VALUES — energetic glow for numbers */
 #active-miner-box strong {
     color: #38bdf8;
     font-weight: 800;
@@ -1121,7 +972,6 @@ body::after + .parallax-stars {
         0 0 18px rgba(56,189,248,0.45);
 }
 
-/* animated pickaxe icon before text */
 #active-miner-box p::before {
     content: "⛏";
     font-size: 15px;
@@ -1139,8 +989,6 @@ body::after + .parallax-stars {
     100% { transform: rotate(0deg); }
 }
 
-
-/* small pill for Tier label inside active miner card (optional if used) */
 #active-tier {
     display: inline-flex;
     align-items: center;
@@ -1169,12 +1017,10 @@ body::after + .parallax-stars {
         0 0 18px rgba(16,185,129,0.35),
         inset 0 0 8px rgba(255,255,255,0.25);
 
-    /* holographic shine */
     position: relative;
     overflow: hidden;
 }
 
-/* moving glossy highlight */
 #active-tier::before {
     content: "";
     position: absolute;
@@ -1199,7 +1045,6 @@ body::after + .parallax-stars {
     100% { transform: translateX(120%) skewX(-20deg); }
 }
 
-/* soft pulse effect for rank badge */
 #active-tier {
     animation: tierPulse 3s ease-in-out infinite;
 }
@@ -1209,9 +1054,6 @@ body::after + .parallax-stars {
     50%  { transform: scale(1.06); box-shadow: 0 0 22px rgba(34,197,94,0.55); }
     100% { transform: scale(1); box-shadow: 0 0 10px rgba(34,197,94,0.35); }
 }
-
-
-/* ---------- PLAN CARDS ---------- */
 
 .plan-card {
     background: linear-gradient(
@@ -1242,7 +1084,6 @@ body::after + .parallax-stars {
         background 0.28s ease;
 }
 
-/* 🔥 Holographic energy swirl inside the card */
 .plan-card::before {
     content: "";
     position: absolute;
@@ -1257,7 +1098,6 @@ body::after + .parallax-stars {
     pointer-events: none;
 }
 
-/* 💫 Outer animated neon perimeter */
 .plan-card::after {
     content: "";
     position: absolute;
@@ -1287,7 +1127,6 @@ body::after + .parallax-stars {
     100% { transform: rotate(360deg); }
 }
 
-/* ⚡ Hover — card becomes ALIVE */
 .plan-card:hover {
     transform: translateY(-4px) scale(1.03);
     box-shadow:
@@ -1311,8 +1150,6 @@ body::after + .parallax-stars {
     opacity: 0.75;
 }
 
-/* ========== TEXT ========== */
-
 .plan-card h3 {
     margin: 0 0 8px;
     font-size: 18px;
@@ -1329,15 +1166,11 @@ body::after + .parallax-stars {
     color: #cbd5e1;
 }
 
-/* 💰 Price highlight */
 .plan-card p:nth-child(2) {
     color: #fde68a;
     font-weight: 700;
     text-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
 }
-
-
-/* ---------- BUTTONS ---------- */
 
 .btn {
     width: 100%;
@@ -1375,7 +1208,6 @@ body::after + .parallax-stars {
         background-position 0.6s ease;
 }
 
-/* 🔥 Hologram glossy wave across button */
 .btn::before {
     content: "";
     position: absolute;
@@ -1398,8 +1230,6 @@ body::after + .parallax-stars {
     100% { transform: translateX(150%) rotate(15deg); }
 }
 
-
-/* 💥 Ripple explosion effect on press */
 .btn:active::after {
     content: "";
     position: absolute;
@@ -1419,8 +1249,6 @@ body::after + .parallax-stars {
     100% { transform: translate(-50%, -50%) scale(32); opacity: 0; }
 }
 
-
-/* 🌈 Gradient movement + elevation */
 .btn:hover {
     transform: translateY(-2px) scale(1.03);
     background-position: 100% 0;
@@ -1431,7 +1259,6 @@ body::after + .parallax-stars {
     filter: brightness(1.06);
 }
 
-/* 👊 Strong click compression */
 .btn:active {
     transform: translateY(2px) scale(0.97);
     box-shadow:
@@ -1439,10 +1266,6 @@ body::after + .parallax-stars {
         0 0 0 1px rgba(15,23,42,1);
 }
 
-
-/* ---------- CLAIM BUTTON INSIDE ACTIVE MINER ---------- */
-
-/* MAIN CLAIM BUTTON — Ultra Neon Edition */
 #claim-btn {
     margin-top: 14px;
     padding: 13px 16px;
@@ -1478,7 +1301,6 @@ body::after + .parallax-stars {
     overflow: hidden;
 }
 
-/* HOLOGRAM LIGHT BEAM */
 #claim-btn::before {
     content: "";
     position: absolute;
@@ -1501,7 +1323,6 @@ body::after + .parallax-stars {
     100% { transform: translateX(160%) rotate(18deg); }
 }
 
-/* PULSING NEON AURA */
 #claim-btn::after {
     content: "";
     position: absolute;
@@ -1519,7 +1340,6 @@ body::after + .parallax-stars {
     100% { opacity: 0.05; }
 }
 
-/* HOVER — elevation + neon bloom */
 #claim-btn:hover {
     transform: translateY(-2px) scale(1.03);
     background-position: 100% 0;
@@ -1532,7 +1352,6 @@ body::after + .parallax-stars {
     filter: brightness(1.07);
 }
 
-/* CLICK — compression + ripple explosion */
 #claim-btn:active {
     transform: translateY(2px) scale(0.96);
     box-shadow:
@@ -1540,7 +1359,6 @@ body::after + .parallax-stars {
         0 0 0 1px rgba(15,23,42,1);
 }
 
-/* rippling blast on click */
 #claim-btn:active .ripple {
     animation: rippleBlastClaim 0.55s ease-out forwards;
 }
@@ -1551,10 +1369,6 @@ body::after + .parallax-stars {
     100% { transform: scale(34); opacity: 0; }
 }
 
-
-/* ---------- HEADER NUMBERS PULSE (TOP BAR) ---------- */
-
-/* MAIN HEADER STATS — balance & speed */
 #header-balance,
 #header-speed {
     font-weight: 800;
@@ -1569,11 +1383,9 @@ body::after + .parallax-stars {
         0 0 40px rgba(14,165,233,0.35),
         0 0 60px rgba(14,165,233,0.18);
 
-    /* subtle hologram flicker */
     animation: statFlicker 4.8s ease-in-out infinite alternate;
 }
 
-/* HOLOGRAM SHIMMER EFFECT */
 @keyframes statFlicker {
     0%   { opacity: 0.88; filter: brightness(1.0); }
     20%  { opacity: 1;    filter: brightness(1.12); }
@@ -1583,33 +1395,24 @@ body::after + .parallax-stars {
     100% { opacity: 1;    filter: brightness(1.10); }
 }
 
-
-/* tiny breathing animation for speed value */
-/* upgraded animated breathing + energy pulse */
 #header-speed {
     animation:
         speedBreath 3.2s ease-in-out infinite,
         speedPulse 2.6s ease-in-out infinite;
 }
 
-/* original breathing (kept & improved) */
 @keyframes speedBreath {
     0%   { transform: scale(1);   }
     40%  { transform: scale(1.06); }
     100% { transform: scale(1);   }
 }
 
-/* added electric pulse */
 @keyframes speedPulse {
     0%   { text-shadow: 0 0 10px rgba(56,189,248,0.65); }
     50%  { text-shadow: 0 0 20px rgba(56,189,248,1); }
     100% { text-shadow: 0 0 10px rgba(56,189,248,0.65); }
 }
 
-
-/* ---------- SCROLLBAR ---------- */
-
-/* Scrollbar Track */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -1618,7 +1421,6 @@ body::after + .parallax-stars {
     backdrop-filter: blur(4px);
 }
 
-/* Scrollbar Thumb (the moving part) */
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(
         180deg,
@@ -1632,7 +1434,6 @@ body::after + .parallax-stars {
     transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* Hover effect — stronger glow */
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
         180deg,
@@ -1644,23 +1445,17 @@ body::after + .parallax-stars {
         0 0 22px rgba(168,85,247,1);
 }
 
-/* Scrollbar corner (for some devices) */
 ::-webkit-scrollbar-corner {
     background: transparent;
 }
 
-
-/* ---------- RESPONSIVE ---------- */
-
 @media (max-width: 480px) {
 
-    /* overall container */
     #mining-app {
         padding: 16px 12px 32px;
-        transform: translateZ(0); /* smoother scrolling */
+        transform: translateZ(0); 
     }
 
-    /* top bar adjustments */
     #top-bar {
         gap: 10px;
         padding: 8px 10px;
@@ -1672,7 +1467,6 @@ body::after + .parallax-stars {
             0 0 0 1px rgba(56,189,248,0.15);
     }
 
-    /* title adjustments */
     .title {
         font-size: 23px;
         letter-spacing: 0.3px;
@@ -1681,7 +1475,6 @@ body::after + .parallax-stars {
         text-shadow: 0 0 12px rgba(56,189,248,0.5);
     }
 
-    /* balance box */
     #user-balance-box {
         font-size: 13.5px;
         padding: 12px 14px;
@@ -1696,14 +1489,12 @@ body::after + .parallax-stars {
         font-weight: 800;
     }
 
-    /* subtitles */
     .subtitle {
         font-size: 15.5px;
         gap: 6px;
         margin-top: 20px;
     }
 
-    /* cards & plan cards */
     .card,
     .plan-card {
         padding: 12px 12px 11px;
@@ -1723,12 +1514,10 @@ body::after + .parallax-stars {
         font-size: 12.5px;
     }
 
-    /* mining active box text */
     #active-miner-box p {
         font-size: 13px;
     }
 
-    /* buttons */
     .btn {
         font-size: 14px;
         padding: 10px 12px;
@@ -1744,7 +1533,6 @@ body::after + .parallax-stars {
             0 0 0 1px rgba(56,189,248,0.7);
     }
 
-    /* top info text */
     #top-info {
         font-size: 12.5px;
         line-height: 1.45;
@@ -1761,26 +1549,56 @@ body::after + .parallax-stars {
 /* ========== Mobile Performance ========== */
 @media (max-width: 768px) {
   
-  /* ✅ Պահել backgrounds, բայց անջատել animations */
+  /* ❌ Հեռացնել ծանր background effects */
   body::before,
   body::after {
     animation: none !important;
-    opacity: 0.3 !important; /* Թույլ գույն */
+    opacity: 0.15 !important;
+    filter: blur(0px) !important;
   }
   
-  /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+  /* ❌ Անջատել backdrop-filter (ամենածանրը mobile-ում) */
   *,
   *::before,
   *::after {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+  * {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
-    transition-duration: 0.1s !important;
+    transition-duration: 0.05s !important;
+  }
+  
+  /* ✅ Hardware acceleration для scroll */
+  body,
+  #mining-app {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    will-change: scroll-position;
+  }
+  
+  /* ✅ Optimize cards rendering */
+  .plan-card,
+  .card {
+    contain: layout style paint;
+    content-visibility: auto;
+  }
+  
+  /* ✅ Remove shadows on mobile */
+  .plan-card,
+  .card,
+  .btn,
+  #top-bar {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
   }
   
   /* ✅ Թողնել button feedback */
   button:active,
   .btn:active {
     transform: scale(0.97) !important;
-    transition: transform 0.1s ease !important;
+    transition: transform 0.05s ease !important;
   }
 }
