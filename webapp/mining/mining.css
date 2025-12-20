@@ -1627,5 +1627,183 @@ body::after {
     }
 }
 
+/* ========================================
+   🚀 MOBILE PERFORMANCE OPTIMIZATION
+======================================== */
+
+@media (max-width: 768px), (hover: none) {
+    
+    /* ❌ Անջատել body decorative elements */
+    body::before,
+    body::after {
+        display: none !important;
+    }
+
+    /* ❌ Անջատել decorative pseudo-elements */
+    #top-bar::before,
+    #top-bar::after,
+    #top-info::before,
+    .title::before,
+    .title::after,
+    .subtitle::before,
+    .subtitle::after,
+    #user-balance-box::before,
+    #user-balance-box::after,
+    #user-balance::after,
+    .card::before,
+    .card::after,
+    .plan-card::before,
+    .plan-card::after,
+    .btn::before,
+    #claim-btn::before,
+    #claim-btn::after,
+    #active-tier::before,
+    #back-btn::before {
+        display: none !important;
+    }
+
+    /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+    * {
+        animation: none !important;
+    }
+
+    /* ❌ Անջատել backdrop-filter և blur effects */
+    #mining-app,
+    #top-bar,
+    #top-info,
+    #user-balance-box,
+    .card,
+    .plan-card,
+    .btn,
+    #claim-btn,
+    .task-btn,
+    ::-webkit-scrollbar {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* ❌ Անջատել filter effects */
+    * {
+        filter: none !important;
+        -webkit-filter: none !important;
+    }
+
+    /* ✅ Թողնել ՄԻԱՅՆ կարճ transitions */
+    .btn,
+    #claim-btn,
+    .plan-card,
+    .card,
+    #back-btn {
+        transition: transform 0.15s ease, opacity 0.15s ease !important;
+    }
+
+    /* ❌ Մնացածը - NO transition */
+    *:not(.btn):not(#claim-btn):not(.plan-card):not(.card):not(#back-btn) {
+        transition: none !important;
+    }
+
+    /* ✅ Hardware acceleration */
+    body,
+    #mining-app {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+    }
+}
+
+/* ========================================
+   📱 MOBILE RESPONSIVE SIZING
+======================================== */
+
+@media (max-width: 480px) {
+
+    #mining-app {
+        padding: 16px 12px 32px;
+    }
+
+    #top-bar {
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 14px;
+        box-shadow:
+            0 10px 30px rgba(15,23,42,0.9),
+            0 0 0 1px rgba(56,189,248,0.15);
+    }
+
+    .title {
+        font-size: 23px;
+        letter-spacing: 0.3px;
+        margin-top: 4px;
+        margin-bottom: 10px;
+        text-shadow: 0 0 12px rgba(56,189,248,0.5);
+    }
+
+    #user-balance-box {
+        font-size: 13.5px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        box-shadow:
+            0 14px 36px rgba(15,23,42,1),
+            0 0 0 1px rgba(148,163,184,0.35);
+    }
+
+    #user-balance-box span {
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+    .subtitle {
+        font-size: 15.5px;
+        gap: 6px;
+        margin-top: 20px;
+    }
+
+    .card,
+    .plan-card {
+        padding: 12px 12px 11px;
+        border-radius: 14px;
+        box-shadow:
+            0 14px 40px rgba(15,23,42,1),
+            0 0 0 1px rgba(56,189,248,0.12);
+    }
+
+    .plan-card h3 {
+        font-size: 15.5px;
+    }
+
+    .plan-card p {
+        font-size: 12.5px;
+    }
+
+    #active-miner-box p {
+        font-size: 13px;
+    }
+
+    .btn {
+        font-size: 14px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        box-shadow:
+            0 12px 32px rgba(16,185,129,0.8),
+            0 0 0 1px rgba(22,163,74,0.7);
+    }
+
+    #claim-btn {
+        box-shadow:
+            0 12px 28px rgba(56,189,248,0.85),
+            0 0 0 1px rgba(56,189,248,0.7);
+    }
+
+    #top-info {
+        font-size: 12.5px;
+        line-height: 1.45;
+    }
+
+    #header-balance,
+    #header-speed {
+        font-size: 13px;
+    }
+}
+
 
 
