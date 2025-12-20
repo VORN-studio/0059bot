@@ -444,12 +444,95 @@ function openDice() {
     window.location.href = `/webapp/games/dice.html?uid=${CURRENT_USER_ID}`;
 }
 function openSlots() {
-    alert("🎰 Slots\n\nԺամանակավորապես փակ է\nՀաճախ այցելեք՝ շուտով կբացվի!");
+    showComingSoonModal("🎰 Slots", "Slots խաղը ժամանակավորապես փակ է։\n\nՀաճախ այցելեք՝ շուտով կբացվի!");
 }
 
 function openCoinflip() {
-    alert("🪙 Coinflip\n\nԺամանակավորապես փակ է\nՀաճախ այցելեք՝ շուտով կբացվի!");
+    showComingSoonModal("🪙 Coinflip", "Coinflip խաղը ժամանակավորապես փակ է։\n\nՀաճախ այցելեք՝ շուտով կբացվի!");
 }
+
+// ✅ CUSTOM MODAL FUNCTION
+function showComingSoonModal(title, message) {
+    // Ստեղծիր modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(12px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        animation: fadeIn 0.3s ease;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95));
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            border-radius: 24px;
+            padding: 32px 24px;
+            max-width: 90%;
+            width: 340px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 
+                        0 0 40px rgba(56, 189, 248, 0.2),
+                        inset 0 0 30px rgba(56, 189, 248, 0.05);
+            text-align: center;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        ">
+            <div style="
+                font-size: 48px;
+                margin-bottom: 16px;
+                animation: bounce 0.6s ease 0.2s;
+            ">🔒</div>
+            
+            <h3 style="
+                color: #38bdf8;
+                font-size: 22px;
+                margin-bottom: 12px;
+                font-weight: 600;
+            ">${title}</h3>
+            
+            <p style="
+                color: rgba(226, 232, 240, 0.9);
+                font-size: 15px;
+                line-height: 1.6;
+                margin-bottom: 24px;
+                white-space: pre-line;
+            ">${message}</p>
+            
+            <button onclick="this.closest('div').parentElement.remove()" style="
+                background: linear-gradient(135deg, #38bdf8, #1d4ed8);
+                color: white;
+                border: none;
+                padding: 12px 32px;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+                transition: all 0.2s ease;
+            " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                Հասկանալի է
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Ավտոմատ հեռացնել 5 վայրկյանից
+    setTimeout(() => {
+        if (modal.parentElement) {
+            modal.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => modal.remove(), 300);
+        }
+    }, 5000);
+}
+
 function openMining() {
     window.location.href = `/webapp/mining/index.html?uid=${CURRENT_USER_ID}`;
 }
