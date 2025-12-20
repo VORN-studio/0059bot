@@ -342,7 +342,13 @@ async function loadUserFromBackend() {
       console.log("⚠️ user not found");
       return;
     }
+    console.log("🔍 DEBUG: U.ref_count =", U.ref_count);
+    console.log("🔍 DEBUG: element exists?", $("ref-total"));
 
+    if ($("ref-total")) {
+      $("ref-total").textContent = U.ref_count;
+      console.log("✅ ref-total թարմացվեց:", U.ref_count);
+    }
     const U = data.user;
 
     $("user-id").textContent = CURRENT_USER_ID;
