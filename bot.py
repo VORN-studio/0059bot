@@ -115,7 +115,7 @@ CORS(app_web)
 socketio = SocketIO(
     app_web,
     cors_allowed_origins="*",
-    async_mode="threading",
+    async_mode="gevent",
     logger=True,
     engineio_logger=False,
     transports=['polling', 'websocket'] 
