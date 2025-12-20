@@ -12,7 +12,7 @@ let crashed = false;
 let timer = null;
 let currentBet = 0;
 let STOP_FALL = false;
-
+let fallenCount = 0;  // 🆕 Քանի domino են ընկել
 // ================= CONFIG =================
 
 // Այս թվերով ես կառավարում խաղի բարդությունը
@@ -94,25 +94,25 @@ function generateCrashPoint() {
 function buildDominoChain() {
     const chain = document.getElementById("domino-chain");
     chain.innerHTML = "";
-    // Ավելի քիչ domino-ներ որ տեղավորվեն էկրանում
-    for (let i = 0; i < 12; i++) {
+    // Ավելի շատ domino-ներ multiplier-ի համար
+    for (let i = 0; i < 35; i++) {
         const d = document.createElement("div");
         d.className = "domino";
         chain.appendChild(d);
     }
 }
 
-function fallEffect() {
-    const pieces = document.querySelectorAll(".domino");
-    pieces.forEach((p, i) => {
-        setTimeout(() => {
-            if (!STOP_FALL) {  
-                p.classList.add("fall");
-            }
-        }, i * 120);
-    });
+// function fallEffect() {
+    //const pieces = document.querySelectorAll(".domino");
+    //pieces.forEach((p, i) => {
+        //setTimeout(() => {
+            //if (!STOP_FALL) {  
+                //p.classList.add("fall");
+            //}
+        //}, i * 120);
+    //});
 
-}
+//}
 
 function crashEffect() {
     const pieces = document.querySelectorAll(".domino");
@@ -230,6 +230,7 @@ async function withdrawFromCrash() {
 
 function startCrash() {
     STOP_FALL = false;
+    fallenCount = 0;  // 🆕 Reset
 
     const bet = Number(document.getElementById("bet").value);
 
@@ -252,18 +253,15 @@ function startCrash() {
     crashPoint = generateCrashPoint();
     console.log("🎯 Crash point:", crashPoint, "x");
 
-    // 🆕 ՖԻՔՍ - Մաքրում ենք հին domino-ները և վերագործարկում animation
-    const chain = document.getElementById("domino-chain");
-    chain.style.animation = "moveScene 2.8s linear infinite";
-    
+    // 🆕 Նոր շղթա ստեղծում
     buildDominoChain();
-    fallEffect();
 
     document.getElementById("start-btn").style.display = "none";
     document.getElementById("cashout-btn").style.display = "block";
 
     show("🎮 Խաղը սկսվեց");
 
+    // 🆕 Multiplier-ի աճը և domino-ների ընկնելը ՄԻԱՍԻՆ
     timer = setInterval(() => {
         const step =
             CRASH_CONFIG.GROWTH_MIN +
@@ -272,6 +270,18 @@ function startCrash() {
         multiplier += step;
         setMultiplier();
 
+        // 🆕 Ամեն 0.08x աճի համար ընկցնում ենք 1 domino
+        const shouldBeFallen = Math.floor((multiplier - 1.0) / 0.08);
+        
+        if (shouldBeFallen > fallenCount && fallenCount < 35) {
+            const pieces = document.querySelectorAll(".domino");
+            if (pieces[fallenCount]) {
+                pieces[fallenCount].classList.add("fall");
+                fallenCount++;
+            }
+        }
+
+        // Եթե հասել ենք crash point-ին
         if (multiplier >= crashPoint) {
             crashNow();
         }

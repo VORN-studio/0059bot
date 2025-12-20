@@ -434,7 +434,7 @@ body::-webkit-scrollbar-thumb {
 /* chain container – moves slowly horizontally */
 .domino-chain {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: flex-end;
   justify-content: center;
   width: 100%;
@@ -446,7 +446,7 @@ body::-webkit-scrollbar-thumb {
    --------------------------------------------------------- */
 
 .domino {
-  width: 18px;
+  width: 14px;
   height: 46px;
   border-radius: 7px;
   background:
