@@ -6,6 +6,7 @@ gunicorn
 requests
 python-dotenv
 flask-socketio
-eventlet
+gevent
+gevent-websocket
 Pillow
 APScheduler==3.10.4
