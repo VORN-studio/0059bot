@@ -1,3 +1,32 @@
+// ========== Mobile Performance ==========
+(function() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    console.log('📱 Tasks: Mobile performance mode enabled');
+    
+    // Disable heavy animations
+    const style = document.createElement('style');
+    style.textContent = `
+      *[class*="Float"],
+      *[class*="Glow"],
+      *[class*="Pulse"],
+      *[class*="Shine"],
+      *[class*="Shift"] {
+        animation: none !important;
+      }
+    `;
+    
+    if (document.head) {
+      document.head.appendChild(style);
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.head.appendChild(style);
+      });
+    }
+  }
+})();
+
 function closeTasks() {
     window.location.href = "../index.html";
 }

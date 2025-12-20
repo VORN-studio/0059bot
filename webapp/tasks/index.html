@@ -4,6 +4,52 @@
     <meta charset="UTF-8">
     <title>Tasks</title>
     <link rel="stylesheet" href="style.css" />
+    
+    <!-- ✅ Mobile Performance Optimization -->
+    <style>
+      @media (max-width: 768px), (hover: none) {
+        /* ❌ Անջատել body backgrounds */
+        body::before,
+        body::after {
+          display: none !important;
+        }
+        
+        /* ❌ Անջատել decorative elements */
+        .inner-ring,
+        .glass-reflect,
+        .noise-overlay,
+        .corner-node,
+        .glow-rim,
+        *[class*="particle"],
+        *[class*="nebula"],
+        *[class*="halo"] {
+          display: none !important;
+        }
+        
+        /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+        * {
+          animation: none !important;
+        }
+        
+        /* ✅ Թողնել ՄԻԱՅՆ կարճ transitions */
+        button,
+        .task-btn,
+        .task-card {
+          transition: transform 0.15s ease, opacity 0.15s ease !important;
+        }
+        
+        /* ❌ Մնացածը - NO transition */
+        *:not(button):not(.task-btn):not(.task-card) {
+          transition: none !important;
+        }
+        
+        /* ✅ Hardware acceleration */
+        body, .screen {
+          transform: translateZ(0);
+          backface-visibility: hidden;
+        }
+      }
+    </style>
 </head>
 <body>
 
