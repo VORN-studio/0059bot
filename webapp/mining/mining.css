@@ -636,7 +636,7 @@ body::after {
 }
 
 #user-balance-box {
-    position: relative;
+    display: none !important;
     margin: 14px 0 20px;
     padding: 18px 20px;
     border-radius: var(--radius-lg);
