@@ -17,7 +17,6 @@ use actix_web::{
 use actix_files as fs;
 use actix_cors::Cors;
 use actix_multipart::Multipart;
-use socketio::{SocketIo, Socket};
 use tokio;
 use sqlx::{PgPool, postgres::PgPoolOptions, Row};
 use teloxide::{
