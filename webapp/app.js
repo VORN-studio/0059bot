@@ -444,10 +444,11 @@ function openDice() {
     window.location.href = `/webapp/games/dice.html?uid=${CURRENT_USER_ID}`;
 }
 function openSlots() {
-    window.location.href = `/webapp/games/slots.html?uid=${CURRENT_USER_ID}`;
+    alert("🎰 Slots\n\nԺամանակավորապես փակ է\nՀաճախ այցելեք՝ շուտով կբացվի!");
 }
+
 function openCoinflip() {
-    window.location.href = `/webapp/games/coinflip.html?uid=${CURRENT_USER_ID}`;
+    alert("🪙 Coinflip\n\nԺամանակավորապես փակ է\nՀաճախ այցելեք՝ շուտով կբացվի!");
 }
 function openMining() {
     window.location.href = `/webapp/mining/index.html?uid=${CURRENT_USER_ID}`;
