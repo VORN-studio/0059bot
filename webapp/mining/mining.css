@@ -1645,8 +1645,6 @@ body::after {
     justify-content: center;
     z-index: 99999;
     animation: modalFadeIn 0.3s ease-out forwards;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
 }
 
 .modal-content {
