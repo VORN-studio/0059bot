@@ -9,7 +9,42 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
-  <link rel="stylesheet" href="/webapp/style.css" />
+    <link rel="stylesheet" href="/webapp/style.css" />
+  
+  <!-- ✅ Mobile Performance Optimization -->
+  <style id="mobile-perf">
+    @media (max-width: 768px), (hover: none) {
+      /* Hide decorative elements on mobile */
+      .inner-ring,
+      .glass-reflect,
+      .noise-overlay,
+      .corner-node,
+      body::before,
+      body::after,
+      .container::before,
+      .container::after {
+        display: none !important;
+      }
+      
+      /* Disable ALL animations on mobile */
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+      
+      /* Keep only button feedback */
+      button:active {
+        transition: transform 0.1s !important;
+      }
+      
+      /* Force hardware acceleration */
+      body, .container, .tab-content {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+      }
+    }
+  </style>
+</head>
 </head>
 <body>
   <div id="app">
