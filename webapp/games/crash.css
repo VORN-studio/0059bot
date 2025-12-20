@@ -388,7 +388,7 @@ body::-webkit-scrollbar-thumb {
     radial-gradient(circle at 10% 0%, rgba(15, 23, 42, 0.9), transparent 60%),
     radial-gradient(circle at 90% 0%, rgba(37, 99, 235, 0.55), transparent 72%),
     radial-gradient(circle at 50% 100%, rgba(2, 6, 23, 1), #020617);
-  overflow: hidden;
+  overflow: hidden;  /* 🆕 ՔԱՅԼԵՐ */
   border: 1px solid rgba(15, 23, 42, 1);
   padding: 0 14px;
   display: flex;
@@ -434,11 +434,12 @@ body::-webkit-scrollbar-thumb {
 /* chain container – moves slowly horizontally */
 .domino-chain {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: flex-end;
-  justify-content: center;
-  width: 100%;
-  /* ՀԵՌԱՑՎԵՑ moveScene animation */
+  width: max-content;  /* 🆕 Ավտոմատ լայնություն */
+  transition: transform 0.15s linear;  /* 🆕 Smooth scroll */
+  transform: translateX(0);
+  padding-left: 50%;  /* 🆕 Սկսվում է էկրանի մեջտեղից */
 }
 
 /* ---------------------------------------------------------

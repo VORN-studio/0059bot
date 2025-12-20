@@ -12,7 +12,9 @@ let crashed = false;
 let timer = null;
 let currentBet = 0;
 let STOP_FALL = false;
-let fallenCount = 0;  // 🆕 Քանի domino են ընկել
+let fallenCount = 0; 
+let totalDominos = 0;
+
 // ================= CONFIG =================
 
 // Այս թվերով ես կառավարում խաղի բարդությունը
@@ -94,12 +96,17 @@ function generateCrashPoint() {
 function buildDominoChain() {
     const chain = document.getElementById("domino-chain");
     chain.innerHTML = "";
-    // Ավելի շատ domino-ներ multiplier-ի համար
-    for (let i = 0; i < 35; i++) {
-        const d = document.createElement("div");
-        d.className = "domino";
-        chain.appendChild(d);
-    }
+    totalDominos = 0;
+    fallenCount = 0;
+    // Սկզբում դատարկ է - domino-ները կստեղծվեն multiplier-ի աճի հետ
+}
+
+function addDomino() {
+    const chain = document.getElementById("domino-chain");
+    const d = document.createElement("div");
+    d.className = "domino";
+    chain.appendChild(d);
+    totalDominos++;
 }
 
 // function fallEffect() {
@@ -230,7 +237,8 @@ async function withdrawFromCrash() {
 
 function startCrash() {
     STOP_FALL = false;
-    fallenCount = 0;  // 🆕 Reset
+    fallenCount = 0;
+    totalDominos = 0;
 
     const bet = Number(document.getElementById("bet").value);
 
@@ -253,15 +261,19 @@ function startCrash() {
     crashPoint = generateCrashPoint();
     console.log("🎯 Crash point:", crashPoint, "x");
 
-    // 🆕 Նոր շղթա ստեղծում
+    // Մաքուր շղթա
     buildDominoChain();
+    
+    // Reset scroll position
+    const chain = document.getElementById("domino-chain");
+    chain.style.transform = "translateX(0)";
 
     document.getElementById("start-btn").style.display = "none";
     document.getElementById("cashout-btn").style.display = "block";
 
     show("🎮 Խաղը սկսվեց");
 
-    // 🆕 Multiplier-ի աճը և domino-ների ընկնելը ՄԻԱՍԻՆ
+    // Multiplier-ի աճը
     timer = setInterval(() => {
         const step =
             CRASH_CONFIG.GROWTH_MIN +
@@ -270,18 +282,26 @@ function startCrash() {
         multiplier += step;
         setMultiplier();
 
-        // 🆕 Ամեն 0.08x աճի համար ընկցնում ենք 1 domino
-        const shouldBeFallen = Math.floor((multiplier - 1.0) / 0.08);
+        // Ամեն 0.12x-ի համար 1 domino ստեղծվում և ընկնում է
+        const shouldExist = Math.floor((multiplier - 1.0) / 0.12) + 1;
         
-        if (shouldBeFallen > fallenCount && fallenCount < 35) {
-            const pieces = document.querySelectorAll(".domino");
-            if (pieces[fallenCount]) {
-                pieces[fallenCount].classList.add("fall");
-                fallenCount++;
-            }
+        // Ստեղծենք նոր domino-ներ եթե պետք է
+        while (totalDominos < shouldExist) {
+            addDomino();
+        }
+        
+        // Ընկցնենք domino-ները
+        const pieces = document.querySelectorAll(".domino");
+        while (fallenCount < shouldExist - 1 && fallenCount < pieces.length) {
+            pieces[fallenCount].classList.add("fall");
+            fallenCount++;
+            
+            // Scroll էֆեկտ - էկրանը շարժվում է ձախ
+            const scrollOffset = fallenCount * 26; // 18px width + 8px gap
+            chain.style.transform = `translateX(-${scrollOffset}px)`;
         }
 
-        // Եթե հասել ենք crash point-ին
+        // Crash point
         if (multiplier >= crashPoint) {
             crashNow();
         }
@@ -298,7 +318,11 @@ function crashNow() {
     STOP_FALL = true;
     clearInterval(timer);
 
-    crashEffect();
+    // Crash-ի domino-ն = վերջին ընկած domino-ն
+    const pieces = document.querySelectorAll(".domino");
+    if (pieces[fallenCount]) {
+        pieces[fallenCount].classList.add("crashed");
+    }
 
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
