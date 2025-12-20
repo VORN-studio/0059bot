@@ -67,7 +67,7 @@ async function loadPlans() {
 
     const box = document.getElementById("plans-box");
     
-    // ✅ Batch render - ավելի արագ է քան forEach appendChild
+    // ✅ Batch render - ավելի արագ է քան forEach appendChilds
     const fragment = document.createDocumentFragment();
 
     data.plans.forEach(plan => {
