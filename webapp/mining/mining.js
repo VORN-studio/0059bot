@@ -20,6 +20,7 @@ let userBalance = 0;
 // CUSTOM MODAL
 // ---------------------------------------
 function showModal(icon, title, message, type = "success") {
+    const modalOverlay = document.getElementById("modal-overlay");
     const modalContent = document.querySelector(".modal-content");
     const modalIcon = document.getElementById("modal-icon");
     const modalTitle = document.getElementById("modal-title");
@@ -40,7 +41,17 @@ function showModal(icon, title, message, type = "success") {
         modalContent.style.boxShadow = "0 0 60px rgba(56, 189, 248, 0.4), 0 20px 80px rgba(0, 0, 0, 0.9)";
     }
     
-    document.getElementById("modal-overlay").style.display = "flex";
+    modalOverlay.style.display = "flex";
+    
+    // 🔥 SCROLL անենք modal-ը viewport center-ին
+    setTimeout(() => {
+        const scrollY = window.scrollY || window.pageYOffset;
+        const viewportHeight = window.innerHeight;
+        const modalHeight = modalContent.offsetHeight;
+        const centerPosition = scrollY + (viewportHeight / 2) - (modalHeight / 2);
+        
+        modalOverlay.scrollTop = centerPosition - scrollY;
+    }, 50);
 }
 
 function closeModal() {
