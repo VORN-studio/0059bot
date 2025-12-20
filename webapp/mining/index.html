@@ -3,9 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <title>Mining</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="mining.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- ✅ Mobile Performance Optimization -->
+    <style>
+      @media (max-width: 768px), (hover: none) {
+        /* ❌ Անջատել body backgrounds */
+        body::before,
+        body::after {
+          display: none !important;
+        }
+
+        /* ❌ Անջատել #mining-app pseudo-elements */
+        #mining-app::before,
+        #mining-app::after {
+          display: none !important;
+        }
+
+        /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+        * {
+          animation: none !important;
+        }
+
+        /* ❌ Անջատել backdrop-filter */
+        #mining-app,
+        #top-bar,
+        #user-balance-box,
+        .card,
+        .plan-card,
+        .btn {
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+
+        /* ✅ Թողնել ՄԻԱՅՆ կարճ transitions */
+        button,
+        .btn,
+        .plan-card,
+        .card {
+          transition: transform 0.15s ease, opacity 0.15s ease !important;
+        }
+
+        /* ❌ Մնացածը - NO transition */
+        *:not(button):not(.btn):not(.plan-card):not(.card) {
+          transition: none !important;
+        }
+
+        /* ✅ Hardware acceleration */
+        body,
+        #mining-app {
+          transform: translateZ(0);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+        }
+      }
+    </style>
 </head>
 <body>
 
