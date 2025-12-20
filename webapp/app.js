@@ -452,103 +452,76 @@ function openCoinflip() {
 }
 
 function showComingSoonModal(title, message) {
-    const modal = document.createElement('div');
-    
-    // ✅ FIXED POSITION - VIEWPORT CENTER (ՈՉ ԹԵ PAGE CENTER)
-    modal.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 99999;
-        max-width: 90%;
-        width: 340px;
+    // Backdrop
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        background: rgba(0, 0, 0, 0.9) !important;
+        backdrop-filter: blur(10px) !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 20px !important;
     `;
 
-    // ✅ BACKDROP
-    const backdrop = document.createElement('div');
-    backdrop.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.85);
-        backdrop-filter: blur(12px);
-        z-index: 99998;
-        animation: fadeIn 0.3s ease;
+    // Modal content
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+        border: 2px solid rgba(56, 189, 248, 0.5) !important;
+        border-radius: 20px !important;
+        padding: 30px 20px !important;
+        width: 90% !important;
+        max-width: 350px !important;
+        text-align: center !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(56,189,248,0.3) !important;
+        position: relative !important;
     `;
 
-    modal.innerHTML = `
-        <div style="
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.95));
-            border: 2px solid rgba(56, 189, 248, 0.4);
-            border-radius: 24px;
-            padding: 32px 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 
-                        0 0 40px rgba(56, 189, 248, 0.2),
-                        inset 0 0 30px rgba(56, 189, 248, 0.05);
-            text-align: center;
-            animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        ">
-            <div style="
-                font-size: 48px;
-                margin-bottom: 16px;
-                animation: modalBounce 0.6s ease 0.2s;
-            ">🔒</div>
-            
-            <h3 style="
-                color: #38bdf8;
-                font-size: 22px;
-                margin-bottom: 12px;
-                font-weight: 600;
-            ">${title}</h3>
-            
-            <p style="
-                color: rgba(226, 232, 240, 0.9);
-                font-size: 15px;
-                line-height: 1.6;
-                margin-bottom: 24px;
-                white-space: pre-line;
-            ">${message}</p>
-            
-            <button id="modal-close-btn" style="
-                background: linear-gradient(135deg, #38bdf8, #1d4ed8);
-                color: white;
-                border: none;
-                padding: 12px 32px;
-                border-radius: 12px;
-                font-size: 16px;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
-                transition: all 0.2s ease;
-            " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                Հասկանալի է
-            </button>
-        </div>
+    content.innerHTML = `
+        <div style="font-size: 50px; margin-bottom: 15px;">🔒</div>
+        <h3 style="color: #38bdf8; font-size: 24px; margin: 0 0 15px 0; font-weight: 700;">${title}</h3>
+        <p style="color: #e2e8f0; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0; white-space: pre-line;">${message}</p>
+        <button class="close-modal-btn" style="
+            background: linear-gradient(135deg, #38bdf8, #1d4ed8) !important;
+            color: white !important;
+            border: none !important;
+            padding: 14px 40px !important;
+            border-radius: 12px !important;
+            font-size: 17px !important;
+            font-weight: 700 !important;
+            cursor: pointer !important;
+            box-shadow: 0 8px 25px rgba(56,189,248,0.5) !important;
+            width: 100% !important;
+        ">Հասկանալի է</button>
     `;
 
-    document.body.appendChild(backdrop);
-    document.body.appendChild(modal);
-    document.body.style.overflow = 'hidden';
+    overlay.appendChild(content);
+    document.body.appendChild(overlay);
 
-    const removeModal = () => {
+    // Close function
+    const closeModal = () => {
+        overlay.remove();
         document.body.style.overflow = '';
-        backdrop.style.animation = 'fadeOut 0.3s ease';
-        modal.style.animation = 'fadeOut 0.3s ease';
-        setTimeout(() => {
-            backdrop.remove();
-            modal.remove();
-        }, 300);
     };
 
-    modal.querySelector('#modal-close-btn').addEventListener('click', removeModal);
-    backdrop.addEventListener('click', removeModal);
+    // Event listeners
+    content.querySelector('.close-modal-btn').onclick = closeModal;
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeModal();
+    };
 
-    setTimeout(() => {
-        if (modal.parentElement) removeModal();
-    }, 5000);
+    // Block scroll
+    document.body.style.overflow = 'hidden';
+
+    // Auto close
+    setTimeout(closeModal, 6000);
 }
 
 function openMining() {
