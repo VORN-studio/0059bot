@@ -10,40 +10,75 @@
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <link rel="stylesheet" href="/webapp/style.css" />
-  
-  <!-- ✅ Mobile Performance Optimization -->
+    <!-- ✅ Mobile Performance Optimization -->
   <style id="mobile-perf">
     @media (max-width: 768px), (hover: none) {
-      /* Hide decorative elements on mobile */
+      
+      /* ❌ ԱՄԲՈՂՋՈՒԹՅԱՄԲ անջատել body backgrounds (ամենածանրը) */
+      body::before,
+      body::after {
+        display: none !important;
+      }
+      
+      /* ❌ Թաքցնել decorative elements որոնք ԱՉՔին ՉԵՆ ԵՐԵՎՈՒՄ */
       .inner-ring,
       .glass-reflect,
       .noise-overlay,
       .corner-node,
-      body::before,
-      body::after,
+      .glow-rim {
+        display: none !important;
+      }
+      
+      /* ❌ Անջատել ԲՈԼՈՐc background animations-ները */
       .container::before,
       .container::after {
         display: none !important;
       }
       
-      /* Disable ALL animations on mobile */
+      /* ❌ Անջատել ԲՈԼՈՐ @keyframes animations-ները */
       * {
         animation: none !important;
+      }
+      
+      /* ✅ Թողնել ՄԻԱՅՆ կարճ transitions (buttons/modals) */
+      button,
+      .tab-btn {
+        transition: transform 0.1s ease, opacity 0.1s ease !important;
+      }
+      
+      .modal-overlay {
+        transition: opacity 0.2s ease !important;
+      }
+      
+      .modal-content {
+        transition: transform 0.2s ease !important;
+      }
+      
+      /* ❌ Մնացած ամեն ինչ - NO transition */
+      *:not(button):not(.tab-btn):not(.modal-overlay):not(.modal-content) {
         transition: none !important;
       }
       
-      /* Keep only button feedback */
-      button:active {
-        transition: transform 0.1s !important;
-      }
-      
-      /* Force hardware acceleration */
+      /* ✅ Hardware acceleration */
       body, .container, .tab-content {
         transform: translateZ(0);
         backface-visibility: hidden;
+        will-change: auto;
+      }
+      
+      /* ✅ Optimize rendering */
+      * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      /* ✅ Reduce repaints */
+      img, canvas, video {
+        image-rendering: -webkit-optimize-contrast;
       }
     }
   </style>
+</head>
 </head>
 </head>
 <body>
