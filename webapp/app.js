@@ -354,7 +354,9 @@ async function loadUserFromBackend() {
     $("user-name").textContent = U.username || "-";
     $("user-balance").textContent = U.balance_usd.toFixed(2) + " $";
     balance = U.balance_usd;
-    document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
+    if (document.getElementById("ton-current")) {
+      document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
+    }
 
     if ($("ref-total")) {
       $("ref-total").textContent = U.ref_count;
