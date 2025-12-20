@@ -19,10 +19,27 @@ let userBalance = 0;
 // ---------------------------------------
 // CUSTOM MODAL
 // ---------------------------------------
-function showModal(icon, title, message) {
-    document.getElementById("modal-icon").textContent = icon;
-    document.getElementById("modal-title").textContent = title;
-    document.getElementById("modal-message").textContent = message;
+function showModal(icon, title, message, type = "success") {
+    const modalContent = document.querySelector(".modal-content");
+    const modalIcon = document.getElementById("modal-icon");
+    const modalTitle = document.getElementById("modal-title");
+    const modalMessage = document.getElementById("modal-message");
+    
+    modalIcon.textContent = icon;
+    modalTitle.textContent = title;
+    modalMessage.textContent = message;
+    
+    // Գույնը փոխում ենք type-ի համաձայն
+    if (type === "error") {
+        modalContent.style.background = "linear-gradient(135deg, #4a1a1a 0%, #2d0f0f 100%)";
+        modalContent.style.borderColor = "rgba(239, 68, 68, 0.3)";
+        modalContent.style.boxShadow = "0 0 60px rgba(239, 68, 68, 0.4), 0 20px 80px rgba(0, 0, 0, 0.9)";
+    } else {
+        modalContent.style.background = "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)";
+        modalContent.style.borderColor = "rgba(56, 189, 248, 0.3)";
+        modalContent.style.boxShadow = "0 0 60px rgba(56, 189, 248, 0.4), 0 20px 80px rgba(0, 0, 0, 0.9)";
+    }
+    
     document.getElementById("modal-overlay").style.display = "flex";
 }
 
@@ -190,11 +207,11 @@ async function buyPlan(id) {
     const data = await res.json();
 
     if (!data.ok) {
-        tg.showPopup({ message: "❌ " + data.error });
+        showModal("❌", "Սխալ", data.error, "error");
         return;
     }
 
-    tg.showPopup({ message: "✅ Փաթեթը ձեռք բերվեց" });
+    showModal("✅", "Հաջողություն", "Փաթեթը ձեռք բերվեց");
 
     
     userBalance = data.user.balance_usd;
