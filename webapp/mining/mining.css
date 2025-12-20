@@ -110,20 +110,8 @@ body::after {
     z-index: -3;
 }
 
-body::after + .parallax-stars {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image:
-        radial-gradient(circle, rgba(56,189,248,0.25) 0, transparent 70%),
-        radial-gradient(circle, rgba(168,85,247,0.25) 0, transparent 70%);
-    background-size: 1200px 1200px, 1600px 1600px;
-    background-position: center;
-    opacity: 0.05;
-    animation: parallaxFloat 65s ease-in-out infinite alternate;
-    z-index: -4;
-    pointer-events: none;
-}
+/* ՋՆՋԻՐ այս selector-ը (չի օգտագործվում HTML-ում) */
+/* body::after + .parallax-stars { ... } */
 
 @keyframes nebulaMove {
     0%   { transform: translate3d(-4%, -3%, 0) scale(1); filter: blur(28px); }
@@ -168,11 +156,9 @@ body::after + .parallax-stars {
         linear-gradient(180deg, rgba(255,255,255,0.03), transparent 60%);
     pointer-events: none;
     z-index: -1;
-
     opacity: 0.8;
     mix-blend-mode: lighten;
     filter: blur(10px);
-
     animation: glossyFloat 14s ease-in-out infinite alternate;
 }
 
@@ -316,9 +302,6 @@ body::after + .parallax-stars {
     
     position: relative;
     overflow: hidden;
-}
-
-#back-btn {
     width: auto !important;
     flex-shrink: 0 !important;
 }
@@ -436,7 +419,6 @@ body::after + .parallax-stars {
     gap: 8px;
     align-items: center;
     justify-content: space-between;
-
     padding: 4px 0;
     position: relative;
 }
@@ -1019,6 +1001,8 @@ body::after + .parallax-stars {
 
     position: relative;
     overflow: hidden;
+    
+    animation: tierPulse 3s ease-in-out infinite;
 }
 
 #active-tier::before {
@@ -1043,10 +1027,6 @@ body::after + .parallax-stars {
     0%   { transform: translateX(-120%) skewX(-20deg); }
     60%  { transform: translateX(120%) skewX(-20deg); }
     100% { transform: translateX(120%) skewX(-20deg); }
-}
-
-#active-tier {
-    animation: tierPulse 3s ease-in-out infinite;
 }
 
 @keyframes tierPulse {
@@ -1453,18 +1433,25 @@ body::after + .parallax-stars {
 
     #mining-app {
         padding: 16px 12px 32px;
-        transform: translateZ(0); 
+        transform: translateZ(0);
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 
     #top-bar {
         gap: 10px;
         padding: 8px 10px;
         border-radius: 14px;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         box-shadow:
             0 10px 30px rgba(15,23,42,0.9),
             0 0 0 1px rgba(56,189,248,0.15);
+    }
+
+    #top-bar::before {
+        animation: none !important;
+        opacity: 0 !important;
     }
 
     .title {
@@ -1473,37 +1460,102 @@ body::after + .parallax-stars {
         margin-top: 4px;
         margin-bottom: 10px;
         text-shadow: 0 0 12px rgba(56,189,248,0.5);
+        animation: none !important;
+        filter: none !important;
+        background-position: 0% center;
+    }
+
+    .title::before,
+    .title::after {
+        animation: none !important;
     }
 
     #user-balance-box {
         font-size: 13.5px;
         padding: 12px 14px;
         border-radius: 16px;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         box-shadow:
             0 14px 36px rgba(15,23,42,1),
             0 0 0 1px rgba(148,163,184,0.35);
+        animation: none !important;
+    }
+
+    #user-balance-box::before,
+    #user-balance-box::after {
+        animation: none !important;
+        opacity: 0 !important;
     }
 
     #user-balance-box span {
         font-size: 18px;
         font-weight: 800;
+        animation: none !important;
+    }
+
+    #user-balance {
+        animation: none !important;
+        filter: none !important;
+    }
+
+    #user-balance::after {
+        animation: none !important;
+        opacity: 0 !important;
     }
 
     .subtitle {
         font-size: 15.5px;
         gap: 6px;
         margin-top: 20px;
+        animation: none !important;
+    }
+
+    .subtitle::before {
+        animation: none !important;
+        filter: none !important;
+    }
+
+    .subtitle::after {
+        animation: none !important;
+        filter: none !important;
+    }
+
+    #top-info {
+        font-size: 12.5px;
+        line-height: 1.45;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    #top-info::before {
+        animation: none !important;
+        filter: none !important;
+        opacity: 0 !important;
+    }
+
+    #top-info div:nth-child(2)::before {
+        animation: none !important;
     }
 
     .card,
     .plan-card {
         padding: 12px 12px 11px;
         border-radius: 14px;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
         box-shadow:
             0 14px 40px rgba(15,23,42,1),
             0 0 0 1px rgba(56,189,248,0.12);
+    }
+
+    .card::before,
+    .card::after,
+    .plan-card::before,
+    .plan-card::after {
+        animation: none !important;
+        filter: none !important;
+        opacity: 0 !important;
     }
 
     .plan-card h3 {
@@ -1516,6 +1568,20 @@ body::after + .parallax-stars {
 
     #active-miner-box p {
         font-size: 13px;
+        animation: none !important;
+    }
+
+    #active-miner-box p::before {
+        animation: none !important;
+    }
+
+    #active-tier {
+        animation: none !important;
+    }
+
+    #active-tier::before {
+        animation: none !important;
+        opacity: 0 !important;
     }
 
     .btn {
@@ -1527,71 +1593,39 @@ body::after + .parallax-stars {
             0 0 0 1px rgba(22,163,74,0.7);
     }
 
+    .btn::before {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+
     #claim-btn {
         box-shadow:
             0 12px 28px rgba(56,189,248,0.85),
             0 0 0 1px rgba(56,189,248,0.7);
     }
 
-    #top-info {
-        font-size: 12.5px;
-        line-height: 1.45;
+    #claim-btn::before,
+    #claim-btn::after {
+        animation: none !important;
+        opacity: 0 !important;
     }
 
     #header-balance,
     #header-speed {
         font-size: 13px;
+        animation: none !important;
+        filter: none !important;
+    }
+
+    #back-btn::before {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+
+    ::-webkit-scrollbar {
+        backdrop-filter: none !important;
     }
 }
 
 
 
-
-
-/* ========== Mobile Performance ========== */
-@media (max-width: 768px) {
-  
-  /* ✅ Fix horizontal scroll */
-  html, body {
-    width: 100vw;
-    max-width: 100vw;
-    overflow-x: hidden !important;
-  }
-  
-  /* ❌ Simplify body backgrounds */
-  body::before {
-    inset: 0 !important;
-    opacity: 0.25 !important;
-    filter: blur(80px) !important;
-  }
-  
-  body::after {
-    opacity: 0.2 !important;
-  }
-  
-  /* ❌ Disable backdrop-filter ONLY */
-  * {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  
-  /* ❌ Disable animations */
-  * {
-    animation: none !important;
-  }
-  
-  /* ✅ Short transitions only for buttons */
-  button, .btn {
-    transition: transform 0.1s ease !important;
-  }
-  
-  button:active, .btn:active {
-    transform: scale(0.96);
-  }
-  
-  /* ✅ Hardware acceleration */
-  body, #mining-app {
-    transform: translate3d(0,0,0);
-    -webkit-overflow-scrolling: touch;
-  }
-}
