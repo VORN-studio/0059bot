@@ -1,4 +1,3 @@
-cat > Cargo.toml << 'EOF'
 [package]
 name = "domino_bot"
 version = "0.1.0"
