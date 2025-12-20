@@ -351,9 +351,9 @@ async function loadUserFromBackend() {
     balance = U.balance_usd;
     document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
 
-    $("ref-total").textContent = U.ref_count;
-    $("ref-active").textContent = U.active_refs;
-    $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " $";
+    if ($("ref-total")) $("ref-total").textContent = U.ref_count;
+    if ($("ref-active")) $("ref-active").textContent = U.active_refs;
+    if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " $";
 
     const botUsername = "doominobot"; 
     $("ref-link").value =
