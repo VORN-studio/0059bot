@@ -1,34 +1,16 @@
-// ========== FPS Monitor & Auto-Optimization ==========
-let fps = 60;
-let frameCount = 0;
-let lastTime = performance.now();
-let lowFpsDetected = false;
-
-function measureFPS() {
-  frameCount++;
-  const now = performance.now();
+// ========== Mobile Auto-Optimization ==========
+function isMobileOrLowEnd() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isLowEnd = navigator.deviceMemory ? navigator.deviceMemory < 4 : false;
+  const isFewCores = navigator.hardwareConcurrency ? navigator.hardwareConcurrency < 4 : false;
   
-  if (now >= lastTime + 1000) {
-    fps = Math.round((frameCount * 1000) / (now - lastTime));
-    frameCount = 0;
-    lastTime = now;
-    
-    // ✅ Եթե FPS < 30, անջատենք ավելորդ animations
-    if (fps < 30 && !lowFpsDetected) {
-      lowFpsDetected = true;
-      disableHeavyAnimations();
-      console.log('⚠️ Low FPS detected (' + fps + '). Disabling heavy animations.');
-    }
-  }
-  
-  requestAnimationFrame(measureFPS);
+  return isMobile || isLowEnd || isFewCores;
 }
 
 function disableHeavyAnimations() {
   const style = document.createElement('style');
   style.id = 'performance-mode';
   style.textContent = `
-    /* Disable heavy animations */
     *[class*="Float"],
     *[class*="Glow"],
     *[class*="Pulse"],
@@ -50,38 +32,18 @@ function disableHeavyAnimations() {
       animation: none !important;
       transition: none !important;
     }
-    
-    /* Keep only essential animations */
-    .modal-overlay,
-    .modal-content,
-    button:hover {
-      animation-duration: 0.2s !important;
-    }
   `;
   document.head.appendChild(style);
 }
 
-// ✅ Start FPS monitoring
-setTimeout(() => {
-  requestAnimationFrame(measureFPS);
-}, 2000); // Start after 2 seconds
-
-// ========== Mobile Auto-Optimization ==========
-function isMobileOrLowEnd() {
-  // Check if mobile
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  
-  // Check if low-end device (< 4GB RAM or < 4 cores)
-  const isLowEnd = navigator.deviceMemory ? navigator.deviceMemory < 4 : false;
-  const isFewCores = navigator.hardwareConcurrency ? navigator.hardwareConcurrency < 4 : false;
-  
-  return isMobile || isLowEnd || isFewCores;
-}
-
-// ✅ Auto-disable animations on mobile/low-end devices
+// ✅ Auto-disable animations ԱՆՄԻՋԱՊԵՍ mobile-ում
 if (isMobileOrLowEnd()) {
-  console.log('📱 Mobile/Low-end device detected. Enabling performance mode.');
-  document.addEventListener('DOMContentLoaded', disableHeavyAnimations);
+  console.log('📱 Mobile detected. Performance mode enabled.');
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', disableHeavyAnimations);
+  } else {
+    disableHeavyAnimations();
+  }
 }
 
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
