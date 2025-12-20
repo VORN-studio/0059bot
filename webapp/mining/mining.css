@@ -1549,6 +1549,9 @@ body::after + .parallax-stars {
 
 
 /* ========== Mobile Performance ========== */
+
+
+/* ========== Mobile Performance - AGGRESSIVE MODE ========== */
 @media (max-width: 768px) {
   
   /* ✅ ՖԻՔՍ horizontal scroll */
@@ -1559,114 +1562,90 @@ body::after + .parallax-stars {
     overflow-x: hidden !important;
   }
   
-  /* ❌ FIX body::before չափերը */
-  body::before {
-    inset: 0 !important; /* Փոխարեն -45% */
-    animation: none !important;
-    opacity: 0.2 !important;
-    filter: blur(60px) !important;
+  /* ❌ Պարզեցնել body backgrounds */
+  body {
+    background: linear-gradient(180deg, #020617, #0a1628) !important;
+    filter: none !important;
   }
   
-  body::after {
-    animation: none !important;
-    opacity: 0.15 !important;
-  }
-  
-  /* ❌ Անջատել backdrop-filter (ծանրագույն effect-ը) */
-  *,
-  *::before,
-  *::after {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  
-  /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
-  * {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
-    transition-duration: 0.05s !important;
-  }
-  
-  /* ✅ Hardware acceleration scroll-ի համար */
-  body,
-  #mining-app {
-    -webkit-overflow-scrolling: touch;
-    transform: translate3d(0, 0, 0);
-    will-change: scroll-position;
-  }
-  
-  /* ✅ Optimize cards rendering */
-  .plan-card,
-  .card {
-    contain: layout style paint;
-    content-visibility: auto;
-  }
-  
-  /* ✅ Պարզեցված shadows */
-  .plan-card,
-  .card,
-  .btn,
-  #top-bar {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-  }
-  
-  /* ✅ Button feedback */
-  button:active,
-  .btn:active {
-    transform: scale(0.97) !important;
-    transition: transform 0.05s ease !important;
-  }
-}
-  
-  /* ❌ Հեռացնել ծանր background effects */
   body::before,
   body::after {
-    animation: none !important;
-    opacity: 0.15 !important;
-    filter: blur(0px) !important;
+    display: none !important;
   }
   
-  /* ❌ Անջատել backdrop-filter (ամենածանրը mobile-ում) */
-  *,
+  /* ❌ Հեռացնել ԲՈԼՈՐ decorative pseudo-elements */
   *::before,
   *::after {
+    display: none !important;
+  }
+  
+  /* ✅ Բայց թողնել content pseudo-elements */
+  .plan-card::before,
+  .card::before,
+  button::before {
+    display: block !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
   
-  /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
+  /* ❌ Հեռացնել ԲՈԼՈՐ backdrop-filter */
   * {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
-    transition-duration: 0.05s !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
   
-  /* ✅ Hardware acceleration для scroll */
+  /* ❌ Պարզեցնել ԲՈԼՈՐ box-shadow */
+  * {
+    box-shadow: none !important;
+  }
+  
+  /* ✅ Թողնել ՄԻԱՅՆ subtle shadow cards-ին */
+  .plan-card,
+  .card,
+  #top-bar {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+  }
+  
+  /* ❌ Անջատել ԲՈԼՈՐ animations */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* ✅ Թողնել ՄԻԱՅՆ button press feedback */
+  button,
+  .btn {
+    transition: transform 0.05s ease !important;
+  }
+  
+  button:active,
+  .btn:active {
+    transform: scale(0.96) !important;
+  }
+  
+  /* ✅ Hardware acceleration */
   body,
   #mining-app {
+    transform: translate3d(0, 0, 0);
     -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
-    will-change: scroll-position;
   }
   
-  /* ✅ Optimize cards rendering */
+  /* ✅ GPU rendering optimization */
   .plan-card,
   .card {
     contain: layout style paint;
     content-visibility: auto;
+    will-change: auto;
   }
   
-  /* ✅ Remove shadows on mobile */
+  /* ❌ Պարզեցնել gradients */
   .plan-card,
-  .card,
-  .btn,
-  #top-bar {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  .card {
+    background: rgba(15,23,42,0.9) !important;
+    border: 1px solid rgba(148,163,184,0.3) !important;
   }
   
-  /* ✅ Թողնել button feedback */
-  button:active,
-  .btn:active {
-    transform: scale(0.97) !important;
-    transition: transform 0.05s ease !important;
+  #mining-app {
+    background: none !important;
   }
+}
