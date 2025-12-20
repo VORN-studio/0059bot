@@ -444,85 +444,22 @@ function openDice() {
     window.location.href = `/webapp/games/dice.html?uid=${CURRENT_USER_ID}`;
 }
 function openSlots() {
-    showComingSoonModal("🎰 Slots", "Slots խաղը ժամանակավորապես փակ է։\n\nՀաճախ այցելեք՝ շուտով կբացվի!");
+    showLockedGame('Slots');
 }
 
 function openCoinflip() {
-    showComingSoonModal("🪙 Coinflip", "Coinflip խաղը ժամանակավորապես փակ է։\n\nՀաճախ այցելեք՝ շուտով կբացվի!");
+    showLockedGame('Coinflip');
 }
 
-function showComingSoonModal(title, message) {
-    // Backdrop
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.style.cssText = `
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        background: rgba(0, 0, 0, 0.9) !important;
-        backdrop-filter: blur(10px) !important;
-        z-index: 999999 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 20px !important;
-    `;
-
-    // Modal content
-    const content = document.createElement('div');
-    content.style.cssText = `
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-        border: 2px solid rgba(56, 189, 248, 0.5) !important;
-        border-radius: 20px !important;
-        padding: 30px 20px !important;
-        width: 90% !important;
-        max-width: 350px !important;
-        text-align: center !important;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(56,189,248,0.3) !important;
-        position: relative !important;
-    `;
-
-    content.innerHTML = `
-        <div style="font-size: 50px; margin-bottom: 15px;">🔒</div>
-        <h3 style="color: #38bdf8; font-size: 24px; margin: 0 0 15px 0; font-weight: 700;">${title}</h3>
-        <p style="color: #e2e8f0; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0; white-space: pre-line;">${message}</p>
-        <button class="close-modal-btn" style="
-            background: linear-gradient(135deg, #38bdf8, #1d4ed8) !important;
-            color: white !important;
-            border: none !important;
-            padding: 14px 40px !important;
-            border-radius: 12px !important;
-            font-size: 17px !important;
-            font-weight: 700 !important;
-            cursor: pointer !important;
-            box-shadow: 0 8px 25px rgba(56,189,248,0.5) !important;
-            width: 100% !important;
-        ">Հասկանալի է</button>
-    `;
-
-    overlay.appendChild(content);
-    document.body.appendChild(overlay);
-
-    // Close function
-    const closeModal = () => {
-        overlay.remove();
-        document.body.style.overflow = '';
-    };
-
-    // Event listeners
-    content.querySelector('.close-modal-btn').onclick = closeModal;
-    overlay.onclick = (e) => {
-        if (e.target === overlay) closeModal();
-    };
-
-    // Block scroll
-    document.body.style.overflow = 'hidden';
-
-    // Auto close
-    setTimeout(closeModal, 6000);
+function showLockedGame(gameName) {
+    const msgBox = document.getElementById('locked-game-msg');
+    const title = document.getElementById('locked-game-title');
+    title.textContent = gameName;
+    msgBox.style.display = 'block';
+    setTimeout(() => { msgBox.style.display = 'none'; }, 4000);
 }
+
+
 
 function openMining() {
     window.location.href = `/webapp/mining/index.html?uid=${CURRENT_USER_ID}`;

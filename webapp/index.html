@@ -150,8 +150,11 @@
             <div class="game-menu">
                 <button class="game-card" onclick="openCrash()">🚀 Crash</button>
                 <button class="game-card" onclick="openDice()">🎲 Dice</button>
-                <button class="game-card" onclick="openSlots()">🎰 Slots</button>
-                <button class="game-card" onclick="openCoinflip()">🪙 Coinflip</button>
+                <div id="locked-game-msg" style="display:none;margin-top:20px;padding:20px;background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.1));border:2px solid rgba(239,68,68,0.4);border-radius:16px;text-align:center;">
+                    <div style="font-size:40px;margin-bottom:10px;">🔒</div>
+                    <h3 style="color:#fca5a5;font-size:20px;margin:0 0 10px 0;" id="locked-game-title"></h3>
+                    <p style="color:#fecaca;font-size:15px;margin:0;">Ժամանակավորապես փակ է։<br>Շուտով կբացվի!</p>
+                </div>
             </div>
         </div>
 
