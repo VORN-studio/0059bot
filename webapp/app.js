@@ -5,6 +5,17 @@ const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
 
 let TON_WALLET = null;
 
+function showSuccessModal(title, message) {
+  const modal = document.getElementById("success-modal");
+  modal.querySelector(".modal-title").textContent = title;
+  modal.querySelector(".modal-message").textContent = message;
+  modal.style.display = "flex";
+}
+
+function closeSuccessModal() {
+  document.getElementById("success-modal").style.display = "none";
+}
+
 // Function to save wallet to backend
 async function saveWalletToBackend() {
   if (!TON_WALLET || !CURRENT_USER_ID) {
@@ -605,13 +616,7 @@ if (refCopyBtn) {
     if (!refLinkInput) return;
     refLinkInput.select();
     document.execCommand("copy");
-    if (tg) {
-      tg.showPopup({
-        title: "🎉 Հաջողություն",
-        message: "Referral հղումը կոպի է արված։\n\nՀիմա կարող ես ուղարկել ընկերներին։",
-        buttons: [{ type: "ok", text: "Լավ" }]
-      });
-    }
+    showSuccessModal("✅ Կատարված է", "Հղումը պատճենված է հիշողության մեջ");
   });
 }
 
