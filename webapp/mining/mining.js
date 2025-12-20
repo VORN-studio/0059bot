@@ -17,6 +17,20 @@ let USER_ID = null;
 let userBalance = 0;
 
 // ---------------------------------------
+// CUSTOM MODAL
+// ---------------------------------------
+function showModal(icon, title, message) {
+    document.getElementById("modal-icon").textContent = icon;
+    document.getElementById("modal-title").textContent = title;
+    document.getElementById("modal-message").textContent = message;
+    document.getElementById("modal-overlay").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("modal-overlay").style.display = "none";
+}
+
+// ---------------------------------------
 // INIT from Telegram
 // ---------------------------------------
 function initUser() {
