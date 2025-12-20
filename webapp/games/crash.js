@@ -240,7 +240,6 @@ function startCrash() {
 
     currentBet = bet;
 
-    // հանենք բեթը Crash balance-ից հենց սկզբում
     crashBalance -= currentBet;
     if (crashBalance < 0) crashBalance = 0;
     updateBalances();
@@ -251,11 +250,13 @@ function startCrash() {
     multiplier = 1.0;
     setMultiplier();
 
-    // 🆕 Գեներացնում ենք crash point-ը հենց խաղի սկզբում
     crashPoint = generateCrashPoint();
     console.log("🎯 Crash point:", crashPoint, "x");
 
-    // նոր կառուցենք շղթան ու թողնենք ընկնի հերթով
+    // 🆕 ՖԻՔՍ - Մաքրում ենք հին domino-ները և վերագործարկում animation
+    const chain = document.getElementById("domino-chain");
+    chain.style.animation = "moveScene 2.8s linear infinite";
+    
     buildDominoChain();
     fallEffect();
 
@@ -264,7 +265,6 @@ function startCrash() {
 
     show("🎮 Խաղը սկսվեց");
 
-    // 🆕 multiplier-ի աճը հիմա կախված է CONFIG-ից
     timer = setInterval(() => {
         const step =
             CRASH_CONFIG.GROWTH_MIN +
@@ -273,7 +273,6 @@ function startCrash() {
         multiplier += step;
         setMultiplier();
 
-        // Եթե հասել ենք կամ անցել crashPoint → պայթում է
         if (multiplier >= crashPoint) {
             crashNow();
         }
@@ -287,13 +286,15 @@ function crashNow() {
 
     running = false;
     crashed = true;
-    STOP_FALL = true;       // ⬅️ ԱՅՍԷ ԳԼԽԱՎՈՐԸ
+    STOP_FALL = true;
     clearInterval(timer);
 
-    document.querySelector(".domino-chain").style.animation = "none";
+    // 🆕 ՖԻՔՍ - Կանգնեցնում ենք animation-ը
+    const chain = document.getElementById("domino-chain");
+    chain.style.animation = "none";
 
     crashEffect();
-    
+
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
 
@@ -312,10 +313,14 @@ async function cashOut() {
 
     clearInterval(timer);
     running = false;
+    STOP_FALL = true;
+
+    // 🆕 ՖԻՔՍ - Կանգնեցնում ենք animation-ը claim-ի ժամանակ էլ
+    const chain = document.getElementById("domino-chain");
+    chain.style.animation = "none";
 
     const win = currentBet * multiplier;
 
-    // win-ը պահում ենք միայն Crash balance-ում
     crashBalance += win;
     updateBalances();
 
