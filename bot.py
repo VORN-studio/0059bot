@@ -1403,7 +1403,6 @@ def api_duels_pay_bot():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-@app_web.route('/api/duels/create-table', methods=['POST'])
 def api_duels_create_table():
     """Create PvP table"""
     try:
@@ -1411,46 +1410,50 @@ def api_duels_create_table():
         user_id = data.get('user_id')
         bet = float(data.get('bet', 0))
         game_type = data.get('game_type', 'tictactoe')
-        
+
         if bet <= 0:
             return jsonify({"success": False, "message": "Գումարը պետք է մեծ լինի 0-ից"}), 400
-        
+
+        # Use apply_burn_transaction to lock bet amount (no burn, just lock)
+        apply_burn_transaction(
+            from_user=user_id,
+            total_amount=bet,
+            transfers=[],
+            burn_amount=0.0,
+            reason="pvp_table_bet"
+        )
+
+        # Get username
         conn = db()
         c = conn.cursor()
-        c.execute("SELECT balance_usd, username FROM dom_users WHERE user_id=%s", (user_id,))
+        c.execute("SELECT username, balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
         row = c.fetchone()
-        
-        if not row:
-            conn.close()
-            return jsonify({"success": False, "message": "Օգտատեր չի գտնվել"}), 404
-        
-        balance = row[0] or 0
-        username = row[1] or "User"
-        
-        if balance < bet:
-            conn.close()
-            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
-        
-        # Deduct bet from balance
-        new_balance = float(balance) - bet
-        c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
-        
-        # Create table
-        import time
-        table_id = f"{game_type}_{user_id}_{int(time.time())}"
+        username = row[0] if row else "User"
+        new_balance = float(row[1]) if row else 0.0
+
+        # Create table with BIGINT timestamp
+        now = int(time.time())
         c.execute("""
-            INSERT INTO duels_tables (table_id, game_type, creator_id, creator_name, bet, status, created_at)
-            VALUES (%s, %s, %s, %s, %s, 'waiting', NOW())
-        """, (table_id, game_type, user_id, username, bet))
-        
+            INSERT INTO dom_duels_tables 
+            (game_type, creator_id, creator_username, bet, status, created_at)
+            VALUES (%s, %s, %s, %s, 'waiting', %s)
+            RETURNING id
+        """, (game_type, user_id, username, bet, now))
+
+        table_id = c.fetchone()[0]
         conn.commit()
-        conn.close()
-        
+        release_db(conn)
+
         return jsonify({
             "success": True,
             "table_id": table_id,
             "new_balance": new_balance
         })
+    
+    except ValueError as e:
+        if str(e) == "low_balance":
+            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+        return jsonify({"success": False, "message": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
