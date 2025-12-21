@@ -49,52 +49,81 @@ function initSocket() {
   socket = io(API);
 
   socket.on("connect", () => {
-    console.log("Connected to server");
-    socket.emit("join_tictactoe_table", { table_id: TABLE_ID, user_id: USER_ID });
+    console.log("✅ Socket connected");
+    socket.emit("join_user", { user_id: USER_ID });
+    loadTableState();
   });
 
-  socket.on("tictactoe_game_start", (data) => {
-    mySymbol = data.your_symbol;
-    currentTurn = 'X';
-    document.getElementById("player1-name").textContent = data.player_x_name || "Խաղացող 1";
-    document.getElementById("player2-name").textContent = data.player_o_name || "Խաղացող 2";
-    updateTurnDisplay();
-    showStatus("Խաղը սկսվեց!", "");
-  });
-
-  socket.on("tictactoe_move", (data) => {
-    const { index, symbol, next_turn } = data;
-    board[index] = symbol;
-    renderBoard();
-    currentTurn = next_turn;
-    updateTurnDisplay();
-  });
-
-  socket.on("tictactoe_game_over", (data) => {
-    gameOver = true;
-    const { winner, winning_line, new_balance } = data;
-    
-    if (new_balance !== undefined) {
-      domitBalance = new_balance;
-      updateBalanceDisplay();
-    }
-
-    if (winning_line) {
-      highlightWinningLine(winning_line);
-    }
-
-    if (winner === "draw") {
-      showStatus("🤝 Ոչ-ոքի!", "draw");
-    } else if (winner === mySymbol) {
-      showStatus("🎉 Դու հաղթեցիր!", "win");
-    } else {
-      showStatus("😔 Դու պարտվեցիր", "lose");
+  socket.on("opponent_move", (data) => {
+    if (data.table_id == TABLE_ID) {
+      const state = data.game_state;
+      board = state.board;
+      currentTurn = state.turn;
+      renderBoard();
+      
+      if (checkWinner(board)) {
+        handleGameOver(checkWinner(board));
+      } else if (!board.includes("")) {
+        handleGameOver("draw");
+      }
     }
   });
 
-  socket.on("tictactoe_error", (data) => {
-    showStatus("❌ " + data.message, "lose");
+  socket.on("game_over", (data) => {
+    if (data.table_id == TABLE_ID) {
+      if (data.draw) {
+        handleGameOver("draw");
+      } else if (data.winner_id == USER_ID) {
+        handleGameOver("win", data.prize);
+      } else {
+        handleGameOver("lose");
+      }
+    }
   });
+
+  socket.on("disconnect", () => {
+    console.log("❌ Socket disconnected");
+  });
+}
+
+async function loadTableState() {
+  try {
+    const r = await fetch(`${API}/api/duels/get-table-state`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table_id: TABLE_ID })
+    });
+
+    const js = await r.json();
+    if (js.success) {
+      board = js.game_state.board;
+      currentTurn = js.game_state.turn;
+      
+      // Որոշում ենք մեր սիմվոլը
+      if (js.creator_id == USER_ID) {
+        mySymbol = 'X';
+        document.getElementById("turn-indicator").textContent = `Դու ես X, հակառակորդը՝ ${js.opponent_username || '...'}`;
+      } else {
+        mySymbol = 'O';
+        document.getElementById("turn-indicator").textContent = `Դու ես O, հակառակորդը՝ ${js.creator_username}`;
+      }
+
+      renderBoard();
+
+      // Ստուգում ենք արդեն խաղն ավարտվել է
+      if (js.status === 'finished') {
+        if (js.winner_id == USER_ID) {
+          handleGameOver("win", js.bet * 2);
+        } else if (js.winner_id) {
+          handleGameOver("lose");
+        } else {
+          handleGameOver("draw");
+        }
+      }
+    }
+  } catch (e) {
+    console.error("loadTableState error:", e);
+  }
 }
 
 // ================= GAME BOARD =================
