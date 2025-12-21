@@ -189,6 +189,21 @@ function goBack() {
   window.location.replace(`${API}/portal/duels/duels.html?uid=${USER_ID}&t=${Date.now()}`);
 }
 
+function restartGame() {
+  board = Array(9).fill(null);
+  gameOver = false;
+  currentTurn = 'X';
+  mySymbol = 'X';
+  renderBoard();
+  updateTurnDisplay();
+  showStatus("Խաղը սկսվեց! Սկսիր քո քայլը", "");
+  document.getElementById("new-game-btn").style.display = "none";
+  
+  // Հեռացնել winner class-ը բոլոր cell-երից
+  const cells = document.querySelectorAll(".cell");
+  cells.forEach(cell => cell.classList.remove("winner"));
+}
+
 // ================= BOT MODE =================
 
 function initBotMode() {
@@ -230,6 +245,7 @@ function checkBotGameOver() {
       } else {
         showStatus("😔 Բոտը հաղթեց", "lose");
       }
+      document.getElementById("new-game-btn").style.display = "block";
       return;
     }
   }
@@ -237,6 +253,7 @@ function checkBotGameOver() {
   if (board.every(cell => cell !== null)) {
     gameOver = true;
     showStatus("🤝 Ոչ-ոքի!", "draw");
+    document.getElementById("new-game-btn").style.display = "block";
   }
 }
 
