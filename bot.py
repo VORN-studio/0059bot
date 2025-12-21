@@ -4525,7 +4525,7 @@ def update_current_candle():
             logger.error("Failed to get valid connection after 3 attempts")
             return
             
-        c = conn.cursor()
+        cur = conn.cursor()
         
         # Վերցնել config
         cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
@@ -5361,7 +5361,7 @@ def api_get_user_data():
     """, (telegram_id,))
     row = c.fetchone()
     c.close()
-    put_db(conn)
+    db(conn)
 
     if not row:
         return jsonify({"error": "User not found"}), 404
