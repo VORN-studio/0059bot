@@ -186,7 +186,7 @@ function showStatus(msg, type) {
 // ================= NAVIGATION =================
 
 function goBack() {
-  window.location.replace(`${API}/portal/duels/duels.html?uid=${USER_ID}&t=${Date.now()}`);
+  window.history.back();
 }
 
 function restartGame() {
