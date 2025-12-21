@@ -141,8 +141,8 @@ async function playBotGame(game) {
     });
 
     const js = await r.json();
-    if (!js.ok) {
-      return showStatus(`❌ ${js.error}`, "lose");
+    if (!js.success) {
+        return showStatus(`❌ ${js.message}`, "lose");
     }
 
     domitBalance = js.new_balance;
