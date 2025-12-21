@@ -6,8 +6,8 @@ let USERNAME = "Player";
 let domitBalance = 0;
 let socket = null;
 
-let activeBotSession = null; // { game: "tictactoe", paid: true }
-let selectedTableId = null; // join modal-ի համար
+let activeBotSession = null;
+let selectedTableId = null;
 
 // ================= HELPERS =================
 
@@ -17,7 +17,7 @@ function getUidFromUrl() {
 }
 
 function updateBalances() {
-  document.getElementById("domit-balance").textContent = domitBalance;
+  document.getElementById("domit-balance").textContent = domitBalance.toFixed(2);
 }
 
 function showStatus(msg, type = "") {
@@ -37,6 +37,7 @@ async function loadUser() {
       domitBalance = js.user.balance_usd || 0;
       USERNAME = js.user.username || `user_${USER_ID}`;
       updateBalances();
+      loadTables();
     } else {
       showStatus("❌ Չհաջողվեց բեռնել բալանսը");
     }
@@ -53,29 +54,43 @@ function connectWebSocket() {
 
   socket.on("connect", () => {
     console.log("✅ WebSocket connected");
-    socket.emit("join_duels", { user_id: USER_ID, username: USERNAME });
+    socket.emit("join_duels", { user_id: USER_ID });
   });
 
-  socket.on("tables_update", (data) => {
-    renderTables(data.tables);
+  socket.on("table_joined", (data) => {
+    showStatus(`✅ Ինչ-որ մեկը միացավ քո սեղանին։`);
+    // Redirect դեպի խաղ
+    setTimeout(() => {
+      window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${data.table_id}&uid=${USER_ID}`;
+    }, 1000);
   });
 
-  socket.on("online_count", (data) => {
-    document.getElementById("online-count").textContent = data.count;
+  socket.on("opponent_move", (data) => {
+    console.log("Opponent made a move", data);
   });
 
-  socket.on("table_closed", (data) => {
-    showStatus(`Սեղան #${data.table_id} փակվեց։`);
+  socket.on("game_over", (data) => {
+    console.log("Game over", data);
   });
+}
 
-  socket.on("game_started", (data) => {
-    // Redirect դեպի խաղի էջ
-    window.location.href = `${API}/duels/game?table_id=${data.table_id}&uid=${USER_ID}`;
-  });
+// ================= LOAD TABLES =================
 
-  socket.on("error", (data) => {
-    showStatus(`❌ ${data.message}`, "lose");
-  });
+async function loadTables() {
+  try {
+    const r = await fetch(`${API}/api/duels/get-tables`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ game_type: "tictactoe" })
+    });
+
+    const js = await r.json();
+    if (js.success) {
+      renderTables(js.tables);
+    }
+  } catch (e) {
+    console.log("loadTables error", e);
+  }
 }
 
 function renderTables(tables) {
@@ -94,18 +109,18 @@ function renderTables(tables) {
 
   container.innerHTML = tables
     .map((t) => {
-      const gameIcon = t.game === "tictactoe" ? "❌⭕" : "🎮";
-      const gameName = t.game === "tictactoe" ? "Tic-Tac-Toe" : t.game;
-      const timeLeft = Math.max(0, Math.floor((300000 - (Date.now() - t.created_at)) / 1000));
+      const now = Math.floor(Date.now() / 1000);
+      const elapsed = now - t.created_at;
+      const timeLeft = Math.max(0, 300 - elapsed);
       const minutes = Math.floor(timeLeft / 60);
       const seconds = timeLeft % 60;
 
       return `
-        <div class="table-card" onclick="openJoinModal('${t.id}')">
-          <div class="table-game-icon">${gameIcon}</div>
+        <div class="table-card" onclick="openJoinModal(${t.id}, '${t.creator}', ${t.bet})">
+          <div class="table-game-icon">❌⭕</div>
           <div class="table-info">
-            <div class="table-game-name">${gameName}</div>
-            <div class="table-creator">Ստեղծող՝ ${t.creator_name}</div>
+            <div class="table-game-name">Tic-Tac-Toe</div>
+            <div class="table-creator">Ստեղծող՝ ${t.creator}</div>
           </div>
           <div style="text-align: right;">
             <div class="table-bet">${t.bet} DOMIT</div>
@@ -120,19 +135,15 @@ function renderTables(tables) {
 // ================= BOT GAME =================
 
 async function playBotGame(game) {
-  // Ստուգում ենք արդեն active session կա՞
   if (activeBotSession && activeBotSession.game === game) {
-    // Արդեն վճարել է, մտնում է խաղ
-    window.location.href = `${API}/duels/bot-game?game=${game}&uid=${USER_ID}`;
+    window.location.href = `${API}/duels/${game}/${game}.html?uid=${USER_ID}`;
     return;
   }
 
-  // Ստուգում ենք balance-ը
   if (domitBalance < 2) {
     return showStatus("❌ Քեզ մոտ չկա 2 DOMIT։", "lose");
   }
 
-  // Վճարում է 2 DOMIT
   try {
     const r = await fetch(`${API}/api/duels/pay-bot`, {
       method: "POST",
@@ -142,7 +153,7 @@ async function playBotGame(game) {
 
     const js = await r.json();
     if (!js.success) {
-        return showStatus(`❌ ${js.message}`, "lose");
+      return showStatus(`❌ ${js.message}`, "lose");
     }
 
     domitBalance = js.new_balance;
@@ -150,8 +161,7 @@ async function playBotGame(game) {
 
     activeBotSession = { game, paid: true };
 
-    // Մտնում է խաղ
-    window.location.href = `${API}/duels/bot-game?game=${game}&uid=${USER_ID}`;
+    window.location.href = `${API}/duels/${game}/${game}.html?uid=${USER_ID}`;
   } catch (e) {
     console.log("payBot error", e);
     showStatus("❌ Սերվերի սխալ", "lose");
@@ -171,7 +181,7 @@ function closeCreateTableModal() {
 }
 
 async function confirmCreateTable() {
-  const game = document.getElementById("game-type").value;
+  const game_type = document.getElementById("game-type").value;
   const bet = Number(document.getElementById("bet-amount").value);
 
   if (!bet || bet <= 0) {
@@ -190,18 +200,22 @@ async function confirmCreateTable() {
     const r = await fetch(`${API}/api/duels/create-table`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: USER_ID, username: USERNAME, game, bet })
+      body: JSON.stringify({ user_id: USER_ID, game_type, bet })
     });
 
     const js = await r.json();
-    if (!js.ok) {
-      return showStatus(`❌ ${js.error}`, "lose");
+    if (!js.success) {
+      return showStatus(`❌ ${js.message}`, "lose");
     }
 
     domitBalance = js.new_balance;
     updateBalances();
 
     showStatus(`✅ Սեղանը ստեղծվեց։ Սպասում ենք հակառակորդին…`);
+
+    // Reload tables
+    setTimeout(() => loadTables(), 500);
+
   } catch (e) {
     console.log("createTable error", e);
     showStatus("❌ Սերվերի սխալ", "lose");
@@ -210,25 +224,15 @@ async function confirmCreateTable() {
 
 // ================= JOIN TABLE =================
 
-function openJoinModal(tableId) {
+function openJoinModal(tableId, creator, bet) {
   selectedTableId = tableId;
 
-  // Գտնում ենք սեղանը
-  socket.emit("get_table_info", { table_id: tableId }, (table) => {
-    if (!table) {
-      return showStatus("❌ Սեղանը չի գտնվել։", "lose");
-    }
+  document.getElementById("join-game-type").textContent = "❌⭕ Tic-Tac-Toe";
+  document.getElementById("join-bet").textContent = bet;
+  document.getElementById("join-creator").textContent = creator;
+  document.getElementById("join-error").textContent = "";
 
-    const gameIcon = table.game === "tictactoe" ? "❌⭕" : "🎮";
-    const gameName = table.game === "tictactoe" ? "Tic-Tac-Toe" : table.game;
-
-    document.getElementById("join-game-type").textContent = `${gameIcon} ${gameName}`;
-    document.getElementById("join-bet").textContent = table.bet;
-    document.getElementById("join-creator").textContent = table.creator_name;
-    document.getElementById("join-error").textContent = "";
-
-    document.getElementById("join-modal").classList.remove("hidden");
-  });
+  document.getElementById("join-modal").classList.remove("hidden");
 }
 
 function closeJoinModal() {
@@ -247,14 +251,13 @@ async function confirmJoinTable() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         user_id: USER_ID,
-        username: USERNAME,
         table_id: selectedTableId
       })
     });
 
     const js = await r.json();
-    if (!js.ok) {
-      return showStatus(`❌ ${js.error}`, "lose");
+    if (!js.success) {
+      return showStatus(`❌ ${js.message}`, "lose");
     }
 
     domitBalance = js.new_balance;
@@ -262,7 +265,11 @@ async function confirmJoinTable() {
 
     showStatus("✅ Միացար սեղանին։ Խաղը սկսվում է…");
 
-    // WebSocket-ը կուղարկի game_started event
+    // Redirect դեպի խաղ
+    setTimeout(() => {
+      window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
+    }, 1000);
+
   } catch (e) {
     console.log("joinTable error", e);
     showStatus("❌ Սերվերի սխալ", "lose");
@@ -281,6 +288,9 @@ window.onload = () => {
   USER_ID = tg?.initDataUnsafe?.user?.id || getUidFromUrl();
   loadUser();
   connectWebSocket();
+  
+  // Refresh tables every 5 seconds
+  setInterval(loadTables, 5000);
 };
 
 window.onbeforeunload = () => {
