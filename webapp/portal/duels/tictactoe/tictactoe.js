@@ -221,9 +221,16 @@ function botMove() {
   const emptyIndexes = board.map((val, idx) => val === null ? idx : null).filter(v => v !== null);
   if (emptyIndexes.length === 0) return;
   
-  const randomIndex = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+  let botIndex;
   
-  board[randomIndex] = 'O';
+  // 80% դեպքերում խելացի քայլ, 20% պատահական
+  if (Math.random() < 0.8) {
+    botIndex = getBestMove();
+  } else {
+    botIndex = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+  }
+  
+  board[botIndex] = 'O';
   renderBoard();
   checkBotGameOver();
   
@@ -231,6 +238,38 @@ function botMove() {
     currentTurn = 'X';
     updateTurnDisplay();
   }
+}
+
+function getBestMove() {
+  // 1. Եթե կարող է հաղթել - հաղթի
+  for (let combo of WINNING_COMBOS) {
+    const [a, b, c] = combo;
+    if (board[a] === 'O' && board[b] === 'O' && board[c] === null) return c;
+    if (board[a] === 'O' && board[c] === 'O' && board[b] === null) return b;
+    if (board[b] === 'O' && board[c] === 'O' && board[a] === null) return a;
+  }
+  
+  // 2. Եթե խաղացողը կարող է հաղթել - արգելակել
+  for (let combo of WINNING_COMBOS) {
+    const [a, b, c] = combo;
+    if (board[a] === 'X' && board[b] === 'X' && board[c] === null) return c;
+    if (board[a] === 'X' && board[c] === 'X' && board[b] === null) return b;
+    if (board[b] === 'X' && board[c] === 'X' && board[a] === null) return a;
+  }
+  
+  // 3. Վերցնել կենտրոնը եթե ազատ է
+  if (board[4] === null) return 4;
+  
+  // 4. Վերցնել անկյուններից մեկը
+  const corners = [0, 2, 6, 8];
+  const emptyCorners = corners.filter(i => board[i] === null);
+  if (emptyCorners.length > 0) {
+    return emptyCorners[Math.floor(Math.random() * emptyCorners.length)];
+  }
+  
+  // 5. Վերցնել ցանկացած ազատ տեղ
+  const emptyIndexes = board.map((val, idx) => val === null ? idx : null).filter(v => v !== null);
+  return emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
 }
 
 function checkBotGameOver() {
