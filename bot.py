@@ -1836,6 +1836,11 @@ def duels_bot_game():
         return send_from_directory(os.path.join(duels_dir, game), f"{game}.html")
     else:
         return "Game not found", 404
+    
+@app_web.route('/duels/<game>/<path:filename>')
+def duels_game_assets(game, filename):
+    duels_dir = os.path.join(WEBAPP_DIR, "portal", "duels")
+    return send_from_directory(os.path.join(duels_dir, game), filename)    
 
 @app_web.route('/webapp/tasks/<path:filename>')
 def webapp_tasks(filename):
