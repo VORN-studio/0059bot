@@ -2819,6 +2819,31 @@ def init_db():
         )
     """)
 
+    
+    # Duels PvP Tables
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_duels_tables (
+            id SERIAL PRIMARY KEY,
+            game_type TEXT NOT NULL,
+            creator_id BIGINT NOT NULL,
+            creator_username TEXT,
+            bet NUMERIC(10,2) NOT NULL,
+            status TEXT DEFAULT 'waiting',
+            opponent_id BIGINT,
+            opponent_username TEXT,
+            game_state JSONB,
+            winner_id BIGINT,
+            created_at BIGINT NOT NULL,
+            started_at BIGINT,
+            finished_at BIGINT
+        )
+    """)
+
+    c.execute("""
+        CREATE INDEX IF NOT EXISTS idx_duels_status 
+        ON dom_duels_tables(status, game_type)
+    """)
+
     c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS likes INT DEFAULT 0")
     c.execute("ALTER TABLE dom_comments ADD COLUMN IF NOT EXISTS parent_id BIGINT DEFAULT NULL")
 
