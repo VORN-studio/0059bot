@@ -34,7 +34,7 @@ async function loadUser() {
     const r = await fetch(`${API}/api/user/${USER_ID}`);
     const js = await r.json();
     if (js.ok) {
-      domitBalance = js.user.domit_balance || 0;
+      domitBalance = js.user.balance_usd || 0;
       USERNAME = js.user.username || `user_${USER_ID}`;
       updateBalances();
     } else {
@@ -272,7 +272,7 @@ async function confirmJoinTable() {
 // ================= BACK =================
 
 function goBack() {
-  window.location.href = `${API}/app?uid=${USER_ID}&t=${Date.now()}`;
+  window.location.href = `${API}/portal/portal.html?uid=${USER_ID}&viewer=${USER_ID}&t=${Date.now()}`;
 }
 
 // ================= INIT =================
