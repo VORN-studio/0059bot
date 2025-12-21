@@ -1438,7 +1438,7 @@ def api_duels_create_table():
         table_id = f"{game_type}_{user_id}_{int(time.time())}"
         c.execute("""
             INSERT INTO duels_tables (table_id, game_type, creator_id, creator_name, bet, status, created_at)
-            VALUES (?, ?, ?, ?, ?, 'waiting', datetime('now'))
+            VALUES (%s, %s, %s, %s, %s, 'waiting', NOW())
         """, (table_id, game_type, user_id, username, bet))
         
         conn.commit()
