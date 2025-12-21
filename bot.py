@@ -4439,7 +4439,7 @@ def create_new_candle():
             logger.error("Failed to get valid connection after 3 attempts")
             return
             
-        c = conn.cursor()
+        cur = conn.cursor()
         
         # Վերցնել config
         cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
