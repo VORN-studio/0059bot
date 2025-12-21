@@ -272,7 +272,7 @@ async function confirmJoinTable() {
 // ================= BACK =================
 
 function goBack() {
-  window.location.href = `${API}/portal/portal.html?uid=${USER_ID}&viewer=${USER_ID}&t=${Date.now()}`;
+  window.location.replace(`${API}/portal/portal.html?uid=${USER_ID}&viewer=${USER_ID}&t=${Date.now()}`);
 }
 
 // ================= INIT =================
