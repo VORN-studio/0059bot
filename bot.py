@@ -1826,6 +1826,17 @@ def favicon():
     assets_dir = os.path.join(WEBAPP_DIR, "assets")
     return send_from_directory(assets_dir, "favicon.ico")
 
+@app_web.route('/duels/bot-game')
+def duels_bot_game():
+    duels_dir = os.path.join(WEBAPP_DIR, "portal", "duels")
+    game = request.args.get('game', 'tictactoe')
+    game_file = os.path.join(duels_dir, game, f"{game}.html")
+    
+    if os.path.exists(game_file):
+        return send_from_directory(os.path.join(duels_dir, game), f"{game}.html")
+    else:
+        return "Game not found", 404
+
 @app_web.route('/webapp/tasks/<path:filename>')
 def webapp_tasks(filename):
     return send_from_directory(TASKS_DIR, filename)
