@@ -1,0 +1,5 @@
+run = "cd /root/apps/0059bot && python3 bot.py"
+entrypoint = "bot.py"
+
+[nix]
+channel = "stable-22_11"
