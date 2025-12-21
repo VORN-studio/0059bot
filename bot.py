@@ -1544,6 +1544,247 @@ def api_duels_join_table():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+
+@app_web.route('/api/duels/get-tables', methods=['POST'])
+def api_duels_get_tables():
+    """Get list of waiting tables"""
+    try:
+        data = request.json
+        game_type = data.get('game_type', 'tictactoe')
+
+        conn = db()
+        c = conn.cursor()
+        c.execute("""
+            SELECT id, creator_username, bet, created_at 
+            FROM dom_duels_tables 
+            WHERE status='waiting' AND game_type=%s
+            ORDER BY created_at DESC
+            LIMIT 20
+        """, (game_type,))
+
+        tables = []
+        for row in c.fetchall():
+            tables.append({
+                'id': row[0],
+                'creator': row[1],
+                'bet': float(row[2]),
+                'created_at': row[3]
+            })
+
+        release_db(conn)
+        return jsonify({"success": True, "tables": tables})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app_web.route('/api/duels/make-move', methods=['POST'])
+def api_duels_make_move():
+    """Make a move in PvP game"""
+    try:
+        data = request.json
+        table_id = data.get('table_id')
+        user_id = data.get('user_id')
+        move = data.get('move')  # {index: 0-8}
+
+        conn = db()
+        c = conn.cursor()
+        c.execute("""
+            SELECT game_state, creator_id, opponent_id, status, bet
+            FROM dom_duels_tables 
+            WHERE id=%s
+        """, (table_id,))
+        row = c.fetchone()
+
+        if not row:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
+
+        game_state, creator_id, opponent_id, status, bet = row
+
+        if status != 'playing':
+            release_db(conn)
+            return jsonify({"success": False, "message": "Խաղը չի սկսել կամ ավարտված է"}), 400
+
+        # Parse game state
+        import json
+        state = json.loads(game_state) if isinstance(game_state, str) else game_state
+        board = state.get('board', [''] * 9)
+        turn = state.get('turn', 'X')
+
+        # Determine player symbol
+        player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
+
+        if turn != player_symbol:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Դու քայլելու հերթը չունես"}), 400
+
+        # Make move
+        index = move.get('index')
+        if board[index] != '':
+            release_db(conn)
+            return jsonify({"success": False, "message": "Այս վանդակը զբաղված է"}), 400
+
+        board[index] = player_symbol
+
+        # Check winner
+        winner = check_winner(board)
+        next_turn = 'O' if turn == 'X' else 'X'
+
+        new_state = {
+            'board': board,
+            'turn': next_turn
+        }
+
+        if winner:
+            # Game finished
+            winner_id = creator_id if winner == 'X' else opponent_id
+            now = int(time.time())
+            
+            c.execute("""
+                UPDATE dom_duels_tables
+                SET game_state=%s, status='finished', winner_id=%s, finished_at=%s
+                WHERE id=%s
+            """, (json.dumps(new_state), winner_id, now, table_id))
+            
+            # Pay winner (2x bet)
+            prize = float(bet) * 2
+            c.execute("""
+                UPDATE dom_users 
+                SET balance_usd = balance_usd + %s 
+                WHERE user_id=%s
+            """, (prize, winner_id))
+            
+            conn.commit()
+            release_db(conn)
+
+            # Emit to both players
+            socketio.emit('game_over', {
+                'table_id': table_id,
+                'winner_id': winner_id,
+                'prize': prize
+            }, room=f'table_{table_id}')
+
+            return jsonify({
+                "success": True,
+                "game_state": new_state,
+                "winner": winner,
+                "prize": prize
+            })
+        
+        elif '' not in board:
+            # Draw
+            now = int(time.time())
+            c.execute("""
+                UPDATE dom_duels_tables
+                SET game_state=%s, status='finished', finished_at=%s
+                WHERE id=%s
+            """, (json.dumps(new_state), now, table_id))
+            
+            # Return bets
+            c.execute("""
+                UPDATE dom_users 
+                SET balance_usd = balance_usd + %s 
+                WHERE user_id IN (%s, %s)
+            """, (float(bet), creator_id, opponent_id))
+            
+            conn.commit()
+            release_db(conn)
+
+            socketio.emit('game_over', {
+                'table_id': table_id,
+                'winner_id': None,
+                'draw': True
+            }, room=f'table_{table_id}')
+
+            return jsonify({
+                "success": True,
+                "game_state": new_state,
+                "draw": True
+            })
+        
+        else:
+            # Game continues
+            c.execute("""
+                UPDATE dom_duels_tables
+                SET game_state=%s
+                WHERE id=%s
+            """, (json.dumps(new_state), table_id))
+            
+            conn.commit()
+            release_db(conn)
+
+            # Emit to opponent
+            opponent = opponent_id if int(user_id) == int(creator_id) else creator_id
+            socketio.emit('opponent_move', {
+                'table_id': table_id,
+                'move': move,
+                'game_state': new_state
+            }, room=f'user_{opponent}')
+
+            return jsonify({
+                "success": True,
+                "game_state": new_state
+            })
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app_web.route('/api/duels/get-table-state', methods=['POST'])
+def api_duels_get_table_state():
+    """Get current table state"""
+    try:
+        data = request.json
+        table_id = data.get('table_id')
+
+        conn = db()
+        c = conn.cursor()
+        c.execute("""
+            SELECT game_state, status, creator_id, opponent_id, 
+                   creator_username, opponent_username, winner_id, bet
+            FROM dom_duels_tables 
+            WHERE id=%s
+        """, (table_id,))
+        row = c.fetchone()
+
+        if not row:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
+
+        import json
+        game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+        
+        release_db(conn)
+        
+        return jsonify({
+            "success": True,
+            "game_state": game_state,
+            "status": row[1],
+            "creator_id": row[2],
+            "opponent_id": row[3],
+            "creator_username": row[4],
+            "opponent_username": row[5],
+            "winner_id": row[6],
+            "bet": float(row[7])
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+def check_winner(board):
+    """Check tic-tac-toe winner"""
+    lines = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],  # rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],  # cols
+        [0, 4, 8], [2, 4, 6]              # diagonals
+    ]
+    
+    for line in lines:
+        if board[line[0]] and board[line[0]] == board[line[1]] == board[line[2]]:
+            return board[line[0]]
+    
+    return None
+
 @app_web.route('/api/upload_post_media', methods=['POST'])
 def upload_post_media():
     """Upload media (image/video) for portal post with FFmpeg compression"""
