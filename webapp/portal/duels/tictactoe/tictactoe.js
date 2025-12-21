@@ -259,18 +259,18 @@ function goBack() {
 }
 
 function restartGame() {
-  board = Array(9).fill(null);
-  gameOver = false;
-  currentTurn = 'X';
-  mySymbol = 'X';
-  renderBoard();
-  updateTurnDisplay();
-  showStatus("Խաղը սկսվեց! Սկսիր քո քայլը", "");
-  document.getElementById("new-game-btn").style.display = "none";
-  
-  // Հեռացնել winner class-ը բոլոր cell-երից
-  const cells = document.querySelectorAll(".cell");
-  cells.forEach(cell => cell.classList.remove("winner"));
+  if (IS_BOT_MODE) {
+    board = Array(9).fill(null);
+    currentTurn = 'X';
+    gameOver = false;
+    renderBoard();
+    updateTurnDisplay();
+    showStatus("", "");
+    document.getElementById("new-game-btn").style.display = "none";
+  } else {
+    // MULTIPLAYER - վերադարձնել դուելներ էջ
+    window.location.href = `${API}/duels/duels.html?uid=${USER_ID}`;
+  }
 }
 
 // ================= BOT MODE =================
@@ -342,27 +342,62 @@ function getBestMove() {
 }
 
 function checkBotGameOver() {
+  handleGameOver();
+}
+
+async function handleGameOver(result = null, prize = 0) {
+  // Check winner from board
+  let winner = null;
   for (let combo of WINNING_COMBOS) {
     const [a, b, c] = combo;
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      gameOver = true;
+      winner = board[a];
       highlightWinningLine(combo);
-      
-      if (board[a] === 'X') {
-        showStatus("🎉 Դու հաղթեցիր!", "win");
-      } else {
-        showStatus("😔 Բոտը հաղթեց", "lose");
-      }
-      document.getElementById("new-game-btn").style.display = "block";
-      return;
+      break;
     }
   }
-  
-  if (board.every(cell => cell !== null)) {
-    gameOver = true;
-    showStatus("🤝 Ոչ-ոքի!", "draw");
-    document.getElementById("new-game-btn").style.display = "block";
+
+  const isDraw = !winner && board.every(cell => cell !== null);
+
+  if (!winner && !isDraw && !result) return; // Game not over
+
+  gameOver = true;
+
+  let message = "";
+  let className = "";
+
+  if (IS_BOT_MODE) {
+    // BOT MODE
+    if (winner === 'X') {
+      message = "🎉 Դու հաղթեցիր!";
+      className = "win";
+    } else if (winner === 'O') {
+      message = "😔 Բոտը հաղթեց";
+      className = "lose";
+    } else {
+      message = "🤝 Ոչ-ոքի!";
+      className = "draw";
+    }
+  } else {
+    // MULTIPLAYER MODE
+    if (result === 'win') {
+      message = `🎉 ԴՈՒ ՀԱՂԹԵՑԻՐ! +${prize.toFixed(2)} DOMIT`;
+      className = "win";
+      domitBalance += prize;
+      updateBalanceDisplay();
+    } else if (result === 'lose') {
+      message = "😔 Դու պարտվեցիր";
+      className = "lose";
+    } else if (result === 'draw' || isDraw) {
+      message = "🤝 Ոչ-ոքի - գումարը վերադարձավ";
+      className = "draw";
+      await loadBalance();
+    }
   }
+
+  showStatus(message, className);
+  document.getElementById("new-game-btn").style.display = "block";
+  document.getElementById("new-game-btn").textContent = IS_BOT_MODE ? "Նոր խաղ" : "Վերադառնալ դուելներ";
 }
 
 // ================= START =================
