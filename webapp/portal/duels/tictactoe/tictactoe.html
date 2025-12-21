@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tic-Tac-Toe | Domino</title>
+  <link rel="stylesheet" href="tictactoe.css"/>
+</head>
+<body>
+  <div class="game-container">
+    <div class="header">
+      <button class="btn back" onclick="goBack()">← Հետ</button>
+      <h1>🎯 Tic-Tac-Toe</h1>
+      <div class="balance">💎 <span id="domit-balance">0</span></div>
+    </div>
+
+    <div class="game-info">
+      <div class="player-info">
+        <div class="player active" id="player-x">
+          <span class="symbol x-symbol">X</span>
+          <span id="player1-name">Դու</span>
+        </div>
+        <div class="vs">VS</div>
+        <div class="player" id="player-o">
+          <span class="symbol o-symbol">O</span>
+          <span id="player2-name">Սպասում...</span>
+        </div>
+      </div>
+      <div class="turn-info" id="turn-info">Քո հերթն է</div>
+    </div>
+
+    <div class="game-board" id="game-board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="tictactoe.js"></script>
+</body>
+</html>

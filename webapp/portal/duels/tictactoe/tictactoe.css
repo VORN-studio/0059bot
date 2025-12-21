@@ -1,0 +1,239 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.game-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 28px;
+  color: #333;
+  flex: 1;
+  text-align: center;
+}
+
+.btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.balance {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.game-info {
+  margin-bottom: 30px;
+}
+
+.player-info {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 15px;
+  border-radius: 12px;
+  background: #f8f9fa;
+  min-width: 120px;
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.player.active {
+  opacity: 1;
+  background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+  transform: scale(1.05);
+}
+
+.symbol {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.x-symbol {
+  color: #f5576c;
+}
+
+.o-symbol {
+  color: #4facfe;
+}
+
+.vs {
+  font-size: 20px;
+  font-weight: bold;
+  color: #999;
+}
+
+.turn-info {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #667eea;
+  padding: 12px;
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+  aspect-ratio: 1;
+}
+
+.cell {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 3px solid #dee2e6;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.cell:hover:not(.taken) {
+  background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+  border-color: #667eea;
+  transform: scale(1.05);
+}
+
+.cell.taken {
+  cursor: not-allowed;
+}
+
+.cell.x {
+  color: #f5576c;
+  animation: popIn 0.3s ease;
+}
+
+.cell.o {
+  color: #4facfe;
+  animation: popIn 0.3s ease;
+}
+
+.cell.winner {
+  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+  animation: winPulse 0.6s ease infinite;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes winPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.status {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 15px;
+  border-radius: 10px;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status.win {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #2d3748;
+}
+
+.status.lose {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  color: #2d3748;
+}
+
+.status.draw {
+  background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+  color: #2d3748;
+}
+
+@media (max-width: 480px) {
+  .game-container {
+    padding: 20px;
+  }
+  
+  .header h1 {
+    font-size: 22px;
+  }
+  
+  .cell {
+    font-size: 48px;
+  }
+  
+  .symbol {
+    font-size: 28px;
+  }
+}
