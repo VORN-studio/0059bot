@@ -1464,8 +1464,8 @@ def api_duels_join_table():
         c = conn.cursor()
         
         # Get table info
-        c.execute("SELECT creator_id, bet, status FROM duels_tables WHERE table_id=?", (table_id,))
-        table_row = cur.fetchone()
+        c.execute("SELECT creator_id, bet, status FROM duels_tables WHERE table_id=%s", (table_id,))
+        table_row = c.fetchone()
         
         if not table_row:
             conn.close()
@@ -1502,9 +1502,9 @@ def api_duels_join_table():
         
         # Update table
         c.execute("""
-            UPDATE duels_tables 
-            SET opponent_id=?, opponent_name=?, status='playing' 
-            WHERE table_id=?
+            UPDATE duels_tables
+            SET opponent_id=%s, opponent_name=%s, status='playing'
+            WHERE table_id=%s
         """, (user_id, username, table_id))
         
         conn.commit()
