@@ -1464,61 +1464,83 @@ def api_duels_join_table():
         data = request.json
         user_id = data.get('user_id')
         table_id = data.get('table_id')
-        
+
         conn = db()
         c = conn.cursor()
-        
+
         # Get table info
-        c.execute("SELECT creator_id, bet, status FROM duels_tables WHERE table_id=%s", (table_id,))
-        table_row = c.fetchone()
-        
-        if not table_row:
-            conn.close()
-            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
-        
-        creator_id, bet, status = table_row
-        
-        if status != 'waiting':
-            conn.close()
-            return jsonify({"success": False, "message": "Սեղանը արդեն զբաղված է"}), 400
-        
-        if str(creator_id) == str(user_id):
-            conn.close()
-            return jsonify({"success": False, "message": "Չես կարող միանալ քո սեղանին"}), 400
-        
-        # Check user balance
-        c.execute("SELECT balance_usd, username FROM dom_users WHERE user_id=%s", (user_id,))
-        row = c.fetchone()
-        
-        if not row:
-            conn.close()
-            return jsonify({"success": False, "message": "Օգտատեր չի գտնվել"}), 404
-        
-        balance = row[0] or 0
-        username = row[1] or "User"
-        
-        if balance < bet:
-            conn.close()
-            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
-        
-        # Deduct bet
-        new_balance = float(balance) - bet
-        c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
-        
-        # Update table
         c.execute("""
-            UPDATE duels_tables
-            SET opponent_id=%s, opponent_name=%s, status='playing'
-            WHERE table_id=%s
-        """, (user_id, username, table_id))
-        
+            SELECT creator_id, bet, status, creator_username 
+            FROM dom_duels_tables 
+            WHERE id=%s
+        """, (table_id,))
+        table_row = c.fetchone()
+
+        if not table_row:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
+
+        creator_id, bet, status, creator_username = table_row
+
+        if status != 'waiting':
+            release_db(conn)
+            return jsonify({"success": False, "message": "Սեղանը արդեն զբաղված է"}), 400
+
+        if int(creator_id) == int(user_id):
+            release_db(conn)
+            return jsonify({"success": False, "message": "Չես կարող միանալ քո սեղանին"}), 400
+
+        release_db(conn)
+
+        # Deduct bet using apply_burn_transaction
+        apply_burn_transaction(
+            from_user=user_id,
+            total_amount=bet,
+            transfers=[],
+            burn_amount=0.0,
+            reason="pvp_join_bet"
+        )
+
+        # Get username and new balance
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT username, balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
+        row = c.fetchone()
+        username = row[0] if row else "User"
+        new_balance = float(row[1]) if row else 0.0
+
+        # Update table - game starts
+        now = int(time.time())
+        c.execute("""
+            UPDATE dom_duels_tables
+            SET opponent_id=%s, 
+                opponent_username=%s, 
+                status='playing',
+                started_at=%s,
+                game_state=%s
+            WHERE id=%s
+        """, (user_id, username, now, '{"board": ["","","","","","","","",""], "turn": "X"}', table_id))
+
         conn.commit()
-        conn.close()
-        
+        release_db(conn)
+
+        # Emit to creator via SocketIO
+        socketio.emit('table_joined', {
+            'table_id': table_id,
+            'opponent_id': user_id,
+            'opponent_username': username
+        }, room=f'user_{creator_id}')
+
         return jsonify({
             "success": True,
-            "new_balance": new_balance
+            "new_balance": new_balance,
+            "creator_username": creator_username
         })
+    
+    except ValueError as e:
+        if str(e) == "low_balance":
+            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+        return jsonify({"success": False, "message": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
