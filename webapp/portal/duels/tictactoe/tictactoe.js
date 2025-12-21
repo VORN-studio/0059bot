@@ -2,7 +2,7 @@ const API = window.location.origin;
 const params = new URLSearchParams(window.location.search);
 const USER_ID = params.get("uid");
 const TABLE_ID = params.get("table_id");
-
+const IS_BOT_MODE = !TABLE_ID; // Եթե table_id չկա → բոտի ռեժիմ
 let socket;
 let domitBalance = 0;
 let mySymbol = null; // 'X' or 'O'
@@ -20,7 +20,11 @@ const WINNING_COMBOS = [
 
 async function init() {
   await loadBalance();
-  initSocket();
+  if (IS_BOT_MODE) {
+    initBotMode();
+  } else {
+    initSocket();
+  }
   initBoard();
 }
 
@@ -169,6 +173,57 @@ function showStatus(msg, type) {
 
 function goBack() {
   window.location.replace(`${API}/portal/duels/duels.html?uid=${USER_ID}&t=${Date.now()}`);
+}
+
+// ================= BOT MODE =================
+
+function initBotMode() {
+  mySymbol = 'X';
+  currentTurn = 'X';
+  document.getElementById("player1-name").textContent = "Դու";
+  document.getElementById("player2-name").textContent = "Համակարգիչ";
+  updateTurnDisplay();
+  showStatus("Խաղը սկսվեց! Սկսիր քո քայլը", "");
+}
+
+function botMove() {
+  if (gameOver) return;
+  
+  const emptyIndexes = board.map((val, idx) => val === null ? idx : null).filter(v => v !== null);
+  if (emptyIndexes.length === 0) return;
+  
+  const randomIndex = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+  
+  board[randomIndex] = 'O';
+  renderBoard();
+  checkBotGameOver();
+  
+  if (!gameOver) {
+    currentTurn = 'X';
+    updateTurnDisplay();
+  }
+}
+
+function checkBotGameOver() {
+  for (let combo of WINNING_COMBOS) {
+    const [a, b, c] = combo;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      gameOver = true;
+      highlightWinningLine(combo);
+      
+      if (board[a] === 'X') {
+        showStatus("🎉 Դու հաղթեցիր!", "win");
+      } else {
+        showStatus("😔 Բոտը հաղթեց", "lose");
+      }
+      return;
+    }
+  }
+  
+  if (board.every(cell => cell !== null)) {
+    gameOver = true;
+    showStatus("🤝 Ոչ-ոքի!", "draw");
+  }
 }
 
 // ================= START =================
