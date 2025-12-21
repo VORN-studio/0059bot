@@ -1479,7 +1479,7 @@ def api_duels_join_table():
 
         if not table_row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
+            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 400
 
         creator_id, bet, status, creator_username = table_row
 
@@ -1598,7 +1598,7 @@ def api_duels_make_move():
 
         if not row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
+            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 400
 
         game_state, creator_id, opponent_id, status, bet = row
 
@@ -1750,7 +1750,7 @@ def api_duels_get_table_state():
 
         if not row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
+            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 400
 
         import json
         game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
