@@ -252,6 +252,22 @@ function showStatus(msg, type) {
   status.className = "status " + type;
 }
 
+
+function showMessage(msg, type = "") {
+  showStatus(msg, type);
+}
+
+
+function checkWinner(board) {
+  for (let combo of WINNING_COMBOS) {
+    const [a, b, c] = combo;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return board[a];
+    }
+  }
+  return null;
+}
+
 // ================= NAVIGATION =================
 
 function goBack() {
