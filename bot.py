@@ -1458,9 +1458,7 @@ def api_duels_create_table():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
-@app_web.route('/api/duels/join-table', methods=['POST'])
-def duels_join_table():
-    log_info(f"🎯 JOIN-TABLE REQUEST: {request.json}")
+
 
 @app_web.route('/api/duels/join-table', methods=['POST'])
 def api_duels_join_table():
@@ -1494,7 +1492,7 @@ def api_duels_join_table():
 
         if int(creator_id) == int(user_id):
             release_db(conn)
-            return jsonify({"success": False, "message": "Չես կարող միանալ քո սեղանին"}), 400
+            return jsonify({"success": True, "is_owner": True, "new_balance": 0}) # 0-ն այստեղ նշանակություն չունի
 
         release_db(conn)
 
@@ -1980,15 +1978,21 @@ def on_connect():
 @socketio.on("disconnect")
 def on_disconnect():
     logger.info(f"🔴 Socket disconnected | sid={request.sid}")
-    
     offline_uid = None
     for uid, sid in list(ONLINE_USERS.items()):
         if sid == request.sid:
             offline_uid = uid
             del ONLINE_USERS[uid]
             break
-    
+
     if offline_uid:
+        # ԱՎԵԼԱՑՐՈՒ ԱՅՍ ՏՈՂԵՐԸ
+        conn = db()
+        c = conn.cursor()
+        c.execute("DELETE FROM dom_duels_tables WHERE creator_id = %s AND status = 'waiting'", (offline_uid,))
+        conn.commit()
+        release_db(conn)
+        # ----------------------
         emit("user_offline", {"user_id": offline_uid}, broadcast=True)
 
 @socketio.on("join_user")
