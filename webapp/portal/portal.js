@@ -2660,6 +2660,11 @@ async function loadHotUser() {
     }
 }
 
+// ================= DUELS =================
+function openDuels() {
+  window.location.href = `${window.location.origin}/portal/duels/duels.html?uid=${USER_ID}&t=${Date.now()}`;
+}
+
 function startHotUserRefresh() {
     if (hotUserInterval) {
         clearInterval(hotUserInterval);
