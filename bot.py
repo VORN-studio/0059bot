@@ -1403,6 +1403,7 @@ def api_duels_pay_bot():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app_web.route('/api/duels/create-table', methods=['POST'])
 def api_duels_create_table():
     """Create PvP table"""
     try:
