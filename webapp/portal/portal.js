@@ -2662,7 +2662,7 @@ async function loadHotUser() {
 
 // ================= DUELS =================
 function openDuels() {
-  window.location.href = `${window.location.origin}/portal/duels/duels.html?uid=${USER_ID}&t=${Date.now()}`;
+  window.location.href = `${window.location.origin}/portal/duels/duels.html?uid=${viewerId}&t=${Date.now()}`;
 }
 
 function startHotUserRefresh() {
