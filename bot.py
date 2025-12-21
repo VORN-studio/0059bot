@@ -1430,13 +1430,13 @@ def api_duels_create_table():
             return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
         
         # Deduct bet from balance
-        new_balance = balance - bet
+        new_balance = float(balance) - bet
         c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
         
         # Create table
         import time
         table_id = f"{game_type}_{user_id}_{int(time.time())}"
-        cur.execute("""
+        c.execute("""
             INSERT INTO duels_tables (table_id, game_type, creator_id, creator_name, bet, status, created_at)
             VALUES (?, ?, ?, ?, ?, 'waiting', datetime('now'))
         """, (table_id, game_type, user_id, username, bet))
@@ -1497,11 +1497,11 @@ def api_duels_join_table():
             return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
         
         # Deduct bet
-        new_balance = balance - bet
+        new_balance = float(balance) - bet
         c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
         
         # Update table
-        cur.execute("""
+        c.execute("""
             UPDATE duels_tables 
             SET opponent_id=?, opponent_name=?, status='playing' 
             WHERE table_id=?
