@@ -2692,6 +2692,24 @@ def init_db():
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS duels_tables (
+            table_id TEXT PRIMARY KEY,
+            game_type TEXT NOT NULL,
+            creator_id TEXT NOT NULL,
+            creator_name TEXT,
+            opponent_id TEXT,
+            opponent_name TEXT,
+            bet REAL NOT NULL,
+            status TEXT DEFAULT 'waiting',
+            winner_id TEXT,
+            board_state TEXT,
+            current_turn TEXT,
+            created_at TEXT,
+            finished_at TEXT
+        )
+    """)
+
         # Fire Reactions Table (unlimited per user)
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_fire_reactions (
