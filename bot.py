@@ -1353,9 +1353,9 @@ def api_get_user(user_id):
     """Get user balance and info"""
     try:
         conn = db()
-        cur = conn.cursor()
-        cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
-        row = cur.fetchone()
+        c = conn.cursor()
+        c.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
+        row = c.fetchone()
         conn.close()
         
         if row:
@@ -1378,9 +1378,9 @@ def api_duels_pay_bot():
         user_id = data.get('user_id')
         
         conn = db()
-        cur = conn.cursor()
-        cur.execute("SELECT balance_usd FROM users WHERE user_id=?", (user_id,))
-        row = cur.fetchone()
+        c = conn.cursor()
+        c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
+        row = c.fetchone()
         
         if not row:
             conn.close()
@@ -1393,7 +1393,7 @@ def api_duels_pay_bot():
             return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
         
         new_balance = balance - 2
-        cur.execute("UPDATE users SET balance_usd=? WHERE user_id=?", (new_balance, user_id))
+        c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
         conn.commit()
         conn.close()
         
@@ -1414,9 +1414,9 @@ def api_duels_create_table():
             return jsonify({"success": False, "message": "Գումարը պետք է մեծ լինի 0-ից"}), 400
         
         conn = db()
-        cur = conn.cursor()
-        cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
-        row = cur.fetchone()
+        c = conn.cursor()
+        c.execute("SELECT balance_usd, username FROM dom_users WHERE user_id=%s", (user_id,))
+        row = c.fetchone()
         
         if not row:
             conn.close()
@@ -1431,7 +1431,7 @@ def api_duels_create_table():
         
         # Deduct bet from balance
         new_balance = balance - bet
-        cur.execute("UPDATE users SET balance_usd=? WHERE user_id=?", (new_balance, user_id))
+        c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
         
         # Create table
         import time
@@ -1461,10 +1461,10 @@ def api_duels_join_table():
         table_id = data.get('table_id')
         
         conn = db()
-        cur = conn.cursor()
+        c = conn.cursor()
         
         # Get table info
-        cur.execute("SELECT creator_id, bet, status FROM duels_tables WHERE table_id=?", (table_id,))
+        c.execute("SELECT creator_id, bet, status FROM duels_tables WHERE table_id=?", (table_id,))
         table_row = cur.fetchone()
         
         if not table_row:
@@ -1482,8 +1482,8 @@ def api_duels_join_table():
             return jsonify({"success": False, "message": "Չես կարող միանալ քո սեղանին"}), 400
         
         # Check user balance
-        cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
-        row = cur.fetchone()
+        c.execute("SELECT balance_usd, username FROM dom_users WHERE user_id=%s", (user_id,))
+        row = c.fetchone()
         
         if not row:
             conn.close()
@@ -1498,7 +1498,7 @@ def api_duels_join_table():
         
         # Deduct bet
         new_balance = balance - bet
-        cur.execute("UPDATE users SET balance_usd=? WHERE user_id=?", (new_balance, user_id))
+        c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
         
         # Update table
         cur.execute("""
@@ -4439,7 +4439,7 @@ def create_new_candle():
             logger.error("Failed to get valid connection after 3 attempts")
             return
             
-        cur = conn.cursor()
+        c = conn.cursor()
         
         # Վերցնել config
         cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
@@ -4525,7 +4525,7 @@ def update_current_candle():
             logger.error("Failed to get valid connection after 3 attempts")
             return
             
-        cur = conn.cursor()
+        c = conn.cursor()
         
         # Վերցնել config
         cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
@@ -5352,15 +5352,15 @@ def api_get_user_data():
         return jsonify({"error": "Missing telegram_id"}), 400
 
     conn = db()
-    cur = conn.cursor()
-    cur.execute("""
+    c = conn.cursor()
+    c.execute("""
         SELECT telegram_id, username, status_level, ton_balance, usd_balance, 
                avatar_data, fires_received, fires_given, total_games, total_wins
         FROM dom_users
         WHERE telegram_id = %s
     """, (telegram_id,))
-    row = cur.fetchone()
-    cur.close()
+    row = c.fetchone()
+    c.close()
     put_db(conn)
 
     if not row:
