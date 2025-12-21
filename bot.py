@@ -1346,6 +1346,177 @@ def api_follows_list():
 
     return jsonify({"ok": True, "list": users})
 
+# ===================== DUELS API =====================
+
+@app_web.route('/api/user/<user_id>', methods=['GET'])
+def api_get_user(user_id):
+    """Get user balance and info"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
+        row = cur.fetchone()
+        conn.close()
+        
+        if row:
+            return jsonify({
+                "user": {
+                    "balance_usd": row[0] or 0,
+                    "username": row[1] or "User"
+                }
+            })
+        else:
+            return jsonify({"user": {"balance_usd": 0, "username": "User"}})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app_web.route('/api/duels/pay-bot', methods=['POST'])
+def api_duels_pay_bot():
+    """Pay 2 DOMIT for bot game access"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT balance_usd FROM users WHERE user_id=?", (user_id,))
+        row = cur.fetchone()
+        
+        if not row:
+            conn.close()
+            return jsonify({"success": False, "message": "Օգտատեր չի գտնվել"}), 404
+        
+        balance = row[0] or 0
+        
+        if balance < 2:
+            conn.close()
+            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+        
+        new_balance = balance - 2
+        cur.execute("UPDATE users SET balance_usd=? WHERE user_id=?", (new_balance, user_id))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"success": True, "new_balance": new_balance})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app_web.route('/api/duels/create-table', methods=['POST'])
+def api_duels_create_table():
+    """Create PvP table"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        bet = float(data.get('bet', 0))
+        game_type = data.get('game_type', 'tictactoe')
+        
+        if bet <= 0:
+            return jsonify({"success": False, "message": "Գումարը պետք է մեծ լինի 0-ից"}), 400
+        
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
+        row = cur.fetchone()
+        
+        if not row:
+            conn.close()
+            return jsonify({"success": False, "message": "Օգտատեր չի գտնվել"}), 404
+        
+        balance = row[0] or 0
+        username = row[1] or "User"
+        
+        if balance < bet:
+            conn.close()
+            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+        
+        # Deduct bet from balance
+        new_balance = balance - bet
+        cur.execute("UPDATE users SET balance_usd=? WHERE user_id=?", (new_balance, user_id))
+        
+        # Create table
+        import time
+        table_id = f"{game_type}_{user_id}_{int(time.time())}"
+        cur.execute("""
+            INSERT INTO duels_tables (table_id, game_type, creator_id, creator_name, bet, status, created_at)
+            VALUES (?, ?, ?, ?, ?, 'waiting', datetime('now'))
+        """, (table_id, game_type, user_id, username, bet))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "table_id": table_id,
+            "new_balance": new_balance
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app_web.route('/api/duels/join-table', methods=['POST'])
+def api_duels_join_table():
+    """Join PvP table"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        table_id = data.get('table_id')
+        
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Get table info
+        cur.execute("SELECT creator_id, bet, status FROM duels_tables WHERE table_id=?", (table_id,))
+        table_row = cur.fetchone()
+        
+        if not table_row:
+            conn.close()
+            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 404
+        
+        creator_id, bet, status = table_row
+        
+        if status != 'waiting':
+            conn.close()
+            return jsonify({"success": False, "message": "Սեղանը արդեն զբաղված է"}), 400
+        
+        if str(creator_id) == str(user_id):
+            conn.close()
+            return jsonify({"success": False, "message": "Չես կարող միանալ քո սեղանին"}), 400
+        
+        # Check user balance
+        cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
+        row = cur.fetchone()
+        
+        if not row:
+            conn.close()
+            return jsonify({"success": False, "message": "Օգտատեր չի գտնվել"}), 404
+        
+        balance = row[0] or 0
+        username = row[1] or "User"
+        
+        if balance < bet:
+            conn.close()
+            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+        
+        # Deduct bet
+        new_balance = balance - bet
+        cur.execute("UPDATE users SET balance_usd=? WHERE user_id=?", (new_balance, user_id))
+        
+        # Update table
+        cur.execute("""
+            UPDATE duels_tables 
+            SET opponent_id=?, opponent_name=?, status='playing' 
+            WHERE table_id=?
+        """, (user_id, username, table_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            "success": True,
+            "new_balance": new_balance
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @app_web.route('/api/upload_post_media', methods=['POST'])
 def upload_post_media():
     """Upload media (image/video) for portal post with FFmpeg compression"""
