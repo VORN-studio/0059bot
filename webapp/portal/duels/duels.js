@@ -86,7 +86,9 @@ async function loadTables() {
 
     const js = await r.json();
     if (js.success) {
-      renderTables(js.tables);
+        showStatus("✅ Սեղանը ստեղծվեց");
+        // Ուղղված հասցեն table_id-ով
+        window.location.href = `/webapp/portal/duels/tictactoe/tictactoe.html?table_id=${js.table_id}&uid=${USER_ID}`;
     }
   } catch (e) {
     console.log("loadTables error", e);
@@ -256,8 +258,15 @@ async function confirmJoinTable() {
     });
 
     const js = await r.json();
-    if (!js.success) {
-      return showStatus(`❌ ${js.message}`, "lose");
+    if (js.success) {
+        // Եթե ամեն ինչ OK է (կամ owner-ն է), գնում ենք խաղի մեջ
+        window.location.href = `/webapp/portal/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
+    } else {
+        // Տարբերակված հաղորդագրություններ
+        let msg = js.message;
+        if (msg === "ERR_NOT_FOUND") msg = "Սեղանը չի գտնվել";
+        if (msg === "ERR_OCCUPIED") msg = "Սեղանը զբաղված է";
+        return showStatus(`❌ ${msg}`, "lose");
     }
 
     domitBalance = js.new_balance;
