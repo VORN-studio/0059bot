@@ -135,32 +135,72 @@ function initBoard() {
   });
 }
 
-function handleCellClick(index) {
-  if (gameOver) return;
-  if (board[index]) return;
-  if (currentTurn !== mySymbol) {
-    showStatus("⏳ Սպասիր քո հերթին", "");
-    return;
-  }
+async function handleCellClick(index) {
+  if (gameOver || board[index]) return;
 
   if (IS_BOT_MODE) {
-    // Բոտի ռեժիմ - խաղացողի քայլ
+    // BOT MODE
+    if (currentTurn !== 'X') return;
+
     board[index] = 'X';
+    currentTurn = 'O';
     renderBoard();
-    checkBotGameOver();
-    
-    if (!gameOver) {
-      currentTurn = 'O';
-      updateTurnDisplay();
-      setTimeout(botMove, 500);
+
+    const winner = checkWinner(board);
+    if (winner) {
+      handleGameOver(winner);
+      return;
     }
+
+    if (!board.includes(null)) {
+      handleGameOver('draw');
+      return;
+    }
+
+    setTimeout(() => {
+      botMove();
+    }, 500);
+
   } else {
-    // Multiplayer ռեժիմ - socket
-    socket.emit("tictactoe_move", {
-      table_id: TABLE_ID,
-      user_id: USER_ID,
-      index: index
-    });
+    // MULTIPLAYER MODE
+    if (currentTurn !== mySymbol) {
+      showMessage("Դեռ քո քայլի հերթը չէ։", "lose");
+      return;
+    }
+
+    try {
+      const r = await fetch(`${API}/api/duels/make-move`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table_id: TABLE_ID,
+          user_id: USER_ID,
+          move: { index }
+        })
+      });
+
+      const js = await r.json();
+      if (!js.success) {
+        showMessage(`❌ ${js.message}`, "lose");
+        return;
+      }
+
+      // Update board
+      board = js.game_state.board;
+      currentTurn = js.game_state.turn;
+      renderBoard();
+
+      // Check game over
+      if (js.winner) {
+        handleGameOver(js.winner === mySymbol ? "win" : "lose", js.prize);
+      } else if (js.draw) {
+        handleGameOver("draw");
+      }
+
+    } catch (e) {
+      console.error("makeMove error:", e);
+      showMessage("❌ Սերվերի սխալ", "lose");
+    }
   }
 }
 
