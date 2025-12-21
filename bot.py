@@ -1372,32 +1372,34 @@ def api_get_user(user_id):
 
 @app_web.route('/api/duels/pay-bot', methods=['POST'])
 def api_duels_pay_bot():
-    """Pay 2 DOMIT for bot game access"""
+    """Pay 2 DOMIT for bot game access - burns to admin fund"""
     try:
         data = request.json
         user_id = data.get('user_id')
-        
+
+        # Use apply_burn_transaction to burn 2 DOMIT
+        apply_burn_transaction(
+            from_user=user_id,
+            total_amount=2.0,
+            transfers=[],
+            burn_amount=2.0,
+            reason="bot_game_entry"
+        )
+
+        # Get new balance
         conn = db()
         c = conn.cursor()
         c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (user_id,))
         row = c.fetchone()
-        
-        if not row:
-            conn.close()
-            return jsonify({"success": False, "message": "Օգտատեր չի գտնվել"}), 404
-        
-        balance = row[0] or 0
-        
-        if balance < 2:
-            conn.close()
-            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
-        
-        new_balance = balance - 2
-        c.execute("UPDATE dom_users SET balance_usd=%s WHERE user_id=%s", (new_balance, user_id))
-        conn.commit()
-        conn.close()
-        
+        new_balance = float(row[0]) if row else 0.0
+        release_db(conn)
+
         return jsonify({"success": True, "new_balance": new_balance})
+    
+    except ValueError as e:
+        if str(e) == "low_balance":
+            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+        return jsonify({"success": False, "message": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
