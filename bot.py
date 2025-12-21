@@ -1352,7 +1352,7 @@ def api_follows_list():
 def api_get_user(user_id):
     """Get user balance and info"""
     try:
-        conn = get_db()
+        conn = db()
         cur = conn.cursor()
         cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
         row = cur.fetchone()
@@ -1377,7 +1377,7 @@ def api_duels_pay_bot():
         data = request.json
         user_id = data.get('user_id')
         
-        conn = get_db()
+        conn = db()
         cur = conn.cursor()
         cur.execute("SELECT balance_usd FROM users WHERE user_id=?", (user_id,))
         row = cur.fetchone()
@@ -1413,7 +1413,7 @@ def api_duels_create_table():
         if bet <= 0:
             return jsonify({"success": False, "message": "Գումարը պետք է մեծ լինի 0-ից"}), 400
         
-        conn = get_db()
+        conn = db()
         cur = conn.cursor()
         cur.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
         row = cur.fetchone()
@@ -1460,7 +1460,7 @@ def api_duels_join_table():
         user_id = data.get('user_id')
         table_id = data.get('table_id')
         
-        conn = get_db()
+        conn = db()
         cur = conn.cursor()
         
         # Get table info
@@ -5351,7 +5351,7 @@ def api_get_user_data():
     if not telegram_id:
         return jsonify({"error": "Missing telegram_id"}), 400
 
-    conn = get_db()
+    conn = db()
     cur = conn.cursor()
     cur.execute("""
         SELECT telegram_id, username, status_level, ton_balance, usd_balance, 
