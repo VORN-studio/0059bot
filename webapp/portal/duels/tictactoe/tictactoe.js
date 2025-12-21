@@ -114,11 +114,25 @@ function handleCellClick(index) {
     return;
   }
 
-  socket.emit("tictactoe_move", {
-    table_id: TABLE_ID,
-    user_id: USER_ID,
-    index: index
-  });
+  if (IS_BOT_MODE) {
+    // Բոտի ռեժիմ - խաղացողի քայլ
+    board[index] = 'X';
+    renderBoard();
+    checkBotGameOver();
+    
+    if (!gameOver) {
+      currentTurn = 'O';
+      updateTurnDisplay();
+      setTimeout(botMove, 500);
+    }
+  } else {
+    // Multiplayer ռեժիմ - socket
+    socket.emit("tictactoe_move", {
+      table_id: TABLE_ID,
+      user_id: USER_ID,
+      index: index
+    });
+  }
 }
 
 function renderBoard() {
