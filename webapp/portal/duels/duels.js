@@ -124,7 +124,7 @@ function renderTables(tables) {
       const seconds = timeLeft % 60;
 
       return `
-        <div class="table-card" onclick="openJoinModal('${t.id || t[0]}', '${t.creator || t[1]}', ${t.bet || t[2]})">
+        <div class="table-card" onclick="openJoinModal(${t.id}, '${t.creator}', ${t.bet})">
           <div class="table-game-icon">❌⭕</div>
           <div class="table-info">
             <div class="table-game-name">Tic-Tac-Toe</div>
@@ -260,8 +260,8 @@ async function confirmJoinTable() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        user_id: USER_ID,
-        table_id: selectedTableId
+        user_id: String(USER_ID),
+        table_id: String(selectedTableId)
       })
     });
 
