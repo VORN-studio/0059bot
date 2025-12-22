@@ -86,9 +86,8 @@ async function loadTables() {
 
     const js = await r.json();
     if (js.success) {
-        showStatus("✅ Սեղանը ստեղծվեց");
-        // Ուղղված հասցեն table_id-ով
-        window.location.href = `/webapp/portal/duels/tictactoe/tictactoe.html?table_id=${js.table_id}&uid=${USER_ID}`;
+        // Փոխարենը redirect անելու, մենք ուղղակի ցուցադրում ենք սեղանները
+        renderTables(js.tables); 
     }
   } catch (e) {
     console.log("loadTables error", e);
