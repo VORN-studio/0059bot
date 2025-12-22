@@ -1632,9 +1632,38 @@ def api_duels_make_move():
 
         board[index] = player_symbol
 
-        # Check winner
-        winner = check_winner(board)
-        next_turn = 'O' if turn == 'X' else 'X'
+        # Check winner and Manage Rounds
+        winner_symbol = check_winner(board)
+        is_draw = not winner_symbol and '' not in board
+        
+        rounds = state.get('rounds', {'x': 0, 'o': 0, 'current': 1})
+        game_finished = False
+        final_winner_id = None
+
+        if winner_symbol or is_draw:
+            if winner_symbol == 'X': rounds['x'] += 1
+            elif winner_symbol == 'O': rounds['o'] += 1
+            
+            if rounds['current'] < 3:
+                # Start Next Round
+                rounds['current'] += 1
+                board = [''] * 9
+                next_turn = random.choice(['X', 'O']) # Ռանդոմ սկիզբ
+            else:
+                # 3 Rounds Finished
+                game_finished = True
+                if rounds['x'] > rounds['o']: final_winner_id = creator_id
+                elif rounds['o'] > rounds['x']: final_winner_id = opponent_id
+                # Եթե հավասար են, final_winner_id կմնա None (ոչ-ոքի)
+        else:
+            next_turn = 'O' if turn == 'X' else 'X'
+
+        # Update State
+        new_state = {
+            'board': board,
+            'turn': next_turn,
+            'rounds': rounds
+        }
 
         new_state = {
             'board': board,

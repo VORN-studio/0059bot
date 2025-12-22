@@ -98,7 +98,13 @@ async function loadTableState() {
     if (js.success) {
       board = js.game_state.board;
       currentTurn = js.game_state.turn;
-      
+
+      // Ցուցադրել ռաունդները և հաշիվը
+      if (js.game_state.rounds) {
+          const r = js.game_state.rounds;
+          document.getElementById("status").textContent = `Ռաունդ ${r.current}/3 | Հաշիվ՝ X:${r.x} - O:${r.o}`;
+      }
+
       // Որոշում ենք մեր սիմվոլը
       if (js.creator_id == USER_ID) {
         mySymbol = 'X';
