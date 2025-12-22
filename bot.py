@@ -1468,6 +1468,8 @@ def api_duels_join_table():
         data = request.json
         user_id = data.get('user_id')
         table_id = data.get('table_id')
+        if not table_id or str(table_id).lower() == 'null':
+            return jsonify({"success": False, "message": "Invalid table ID"}), 400
 
         conn = db()
         c = conn.cursor()

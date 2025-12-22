@@ -247,7 +247,7 @@ function openJoinModal(tableId, creator, bet) {
 
 function closeJoinModal() {
   document.getElementById("join-modal").classList.add("hidden");
-  selectedTableId = null;
+  //selectedTableId = null;
 }
 
 async function confirmJoinTable() {
@@ -260,8 +260,8 @@ async function confirmJoinTable() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        user_id: String(USER_ID),
-        table_id: String(selectedTableId)
+        user_id: Number(USER_ID),
+        table_id: Number(selectedTableId)
       })
     });
 
