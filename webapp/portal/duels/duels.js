@@ -57,6 +57,13 @@ function connectWebSocket() {
     socket.emit("join_duels", { user_id: USER_ID });
   });
 
+  socket.on("update_online_count", (data) => {
+    const el = document.getElementById("online-count");
+    if (el) {
+      el.textContent = data.count;
+    }
+  });
+
   socket.on("table_joined", (data) => {
     showStatus(`✅ Ինչ-որ մեկը միացավ քո սեղանին։`);
     // Redirect դեպի խաղ

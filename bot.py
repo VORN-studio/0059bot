@@ -2016,7 +2016,27 @@ def on_join_user(data):
         
         emit("user_online", {"user_id": uid}, broadcast=True)
 
+# Դուելների օնլայն հաշվիչի համար
+duels_players = set()
 
+@socketio.on("join_duels")
+def handle_join_duels(data):
+    user_id = data.get("user_id")
+    if user_id:
+        join_room("duels_room")
+        duels_players.add(user_id)
+        logger.info(f"🎮 User {user_id} joined duels_room. Total: {len(duels_players)}")
+        # Ուղարկում ենք թիվը բոլորին, ովքեր duels_room-ում են
+        emit("update_online_count", {"count": len(duels_players)}, room="duels_room")
+
+@socketio.on("leave_duels")
+def handle_leave_duels(data):
+    user_id = data.get("user_id")
+    if user_id in duels_players:
+        duels_players.remove(user_id)
+        leave_room("duels_room")
+        logger.info(f"🏃 User {user_id} left duels_room. Total: {len(duels_players)}")
+        emit("update_online_count", {"count": len(duels_players)}, room="duels_room")
 
 @socketio.on("join_global")
 def on_join_global():
