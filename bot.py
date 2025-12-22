@@ -1462,7 +1462,7 @@ def api_duels_create_table():
 
 @app_web.route('/api/duels/join-table', methods=['POST'])
 def api_duels_join_table():
-    log_info(f"🎯 JOIN-TABLE REQUEST: {request.json}")
+    logger.info(f"🎯 JOIN-TABLE REQUEST: {request.json}")
     """Join PvP table"""
     try:
         data = request.json
