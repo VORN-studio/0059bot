@@ -1569,7 +1569,7 @@ def api_duels_get_tables():
         tables = []
         for row in c.fetchall():
             tables.append({
-                'id': row[0],
+                'id': str(row[0]),
                 'creator': row[1],
                 'bet': float(row[2]),
                 'created_at': row[3]
