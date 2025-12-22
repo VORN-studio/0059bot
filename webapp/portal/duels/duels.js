@@ -124,7 +124,7 @@ function renderTables(tables) {
       const seconds = timeLeft % 60;
 
       return `
-        <div class="table-card" onclick="openJoinModal(${t.id}, '${t.creator}', ${t.bet})">
+        <div class="table-card" onclick="openJoinModal(${t.id || t.table_id}, '${t.creator}', ${t.bet})">
           <div class="table-game-icon">❌⭕</div>
           <div class="table-info">
             <div class="table-game-name">Tic-Tac-Toe</div>
@@ -222,7 +222,9 @@ async function confirmCreateTable() {
     showStatus(`✅ Սեղանը ստեղծվեց։ Սպասում ենք հակառակորդին…`);
 
     // Reload tables
-    setTimeout(() => loadTables(), 500);
+    if (js.success) {
+        window.location.href = `/webapp/portal/duels/tictactoe/tictactoe.html?table_id=${js.table_id}&uid=${USER_ID}`;
+    }
 
   } catch (e) {
     console.log("createTable error", e);
