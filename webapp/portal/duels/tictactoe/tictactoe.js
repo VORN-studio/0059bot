@@ -169,13 +169,6 @@ async function handleCellClick(index) {
     if (!board.includes(null)) {
       handleGameOver('draw');
       return;
-    } else {
-    // ԱՅՍ ՄԱՍԸ ԱՎԵԼԱՑՐՈՒ
-    if (currentTurn !== mySymbol) {
-      showMessage("Դեռ քո քայլի հերթը չէ:", "lose");
-      return;
-    }
-    await makeMove(index);
     }
 
     setTimeout(() => {

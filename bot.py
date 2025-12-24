@@ -1583,20 +1583,22 @@ def api_duels_get_tables():
 
 @app_web.route('/api/duels/make-move', methods=['POST'])
 def api_duels_make_move():
-    """Make a move in PvP game"""
     try:
         data = request.json
         table_id = data.get('table_id')
         user_id = data.get('user_id')
-        move = data.get('move')  # {index: 0-8}
+        move = data.get('move') or {}
 
         conn = db()
         c = conn.cursor()
-        c.execute("""
+        c.execute(
+            """
             SELECT game_state, creator_id, opponent_id, status, bet
             FROM dom_duels_tables 
             WHERE id=%s
-        """, (table_id,))
+            """,
+            (table_id,),
+        )
         row = c.fetchone()
 
         if not row:
@@ -1609,173 +1611,127 @@ def api_duels_make_move():
             release_db(conn)
             return jsonify({"success": False, "message": "Игра ещё не началась или не закончилась."}), 400
 
-        # Parse game state
-        import json
+        import json, random
         state = json.loads(game_state) if isinstance(game_state, str) else game_state
         board = state.get('board', [''] * 9)
-        # 1. Որոշում ենք, թե ով է խաղացողը (X թե O)
-        player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
-        
-        # 2. Ստուգում ենք՝ հիմա այդ սիմվոլի հերթն է, թե ոչ
         turn = state.get('turn', 'X')
+        player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
+
         if turn != player_symbol:
             release_db(conn)
             return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
 
-        # 3. Ստուգում ենք՝ արդյոք վանդակը դատարկ է
-        index = data.get('index')
+        index = move.get('index')
+        if index is None or index < 0 or index > 8:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Սխալ քայլ"}), 400
+
         if board[index] != '':
             release_db(conn)
             return jsonify({"success": False, "message": "Այս վանդակը զբաղված է"}), 400
 
-        # 4. Կատարում ենք քայլը
-        board[index] = player_symbol
-        turn = state.get('turn', 'X')
-
-        # Determine player symbol
-        player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
-
-        if turn != player_symbol:
-            release_db(conn)
-            return jsonify({"success": False, "message": "Сейчас не твоя очередь идти."}), 400
-
-        # Make move
-        index = move.get('index')
-        if board[index] != '':
-            release_db(conn)
-            return jsonify({"success": False, "message": "Этот блок занят."}), 400
-
         board[index] = player_symbol
 
-        # Check winner and Manage Rounds
         winner_symbol = check_winner(board)
-        is_draw = not winner_symbol and '' not in board
-        
+        is_draw_now = not winner_symbol and '' not in board
+
         rounds = state.get('rounds', {'x': 0, 'o': 0, 'current': 1})
         game_finished = False
         final_winner_id = None
 
-        if winner_symbol or is_draw:
-            if winner_symbol == 'X': rounds['x'] += 1
-            elif winner_symbol == 'O': rounds['o'] += 1
-            
+        if winner_symbol or is_draw_now:
+            if winner_symbol == 'X':
+                rounds['x'] += 1
+            elif winner_symbol == 'O':
+                rounds['o'] += 1
+
             if rounds['current'] < 3:
-                # Start Next Round
                 rounds['current'] += 1
                 board = [''] * 9
-                next_turn = random.choice(['X', 'O']) 
+                next_turn = random.choice(['X', 'O'])
             else:
-                # 3 Rounds Finished
                 game_finished = True
-                if rounds['x'] > rounds['o']: final_winner_id = creator_id
-                elif rounds['o'] > rounds['x']: final_winner_id = opponent_id
-                
+                if rounds['x'] > rounds['o']:
+                    final_winner_id = creator_id
+                elif rounds['o'] > rounds['x']:
+                    final_winner_id = opponent_id
+                else:
+                    final_winner_id = None
+                next_turn = state.get('turn', 'X')
         else:
             next_turn = 'O' if turn == 'X' else 'X'
 
-        # Update State
-        new_state = {
-            'board': board,
-            'turn': next_turn,
-            'rounds': rounds
-        }
+        new_state = {'board': board, 'turn': next_turn, 'rounds': rounds}
 
-        new_state = {
-            'board': board,
-            'turn': next_turn
-        }
-
-        if winner:
-            # Game finished
-            winner_id = creator_id if winner == 'X' else opponent_id
+        if game_finished:
             now = int(time.time())
-            
-            c.execute("""
-                UPDATE dom_duels_tables
-                SET game_state=%s, status='finished', winner_id=%s, finished_at=%s
-                WHERE id=%s
-            """, (json.dumps(new_state), winner_id, now, table_id))
-            
-            # Pay winner (2x bet)
-            prize = float(bet) * 2
-            c.execute("""
-                UPDATE dom_users 
-                SET balance_usd = balance_usd + %s 
-                WHERE user_id=%s
-            """, (prize, winner_id))
-            
-            conn.commit()
-            release_db(conn)
-
-            # Emit to both players
-            socketio.emit('game_over', {
-                'table_id': table_id,
-                'winner_id': winner_id,
-                'prize': prize
-            }, room=f'table_{table_id}')
-
-            return jsonify({
-                "success": True,
-                "game_state": new_state,
-                "winner": winner,
-                "prize": prize
-            })
-        
-        elif '' not in board:
-            # Draw
-            now = int(time.time())
-            c.execute("""
-                UPDATE dom_duels_tables
-                SET game_state=%s, status='finished', finished_at=%s
-                WHERE id=%s
-            """, (json.dumps(new_state), now, table_id))
-            
-            # Return bets
-            c.execute("""
-                UPDATE dom_users 
-                SET balance_usd = balance_usd + %s 
-                WHERE user_id IN (%s, %s)
-            """, (float(bet), creator_id, opponent_id))
-            
-            conn.commit()
-            release_db(conn)
-
-            socketio.emit('game_over', {
-                'table_id': table_id,
-                'winner_id': None,
-                'draw': True
-            }, room=f'table_{table_id}')
-
-            return jsonify({
-                "success": True,
-                "game_state": new_state,
-                "draw": True
-            })
-        
+            if final_winner_id is not None:
+                c.execute(
+                    """
+                    UPDATE dom_duels_tables
+                    SET game_state=%s, status='finished', winner_id=%s, finished_at=%s
+                    WHERE id=%s
+                    """,
+                    (json.dumps(new_state), final_winner_id, now, table_id),
+                )
+                prize = float(bet) * 2
+                c.execute(
+                    """
+                    UPDATE dom_users 
+                    SET balance_usd = balance_usd + %s 
+                    WHERE user_id=%s
+                    """,
+                    (prize, final_winner_id),
+                )
+                conn.commit()
+                release_db(conn)
+                socketio.emit(
+                    'game_over',
+                    {'table_id': table_id, 'winner_id': final_winner_id, 'prize': prize},
+                    room=f'user_{creator_id}',
+                )
+                socketio.emit(
+                    'game_over',
+                    {'table_id': table_id, 'winner_id': final_winner_id, 'prize': prize},
+                    room=f'user_{opponent_id}',
+                )
+                return jsonify({"success": True, "game_state": new_state, "winner": player_symbol if int(final_winner_id) == int(user_id) else ('X' if int(final_winner_id) == int(creator_id) else 'O'), "prize": prize})
+            else:
+                c.execute(
+                    """
+                    UPDATE dom_duels_tables
+                    SET game_state=%s, status='finished', finished_at=%s
+                    WHERE id=%s
+                    """,
+                    (json.dumps(new_state), now, table_id),
+                )
+                c.execute(
+                    """
+                    UPDATE dom_users 
+                    SET balance_usd = balance_usd + %s 
+                    WHERE user_id IN (%s, %s)
+                    """,
+                    (float(bet), creator_id, opponent_id),
+                )
+                conn.commit()
+                release_db(conn)
+                socketio.emit('game_over', {'table_id': table_id, 'winner_id': None, 'draw': True}, room=f'user_{creator_id}')
+                socketio.emit('game_over', {'table_id': table_id, 'winner_id': None, 'draw': True}, room=f'user_{opponent_id}')
+                return jsonify({"success": True, "game_state": new_state, "draw": True})
         else:
-            # Game continues
-            c.execute("""
+            c.execute(
+                """
                 UPDATE dom_duels_tables
                 SET game_state=%s
                 WHERE id=%s
-            """, (json.dumps(new_state), table_id))
-            
+                """,
+                (json.dumps(new_state), table_id),
+            )
             conn.commit()
             release_db(conn)
-
-            # Emit to opponent
             opponent = opponent_id if int(user_id) == int(creator_id) else creator_id
-            socketio.emit('opponent_move', {
-                'table_id': table_id,
-                'move': move,
-                'game_state': new_state
-            }, room=f'user_{opponent}')
-
-            return jsonify({
-                "success": True,
-                "game_state": new_state
-            })
-
+            socketio.emit('opponent_move', {'table_id': table_id, 'move': move, 'game_state': new_state}, room=f'user_{opponent}')
+            return jsonify({"success": True, "game_state": new_state})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
