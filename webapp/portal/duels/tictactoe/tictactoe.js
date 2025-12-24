@@ -104,6 +104,16 @@ async function loadTableState() {
           document.getElementById("status").textContent = `Раунд ${r.current}/3 | Счет՝ X:${r.x} - O:${r.o}`;
       }
 
+      // Որոշում ենք՝ մենք X ենք, թե O
+      if (Number(js.creator_id) === Number(USER_ID)) {
+          mySymbol = 'X';
+      } else {
+          mySymbol = 'O';
+      }
+
+      renderBoard();
+      updateTurnDisplay();
+
       if (js.creator_id == USER_ID) {
         mySymbol = 'X';
         document.getElementById("turn-indicator").textContent = `Вы — X, ваш противник.՝ ${js.opponent_username || '...'}`;

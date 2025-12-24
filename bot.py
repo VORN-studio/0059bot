@@ -1633,6 +1633,23 @@ def api_duels_make_move():
         import json
         state = json.loads(game_state) if isinstance(game_state, str) else game_state
         board = state.get('board', [''] * 9)
+        # 1. Որոշում ենք, թե ով է խաղացողը (X թե O)
+        player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
+        
+        # 2. Ստուգում ենք՝ հիմա այդ սիմվոլի հերթն է, թե ոչ
+        turn = state.get('turn', 'X')
+        if turn != player_symbol:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+
+        # 3. Ստուգում ենք՝ արդյոք վանդակը դատարկ է
+        index = data.get('index')
+        if board[index] != '':
+            release_db(conn)
+            return jsonify({"success": False, "message": "Այս վանդակը զբաղված է"}), 400
+
+        # 4. Կատարում ենք քայլը
+        board[index] = player_symbol
         turn = state.get('turn', 'X')
 
         # Determine player symbol
