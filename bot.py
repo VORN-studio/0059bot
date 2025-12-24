@@ -1472,30 +1472,34 @@ def api_duels_join_table():
 
         # Get table info
         c.execute("""
-            SELECT creator_id, bet, status, creator_username 
-            FROM dom_duels_tables 
+            SELECT creator_id, bet, status, creator_username
+            FROM dom_duels_tables
             WHERE id=%s
         """, (table_id,))
         table_row = c.fetchone()
 
-        # Գրանցում ենք հակառակորդին և փոխում կարգավիճակը
-        c.execute("""
-            UPDATE dom_duels_tables 
-            SET opponent_id=%s, status='playing', 
-                opponent_username=(SELECT username FROM dom_users WHERE user_id=%s)
-            WHERE id=%s AND status='waiting'
-        """, (user_id, user_id, table_id))
-        conn.commit()
-
         if not table_row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Таблица не найдена"}), 400
+            return jsonify({"success": False, "message": "Սեղանը չի գտնվել"}), 400
 
         creator_id, bet, status, creator_username = table_row
 
         if status != 'waiting':
             release_db(conn)
-            return jsonify({"success": False, "message": "Столик уже занят."}), 400
+            return jsonify({"success": False, "message": "Սեղանն արդեն զբաղված է"}), 400
+
+        if int(creator_id) == int(user_id):
+            release_db(conn)
+            return jsonify({"success": True, "is_owner": True})
+
+        # Հիմա ենք թարմացնում բազան, երբ ստուգումներն անցան
+        c.execute("""
+            UPDATE dom_duels_tables
+            SET opponent_id=%s, status='playing',
+                opponent_username=(SELECT username FROM dom_users WHERE user_id=%s)
+            WHERE id=%s AND status='waiting'
+        """, (user_id, user_id, table_id))
+        conn.commit()
 
         if int(creator_id) == int(user_id):
             release_db(conn)
