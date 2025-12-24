@@ -1513,27 +1513,28 @@ def api_duels_join_table():
         username = row[0] if row else "User"
         new_balance = float(row[1]) if row else 0.0
 
-        # Update table - game starts
+        # Update table - game starts, preserve rounds state
         now = int(time.time())
         c.execute("""
             UPDATE dom_duels_tables
             SET opponent_id=%s, 
                 opponent_username=%s, 
                 status='playing',
-                started_at=%s,
-                game_state=%s
+                started_at=%s
             WHERE id=%s
-        """, (user_id, username, now, '{"board": ["","","","","","","","",""], "turn": "X"}', table_id))
+        """, (user_id, username, now, table_id))
 
         conn.commit()
         release_db(conn)
 
-        # Emit to creator via SocketIO
-        socketio.emit('table_joined', {
+        # Emit to creator and duels_room via SocketIO
+        payload = {
             'table_id': table_id,
             'opponent_id': user_id,
             'opponent_username': username
-        }, room=f'user_{creator_id}')
+        }
+        socketio.emit('table_joined', payload, room=f'user_{creator_id}')
+        emit('table_joined', payload, room='duels_room')
 
         return jsonify({
             "success": True,

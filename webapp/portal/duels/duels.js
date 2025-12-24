@@ -55,6 +55,7 @@ function connectWebSocket() {
   socket.on("connect", () => {
     console.log("✅ WebSocket connected");
     socket.emit("join_duels", { user_id: USER_ID });
+    socket.emit("join_user", { user_id: USER_ID });
   });
 
   socket.on("update_online_count", (data) => {
