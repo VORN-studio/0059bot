@@ -100,6 +100,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL env var is missing (PostgreSQL connection string)")
 ADMIN_IDS = {5274439601} 
+ADMIN_SECRET = os.getenv("ADMIN_SECRET", "").strip()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
 DOMIT_PRICE_USD = 1  
@@ -513,8 +514,7 @@ def api_global_send():
         "status_level": status_level,
         "message": message,
         "time": now,
-        "highlighted": highlight,
-        "id": msg_id
+        "highlighted": highlight
     }, room="global")
     
     return jsonify({"ok": True, "id": msg_id})
@@ -1344,27 +1344,7 @@ def api_follows_list():
 
 # ===================== DUELS API =====================
 
-@app_web.route('/api/user/<user_id>', methods=['GET'])
-def api_get_user(user_id):
-    """Get user balance and info"""
-    try:
-        conn = db()
-        c = conn.cursor()
-        c.execute("SELECT balance_usd, username FROM users WHERE user_id=?", (user_id,))
-        row = c.fetchone()
-        conn.close()
-        
-        if row:
-            return jsonify({
-                "user": {
-                    "balance_usd": row[0] or 0,
-                    "username": row[1] or "User"
-                }
-            })
-        else:
-            return jsonify({"user": {"balance_usd": 0, "username": "User"}})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+ 
 
 @app_web.route('/api/duels/pay-bot', methods=['POST'])
 def api_duels_pay_bot():
@@ -1855,63 +1835,6 @@ def check_winner(board):
     
     return None
 
-@app_web.route('/api/upload_post_media', methods=['POST'])
-def upload_post_media():
-    """Upload media (image/video) for portal post with FFmpeg compression"""
-    try:
-        uid = request.form.get('uid', '0')
-        file = request.files.get('file')
-        
-        if not file:
-            return jsonify({'ok': False, 'error': 'No file provided'}), 400
-        
-        filename = secure_filename(file.filename)
-        ext = os.path.splitext(filename)[1].lower()
-        
-        # Generate unique filename
-        timestamp = int(time.time() * 1000)
-        unique_name = f"post_{uid}_{timestamp}{ext}"
-        
-        # Save paths
-        upload_dir = os.path.join(os.path.dirname(__file__), 'webapp', 'static', 'media', 'posts')
-        os.makedirs(upload_dir, exist_ok=True)
-        
-        temp_path = os.path.join(upload_dir, f"temp_{unique_name}")
-        final_path = os.path.join(upload_dir, unique_name)
-        
-        # Save uploaded file temporarily
-        file.save(temp_path)
-        
-        # Compress video with FFmpeg
-        if ext in ['.mp4', '.mov', '.avi', '.mkv', '.webm']:
-            try:
-                logger.info(f"🎬 Compressing video: {filename}")
-                subprocess.run([
-                    'ffmpeg', '-i', temp_path,
-                    '-vf', 'scale=-2:480',  # 480p height
-                    '-b:v', '500k',          # 500kbps bitrate
-                    '-c:a', 'aac',
-                    '-b:a', '96k',
-                    '-y',
-                    final_path
-                ], check=True, capture_output=True)
-                
-                os.remove(temp_path)  # Remove temp file
-                logger.info(f"✅ Video compressed: {unique_name}")
-            except subprocess.CalledProcessError as e:
-                logger.error(f"❌ FFmpeg failed: {e}")
-                os.rename(temp_path, final_path)  # Use original if compression fails
-        else:
-            # For images, just rename
-            os.rename(temp_path, final_path)
-        
-        # Return URL
-        url = f"/static/media/posts/{unique_name}"
-        return jsonify({'ok': True, 'url': url})
-        
-    except Exception as e:
-        logger.error(f"❌ upload_post_media error: {e}")
-        return jsonify({'ok': False, 'error': str(e)}), 500
 
 @app_web.route("/api/upload_avatar", methods=["POST"])
 def upload_avatar():
@@ -2431,9 +2354,7 @@ def api_admin_give():
     target = int(data.get("target", 0))
     amount = float(data.get("amount", 0))
 
-    ADMIN_SECRET = "super059key"
-
-    if secret != ADMIN_SECRET:
+    if not ADMIN_SECRET or secret != ADMIN_SECRET:
         return jsonify({"ok": False, "error": "forbidden"}), 403
 
     if target == 0 or amount <= 0:
@@ -2917,7 +2838,7 @@ def api_upload_post_media():
         os.rename(temp_path, final_path)
 
     # Return URL
-    url = f"/static/media/posts/{unique_name}"
+    url = f"/webapp/static/media/posts/{unique_name}"
     return jsonify({"ok": True, "url": url})
 
 
@@ -5153,17 +5074,20 @@ async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
             high_price = max(open_price, close_price) + random.uniform(0, 0.01)
             low_price = min(open_price, close_price) - random.uniform(0, 0.01)
             
-            c.execute("""
+            c.execute(
+                """
                 INSERT INTO domit_price_history (timestamp, open, high, low, close, volume)
                 VALUES (%s, %s, %s, %s, %s, %s)
-            """, (
-                time.strftime('%Y-%m-%d %H:%M:%S'),
-                round(open_price, 4),
-                round(high_price, 4),
-                round(low_price, 4),
-                round(close_price, 4),
-                random.randint(1000, 5000)
-            ))
+                """,
+                (
+                    int(time.timestamp()),
+                    round(open_price, 4),
+                    round(high_price, 4),
+                    round(low_price, 4),
+                    round(close_price, 4),
+                    random.randint(1000, 5000),
+                ),
+            )
             
             current_price = close_price
         

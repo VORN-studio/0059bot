@@ -3413,7 +3413,7 @@ function sendForwardMessage(targetUserId, toGlobal) {
         to_global: toGlobal
     };
 
-    const endpoint = currentForwardChatType === "global" ? "/api/global/forward" : "/api/dm/forward";
+    const endpoint = currentForwardChatType === "global" ? "/api/chat/forward" : "/api/dm/forward";
 
     console.log("🚀 Forward payload:", payload);
     console.log("📍 Endpoint:", endpoint);
