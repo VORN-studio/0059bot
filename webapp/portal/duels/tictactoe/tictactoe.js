@@ -2,7 +2,7 @@ const API = window.location.origin;
 const params = new URLSearchParams(window.location.search);
 const USER_ID = params.get("uid");
 const TABLE_ID = params.get("table_id");
-const IS_BOT_MODE = !TABLE_ID; // Եթե table_id չկա → բոտի ռեժիմ
+const IS_BOT_MODE = !TABLE_ID; 
 let socket;
 let domitBalance = 0;
 let mySymbol = null; // 'X' or 'O'
@@ -99,24 +99,22 @@ async function loadTableState() {
       board = js.game_state.board;
       currentTurn = js.game_state.turn;
 
-      // Ցուցադրել ռաունդները և հաշիվը
       if (js.game_state.rounds) {
           const r = js.game_state.rounds;
-          document.getElementById("status").textContent = `Ռաունդ ${r.current}/3 | Հաշիվ՝ X:${r.x} - O:${r.o}`;
+          document.getElementById("status").textContent = `Раунд ${r.current}/3 | Счет՝ X:${r.x} - O:${r.o}`;
       }
 
-      // Որոշում ենք մեր սիմվոլը
       if (js.creator_id == USER_ID) {
         mySymbol = 'X';
-        document.getElementById("turn-indicator").textContent = `Դու ես X, հակառակորդը՝ ${js.opponent_username || '...'}`;
+        document.getElementById("turn-indicator").textContent = `Вы — X, ваш противник.՝ ${js.opponent_username || '...'}`;
       } else {
         mySymbol = 'O';
-        document.getElementById("turn-indicator").textContent = `Դու ես O, հակառակորդը՝ ${js.creator_username}`;
+        document.getElementById("turn-indicator").textContent = `Вы — O, ваш противник.՝ ${js.creator_username}`;
       }
 
       renderBoard();
-
-      // Ստուգում ենք արդեն խաղն ավարտվել է
+      updateTurnDisplay();
+      
       if (js.status === 'finished') {
         if (js.winner_id == USER_ID) {
           handleGameOver("win", js.bet * 2);
@@ -170,7 +168,7 @@ async function handleCellClick(index) {
   } else {
     // MULTIPLAYER MODE
     if (currentTurn !== mySymbol) {
-      showMessage("Դեռ քո քայլի հերթը չէ։", "lose");
+      showMessage("Ваша очередь переезжать ещё не настала.։", "lose");
       return;
     }
 
@@ -205,7 +203,7 @@ async function handleCellClick(index) {
 
     } catch (e) {
       console.error("makeMove error:", e);
-      showMessage("❌ Սերվերի սխալ", "lose");
+      showMessage("❌ Ошибка сервера", "lose");
     }
   }
 }
@@ -237,10 +235,10 @@ function updateTurnDisplay() {
   }
 
   if (currentTurn === mySymbol) {
-    turnInfo.textContent = "Քո հերթն է";
+    turnInfo.textContent = "Теперь твоя очередь.";
     turnInfo.style.color = "#667eea";
   } else {
-    turnInfo.textContent = "Հակառակորդի հերթն է";
+    turnInfo.textContent = "Теперь ход противника.";
     turnInfo.style.color = "#999";
   }
 }
@@ -290,7 +288,7 @@ function restartGame() {
     showStatus("", "");
     document.getElementById("new-game-btn").style.display = "none";
   } else {
-    // MULTIPLAYER - վերադարձնել դուելներ էջ
+    
     window.location.href = `${API}/duels/duels.html?uid=${USER_ID}`;
   }
 }
@@ -300,10 +298,10 @@ function restartGame() {
 function initBotMode() {
   mySymbol = 'X';
   currentTurn = 'X';
-  document.getElementById("player1-name").textContent = "Դու";
-  document.getElementById("player2-name").textContent = "Համակարգիչ";
+  document.getElementById("player1-name").textContent = "Ты";
+  document.getElementById("player2-name").textContent = "Компьютер";
   updateTurnDisplay();
-  showStatus("Խաղը սկսվեց! Սկսիր քո քայլը", "");
+  showStatus("Игра началась! Начинайте свой ход!", "");
 }
 
 function botMove() {
@@ -314,7 +312,6 @@ function botMove() {
   
   let botIndex;
   
-  // 80% դեպքերում խելացի քայլ, 20% պատահական
   if (Math.random() < 0.8) {
     botIndex = getBestMove();
   } else {
@@ -332,7 +329,7 @@ function botMove() {
 }
 
 function getBestMove() {
-  // 1. Եթե կարող է հաղթել - հաղթի
+  
   for (let combo of WINNING_COMBOS) {
     const [a, b, c] = combo;
     if (board[a] === 'O' && board[b] === 'O' && board[c] === null) return c;
@@ -340,7 +337,6 @@ function getBestMove() {
     if (board[b] === 'O' && board[c] === 'O' && board[a] === null) return a;
   }
   
-  // 2. Եթե խաղացողը կարող է հաղթել - արգելակել
   for (let combo of WINNING_COMBOS) {
     const [a, b, c] = combo;
     if (board[a] === 'X' && board[b] === 'X' && board[c] === null) return c;
@@ -348,17 +344,14 @@ function getBestMove() {
     if (board[b] === 'X' && board[c] === 'X' && board[a] === null) return a;
   }
   
-  // 3. Վերցնել կենտրոնը եթե ազատ է
   if (board[4] === null) return 4;
   
-  // 4. Վերցնել անկյուններից մեկը
   const corners = [0, 2, 6, 8];
   const emptyCorners = corners.filter(i => board[i] === null);
   if (emptyCorners.length > 0) {
     return emptyCorners[Math.floor(Math.random() * emptyCorners.length)];
   }
   
-  // 5. Վերցնել ցանկացած ազատ տեղ
   const emptyIndexes = board.map((val, idx) => val === null ? idx : null).filter(v => v !== null);
   return emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
 }
@@ -391,27 +384,27 @@ async function handleGameOver(result = null, prize = 0) {
   if (IS_BOT_MODE) {
     // BOT MODE
     if (winner === 'X') {
-      message = "🎉 Դու հաղթեցիր!";
+      message = "🎉 Вы победили!";
       className = "win";
     } else if (winner === 'O') {
-      message = "😔 Բոտը հաղթեց";
+      message = "😔 Бот победил.";
       className = "lose";
     } else {
-      message = "🤝 Ոչ-ոքի!";
+      message = "🤝 Ничья!";
       className = "draw";
     }
   } else {
     // MULTIPLAYER MODE
     if (result === 'win') {
-      message = `🎉 ԴՈՒ ՀԱՂԹԵՑԻՐ! +${prize.toFixed(2)} DOMIT`;
+      message = `🎉 ВЫ ПОБЕДИЛИ! +${prize.toFixed(2)} DOMIT`;
       className = "win";
       domitBalance += prize;
       updateBalanceDisplay();
     } else if (result === 'lose') {
-      message = "😔 Դու պարտվեցիր";
+      message = "😔 Вы проиграли.";
       className = "lose";
     } else if (result === 'draw' || isDraw) {
-      message = "🤝 Ոչ-ոքի - գումարը վերադարձավ";
+      message = "🤝 Ничья - Деньги были возвращены.";
       className = "draw";
       await loadBalance();
     }
@@ -419,7 +412,7 @@ async function handleGameOver(result = null, prize = 0) {
 
   showStatus(message, className);
   document.getElementById("new-game-btn").style.display = "block";
-  document.getElementById("new-game-btn").textContent = IS_BOT_MODE ? "Նոր խաղ" : "Վերադառնալ դուելներ";
+  document.getElementById("new-game-btn").textContent = IS_BOT_MODE ? "Новая игра" : "Возвращаемся к дуэлям";
 }
 
 // ================= START =================

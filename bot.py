@@ -75,7 +75,7 @@ class _PrintToLogger:
         self.prefix = prefix
 
     def write(self, message):
-        # print() հաճախ գրում է "\n" առանձին, սրանք անտեսում ենք
+        
         msg = (message or "").rstrip()
         if msg:
             self.logger.log(self.level, f"{self.prefix}{msg}")
@@ -102,7 +102,7 @@ if not DATABASE_URL:
 ADMIN_IDS = {5274439601} 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 WEBAPP_DIR = os.path.join(BASE_DIR, "webapp")
-DOMIT_PRICE_USD = 1  # DOMIT հիմա նույնն է, ինչ $ (միայն տեքստով տարբերս)
+DOMIT_PRICE_USD = 1  
 PORTAL_DIR = os.path.join(WEBAPP_DIR, "portal")
 TASKS_DIR = os.path.join(WEBAPP_DIR, "tasks")
 GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
@@ -123,13 +123,13 @@ socketio = SocketIO(
 
 @socketio.on('join_chart')
 def handle_join_chart():
-    """Օգտատերը միանում է chart room-ին"""
+    """Пользователь присоединяется к комнате с диаграммами."""
     join_room('chart_viewers')
     logger.info("👤 User joined chart_viewers room")
 
 @socketio.on('leave_chart')
 def handle_leave_chart():
-    """Օգտատերը դուրս է գալիս chart room-ից"""
+    """Пользователь выходит из штурманской комнаты"""
     leave_room('chart_viewers')
     logger.info("👋 User left chart_viewers room")
 
@@ -140,8 +140,8 @@ def index():
 @app_web.route("/app")
 def app_page():
     """
-    Սերվում ենք WebApp–ի հիմնական էջը.
-    Telegram WebApp–ի URL-ը կլինի՝
+    Добро пожаловать на главную страницу веб-приложения!.
+    URL-адрес веб-приложения Telegram будет следующим:՝
     https://domino-play.online/app?uid=XXXX
     """
     return send_from_directory(WEBAPP_DIR, "index.html")
@@ -149,8 +149,8 @@ def app_page():
 @app_web.route("/webapp/<path:filename>")
 def serve_webapp(filename):
     """
-    Static ֆայլերի սերվինգ՝ /webapp/... համար
-    օրինակ՝ /webapp/app.js, /webapp/style.css, /webapp/assets/...
+    Обслуживание статических файлов для /webapp/...
+    например, /webapp/app.js, /webapp/style.css, /webapp/assets/...
     """
     resp = send_from_directory(WEBAPP_DIR, filename)
     if filename.endswith(".mp4"):
@@ -172,7 +172,6 @@ def api_message_partners():
     conn = db()
     c = conn.cursor()
 
-    # 1) բոլոր partner id-ները
     c.execute("""
         SELECT DISTINCT
             CASE
@@ -204,7 +203,6 @@ def api_message_partners():
         avatar_url = u[2] or "/portal/default.png"
         username = u[1] or f"User {partner_id}"
 
-        # --- last message preview (այստեղ partner_id արդեն կա) ---
         c.execute("""
             SELECT id, sender, text, created_at
             FROM dom_messages
@@ -254,7 +252,7 @@ def api_message_partners():
 
 @app_web.route("/api/global/messages")
 def api_global_messages():
-    """Վերջին 30 global chat նամակները"""
+    """Последние 30 сообщений глобального чата"""
     conn = db()
     c = conn.cursor()
     
@@ -298,7 +296,7 @@ def api_global_messages():
 
 @app_web.route("/api/global/hot-user")
 def api_global_hot_user():
-    """Global chat-ում ներկա ONLINE ամենա բարձր status ունեցող user-ը"""
+    """Пользователь с наивысшим статусом "ОНЛАЙН" в глобальном чате."""
     conn = db()
     c = conn.cursor()
     
@@ -352,7 +350,7 @@ def api_global_hot_user():
 
 @app_web.route("/api/global/ping", methods=["POST"])
 def api_global_ping():
-    """User-ը ping է անում որ ցույց տա որ online է global chat-ում"""
+    """Пользователь отправляет уведомление в глобальном чате, подтверждая свое присутствие в сети."""
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
     
@@ -382,7 +380,7 @@ def api_global_ping():
 
 @app_web.route("/api/global/offline", methods=["POST"])
 def api_global_offline():
-    """User-ը հեռանում է global chat-ից"""
+    """Пользователь покидает глобальный чат"""
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
     
@@ -404,7 +402,7 @@ def api_global_offline():
 
 @app_web.route("/api/global/send", methods=["POST"])
 def api_global_send():
-    """Global chat նամակ ուղարկել"""
+    """Отправить электронное письмо в глобальный чат"""
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
     message = data.get("message", "").strip()
@@ -590,7 +588,7 @@ def delete_dm_message():
 
 @app_web.route("/api/message/react", methods=["POST"])
 def api_message_react():
-    """Նամակի վրա emoji react անել"""
+    """Отреагируйте на электронное письмо смайликом."""
     data = request.get_json(force=True, silent=True) or {}
     message_id = int(data.get("message_id", 0))
     chat_type = data.get("chat_type", "")  # "global" or "dm"
@@ -604,7 +602,6 @@ def api_message_react():
     conn = db()
     c = conn.cursor()
     
-    # Toggle reaction (եթե կա՝ հեռացնի, եթե չկա՝ ավելացնի)
     c.execute("""
         SELECT id FROM dom_message_reactions
         WHERE message_id=%s AND chat_type=%s AND user_id=%s AND emoji=%s
@@ -613,7 +610,6 @@ def api_message_react():
     existing = c.fetchone()
 
     if existing:
-        # Remove reaction
         c.execute("""
             DELETE FROM dom_message_reactions
             WHERE message_id=%s AND chat_type=%s AND user_id=%s AND emoji=%s
@@ -707,7 +703,7 @@ def api_message_react():
 
 @app_web.route("/api/message/reactions")
 def api_message_reactions():
-    """Նամակի reactions-ները ստանալ"""
+    """Получайте отзывы по электронной почте"""
     message_id = request.args.get("message_id", type=int)
     chat_type = request.args.get("chat_type", "")
     
@@ -929,7 +925,7 @@ def api_message_send():
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
-    # ✅ sender-ը կարող է գրել միայն նրան, ում follow է անում
+    
     c.execute("SELECT 1 FROM dom_follows WHERE follower=%s AND target=%s", (sender, receiver))
     if not c.fetchone():
         release_db(conn)
@@ -1398,7 +1394,7 @@ def api_duels_pay_bot():
     
     except ValueError as e:
         if str(e) == "low_balance":
-            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+            return jsonify({"success": False, "message": "Недостаточный баланс"}), 400
         return jsonify({"success": False, "message": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -1413,7 +1409,7 @@ def api_duels_create_table():
         game_type = data.get('game_type', 'tictactoe')
 
         if bet <= 0:
-            return jsonify({"success": False, "message": "Գումարը պետք է մեծ լինի 0-ից"}), 400
+            return jsonify({"success": False, "message": "Сумма должна быть больше 0."}), 400
 
         # Use apply_burn_transaction to lock bet amount (no burn, just lock)
         apply_burn_transaction(
@@ -1453,7 +1449,7 @@ def api_duels_create_table():
     
     except ValueError as e:
         if str(e) == "low_balance":
-            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+            return jsonify({"success": False, "message": "Недостаточный баланс"}), 400
         return jsonify({"success": False, "message": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -1482,19 +1478,28 @@ def api_duels_join_table():
         """, (table_id,))
         table_row = c.fetchone()
 
+        # Գրանցում ենք հակառակորդին և փոխում կարգավիճակը
+        c.execute("""
+            UPDATE dom_duels_tables 
+            SET opponent_id=%s, status='playing', 
+                opponent_username=(SELECT username FROM dom_users WHERE user_id=%s)
+            WHERE id=%s AND status='waiting'
+        """, (user_id, user_id, table_id))
+        conn.commit()
+
         if not table_row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 400
+            return jsonify({"success": False, "message": "Таблица не найдена"}), 400
 
         creator_id, bet, status, creator_username = table_row
 
         if status != 'waiting':
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղանը արդեն զբաղված է"}), 400
+            return jsonify({"success": False, "message": "Столик уже занят."}), 400
 
         if int(creator_id) == int(user_id):
             release_db(conn)
-            return jsonify({"success": True, "is_owner": True, "new_balance": 0}) # 0-ն այստեղ նշանակություն չունի
+            return jsonify({"success": True, "is_owner": True, "new_balance": 0}) 
 
         release_db(conn)
 
@@ -1545,7 +1550,7 @@ def api_duels_join_table():
     
     except ValueError as e:
         if str(e) == "low_balance":
-            return jsonify({"success": False, "message": "Անբավարար բալանս"}), 400
+            return jsonify({"success": False, "message": "Недостаточный баланс"}), 400
         return jsonify({"success": False, "message": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -1603,13 +1608,13 @@ def api_duels_make_move():
 
         if not row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 400
+            return jsonify({"success": False, "message": "Таблица не найдена"}), 400
 
         game_state, creator_id, opponent_id, status, bet = row
 
         if status != 'playing':
             release_db(conn)
-            return jsonify({"success": False, "message": "Խաղը չի սկսել կամ ավարտված է"}), 400
+            return jsonify({"success": False, "message": "Игра ещё не началась или не закончилась."}), 400
 
         # Parse game state
         import json
@@ -1622,13 +1627,13 @@ def api_duels_make_move():
 
         if turn != player_symbol:
             release_db(conn)
-            return jsonify({"success": False, "message": "Դու քայլելու հերթը չունես"}), 400
+            return jsonify({"success": False, "message": "Сейчас не твоя очередь идти."}), 400
 
         # Make move
         index = move.get('index')
         if board[index] != '':
             release_db(conn)
-            return jsonify({"success": False, "message": "Այս վանդակը զբաղված է"}), 400
+            return jsonify({"success": False, "message": "Этот блок занят."}), 400
 
         board[index] = player_symbol
 
@@ -1648,13 +1653,13 @@ def api_duels_make_move():
                 # Start Next Round
                 rounds['current'] += 1
                 board = [''] * 9
-                next_turn = random.choice(['X', 'O']) # Ռանդոմ սկիզբ
+                next_turn = random.choice(['X', 'O']) 
             else:
                 # 3 Rounds Finished
                 game_finished = True
                 if rounds['x'] > rounds['o']: final_winner_id = creator_id
                 elif rounds['o'] > rounds['x']: final_winner_id = opponent_id
-                # Եթե հավասար են, final_winner_id կմնա None (ոչ-ոքի)
+                
         else:
             next_turn = 'O' if turn == 'X' else 'X'
 
@@ -1784,7 +1789,7 @@ def api_duels_get_table_state():
 
         if not row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղան չի գտնվել"}), 400
+            return jsonify({"success": False, "message": "Таблица не найдена"}), 400
 
         import json
         game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
@@ -2017,7 +2022,7 @@ def on_disconnect():
             break
 
     if offline_uid:
-        # ԱՎԵԼԱՑՐՈՒ ԱՅՍ ՏՈՂԵՐԸ
+        
         conn = db()
         c = conn.cursor()
         c.execute("DELETE FROM dom_duels_tables WHERE creator_id = %s AND status = 'waiting'", (offline_uid,))
@@ -2047,7 +2052,7 @@ def on_join_user(data):
         
         emit("user_online", {"user_id": uid}, broadcast=True)
 
-# Դուելների օնլայն հաշվիչի համար
+
 duels_players = set()
 
 @socketio.on("join_duels")
@@ -2057,7 +2062,7 @@ def handle_join_duels(data):
         join_room("duels_room")
         duels_players.add(user_id)
         logger.info(f"🎮 User {user_id} joined duels_room. Total: {len(duels_players)}")
-        # Ուղարկում ենք թիվը բոլորին, ովքեր duels_room-ում են
+        
         emit("update_online_count", {"count": len(duels_players)}, room="duels_room")
 
 @socketio.on("leave_duels")
@@ -2097,7 +2102,7 @@ def on_join_dm(data):
 
 @socketio.on("typing_global")
 def handle_typing_global(data):
-    """User-ը գրում է global chat-ում"""
+    """Пользователь пишет в глобальном чате"""
     user_id = int(data.get("user_id", 0))
     
     if user_id == 0:
@@ -2122,7 +2127,7 @@ def handle_typing_global(data):
 
 @socketio.on("typing_dm")
 def handle_typing_dm(data):
-    """User-ը գրում է DM-ում"""
+    """Пользователь пишет в личные сообщения."""
     sender = int(data.get("sender", 0))
     receiver = int(data.get("receiver", 0))
     
@@ -2226,7 +2231,7 @@ def api_get_domit_prices():
 
         from datetime import datetime
         for row in rows:
-            unix_time = int(row[0])  # timestamp-ը արդեն Unix timestamp է (BIGINT)
+            unix_time = int(row[0])  
 
             candles.append({
                 'time': unix_time,
@@ -2432,7 +2437,7 @@ def api_follow_stats(user_id):
 @app_web.route("/api/is_following/<int:follower>/<int:target>")
 def api_is_following(follower, target):
     """
-    Ստուգում ենք՝ follower-ը follow արե՞լ է target-ին, թե ոչ։
+    Мы проверяем, подписался ли подписчик на целевую аудиторию или нет.
     """
     if follower == 0 or target == 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
@@ -2454,8 +2459,8 @@ def api_is_following(follower, target):
 @app_web.route("/api/post/create", methods=["POST"])
 def api_post_create():
     """
-    Ստեղծում է նոր post Domino Portal–ի համար։
-    Body: { "user_id": ..., "text": optional, "media_url": optional }
+    Создает новую запись для портала Domino.
+    Тело: { "user_id": ..., "text": optional, "media_url": optional }
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -2578,7 +2583,6 @@ def api_message_seen():
 
     conn = db(); c = conn.cursor()
 
-    # գտնում ենք conversation-ի վերջին msg id-ն
     c.execute("""
         SELECT COALESCE(MAX(id), 0)
         FROM dom_messages
@@ -2602,8 +2606,8 @@ def api_message_seen():
 @app_web.route("/api/posts/feed")
 def api_posts_feed():
     """
-    Հիմնական feed՝ խառը օգտատերերի post–երով։
-    Query: ?uid=VIEWER_ID  (պետք ա like-ի ստատուսը ցույց տալու համար)
+    Основная лента с постами от разных пользователей.
+    Запрос: ?uid=VIEWER_ID (необходим для отображения статуса «нравится»)
     """
     viewer_raw = request.args.get("uid", "0")
     try:
@@ -2661,8 +2665,8 @@ def api_posts_feed():
 @app_web.route("/api/posts/user/<int:user_id>")
 def api_posts_user(user_id):
     """
-    Վերադարձնում է user-ի սեփական post–երը։
-    Optional viewer=? param like-ի ստատուսի համար։
+    Возвращает собственные публикации пользователя.
+    Необязательный параметр viewer=? для статуса «нравится».
     """
     viewer_raw = request.args.get("viewer", "0")
     try:
@@ -2722,9 +2726,9 @@ def api_posts_user(user_id):
 @app_web.route("/api/post/like", methods=["POST"])
 def api_post_like():
     """
-    Օգտատերը լայքում է post-ը:
-    Body: { "user_id": ..., "post_id": ... }
-    Առայժմ՝ միայն 1 անգամ կարելի է like անել, unlike չկա։
+    Пользователю понравился пост.
+    Текст: { "user_id": ..., "post_id": ... }
+    В настоящее время можно поставить лайк только один раз, дизлайк невозможен.
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -2778,7 +2782,6 @@ def api_comment_like():
 
     conn = db(); c = conn.cursor()
 
-    # table-ը ավելի ճիշտ է init_db-ում ստեղծել, բայց թող այստեղ էլ լինի՝ ապահով
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_comment_likes (
             id SERIAL PRIMARY KEY,
@@ -3430,7 +3433,6 @@ def trim_global_chat(limit: int = 30):
         if deleted > 0:
             logger.info(f"🧹 Global chat trimmed, removed {deleted} old messages")
 
-            # 🔥 realtime ասում ենք frontend-ին
             socketio.emit("global_trim", {
                 "keep": limit
             }, room="global")
@@ -3442,7 +3444,7 @@ def trim_global_chat(limit: int = 30):
 
 def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int] = None):
     """
-    Գրանցում/թարմացնում է օգտատիրոջ տվյալները Domino-ում։
+    Регистрирует/обновляет данные пользователей в Domino.
     """
     if inviter_id == user_id:
         inviter_id = None
@@ -3465,8 +3467,7 @@ def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int]
 
 def get_user_stats(user_id: int):
     """
-    Վերադարձնում ենք օգտատիրոջ USD balance-ը, TON balance-ը (հաշվարկված),
-    ռեֆերալների վիճակը և այլն։
+    Мы возвращаем пользователю баланс в долларах США, баланс в тоннах (рассчитанный), реферальный статус и т.д.
     """
     conn = db()
     c = conn.cursor()
@@ -3574,9 +3575,9 @@ def apply_burn_transaction(
 ):
     """
     Universal balance operation:
-    - total_amount հանվում է from_user-ից
+    - total_amount вычитается из from_user
     - transfers → [(user_id, amount), ...]
-    - burn_amount → գնում է admin fund + burn ledger
+    - Сумма сжигания → поступает в административный фонд + в реестр сжигания
     """
 
     if total_amount <= 0:
@@ -3588,21 +3589,18 @@ def apply_burn_transaction(
     conn = db()
     c = conn.cursor()
 
-    # ստուգում ենք բալանսը
     c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (from_user,))
     row = c.fetchone()
     if not row or float(row[0]) < total_amount:
         release_db(conn)
         raise ValueError("low_balance")
 
-    # հանում ենք ամբողջ գումարը
     c.execute("""
         UPDATE dom_users
         SET balance_usd = balance_usd - %s
         WHERE user_id=%s
     """, (total_amount, from_user))
 
-    # փոխանցումներ
     for uid, amt in transfers:
         c.execute("""
             UPDATE dom_users
@@ -3630,9 +3628,9 @@ def apply_burn_transaction(
 
 def apply_deposit(user_id: int, amount: float):
     """
-    Պարզ տարբերակ՝
-    - միանգամից գումարում ենք balance_usd + total_deposit_usd
-    - գրանցում ենք dom_deposits-ում
+    Простой вариант:
+    - добавить balance_usd + total_deposit_usd одновременно
+    - записать в dom_deposits
     """
     now = int(time.time())
     conn = db()
@@ -3660,8 +3658,8 @@ def apply_deposit(user_id: int, amount: float):
 
 def get_mining_plans():
     """
-    Վերադարձնում է բոլոր mining plan-ները, հաշված ՄԵԿԱՅՆ USD/hr-ով։
-    DOMIT-ը frontend-ում կարող ես ցույց տալ որպես նույն թիվը, պարզապես անվանափոխված։
+    Возвращает все планы майнинга, рассчитанные в долларах США/час.
+    В интерфейсе можно отобразить DOMIT как то же число, просто переименованное.
     """
     conn = db(); c = conn.cursor()
     c.execute("""
@@ -3696,7 +3694,7 @@ def get_mining_plans():
 
 def get_user_miners(user_id: int):
     """
-    Վերադարձնում է օգտատիրոջ բոլոր miners-ները։
+    Возвращает всех майнеров, доступных пользователю.
     """
     conn = db(); c = conn.cursor()
     c.execute("""
@@ -3734,8 +3732,8 @@ def get_user_miners(user_id: int):
 
 def calc_miner_pending(miner: dict, now: int):
     """
-    Հաշվում է կոնկրետ miner-ի չվերցված reward-ը (մինչև now կամ մինչև ends_at)։
-    Վերադարձնում է (reward_usd, new_last_claim_at)
+    Вычисляет невостребованное вознаграждение для конкретного майнера (на данный момент или до ends_at).
+    Возвращает (reward_usd, new_last_claim_at)
     """
     started = miner["started_at"]
     ends_at = miner["ends_at"]
@@ -3753,8 +3751,8 @@ def calc_miner_pending(miner: dict, now: int):
 
 def claim_user_mining_rewards(user_id: int):
     """
-    Հավաքում է օգտատիրոջ բոլոր miners-ների pending reward-ը,
-    թարմացնում է last_claim_at-երը և գումարը ավելացնում balance_usd-ի վրա։
+    Собирает ожидающие вознаграждения всех майнеров пользователя,
+    обновляет last_claim_ats и добавляет сумму в balance_usd.
     """
     now = int(time.time())
     miners = get_user_miners(user_id)
@@ -3799,8 +3797,8 @@ def claim_user_mining_rewards(user_id: int):
 
 def create_withdraw_request(user_id: int, amount: float):
     """
-    Ստեղծում է pending withdraw request + նվազեցնում balance_usd,
-    ավելացնում total_withdraw_usd։
+    Создает ожидающий запрос на вывод средств + уменьшает balance_usd,
+    увеличивает total_withdraw_usd.
     """
     now = int(time.time())
     conn = db()
@@ -3858,7 +3856,7 @@ def api_user(user_id):
 
 @app_web.route("/api/user/domino-stars")
 def api_user_domino_stars():
-    """Վերադարձնում է user-ի ստացած Domino Stars քանակը"""
+    """Возвращает количество полученных пользователем Domino Stars."""
     uid = request.args.get("uid", type=int)
     if not uid:
         return jsonify({"ok": False, "error": "no uid"}), 400
@@ -3882,9 +3880,9 @@ def api_deposit():
     """
     Body: { "user_id": ..., "amount": ... }
 
-    Այս պահին՝ SIMPLE տարբերակ:
-    - Մեկենա գրանցում ենք դեպոզիտը որպես "auto_credited"
-    - Բալանսն ու total_deposit_usd-ը անմիջապես աճում են
+    Текущая ПРОСТАЯ версия:
+    - Автоматически записывает депозит как "auto_credited"
+    - Баланс и total_deposit_usd увеличиваются немедленно
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -3907,7 +3905,7 @@ def api_deposit():
         return jsonify({
             "ok": False,
             "error": "pending_withdraw_exists",
-            "message": "Դուք արդեն ունեք սպասման փուլում գտնվող կանխիկացման հայտ։ Խնդրում ենք սպասել նախորդ հայտի հաստատմանը։"
+            "message": "У вас уже есть ожидающий подтверждения запрос на вывод средств. Пожалуйста, дождитесь одобрения предыдущего запроса."
         }), 200
 
     stats = get_user_stats(user_id)
@@ -3919,7 +3917,7 @@ def api_deposit():
 
     return jsonify({
         "ok": True,
-        "message": "Դեպոզիտի հարցումը գրանցվեց ✅ Գումարը հաշվվել է ձեր բալանսի վրա։",
+        "message": "Запрос на пополнение счета зарегистрирован ✅ Сумма зачислена на ваш баланс.",
         "user": new_stats
     })
 
@@ -4017,11 +4015,11 @@ def api_withdraw_request():
     """
     Body: { "user_id": ..., "amount": ... }
 
-    Կանոններ, որոնք դու ասել ես.
-    - amount > 0
-    - amount <= balance_usd
-    - ունի առնվազն 10 հրավիրված ընկեր
-    - թիմի ընդհանուր դեպոզիտը (ընկերների) >= 200$
+    Указанные вами правила:
+    - сумма > 0
+    - сумма <= баланс в DOMIT
+    - не менее 10 приглашенных друзей
+    - общий депозит команды (друзей) >= 200 DOMIT
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -4043,21 +4041,21 @@ def api_withdraw_request():
         return jsonify({
             "ok": False,
             "error": "not_enough_balance",
-            "message": "Ունեք բավարար բալանս կանխիկացման համար չէ։"
+            "message": "У вас достаточно средств на счету для снятия наличных?"
         }), 200
 
     if ref_count < 10:
         return jsonify({
             "ok": False,
             "error": "not_enough_refs",
-            "message": "Կանխիկացնելու համար պետք է ունենաք առնվազն 10 հրավիրված ընկեր։"
+            "message": "Для вывода средств необходимо пригласить не менее 10 друзей."
         }), 200
 
     if team_dep < 200.0:
         return jsonify({
             "ok": False,
             "error": "not_enough_team_deposit",
-            "message": "Կանխիկացնելու համար ձեր հրավիրվածների ընդհանուր դեպոզիտը պետք է լինի առնվազն 200$։"
+            "message": "Для вывода средств общая сумма депозита ваших приглашенных должна составлять не менее 200 DOMIT.։"
         }), 200
 
     create_withdraw_request(user_id, amount)
@@ -4065,7 +4063,7 @@ def api_withdraw_request():
 
     return jsonify({
         "ok": True,
-        "message": "Ձեր կանխիկացման հայտը ստացվել է ✅ Գումարը կփոխանցվի մինչև 24 ժամվա ընթացքում։",
+        "message": "Ваш запрос на вывод средств получен ✅ Деньги будут переведены в течение 24 часов.",
         "user": new_stats
     })
 
@@ -4370,8 +4368,8 @@ def mylead_postback():
     """
     MyLead → Domino Postback
 
-    Ակնկալում ենք, որ MyLead-ի tracking link-ի մեջ s1 պարամետրը հավասար է Telegram user_id-ին:
-    Postback-ն ուղարկվում է примерно այս տեսքով.
+    Мы ожидаем, что параметр s1 в отслеживающей ссылке MyLead будет равен идентификатору пользователя Telegram.
+    Обратная связь отправляется в следующем формате:
 
     https://domino-backend-iavj.onrender.com/mylead/postback
         ?s1={sub1}
@@ -4769,11 +4767,10 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await context.bot.send_message(
         chat_id=user.id,
-        text="🎰 Բարի գալուստ Domino Casino.\nՍեղմիր կոճակին՝ բացելու համար WebApp-ը 👇",
+        text="🎰 Добро пожаловать в Domino.\nНажмите кнопку, чтобы открыть WebApp. 👇",
         reply_markup=keyboard
     )
 
-    # (սա կարող ես թողնել կամ հանել, բայց սխալ չի)
     try:
         if update.message:
             await context.bot.pin_chat_message(chat_id=user.id, message_id=update.message.message_id)
@@ -4788,7 +4785,7 @@ scheduler = BackgroundScheduler()
 from decimal import Decimal
 
 def create_new_candle():
-    """Ստեղծել նոր 1-րոպեանոց candle (ամեն րոպե)"""
+    """Создавайте новую 1-минутную свечу (каждую минуту)."""
     conn = None
     cur = None
     try:
@@ -4811,18 +4808,16 @@ def create_new_candle():
             
         cur = conn.cursor()
         
-        # Վերցնել config
         cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
         row = cur.fetchone()
         if not row:
-            print("⚠️ domit_config չկա")
+            print("⚠️ domit_config non")
             cur.close()
             release_db(conn)
             return
         
         min_price, max_price = float(row[0]), float(row[1])
         
-        # Վերցնել վերջին candle-ի close
         cur.execute("""
             SELECT close FROM domit_price_history 
             ORDER BY timestamp DESC LIMIT 1
@@ -4830,14 +4825,12 @@ def create_new_candle():
         last_row = cur.fetchone()
         last_close = float(last_row[0]) if last_row else (min_price + max_price) / 2
         
-        # Նոր candle-ը սկսվում է վերջինի close-ից
         open_price = last_close
-        close_price = last_close  # Առայժմ նույնն է
+        close_price = last_close  
         high_price = open_price
         low_price = open_price
         volume = 0
         
-        # Insert նոր candle
         now = int(datetime.now().timestamp())
         cur.execute("""
             INSERT INTO domit_price_history (timestamp, open, high, low, close, volume)
@@ -4874,7 +4867,7 @@ def create_new_candle():
 
 
 def update_current_candle():
-    """Թարմացնել ընթացիկ candle-ը (ամեն 5 վրկ)"""
+    """Обновлять текущую свечу (каждые 5 секунд)"""
     conn = None
     cur = None
     try:
@@ -4897,7 +4890,6 @@ def update_current_candle():
             
         cur = conn.cursor()
         
-        # Վերցնել config
         cur.execute("SELECT min_price, max_price FROM domit_config WHERE id = 1")
         row = cur.fetchone()
         if not row:
@@ -4907,7 +4899,6 @@ def update_current_candle():
         
         min_price, max_price = float(row[0]), float(row[1])
         
-        # Վերցնել վերջին candle-ը
         cur.execute("""
             SELECT timestamp, open, high, low, close FROM domit_price_history 
             ORDER BY timestamp DESC LIMIT 1
@@ -4924,17 +4915,14 @@ def update_current_candle():
         old_low = float(old_low)
         old_close = float(old_close)
         
-        # Ստեղծել նոր close (±2% random շարժում)
         volatility = 0.02
         price_change = random.uniform(-volatility, volatility)
         new_close = old_close * (1 + price_change)
         new_close = max(min_price, min(max_price, new_close))
         
-        # Թարմացնել high/low
         new_high = max(old_high, new_close)
         new_low = min(old_low, new_close)
         
-        # Update վերջին candle-ը
         cur.execute("""
             UPDATE domit_price_history 
             SET high = %s, low = %s, close = %s, volume = volume + %s
@@ -4953,7 +4941,7 @@ def update_current_candle():
                 'close': new_close
             }, room='chart_viewers')
         except Exception as e:
-            logger.warning(f"Socket emit failed: {e}")  # ✅ Միայն chart viewers-ին
+            logger.warning(f"Socket emit failed: {e}")  
         
     except Exception as e:
         logger.error(f"❌ Error updating candle: {e}")
@@ -4973,7 +4961,7 @@ def update_current_candle():
 # Scheduler jobs
 scheduler.add_job(
     create_new_candle,
-    CronTrigger(minute='*'),  # Ամեն 1 րոպե - նոր candle
+    CronTrigger(minute='*'),  
     id='domit_candle_create',
     replace_existing=True
 )
@@ -4981,14 +4969,14 @@ scheduler.add_job(
 scheduler.add_job(
     update_current_candle,
     'interval',
-    seconds=5,  # Ամեն 5 վրկ - թարմացում
+    seconds=5,  
     id='domit_candle_update',
     replace_existing=True
 )
 
 async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Որ չատը մաքուր մնա՝ ջնջում ենք ցանկացած տեքստային մեսիջ
+    Чтобы чат оставался чистым, мы удаляем все текстовые сообщения.
     """
     try:
         await update.message.delete()
@@ -5003,11 +4991,11 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     stats = get_user_stats(user_id)
     if not stats:
-        await update.message.reply_text("Չենք գտնում ձեր տվյալները բազայում։")
+        await update.message.reply_text("Мы не можем найти вашу информацию в базе данных.")
         return
 
     msg = (
-        f"💳 Ձեր վիճակը\n\n"
+        f"💳 Ваша ситуация\n\n"
         f"Balance: {stats['balance_usd']:.2f}$\n"
         f"Total deposit: {stats['total_deposit_usd']:.2f}$\n"
         f"Total withdraw: {stats['total_withdraw_usd']:.2f}$\n\n"
@@ -5018,7 +5006,7 @@ async def stats_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def burn_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
-        await update.message.reply_text("❌ admin չես")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
 
     conn = db()
@@ -5055,22 +5043,22 @@ async def burn_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         last_update_str = "Never"
 
     await update.message.reply_text(
-        f"🔥 Burn վիճակ\n\n"
-        f"💰 Ընդհանուր burned: {total_burned:.2f} USD\n"
-        f"📅 Այսօր: {today_burn:.2f} USD\n"
+        f"🔥 Burn ситуация\n\n"
+        f"💰 Общий burned: {total_burned:.2f} USD\n"
+        f"📅 Сегодня: {today_burn:.2f} USD\n"
         f"🌟 Domino Stars: {total_fires}\n"
-        f"⏰ Թարմացում: {last_update_str}"
+        f"⏰ Обновлять: {last_update_str}"
     )    
 
 
 
 async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in ADMIN_IDS:
-        await update.message.reply_text("❌ admin չես")
+        await update.message.reply_text("❌ Вы не являетесь администратором")
         return
 
     if len(context.args) != 2:
-        await update.message.reply_text("Օգտագործում՝ /burn_reward user_id amount")
+        await update.message.reply_text("Использование՝ /burn_reward user_id amount")
         return
 
     target = int(context.args[0])
@@ -5083,7 +5071,7 @@ async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if fund < amount:
         release_db(conn)
-        await update.message.reply_text("❌ Burn ֆոնդում բավարար գումար չկա")
+        await update.message.reply_text("❌ В Burn фонде недостаточно средств.")
         return
 
     c.execute("""
@@ -5102,14 +5090,14 @@ async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     release_db(conn)
 
     await update.message.reply_text(
-        f"🎁 {amount} DOMIT փոխանցվեց օգտատեր {target}-ին burn ֆոնդից"
+        f"🎁 {amount} DOMIT передано пользователю {target}-из фонда Burn"
     )
 
 async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin command: Generate initial 24h DOMIT price data"""
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
     
     try:
@@ -5152,23 +5140,23 @@ async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn_obj.commit()
         release_db(conn_obj)
         
-        await update.message.reply_text("✅ DOMIT գրաֆիկի տվյալները ստեղծվեցին!\n📊 288 candles (24 ժամ)")
+        await update.message.reply_text("✅ Созданы данные графика DOMIT.!\n📊 288 candles (24 час)")
     
     except Exception as e:
         logger.error(f"❌ Error in init_domit_data: {e}")
-        await update.message.reply_text(f"❌ Սխալ: {e}")
+        await update.message.reply_text(f"❌ Неправильный: {e}")
 
 
 async def set_domit_range(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin: /set_domit_range 0.50 1.50"""
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
     
     try:
         if len(context.args) < 2:
-            await update.message.reply_text("Օգտագործում՝ /set_domit_range 0.50 1.50")
+            await update.message.reply_text("Использование՝ /set_domit_range 0.50 1.50")
             return
         
         min_price = float(context.args[0])
@@ -5188,16 +5176,16 @@ async def set_domit_range(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     except Exception as e:
         logger.error(f"❌ Error in set_domit_range: {e}")
-        await update.message.reply_text(f"❌ Սխալ: {e}")
+        await update.message.reply_text(f"❌ Неправильный: {e}")
 
 async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.։")
         return
 
     if len(context.args) < 2:
-        await update.message.reply_text("Օգտագործում՝ /admin_add user_id amount")
+        await update.message.reply_text("Использование՝ /admin_add user_id amount")
         return
 
     target = int(context.args[0])
@@ -5213,13 +5201,13 @@ async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.commit()
     release_db(conn)
 
-    await update.message.reply_text(f"✔ {amount}$ ավելացվեց օգտատեր {target}-ի հաշվին։")
+    await update.message.reply_text(f"✔ {amount}DOMIT пользователь добавил {target} в счет։")
 
 async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Ցույց տալ բոլոր pending withdraw հայտերը"""
+    """Показать все ожидающие запросы на вывод средств"""
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
 
     conn = db()
@@ -5238,12 +5226,12 @@ async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
     release_db(conn)
     
     if not rows:
-        await update.message.reply_text("✅ Չկան pending կանխիկացման հայտեր։")
+        await update.message.reply_text("✅ В настоящее время нет ожидающих обработки запросов на снятие наличных.")
         return
     
     from datetime import datetime
     
-    msg = "📋 PENDING ԿԱՆԽԻԿԱՑՈՒՄՆԵՐ:\n\n"
+    msg = "📋 Ожидаются выводы средств:\n\n"
     for row in rows:
         withdraw_id, uid, amount_usd, created_at, username, wallet = row
         amount_usd = float(amount_usd)
@@ -5263,31 +5251,31 @@ async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ton_amount = amount_usd / ton_price if ton_price > 0 else 0
         
         date_str = datetime.fromtimestamp(created_at).strftime("%Y-%m-%d %H:%M")
-        username_str = f"@{username}" if username else "Անանուն"
-        wallet_str = wallet if wallet else "❌ Չկա wallet"
+        username_str = f"@{username}" if username else "Аноним"
+        wallet_str = wallet if wallet else "❌ Без кошелька"
         
         msg += f"🆔 ID: {withdraw_id}\n"
         msg += f"👤 User: {username_str} ({uid})\n"
-        msg += f"💰 Գումար: {amount_usd:.2f} DOMIT (~{ton_amount:.4f} TON)\n"
+        msg += f"💰 Деньги: {amount_usd:.2f} DOMIT (~{ton_amount:.4f} TON)\n"
         msg += f"💳 Wallet: {wallet_str}\n"
-        msg += f"📅 Ժամանակ: {date_str}\n"
+        msg += f"📅 Время: {date_str}\n"
         msg += f"━━━━━━━━━━━━━━━━\n\n"
     
-    msg += "\n📌 Հաստատելու համար՝ /admin_approve <ID>\n"
-    msg += "📌 Մերժելու համար՝ /admin_reject <ID>"
+    msg += "\n📌 Для подтверждения՝ /admin_approve <ID>\n"
+    msg += "📌 Отказаться՝ /admin_reject <ID>"
     
     await update.message.reply_text(msg)
 
 
 async def admin_approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Հաստատել withdraw հայտը"""
+    """Подтвердите запрос на вывод средств."""
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
     
     if len(context.args) < 1:
-        await update.message.reply_text("Օգտագործում՝ /admin_approve <withdraw_id>")
+        await update.message.reply_text("Использование՝ /admin_approve <withdraw_id>")
         return
     
     withdraw_id = int(context.args[0])
@@ -5306,14 +5294,14 @@ async def admin_approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         row = c.fetchone()
         if not row:
-            await update.message.reply_text(f"❌ Withdraw ID {withdraw_id} չի գտնվել։")
+            await update.message.reply_text(f"❌ Withdraw ID {withdraw_id} не найдено։")
             release_db(conn)
             return
         
         target_user_id, amount_usd, status = row
         
         if status != 'pending':
-            await update.message.reply_text(f"❌ Withdraw-ը արդեն {status} է։")
+            await update.message.reply_text(f"❌ Уже сняты средства {status} ")
             release_db(conn)
             return
         
@@ -5328,36 +5316,36 @@ async def admin_approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
         release_db(conn)
         
         await update.message.reply_text(
-            f"✅ Withdraw #{withdraw_id} հաստատվեց։\n"
+            f"✅ Withdraw #{withdraw_id} одобренный։\n"
             f"👤 User: {target_user_id}\n"
-            f"💰 Գումար: {float(amount_usd):.2f} DOMIT"
+            f"💰 Деньги: {float(amount_usd):.2f} DOMIT"
         )
         
         # Send notification to user
         try:
             await context.bot.send_message(
                 chat_id=target_user_id,
-                text=f"✅ Ձեր կանխիկացման հայտը հաստատվել է։\n💰 Գումարը փոխանցվել է ձեր wallet-ին։"
+                text=f"✅ Ваш запрос на вывод средств одобрен.։\n💰 Деньги переведены на ваш электронный кошелек."
             )
         except Exception as e:
             logger.warning(f"Could not notify user {target_user_id}: {e}")
     
     except Exception as e:
         logger.error(f"Error approving withdraw: {e}")
-        await update.message.reply_text(f"❌ Սխալ՝ {e}")
+        await update.message.reply_text(f"❌ Неправильный՝ {e}")
         if conn:
             release_db(conn)
 
 
 async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Մերժել withdraw հայտը և վերադարձնել գումարը"""
+    """Отклоните запрос на вывод средств и верните деньги."""
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
     
     if len(context.args) < 1:
-        await update.message.reply_text("Օգտագործում՝ /admin_reject <withdraw_id>")
+        await update.message.reply_text("Использование՝ /admin_reject <withdraw_id>")
         return
     
     withdraw_id = int(context.args[0])
@@ -5376,14 +5364,14 @@ async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         row = c.fetchone()
         if not row:
-            await update.message.reply_text(f"❌ Withdraw ID {withdraw_id} չի գտնվել։")
+            await update.message.reply_text(f"❌ Withdraw ID {withdraw_id} не найдено։")
             release_db(conn)
             return
         
         target_user_id, amount_usd, status = row
         
         if status != 'pending':
-            await update.message.reply_text(f"❌ Withdraw-ը արդեն {status} է։")
+            await update.message.reply_text(f"❌ Уже вывели средства {status} ")
             release_db(conn)
             return
         
@@ -5406,35 +5394,35 @@ async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         release_db(conn)
         
         await update.message.reply_text(
-            f"❌ Withdraw #{withdraw_id} մերժվեց։\n"
+            f"❌ Withdraw #{withdraw_id} отклоненный։\n"
             f"👤 User: {target_user_id}\n"
-            f"💰 Գումարը ({float(amount_usd):.2f} DOMIT) վերադարձվեց balance-ին։"
+            f"💰 Количество ({float(amount_usd):.2f} DOMIT) вернулось к balance։"
         )
         
         # Send notification to user
         try:
             await context.bot.send_message(
                 chat_id=target_user_id,
-                text=f"❌ Ձեր կանխիկացման հայտը մերժվել է։\n💰 Գումարը վերադարձվել է ձեր balance-ին։"
+                text=f"❌ Ваш запрос на вывод средств отклонен։\n💰 Деньги возвращены на ваш баланс."
             )
         except Exception as e:
             logger.warning(f"Could not notify user {target_user_id}: {e}")
     
     except Exception as e:
         logger.error(f"Error rejecting withdraw: {e}")
-        await update.message.reply_text(f"❌ Սխալ՝ {e}")
+        await update.message.reply_text(f"❌ Неправильный՝ {e}")
         if conn:
             release_db(conn)
 
 async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """TEST: Ստեղծել withdraw request ԱՌԱՆՑ validations-ի"""
+    """ТЕСТ: Создание запроса на вывод средств БЕЗ проверок"""
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
     
     if len(context.args) < 2:
-        await update.message.reply_text("Օգտագործում՝ /admin_test_withdraw <user_id> <amount>")
+        await update.message.reply_text("Использование՝ /admin_test_withdraw <user_id> <amount>")
         return
     
     target_user_id = int(context.args[0])
@@ -5450,7 +5438,7 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         current_balance = float(row[0]) if row else 0.0
         
         if current_balance < amount:
-            await update.message.reply_text(f"❌ User {target_user_id}-ը ունի միայն {current_balance:.2f} DOMIT")
+            await update.message.reply_text(f"❌ User {target_user_id}-имеет только {current_balance:.2f} DOMIT")
             release_db(conn)
             return
         
@@ -5462,7 +5450,7 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         pending_count = c.fetchone()[0]
         
         if pending_count > 0:
-            await update.message.reply_text(f"❌ User {target_user_id}-ը արդեն ունի pending withdraw հայտ։")
+            await update.message.reply_text(f"❌ User {target_user_id}-Уже есть ожидающий рассмотрения запрос на вывод средств.")
             release_db(conn)
             return
         
@@ -5490,22 +5478,22 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         release_db(conn)
         
         await update.message.reply_text(
-            f"✅ TEST withdraw ստեղծվեց։\n"
+            f"✅ TEST withdraw созданный։\n"
             f"👤 User: {target_user_id}\n"
-            f"💰 Գումար: {amount:.2f} DOMIT\n\n"
-            f"Օգտագործիր /admin_withdrawals տեսնելու համար"
+            f"💰 Деньги: {amount:.2f} DOMIT\n\n"
+            f"Использовать /admin_withdrawals чтобы увидеть"
         )
     
     except Exception as e:
         logger.error(f"Error in test withdraw: {e}")
-        await update.message.reply_text(f"❌ Սխալ՝ {e}")
+        await update.message.reply_text(f"❌ Неправильный՝ {e}")
         if conn:
             release_db(conn)
 
 async def start_bot_webhook():
     """
-    Կարգավորում ենք Telegram–ը Webhook mode-ում,
-    նույն լոգիկան, ինչ VORN բոտում։
+    Мы настраиваем Telegram в режиме веб-хука,
+    используя ту же логику, что и в боте VORN.
     """
     global application
     print("🤖 Initializing Domino Telegram bot (Webhook Mode)...")
@@ -5548,17 +5536,17 @@ async def start_bot_webhook():
 
 async def migrate_posts_cmd(update: Update, context):
     """Admin command to migrate posts media"""
-    if update.effective_user.id not in ADMIN_IDS:  # ← ՓՈԽԻՐ ԱՅՍ
-        await update.message.reply_text("❌ Միայն ադմինի համար")
+    if update.effective_user.id not in ADMIN_IDS:  
+        await update.message.reply_text("❌ Только для администраторов")
         return
     
-    await update.message.reply_text("🔄 Սկսում եմ migration...")
+    await update.message.reply_text("🔄 Я начинаю migration...")
     
     try:
         migrate_posts_to_files()
-        await update.message.reply_text("✅ Migration ավարտված!")
+        await update.message.reply_text("✅ Migration законченный!")
     except Exception as e:
-        await update.message.reply_text(f"❌ Սխալ: {e}")
+        await update.message.reply_text(f"❌ Ошибка. {e}")
         print(f"Migration error: {e}")
 
 async def task_add_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -5579,7 +5567,7 @@ async def task_add_special(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def task_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
 
     conn = db(); c = conn.cursor()
@@ -5588,10 +5576,10 @@ async def task_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     release_db(conn)
 
     if not rows:
-        await update.message.reply_text("📭 Տասկեր չկան։")
+        await update.message.reply_text("📭 No Task")
         return
 
-    msg = "📋 **Տասկեր**\n\n"
+    msg = "📋 **Task**\n\n"
     for r in rows:
         msg += f"ID: {r[0]} | {r[1]} | {r[2]} | 💰 {r[3]}$ | {'🟢 ON' if r[4] else '🔴 OFF'}\n"
 
@@ -5600,11 +5588,11 @@ async def task_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def task_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
 
     if len(context.args) != 1:
-        await update.message.reply_text("Օգտագործում՝ /task_delete ID")
+        await update.message.reply_text("Использование՝ /task_delete ID")
         return
 
     task_id = int(context.args[0])
@@ -5614,16 +5602,16 @@ async def task_delete(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.commit()
     release_db(conn)
 
-    await update.message.reply_text(f"🗑 Տասկը ջնջված է (ID={task_id})")
+    await update.message.reply_text(f"🗑 Задание удалено. (ID={task_id})")
 
 async def task_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ admin չես")
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
 
     if len(context.args) != 1:
-        await update.message.reply_text("Օգտագործում՝ /task_toggle ID")
+        await update.message.reply_text("Использование՝ /task_toggle ID")
         return
 
     task_id = int(context.args[0])
@@ -5635,22 +5623,22 @@ async def task_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE):
     release_db(conn)
 
     if not row:
-        await update.message.reply_text("❌ Տասկը չկա")
+        await update.message.reply_text("❌ Задача отсутствует.")
         return
 
-    state = "🟢 Միացված" if row[0] else "🔴 Անջատված"
+    state = "🟢 Подключено" if row[0] else "🔴 Выключенный"
     await update.message.reply_text(f"ID {task_id} → {state}")
 
 async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_TYPE, category: str):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Դու admin չես։")
+        await update.message.reply_text("❌ Вы не являетесь администратором.։")
         return
 
     text = " ".join(context.args)
     if "|" not in text:
         await update.message.reply_text(
-            "Օգտագործում՝\n"
+            "Использование՝\n"
             f"/task_add_{category} Title | Description | URL | Reward"
         )
         return
@@ -5659,7 +5647,7 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
         title, desc, url, reward = [x.strip() for x in text.split("|")]
         reward = float(reward)
     except:
-        await update.message.reply_text("❌ Սխալ ձևաչափ։")
+        await update.message.reply_text("❌ Неверный формат.")
         return
 
     import urllib.parse
@@ -5682,15 +5670,14 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
     conn.commit()
     release_db(conn)
 
-    await update.message.reply_text(f"✔ Տասկը ավելացվեց `{category}` բաժնում։")
+    await update.message.reply_text(f"✔ Добавлена ​​задача `{category}` в отделе.")
 
 
 
 @app_web.route("/webhook", methods=["POST"])
 def telegram_webhook():
     """
-    Flask route, որը ստանում է Telegram–ի update-ները
-    և փոխանցում է PTB application-ին։
+    Маршрут Flask, который получает обновления из Telegram и передает их в приложение PTB.
     """
 
     global application, bot_loop
@@ -5739,10 +5726,8 @@ def api_get_user_data():
     total_games = row[8] or 0
     total_wins = row[9] or 0
     
-    # 🧠 Intellect Score հաշվարկ
     intellect_score = round((total_wins / total_games * 10), 1) if total_games > 0 else 0.0
     
-    # Progress bar (10 սիմվոլ)
     filled = int(intellect_score)  # 0-10
     progress_bar = "━" * filled + "░" * (10 - filled)
 
@@ -5880,7 +5865,6 @@ def migrate_posts_to_files():
     """Migrate posts media from base64 to file system"""
     print("🔍 Starting posts media migration...")
     
-    # ← ՍՏԵՂԾԻՐ ՆՈՐ CONNECTION
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     
@@ -5956,7 +5940,6 @@ def migrate_posts_to_files():
         
         print(f"   ✅ Updated DB: {file_url}\n")
     
-    # ← ՓԱԿԻՐ CONNECTION-Ը
     cursor.close()
     conn.close()
     
@@ -6001,8 +5984,7 @@ if __name__ == "__main__":
 
     def run_bot():
         """
-        Telegram bot-ը աշխատում է առանձին thread-ում՝ իր event loop-ով,
-        ճիշտ նույն գաղափարը ինչ՝ VORN–ում։
+        Telegram-бот работает в отдельном потоке со своим собственным циклом событий, по той же самой схеме, что и в VORN.
         """
         global bot_loop
         try:
@@ -6018,7 +6000,6 @@ if __name__ == "__main__":
     bot_thread = threading.Thread(target=run_bot, daemon=True)
     bot_thread.start()
 
-    # ⏳ սպասում ենք մինչև bot_loop պատրաստ լինի
     print("⏳ Waiting for Telegram bot to be ready...")
     while bot_loop is None:
         time.sleep(0.2)

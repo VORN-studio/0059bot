@@ -39,11 +39,11 @@ async function loadUser() {
       updateBalances();
       loadTables();
     } else {
-      showStatus("❌ Չհաջողվեց բեռնել բալանսը");
+      showStatus("❌ Не удалось выполнить балансировку нагрузки.");
     }
   } catch (e) {
     console.log("loadUser error", e);
-    showStatus("❌ Սերվերի սխալ");
+    showStatus("❌ Ошибка сервера");
   }
 }
 
@@ -65,8 +65,8 @@ function connectWebSocket() {
   });
 
   socket.on("table_joined", (data) => {
-    showStatus(`✅ Ինչ-որ մեկը միացավ քո սեղանին։`);
-    // Redirect դեպի խաղ
+    showStatus(`✅ К вашему столику кто-то присоединился.`);
+    
     setTimeout(() => {
       window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${data.table_id}&uid=${USER_ID}`;
     }, 1000);
@@ -93,7 +93,6 @@ async function loadTables() {
 
     const js = await r.json();
     if (js.success) {
-        // Փոխարենը redirect անելու, մենք ուղղակի ցուցադրում ենք սեղանները
         renderTables(js.tables); 
     }
   } catch (e) {
@@ -108,8 +107,8 @@ function renderTables(tables) {
     container.innerHTML = `
       <div class="empty-state">
         <span class="empty-icon">🎮</span>
-        <p>Ակտիվ սեղաններ չկան</p>
-        <p class="empty-hint">Ստեղծիր առաջին սեղանը։</p>
+        <p>Нет активных таблиц</p>
+        <p class="empty-hint">Создайте первую таблицу։</p>
       </div>
     `;
     return;
@@ -128,7 +127,7 @@ function renderTables(tables) {
           <div class="table-game-icon">❌⭕</div>
           <div class="table-info">
             <div class="table-game-name">Tic-Tac-Toe</div>
-            <div class="table-creator">Ստեղծող՝ ${t.creator}</div>
+            <div class="table-creator">Создатель՝ ${t.creator}</div>
           </div>
           <div style="text-align: right;">
             <div class="table-bet">${t.bet} DOMIT</div>
@@ -149,7 +148,7 @@ async function playBotGame(game) {
   }
 
   if (domitBalance < 2) {
-    return showStatus("❌ Քեզ մոտ չկա 2 DOMIT։", "lose");
+    return showStatus("❌ У вас его нет. 2 DOMIT։", "lose");
   }
 
   try {
@@ -172,7 +171,7 @@ async function playBotGame(game) {
     window.location.href = `${API}/duels/${game}/${game}.html?uid=${USER_ID}`;
   } catch (e) {
     console.log("payBot error", e);
-    showStatus("❌ Սերվերի սխալ", "lose");
+    showStatus("❌ Ошибка сервера", "lose");
   }
 }
 
@@ -193,12 +192,12 @@ async function confirmCreateTable() {
   const bet = Number(document.getElementById("bet-amount").value);
 
   if (!bet || bet <= 0) {
-    document.getElementById("create-error").textContent = "Գրիր ճիշտ գումար։";
+    document.getElementById("create-error").textContent = "Напишите правильную сумму։";
     return;
   }
 
   if (bet > domitBalance) {
-    document.getElementById("create-error").textContent = "Դուք չունեք այդքան DOMIT։";
+    document.getElementById("create-error").textContent = "У тебя не так уж много. DOMIT։";
     return;
   }
 
@@ -219,7 +218,7 @@ async function confirmCreateTable() {
     domitBalance = js.new_balance;
     updateBalances();
 
-    showStatus(`✅ Սեղանը ստեղծվեց։ Սպասում ենք հակառակորդին…`);
+    showStatus(`✅ Всё готово. Ждём соперника.…`);
 
     // Reload tables
     if (js.success) {
@@ -228,7 +227,7 @@ async function confirmCreateTable() {
 
   } catch (e) {
     console.log("createTable error", e);
-    showStatus("❌ Սերվերի սխալ", "lose");
+    showStatus("❌ Ошибка сервера", "lose");
   }
 }
 
@@ -267,29 +266,27 @@ async function confirmJoinTable() {
 
     const js = await r.json();
     if (js.success) {
-        // Եթե ամեն ինչ OK է (կամ owner-ն է), գնում ենք խաղի մեջ
         window.location.href = `/webapp/portal/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
     } else {
-        // Տարբերակված հաղորդագրություններ
+       
         let msg = js.message;
-        if (msg === "ERR_NOT_FOUND") msg = "Սեղանը չի գտնվել";
-        if (msg === "ERR_OCCUPIED") msg = "Սեղանը զբաղված է";
+        if (msg === "ERR_NOT_FOUND") msg = "Таблица не найдена";
+        if (msg === "ERR_OCCUPIED") msg = "За столом много посетителей.";
         return showStatus(`❌ ${msg}`, "lose");
     }
 
     domitBalance = js.new_balance;
     updateBalances();
 
-    showStatus("✅ Միացար սեղանին։ Խաղը սկսվում է…");
+    showStatus("✅ Вы присоединились к столу. Игра начинается.…");
 
-    // Redirect դեպի խաղ
     setTimeout(() => {
       window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
     }, 1000);
 
   } catch (e) {
     console.log("joinTable error", e);
-    showStatus("❌ Սերվերի սխալ", "lose");
+    showStatus("❌ Ошибка сервера", "lose");
   }
 }
 
