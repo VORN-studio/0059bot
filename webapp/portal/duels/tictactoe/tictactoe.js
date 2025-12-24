@@ -95,9 +95,9 @@ async function loadTableState() {
     });
 
     const js = await r.json();
-    if (js.success) {
-      board = js.game_state.board;
-      currentTurn = js.game_state.turn;
+    if (js.success && js.game_state) { // Ստուգում ենք, որ տվյալները գոյություն ունեն
+      board = js.game_state.board || Array(9).fill("");
+      currentTurn = js.game_state.turn || 'X';
 
       if (js.game_state.rounds) {
           const r = js.game_state.rounds;

@@ -1493,12 +1493,21 @@ def api_duels_join_table():
             return jsonify({"success": True, "is_owner": True})
 
         # Հիմա ենք թարմացնում բազան, երբ ստուգումներն անցան
+        # Ստեղծում ենք խաղի սկզբնական վիճակը
+        import json
+        initial_state = json.dumps({
+            'board': [''] * 9,
+            'turn': 'X',
+            'rounds': {'x': 0, 'o': 0, 'current': 1}
+        })
+
+        # Գրանցում ենք հակառակորդին և լցնում game_state-ը
         c.execute("""
             UPDATE dom_duels_tables
-            SET opponent_id=%s, status='playing',
+            SET opponent_id=%s, status='playing', game_state=%s,
                 opponent_username=(SELECT username FROM dom_users WHERE user_id=%s)
             WHERE id=%s AND status='waiting'
-        """, (user_id, user_id, table_id))
+        """, (user_id, initial_state, user_id, table_id))
         conn.commit()
 
         if int(creator_id) == int(user_id):
