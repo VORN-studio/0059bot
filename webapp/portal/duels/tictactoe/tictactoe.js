@@ -424,11 +424,11 @@ async function handleGameOver(result = null, prize = 0) {
     if (result === 'win') {
       message = `🎉 ВЫ ПОБЕДИЛИ! +${prize.toFixed(2)} DOMIT`;
       className = "win";
-      domitBalance += prize;
-      updateBalanceDisplay();
+      await loadBalance();
     } else if (result === 'lose') {
       message = "😔 Вы проиграли.";
       className = "lose";
+      await loadBalance();
     } else if (result === 'draw' || isDraw) {
       message = "🤝 Ничья - Деньги были возвращены.";
       className = "draw";
