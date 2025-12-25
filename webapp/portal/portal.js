@@ -607,6 +607,22 @@ async function loadProfile() {
         if (scoreEl) {
             scoreEl.textContent = `x${intellectScore.toFixed(1)}`;
         }
+        const dUsedEl = document.getElementById("intellect-daily-used");
+        const dCapEl = document.getElementById("intellect-daily-cap");
+        const dRemEl = document.getElementById("intellect-daily-remaining");
+        const dUsed = Number(user.intellect_daily_used || 0);
+        const dCap = Number(user.intellect_daily_cap || 0.5);
+        const dRem = Number(user.intellect_daily_remaining || 0);
+        if (dUsedEl) dUsedEl.textContent = dUsed.toFixed(4);
+        if (dCapEl) dCapEl.textContent = dCap.toFixed(2);
+        if (dRemEl) dRemEl.textContent = dRem.toFixed(4);
+        const bd = user.intellect_breakdown || {};
+        const gpEl = document.getElementById("intellect-gameplay");
+        const scEl = document.getElementById("intellect-social");
+        const ecEl = document.getElementById("intellect-economy");
+        if (gpEl) gpEl.textContent = `Gameplay: ${(Number(bd.gameplay || 0)).toFixed(4)}`;
+        if (scEl) scEl.textContent = `Social: ${(Number(bd.social || 0)).toFixed(4)}`;
+        if (ecEl) ecEl.textContent = `Economy: ${(Number(bd.economy || 0)).toFixed(4)}`;
         updateCharCounter();
 
         

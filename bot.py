@@ -376,7 +376,6 @@ def api_global_ping():
     
     conn.commit()
     release_db(conn)
-    
     return jsonify({"ok": True})
 
 @app_web.route("/api/global/offline", methods=["POST"])
@@ -398,7 +397,6 @@ def api_global_offline():
     
     conn.commit()
     release_db(conn)
-    
     return jsonify({"ok": True})
 
 @app_web.route("/api/global/send", methods=["POST"])
@@ -516,6 +514,10 @@ def api_global_send():
         "time": now,
         "highlighted": highlight
     }, room="global")
+    try:
+        add_intellect_event(user_id, "global_msg", meta={"message_id": msg_id})
+    except Exception:
+        logger.exception("intellect_event global_msg failed")
     
     return jsonify({"ok": True, "id": msg_id})
 
@@ -822,6 +824,12 @@ def api_fire_add():
     
     release_db(conn)
     
+    try:
+        add_intellect_event(giver_id, "fire_given", meta={"message_id": message_id, "chat_type": chat_type})
+        add_intellect_event(receiver_id, "fire_received", meta={"message_id": message_id, "chat_type": chat_type})
+    except Exception:
+        logger.exception("intellect_event fire failed")
+
     # Broadcast fire update via socket
     if chat_type == "global":
         socketio.emit("fire_update", {
@@ -981,6 +989,10 @@ def api_message_send():
         room=f"user_{receiver}"
     )
 
+    try:
+        add_intellect_event(sender, "dm_msg", meta={"receiver_id": receiver, "message_id": message_id})
+    except Exception:
+        logger.exception("intellect_event dm_msg failed")
 
     release_db(conn)
 
@@ -1730,6 +1742,12 @@ def api_duels_make_move():
                     {'table_id': table_id, 'winner_id': final_winner_id, 'prize': prize},
                     room=f'user_{opponent_id}',
                 )
+                try:
+                    add_intellect_event(creator_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(opponent_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(final_winner_id, "pvp_win", meta={"table_id": table_id, "bet": float(bet)})
+                except Exception:
+                    logger.exception("intellect_event pvp_win failed")
                 return jsonify({"success": True, "game_state": new_state, "winner": player_symbol if int(final_winner_id) == int(user_id) else ('X' if int(final_winner_id) == int(creator_id) else 'O'), "prize": prize})
             else:
                 c.execute(
@@ -1760,6 +1778,13 @@ def api_duels_make_move():
                 release_db(conn)
                 socketio.emit('game_over', {'table_id': table_id, 'winner_id': None, 'draw': True}, room=f'user_{creator_id}')
                 socketio.emit('game_over', {'table_id': table_id, 'winner_id': None, 'draw': True}, room=f'user_{opponent_id}')
+                try:
+                    add_intellect_event(creator_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(opponent_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(creator_id, "pvp_draw", meta={"table_id": table_id})
+                    add_intellect_event(opponent_id, "pvp_draw", meta={"table_id": table_id})
+                except Exception:
+                    logger.exception("intellect_event pvp_draw failed")
                 return jsonify({"success": True, "game_state": new_state, "draw": True})
         else:
             c.execute(
@@ -2286,6 +2311,10 @@ def api_follow():
 
     release_db(conn)
 
+    try:
+        add_intellect_event(follower, "follow_made", meta={"target": target})
+    except Exception:
+        logger.exception("intellect_event follow failed")
     return jsonify({"ok": True}), 200
 
 @app_web.route("/api/comment/delete", methods=["POST"])
@@ -2436,6 +2465,10 @@ def api_post_create():
 
     release_db(conn)
 
+    try:
+        add_intellect_event(user_id, "post_created", meta={"post_id": pid})
+    except Exception:
+        logger.exception("intellect_event post_created failed")
     return jsonify({"ok": True, "post_id": pid})
 
 @app_web.route("/api/comment/list")
@@ -2511,6 +2544,11 @@ def api_comment_create():
         },
         room=f"post_{post_id}"
     )
+
+    try:
+        add_intellect_event(int(user_id), "comment_created", meta={"post_id": post_id})
+    except Exception:
+        logger.exception("intellect_event comment_created failed")
 
     release_db(conn)
 
@@ -3343,6 +3381,38 @@ def init_db():
             (name, tier)
         )
 
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS dom_intellect_events (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            event_type TEXT NOT NULL,
+            value NUMERIC(10,6) NOT NULL,
+            meta JSONB,
+            created_at BIGINT NOT NULL
+        )
+        """
+    )
+
+    c.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_intellect_events_user_time
+        ON dom_intellect_events(user_id, created_at)
+        """
+    )
+
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS dom_intellect_daily (
+            user_id BIGINT NOT NULL,
+            day BIGINT NOT NULL,
+            score NUMERIC(10,6) NOT NULL,
+            breakdown JSONB,
+            PRIMARY KEY(user_id, day)
+        )
+        """
+    )
+
     conn.commit()
     release_db(conn)
     logger.info("✅ Domino tables ready with applied patches!")
@@ -3355,6 +3425,90 @@ def realtime_emit(event: str, data: dict, room: str = None):
             socketio.emit(event, data)
     except Exception:
         logger.exception("Realtime emit failed")
+
+def add_intellect_event(user_id: int, event_type: str, base_value: float = 0.0, meta: dict = None):
+    now = int(time.time())
+    meta = meta or {}
+
+    weights = {
+        "pvp_win": 0.0500,
+        "pvp_draw": 0.0100,
+        "pvp_played": 0.0050,
+        "global_msg": 0.0020,
+        "dm_msg": 0.0015,
+        "follow_made": 0.0200,
+        "fire_given": 0.0010,
+        "fire_received": 0.0020,
+        "post_created": 0.0030,
+        "comment_created": 0.0020,
+        "mining_buy": 0.0500,
+        "deposit_made": 0.0200,
+    }
+
+    categories = {
+        "pvp_win": "gameplay",
+        "pvp_draw": "gameplay",
+        "pvp_played": "gameplay",
+        "global_msg": "social",
+        "dm_msg": "social",
+        "follow_made": "social",
+        "fire_given": "social",
+        "fire_received": "social",
+        "post_created": "social",
+        "comment_created": "social",
+        "mining_buy": "economy",
+        "deposit_made": "economy",
+    }
+
+    base = base_value if base_value > 0 else float(weights.get(event_type, 0.0))
+    if base <= 0:
+        return 0.0
+
+    conn = db(); c = conn.cursor()
+
+    if event_type == "dm_msg":
+        recv = int(meta.get("receiver_id") or 0)
+        if recv:
+            c.execute("SELECT 1 FROM dom_follows WHERE follower=%s AND target=%s", (user_id, recv))
+            if not c.fetchone():
+                base = 0.0001
+
+    since = now - 48 * 3600
+    c.execute(
+        """
+        SELECT DISTINCT event_type FROM dom_intellect_events
+        WHERE user_id=%s AND created_at >= %s
+        """,
+        (user_id, since)
+    )
+    seen = [r[0] for r in c.fetchall()]
+    seen_cats = set(categories.get(t, "other") for t in seen)
+    multiplier = 1.25 if len(seen_cats) >= 2 else 1.0
+
+    day_start = now - (now % 86400)
+    c.execute(
+        "SELECT COALESCE(SUM(value),0) FROM dom_intellect_events WHERE user_id=%s AND created_at >= %s",
+        (user_id, day_start)
+    )
+    used_today = float(c.fetchone()[0] or 0.0)
+    cap = 0.50
+    remain = max(0.0, cap - used_today)
+    final_value = min(base * multiplier, remain)
+
+    try:
+        import json as _json
+        c.execute(
+            """
+            INSERT INTO dom_intellect_events (user_id, event_type, value, meta, created_at)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (user_id, event_type, final_value, _json.dumps(meta), now)
+        )
+        conn.commit()
+    finally:
+        release_db(conn)
+
+    return final_value
 
 def trim_global_chat(limit: int = 30):
     try:
@@ -3522,7 +3676,52 @@ def get_user_stats(user_id: int):
 
     inactivity_penalty = float(days_inactive) * 0.25
     calculated = max(0.0, base_score - inactivity_penalty)
-    intellect_score = round(min(calculated, 10.0), 1)
+
+    day_start = now_ts - (now_ts % 86400)
+    c.execute("SELECT COALESCE(SUM(value),0) FROM dom_intellect_events WHERE user_id=%s AND created_at >= %s", (user_id, day_start))
+    daily_used = float(c.fetchone()[0] or 0.0)
+    daily_cap = 0.50
+    daily_remaining = max(0.0, daily_cap - daily_used)
+
+    since7 = now_ts - 7*86400
+    since30 = now_ts - 30*86400
+    c.execute("""
+        SELECT event_type, value, created_at
+        FROM dom_intellect_events
+        WHERE user_id=%s AND created_at >= %s
+    """, (user_id, since30))
+    rows = c.fetchall() or []
+    cats_map = {
+        'pvp_win': 'gameplay',
+        'pvp_draw': 'gameplay',
+        'pvp_played': 'gameplay',
+        'global_msg': 'social',
+        'dm_msg': 'social',
+        'follow_made': 'social',
+        'fire_given': 'social',
+        'fire_received': 'social',
+        'post_created': 'social',
+        'comment_created': 'social',
+        'mining_buy': 'economy',
+        'deposit_made': 'economy',
+    }
+    gameplay_sum = 0.0
+    social_sum = 0.0
+    economy_sum = 0.0
+    events_score = 0.0
+    for et, val, ts in rows:
+        w = 1.0 if int(ts) >= since7 else 0.5
+        events_score += float(val) * w
+        cat = cats_map.get(et, 'other')
+        if cat == 'gameplay':
+            gameplay_sum += float(val)
+        elif cat == 'social':
+            social_sum += float(val)
+        elif cat == 'economy':
+            economy_sum += float(val)
+
+    events_score = min(events_score, 5.0)
+    intellect_score = round(min(calculated + events_score, 10.0), 1)
 
     release_db(conn)
 
@@ -3541,6 +3740,15 @@ def get_user_stats(user_id: int):
         "status_level": int(status_level),
         "status_name": status_name,
         "intellect_score": float(intellect_score),
+        "intellect_daily_used": round(daily_used, 4),
+        "intellect_daily_cap": round(daily_cap, 2),
+        "intellect_daily_remaining": round(daily_remaining, 4),
+        "intellect_breakdown": {
+            "recent_events_total": round(gameplay_sum + social_sum + economy_sum, 4),
+            "gameplay": round(gameplay_sum, 4),
+            "social": round(social_sum, 4),
+            "economy": round(economy_sum, 4)
+        },
         "total_games": int(total_games),
         "total_wins": int(total_wins),
     }
@@ -3805,14 +4013,14 @@ def create_withdraw_request(user_id: int, amount: float):
             VALUES (%s, %s, 'pending', %s, %s)
         """, (user_id, amount, now, wallet_address))
 
-        c.execute("""
-            UPDATE dom_users
-               SET balance_usd = balance_usd - %s,
-                   total_withdraw_usd = COALESCE(total_withdraw_usd,0) + %s
-             WHERE user_id=%s
-        """, (amount, amount, user_id))
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = balance_usd - %s,
+            total_withdraw_usd = COALESCE(total_withdraw_usd,0) + %s
+        WHERE user_id=%s
+    """, (amount, amount, user_id))
 
-        conn.commit()
+    conn.commit()
     finally:
         release_db(conn)
 
@@ -3894,6 +4102,10 @@ def api_deposit():
 
     apply_deposit(user_id, amount)
     new_stats = get_user_stats(user_id)
+    try:
+        add_intellect_event(user_id, "deposit_made", meta={"amount": amount})
+    except Exception:
+        logger.exception("intellect_event deposit_made failed")
 
     return jsonify({
         "ok": True,
@@ -4511,6 +4723,11 @@ def api_mining_buy():
     miner_id = c.fetchone()[0]
     conn.commit()
     release_db(conn)
+
+    try:
+        add_intellect_event(user_id, "mining_buy", meta={"plan_id": pid, "tier": tier, "price": price_usd})
+    except Exception:
+        logger.exception("intellect_event mining_buy failed")
 
     new_stats = get_user_stats(user_id)
 
