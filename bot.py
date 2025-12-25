@@ -1675,7 +1675,7 @@ def api_duels_make_move():
                     """,
                     (json.dumps(new_state), final_winner_id, now, table_id),
                 )
-                prize = float(bet) * 2
+                prize = float(bet) * 1.75
                 c.execute(
                     """
                     UPDATE dom_users 
@@ -1683,6 +1683,24 @@ def api_duels_make_move():
                     WHERE user_id=%s
                     """,
                     (prize, final_winner_id),
+                )
+                burn_amount = float(bet) * 0.25
+                loser_id = opponent_id if int(final_winner_id) == int(creator_id) else creator_id
+                c.execute(
+                    """
+                    INSERT INTO dom_burn_ledger (user_id, amount, reason, created_at)
+                    VALUES (%s, %s, %s, %s)
+                    """,
+                    (loser_id, burn_amount, 'pvp_loss_burn', now),
+                )
+                c.execute(
+                    """
+                    UPDATE dom_burn_account
+                    SET total_burned = total_burned + %s,
+                        last_updated = %s
+                    WHERE id = 1
+                    """,
+                    (burn_amount, now),
                 )
                 conn.commit()
                 release_db(conn)
