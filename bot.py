@@ -3991,36 +3991,42 @@ def create_withdraw_request(user_id: int, amount: float):
     now = int(time.time())
     conn = db()
     c = conn.cursor()
-    
+
     try:
-        # Check current balance first
         c.execute("SELECT balance_usd FROM dom_users WHERE user_id = %s FOR UPDATE", (user_id,))
         row = c.fetchone()
         current_balance = float(row[0]) if row else 0.0
-        
+
         if current_balance < amount:
             conn.rollback()
-            release_db(conn)
-            raise ValueError(f"Insufficient balance: {current_balance} < {amount}")
+            raise ValueError("Insufficient balance")
 
-        # Get user's wallet address
         c.execute("SELECT wallet_address FROM dom_users WHERE user_id=%s", (user_id,))
         wallet_row = c.fetchone()
         wallet_address = wallet_row[0] if wallet_row and wallet_row[0] else None
 
-        c.execute("""
+        c.execute(
+            """
             INSERT INTO dom_withdrawals (user_id, amount_usd, status, created_at, wallet_address)
             VALUES (%s, %s, 'pending', %s, %s)
-        """, (user_id, amount, now, wallet_address))
+            """,
+            (user_id, amount, now, wallet_address)
+        )
 
-    c.execute("""
-        UPDATE dom_users
-        SET balance_usd = balance_usd - %s,
-            total_withdraw_usd = COALESCE(total_withdraw_usd,0) + %s
-        WHERE user_id=%s
-    """, (amount, amount, user_id))
+        c.execute(
+            """
+            UPDATE dom_users
+            SET balance_usd = balance_usd - %s,
+                total_withdraw_usd = COALESCE(total_withdraw_usd,0) + %s
+            WHERE user_id=%s
+            """,
+            (amount, amount, user_id)
+        )
 
-    conn.commit()
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         release_db(conn)
 
