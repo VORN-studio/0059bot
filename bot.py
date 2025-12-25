@@ -3494,9 +3494,35 @@ def get_user_stats(user_id: int):
     )
     last_duel = int(c.fetchone()[0] or 0)
     days_inactive = ((now_ts - last_duel) // 86400) if last_duel else 999
-    decay_per_day = 0.2
-    raw_score = round((total_wins / total_games) * 10, 1) if total_games > 0 else 0.0
-    intellect_score = max(0.0, round(raw_score - days_inactive * decay_per_day, 1))
+
+    c.execute(
+        """
+        SELECT COUNT(*)
+        FROM dom_fire_reactions
+        WHERE receiver_user_id = %s
+        """,
+        (user_id,)
+    )
+    stars_count = int(c.fetchone()[0] or 0)
+
+    win_rate = (float(total_wins) / float(total_games)) if (total_games and total_games > 0) else 0.0
+    win_rate_score = win_rate * 4.0
+
+    games_volume_score = min((float(total_games) / 50.0), 1.0) * 2.0
+
+    status_score = float(status_level) * 0.2
+
+    stars_score = min((stars_count ** 0.5), 4.0) * 0.5
+
+    ref_score = min(float(active_refs), 20.0) * 0.1
+
+    team_dep_score = min(float(team_dep) / 500.0, 1.0) * 1.0
+
+    base_score = win_rate_score + games_volume_score + status_score + stars_score + ref_score + team_dep_score
+
+    inactivity_penalty = float(days_inactive) * 0.25
+    calculated = max(0.0, base_score - inactivity_penalty)
+    intellect_score = round(min(calculated, 10.0), 1)
 
     release_db(conn)
 

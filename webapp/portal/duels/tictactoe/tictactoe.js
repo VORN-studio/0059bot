@@ -444,3 +444,9 @@ async function handleGameOver(result = null, prize = 0) {
 // ================= START =================
 
 window.onload = init;
+
+window.addEventListener('focus', () => {
+  if (!IS_BOT_MODE) {
+    loadBalance();
+  }
+});

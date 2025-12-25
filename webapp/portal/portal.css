@@ -3938,3 +3938,35 @@ input[type="checkbox"][id*="highlight"]:checked::before {
 #forward-target-list::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
 }
+
+/* INTELLECT BAR */
+.intellect-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+.intellect-label {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: var(--font-sm);
+}
+.intellect-bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(148,163,184,0.25);
+    overflow: hidden;
+    border: 1px solid rgba(148,163,184,0.35);
+}
+.intellect-bar .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #8b5cf6, #22c55e);
+}
+.intellect-score {
+    color: #c4b5fd;
+    font-weight: 700;
+    font-family: monospace;
+    font-size: var(--font-sm);
+}

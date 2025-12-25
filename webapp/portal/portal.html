@@ -43,7 +43,11 @@
     <div class="profile-info">
         <div id="profile-name" style="font-size: 18px; font-weight: bold;"></div>
         <div id="profile-status" style="opacity: 0.7; font-size: 13px;">Online</div>
-        <div id="profile-intellect" style="font-size: 14px; margin-top: 8px; font-family: monospace;">🧠 ──────────── x0.0</div>
+        <div id="profile-intellect" class="intellect-row">
+            <span class="intellect-label">🧠 Intellect</span>
+            <div id="intellect-bar" class="intellect-bar"><div class="fill"></div></div>
+            <span id="intellect-score" class="intellect-score">x0.0</span>
+        </div>
         <button id="follow-btn">Follow</button>
     </div>
 </div>

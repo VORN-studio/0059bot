@@ -598,14 +598,14 @@ async function loadProfile() {
         CURRENT_USER_STATUS = user.status_level || 0;
                 // Intellect score ցուցադրում
         const intellectScore = user.intellect_score || 0.0;
-        const barLength = 10;
-        const filledBars = Math.round((intellectScore / 10) * barLength);
-        const emptyBars = barLength - filledBars;
-        const progressBar = '━'.repeat(filledBars) + '─'.repeat(emptyBars);
-        
-        const intellectDiv = document.getElementById("profile-intellect");
-        if (intellectDiv) {
-            intellectDiv.innerHTML = `🧠 ${progressBar} x${intellectScore.toFixed(1)}`;
+        const bar = document.getElementById("intellect-bar");
+        const scoreEl = document.getElementById("intellect-score");
+        if (bar) {
+            const fill = bar.querySelector(".fill");
+            if (fill) fill.style.width = `${Math.max(0, Math.min(100, (intellectScore / 10) * 100))}%`;
+        }
+        if (scoreEl) {
+            scoreEl.textContent = `x${intellectScore.toFixed(1)}`;
         }
         updateCharCounter();
 

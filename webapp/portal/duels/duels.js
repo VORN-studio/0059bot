@@ -308,6 +308,10 @@ window.onload = () => {
   setInterval(loadTables, 5000);
 };
 
+window.addEventListener('focus', () => {
+  if (USER_ID) loadUser();
+});
+
 window.onbeforeunload = () => {
   if (socket) socket.disconnect();
 };
