@@ -1675,6 +1675,22 @@ def api_duels_make_move():
                     """,
                     (json.dumps(new_state), final_winner_id, now, table_id),
                 )
+                c.execute(
+                    """
+                    UPDATE dom_users
+                    SET total_games = COALESCE(total_games,0) + 1
+                    WHERE user_id IN (%s, %s)
+                    """,
+                    (creator_id, opponent_id),
+                )
+                c.execute(
+                    """
+                    UPDATE dom_users
+                    SET total_wins = COALESCE(total_wins,0) + 1
+                    WHERE user_id=%s
+                    """,
+                    (final_winner_id,),
+                )
                 prize = float(bet) * 1.75
                 c.execute(
                     """
@@ -1723,6 +1739,14 @@ def api_duels_make_move():
                     WHERE id=%s
                     """,
                     (json.dumps(new_state), now, table_id),
+                )
+                c.execute(
+                    """
+                    UPDATE dom_users
+                    SET total_games = COALESCE(total_games,0) + 1
+                    WHERE user_id IN (%s, %s)
+                    """,
+                    (creator_id, opponent_id),
                 )
                 c.execute(
                     """
@@ -3459,10 +3483,20 @@ def get_user_stats(user_id: int):
     """, (user_id,))
     team_dep = c.fetchone()[0] or 0
 
-    if total_games > 0:
-        intellect_score = round((total_wins / total_games) * 10, 1)
-    else:
-        intellect_score = 0.0
+    now_ts = int(time.time())
+    c.execute(
+        """
+        SELECT COALESCE(MAX(finished_at), 0)
+        FROM dom_duels_tables
+        WHERE status='finished' AND (creator_id=%s OR opponent_id=%s)
+        """,
+        (user_id, user_id)
+    )
+    last_duel = int(c.fetchone()[0] or 0)
+    days_inactive = ((now_ts - last_duel) // 86400) if last_duel else 999
+    decay_per_day = 0.2
+    raw_score = round((total_wins / total_games) * 10, 1) if total_games > 0 else 0.0
+    intellect_score = max(0.0, round(raw_score - days_inactive * decay_per_day, 1))
 
     release_db(conn)
 
