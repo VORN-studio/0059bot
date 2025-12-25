@@ -4,17 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sudoku | Domino</title>
-  <style>
-    body { background:#0f172a; color:#e5e7eb; font-family:system-ui; }
-    .container { max-width: 420px; margin: 20px auto; padding: 10px; }
-    .top { display:flex; align-items:center; justify-content:space-between; }
-    .grid { display:grid; grid-template-columns: repeat(9, 34px); gap:2px; margin:12px auto; width:max-content; }
-    .cell { width:34px; height:34px; display:flex; align-items:center; justify-content:center; background:#1e293b; border:1px solid #334155; border-radius:6px; cursor:pointer; }
-    .cell.prefill { background:#334155; color:#cbd5e1; }
-    .panel { text-align:center; margin-top:8px; }
-    .btn { background:#1e293b; color:#e5e7eb; border:1px solid #8b5cf6; border-radius:10px; padding:8px 10px; cursor:pointer; }
-    .status { text-align:center; margin-top:8px; font-size:13px; }
-  </style>
+  <link rel="stylesheet" href="/portal/duels/sudoku/sudoku.css"/>
 </head>
 <body>
   <div class="container">
@@ -23,7 +13,7 @@
       <div>💎 <span id="domit-balance">0</span></div>
     </div>
     <h2 style="text-align:center;">🔢 Սուդոկու (բոտ)</h2>
-    <div id="turnInfo" style="text-align:center; color:#94a3b8;">Քո քայլերը — 20վրկ</div>
+    <div id="turnInfo" class="turn">Քո քայլերը — 20վրկ</div>
     <div id="grid" class="grid"></div>
     <div class="panel">
       <div id="numbers"></div>
