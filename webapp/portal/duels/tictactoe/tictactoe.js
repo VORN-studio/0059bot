@@ -286,7 +286,7 @@ function checkWinner(board) {
 // ================= NAVIGATION =================
 
 function goBack() {
-  window.history.back();
+  window.location.href = `${API}/portal/duels/duels.html?uid=${USER_ID}`;
 }
 
 function restartGame() {
@@ -299,8 +299,7 @@ function restartGame() {
     showStatus("", "");
     document.getElementById("new-game-btn").style.display = "none";
   } else {
-    
-    window.location.href = `${API}/duels/duels.html?uid=${USER_ID}`;
+    window.location.href = `${API}/portal/duels/duels.html?uid=${USER_ID}`;
   }
 }
 
