@@ -11,6 +11,8 @@ let board = Array(9).fill("");
 let gameOver = false;
 let creatorUsername = "";
 let opponentUsername = "";
+let turnTimeoutId = null;
+let countdownIntervalId = null;
 
 const WINNING_COMBOS = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -73,6 +75,7 @@ function initSocket() {
       currentTurn = state.turn;
       renderBoard();
       updateTurnDisplay();
+      scheduleTurnTimer();
       
       if (checkWinner(board)) {
         handleGameOver(checkWinner(board));
@@ -84,6 +87,7 @@ function initSocket() {
 
   socket.on("game_over", (data) => {
     if (data.table_id == TABLE_ID) {
+      clearTurnTimers();
       if (data.draw) {
         handleGameOver("draw");
       } else if (data.winner_id == USER_ID) {
@@ -141,6 +145,7 @@ async function loadTableState() {
 
       renderBoard();
       updateTurnDisplay();
+      scheduleTurnTimer();
 
       // Եթե խաղն ավարտված է՝ ցուցադրում ենք արդյունքը
       if (js.status === 'finished') {
@@ -221,6 +226,8 @@ async function handleCellClick(index) {
       board = js.game_state.board;
       currentTurn = js.game_state.turn;
       renderBoard();
+      
+      scheduleTurnTimer();
 
       // Check game over
       if (js.winner) {
@@ -268,6 +275,59 @@ function updateTurnDisplay() {
   const me = mySymbol === 'X' ? 'X' : 'O';
   const opp = mySymbol === 'X' ? (opponentUsername || '...') : (creatorUsername || '...');
   ti.textContent = `Դու — ${me}, հակառակորդ՝ ${opp}`;
+}
+
+function clearTurnTimers() {
+  if (turnTimeoutId) {
+    clearTimeout(turnTimeoutId);
+    turnTimeoutId = null;
+  }
+  if (countdownIntervalId) {
+    clearInterval(countdownIntervalId);
+    countdownIntervalId = null;
+  }
+}
+
+function scheduleTurnTimer() {
+  if (IS_BOT_MODE || gameOver) {
+    clearTurnTimers();
+    return;
+  }
+  const turnInfo = document.getElementById("turn-info");
+  clearTurnTimers();
+  if (currentTurn !== mySymbol) {
+    if (turnInfo) turnInfo.textContent = "Հակառակորդի հերթն է";
+    return;
+  }
+  const deadline = Date.now() + 20000;
+  countdownIntervalId = setInterval(() => {
+    const left = Math.max(0, deadline - Date.now());
+    const s = Math.ceil(left / 1000);
+    if (turnInfo) {
+      turnInfo.textContent = `Քո հերթն է — ${s}վրկ`;
+    }
+  }, 250);
+  turnTimeoutId = setTimeout(onTurnTimeout, 20000);
+}
+
+async function onTurnTimeout() {
+  clearTurnTimers();
+  if (IS_BOT_MODE || gameOver) return;
+  try {
+    const r = await fetch(`${API}/api/duels/forfeit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ table_id: TABLE_ID, user_id: USER_ID })
+    });
+    const js = await r.json();
+    if (js.success) {
+      handleGameOver('lose');
+    } else {
+      showMessage(`❌ ${js.message}`, 'lose');
+    }
+  } catch (e) {
+    showMessage("❌ Սերվերի սխալ", "lose");
+  }
 }
 
 function highlightWinningLine(line) {
@@ -403,6 +463,7 @@ async function handleGameOver(result = null, prize = 0) {
   if (!winner && !isDraw && !result) return; // Game not over
 
   gameOver = true;
+  clearTurnTimers();
 
   let message = "";
   let className = "";

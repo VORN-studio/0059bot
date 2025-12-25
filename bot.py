@@ -1830,17 +1830,17 @@ def api_duels_get_table_state():
         
         release_db(conn)
         
-        return jsonify({
-            "success": True,
-            "game_state": game_state,
-            "status": row[1],
-            "creator_id": row[2],
-            "opponent_id": row[3],
-            "creator_username": row[4],
-            "opponent_username": row[5],
-            "winner_id": row[6],
-            "bet": float(row[7])
-        })
+    return jsonify({
+        "success": True,
+        "game_state": game_state,
+        "status": row[1],
+        "creator_id": row[2],
+        "opponent_id": row[3],
+        "creator_username": row[4],
+        "opponent_username": row[5],
+        "winner_id": row[6],
+        "bet": float(row[7])
+    })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
@@ -1858,6 +1858,115 @@ def check_winner(board):
             return board[line[0]]
     
     return None
+
+
+@app_web.route('/api/duels/forfeit', methods=['POST'])
+def api_duels_forfeit():
+    try:
+        data = request.json
+        table_id = data.get('table_id')
+        user_id = data.get('user_id')
+
+        conn = db()
+        c = conn.cursor()
+        c.execute(
+            """
+            SELECT game_state, creator_id, opponent_id, status, bet
+            FROM dom_duels_tables
+            WHERE id=%s
+            """,
+            (table_id,),
+        )
+        row = c.fetchone()
+
+        if not row:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Տախտակ չի գտնվել"}), 400
+
+        game_state, creator_id, opponent_id, status, bet = row
+
+        if status != 'playing':
+            release_db(conn)
+            return jsonify({"success": False, "message": "Խաղը չի գտնվում ակտիվ փուլում"}), 400
+
+        import json
+        state = json.loads(game_state) if isinstance(game_state, str) else game_state
+        turn = state.get('turn', 'X')
+        player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
+
+        if turn != player_symbol:
+            release_db(conn)
+            return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+
+        winner_id = opponent_id if int(user_id) == int(creator_id) else creator_id
+        now = int(time.time())
+
+        c.execute(
+            """
+            UPDATE dom_duels_tables
+            SET status='finished', winner_id=%s, finished_at=%s
+            WHERE id=%s
+            """,
+            (winner_id, now, table_id),
+        )
+        c.execute(
+            """
+            UPDATE dom_users
+            SET total_games = COALESCE(total_games,0) + 1
+            WHERE user_id IN (%s, %s)
+            """,
+            (creator_id, opponent_id),
+        )
+        c.execute(
+            """
+            UPDATE dom_users
+            SET total_wins = COALESCE(total_wins,0) + 1
+            WHERE user_id=%s
+            """,
+            (winner_id,),
+        )
+        prize = float(bet) * 1.75
+        c.execute(
+            """
+            UPDATE dom_users
+            SET balance_usd = balance_usd + %s
+            WHERE user_id=%s
+            """,
+            (prize, winner_id),
+        )
+        burn_amount = float(bet) * 0.25
+        loser_id = int(user_id)
+        c.execute(
+            """
+            INSERT INTO dom_burn_ledger (user_id, amount, reason, created_at)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (loser_id, burn_amount, 'pvp_timeout_loss', now),
+        )
+        c.execute(
+            """
+            UPDATE dom_burn_account
+            SET total_burned = total_burned + %s,
+                last_updated = %s
+            WHERE id = 1
+            """,
+            (burn_amount, now),
+        )
+        conn.commit()
+        release_db(conn)
+
+        socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{creator_id}')
+        socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{opponent_id}')
+        try:
+            add_intellect_event(creator_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+            add_intellect_event(opponent_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+            add_intellect_event(winner_id, "pvp_win", meta={"table_id": table_id, "bet": float(bet)})
+        except Exception:
+            logger.exception("intellect_event pvp_timeout failed")
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @app_web.route("/api/upload_avatar", methods=["POST"])
@@ -3677,51 +3786,56 @@ def get_user_stats(user_id: int):
     inactivity_penalty = float(days_inactive) * 0.25
     calculated = max(0.0, base_score - inactivity_penalty)
 
-    day_start = now_ts - (now_ts % 86400)
-    c.execute("SELECT COALESCE(SUM(value),0) FROM dom_intellect_events WHERE user_id=%s AND created_at >= %s", (user_id, day_start))
-    daily_used = float(c.fetchone()[0] or 0.0)
-    daily_cap = 0.50
-    daily_remaining = max(0.0, daily_cap - daily_used)
+    c.execute("SELECT COUNT(*) FROM dom_fire_reactions WHERE receiver_user_id=%s", (user_id,))
+    fires_received = int(c.fetchone()[0] or 0)
+    income_fires = fires_received * 0.10
 
-    since7 = now_ts - 7*86400
-    since30 = now_ts - 30*86400
+    c.execute("SELECT COUNT(*) FROM dom_fire_reactions WHERE giver_user_id=%s", (user_id,))
+    fires_given = int(c.fetchone()[0] or 0)
+    cost_fires = fires_given * 0.20
+
+    c.execute("SELECT COUNT(*) FROM dom_follows WHERE target=%s", (user_id,))
+    follows_received = int(c.fetchone()[0] or 0)
+    income_follows = follows_received * 2.0
+
+    c.execute("SELECT COUNT(*) FROM dom_follows WHERE follower=%s", (user_id,))
+    follows_made = int(c.fetchone()[0] or 0)
+    cost_follows = follows_made * 5.0
+
     c.execute("""
-        SELECT event_type, value, created_at
-        FROM dom_intellect_events
-        WHERE user_id=%s AND created_at >= %s
-    """, (user_id, since30))
-    rows = c.fetchall() or []
-    cats_map = {
-        'pvp_win': 'gameplay',
-        'pvp_draw': 'gameplay',
-        'pvp_played': 'gameplay',
-        'global_msg': 'social',
-        'dm_msg': 'social',
-        'follow_made': 'social',
-        'fire_given': 'social',
-        'fire_received': 'social',
-        'post_created': 'social',
-        'comment_created': 'social',
-        'mining_buy': 'economy',
-        'deposit_made': 'economy',
-    }
-    gameplay_sum = 0.0
-    social_sum = 0.0
-    economy_sum = 0.0
-    events_score = 0.0
-    for et, val, ts in rows:
-        w = 1.0 if int(ts) >= since7 else 0.5
-        events_score += float(val) * w
-        cat = cats_map.get(et, 'other')
-        if cat == 'gameplay':
-            gameplay_sum += float(val)
-        elif cat == 'social':
-            social_sum += float(val)
-        elif cat == 'economy':
-            economy_sum += float(val)
+        SELECT COALESCE(SUM(bet),0)
+        FROM dom_duels_tables
+        WHERE status='finished' AND winner_id=%s
+    """, (user_id,))
+    sum_wins_bet = float(c.fetchone()[0] or 0.0)
+    income_duels = sum_wins_bet * 1.75
 
-    events_score = min(events_score, 5.0)
-    intellect_score = round(min(calculated + events_score, 10.0), 1)
+    c.execute("SELECT COALESCE(SUM(price_usd),0) FROM dom_user_miners WHERE user_id=%s", (user_id,))
+    cost_mining_buys = float(c.fetchone()[0] or 0.0)
+
+    c.execute("SELECT id, reward_per_second_usd, started_at, ends_at FROM dom_user_miners WHERE user_id=%s", (user_id,))
+    miners_rows = c.fetchall() or []
+    mining_generated = 0.0
+    for _id, rps, started, ends in miners_rows:
+        try:
+            rpsf = float(rps or 0.0)
+            start_ts = int(started or 0)
+            end_ts = int(ends or 0)
+            if start_ts > 0:
+                effective_end = min(now_ts, end_ts) if end_ts else now_ts
+                duration = max(0, effective_end - start_ts)
+                mining_generated += rpsf * float(duration)
+        except Exception:
+            pass
+
+    c.execute("SELECT COALESCE(SUM(amount),0) FROM dom_burn_ledger WHERE user_id=%s AND reason='pvp_loss_burn'", (user_id,))
+    cost_pvp_burn = float(c.fetchone()[0] or 0.0)
+
+    total_earned = income_fires + income_follows + income_duels + mining_generated
+    total_spent = cost_fires + cost_follows + cost_mining_buys + cost_pvp_burn
+    net_for_progress = max(0.0, total_earned - 0.5 * total_spent)
+    target_total = 100000.0
+    intellect_score = round(min(10.0, net_for_progress / (target_total / 10.0)), 1)
 
     release_db(conn)
 
@@ -3740,15 +3854,6 @@ def get_user_stats(user_id: int):
         "status_level": int(status_level),
         "status_name": status_name,
         "intellect_score": float(intellect_score),
-        "intellect_daily_used": round(daily_used, 4),
-        "intellect_daily_cap": round(daily_cap, 2),
-        "intellect_daily_remaining": round(daily_remaining, 4),
-        "intellect_breakdown": {
-            "recent_events_total": round(gameplay_sum + social_sum + economy_sum, 4),
-            "gameplay": round(gameplay_sum, 4),
-            "social": round(social_sum, 4),
-            "economy": round(economy_sum, 4)
-        },
         "total_games": int(total_games),
         "total_wins": int(total_wins),
     }
