@@ -9,6 +9,8 @@ let mySymbol = null; // 'X' or 'O'
 let currentTurn = 'X';
 let board = Array(9).fill(null);
 let gameOver = false;
+let creatorUsername = "";
+let opponentUsername = "";
 
 const WINNING_COMBOS = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -60,6 +62,7 @@ function initSocket() {
       board = state.board;
       currentTurn = state.turn;
       renderBoard();
+      updateTurnDisplay();
       
       if (checkWinner(board)) {
         handleGameOver(checkWinner(board));
@@ -98,6 +101,8 @@ async function loadTableState() {
     if (js.success) {
       // Սահմանում ենք մեր նշանը՝ X (ստեղծող) կամ O (մտնող)
       mySymbol = Number(js.creator_id) === Number(USER_ID) ? 'X' : 'O';
+      creatorUsername = js.creator_username || "";
+      opponentUsername = js.opponent_username || "";
 
       const state = js.game_state;
       if (state) {
@@ -116,10 +121,12 @@ async function loadTableState() {
       }
 
       // Անուններ և ինդիկատորներ
-      if (js.creator_id == USER_ID) {
-        document.getElementById("turn-indicator").textContent = `Вы — X, ваш противник.՝ ${js.opponent_username || '...'}`;
+      if (mySymbol === 'X') {
+        document.getElementById("player1-name").textContent = "Դու";
+        document.getElementById("player2-name").textContent = opponentUsername || "Սպասում...";
       } else {
-        document.getElementById("turn-indicator").textContent = `Вы — O, ваш противник.՝ ${js.creator_username}`;
+        document.getElementById("player1-name").textContent = creatorUsername || "Սպասում...";
+        document.getElementById("player2-name").textContent = "Դու";
       }
 
       renderBoard();
@@ -236,22 +243,21 @@ function updateTurnDisplay() {
   const playerX = document.getElementById("player-x");
   const playerO = document.getElementById("player-o");
 
-  playerX.classList.remove("active");
-  playerO.classList.remove("active");
-
-  if (currentTurn === 'X') {
-    playerX.classList.add("active");
-  } else {
-    playerO.classList.add("active");
-  }
+  playerX.classList.toggle("active", currentTurn === 'X');
+  playerO.classList.toggle("active", currentTurn === 'O');
 
   if (currentTurn === mySymbol) {
-    turnInfo.textContent = "Теперь твоя очередь.";
+    turnInfo.textContent = "Քո հերթն է";
     turnInfo.style.color = "#667eea";
   } else {
-    turnInfo.textContent = "Теперь ход противника.";
+    turnInfo.textContent = "Հակառակորդի հերթն է";
     turnInfo.style.color = "#999";
   }
+
+  const ti = document.getElementById("turn-indicator");
+  const me = mySymbol === 'X' ? 'X' : 'O';
+  const opp = mySymbol === 'X' ? (opponentUsername || '...') : (creatorUsername || '...');
+  ti.textContent = `Դու — ${me}, հակառակորդ՝ ${opp}`;
 }
 
 function highlightWinningLine(line) {
