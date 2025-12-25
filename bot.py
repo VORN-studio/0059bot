@@ -1932,13 +1932,6 @@ def on_disconnect():
             break
 
     if offline_uid:
-        
-        conn = db()
-        c = conn.cursor()
-        c.execute("DELETE FROM dom_duels_tables WHERE creator_id = %s AND status = 'waiting'", (offline_uid,))
-        conn.commit()
-        release_db(conn)
-        # ----------------------
         emit("user_offline", {"user_id": offline_uid}, broadcast=True)
 
 @socketio.on("join_user")

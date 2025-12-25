@@ -95,36 +95,37 @@ async function loadTableState() {
     });
 
     const js = await r.json();
-    if (js.success && js.game_state) { // Ստուգում ենք, որ տվյալները գոյություն ունեն
-      board = js.game_state.board || Array(9).fill("");
-      currentTurn = js.game_state.turn || 'X';
+    if (js.success) {
+      // Սահմանում ենք մեր նշանը՝ X (ստեղծող) կամ O (մտնող)
+      mySymbol = Number(js.creator_id) === Number(USER_ID) ? 'X' : 'O';
 
-      if (js.game_state.rounds) {
-          const r = js.game_state.rounds;
-          document.getElementById("status").textContent = `Раунд ${r.current}/3 | Счет՝ X:${r.x} - O:${r.o}`;
-      }
+      const state = js.game_state;
+      if (state) {
+        board = state.board || Array(9).fill("");
+        currentTurn = state.turn || 'X';
 
-      // Որոշում ենք՝ մենք X ենք, թե O
-      if (Number(js.creator_id) === Number(USER_ID)) {
-          mySymbol = 'X';
+        if (state.rounds) {
+          const rinfo = state.rounds;
+          document.getElementById("status").textContent = `Раунд ${rinfo.current}/3 | Счет՝ X:${rinfo.x} - O:${rinfo.o}`;
+        }
       } else {
-          mySymbol = 'O';
+        // Սպասում ենք հակառակորդին՝ պահում ենք դատարկ տախտակ
+        board = Array(9).fill("");
+        currentTurn = 'X';
+        document.getElementById("status").textContent = `Սպասում ենք հակառակորդին…`;
       }
 
-      renderBoard();
-      updateTurnDisplay();
-
+      // Անուններ և ինդիկատորներ
       if (js.creator_id == USER_ID) {
-        mySymbol = 'X';
         document.getElementById("turn-indicator").textContent = `Вы — X, ваш противник.՝ ${js.opponent_username || '...'}`;
       } else {
-        mySymbol = 'O';
         document.getElementById("turn-indicator").textContent = `Вы — O, ваш противник.՝ ${js.creator_username}`;
       }
 
       renderBoard();
       updateTurnDisplay();
-      
+
+      // Եթե խաղն ավարտված է՝ ցուցադրում ենք արդյունքը
       if (js.status === 'finished') {
         if (js.winner_id == USER_ID) {
           handleGameOver("win", js.bet * 2);
