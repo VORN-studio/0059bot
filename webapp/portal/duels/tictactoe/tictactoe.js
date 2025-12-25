@@ -7,7 +7,7 @@ let socket;
 let domitBalance = 0;
 let mySymbol = null; // 'X' or 'O'
 let currentTurn = 'X';
-let board = Array(9).fill(null);
+let board = Array(9).fill("");
 let gameOver = false;
 let creatorUsername = "";
 let opponentUsername = "";
@@ -145,7 +145,7 @@ async function loadTableState() {
       // Եթե խաղն ավարտված է՝ ցուցադրում ենք արդյունքը
       if (js.status === 'finished') {
         if (js.winner_id == USER_ID) {
-          handleGameOver("win", js.bet * 2);
+          handleGameOver("win", js.bet * 1.75);
         } else if (js.winner_id) {
           handleGameOver("lose");
         } else {
@@ -184,7 +184,7 @@ async function handleCellClick(index) {
       return;
     }
 
-    if (!board.includes(null)) {
+    if (!board.includes("")) {
       handleGameOver('draw');
       return;
     }
@@ -307,7 +307,7 @@ function goBack() {
 
 function restartGame() {
   if (IS_BOT_MODE) {
-    board = Array(9).fill(null);
+    board = Array(9).fill("");
     currentTurn = 'X';
     gameOver = false;
     renderBoard();
@@ -333,7 +333,7 @@ function initBotMode() {
 function botMove() {
   if (gameOver) return;
   
-  const emptyIndexes = board.map((val, idx) => val === null ? idx : null).filter(v => v !== null);
+  const emptyIndexes = board.map((val, idx) => val === "" ? idx : null).filter(v => v !== null);
   if (emptyIndexes.length === 0) return;
   
   let botIndex;
@@ -370,15 +370,15 @@ function getBestMove() {
     if (board[b] === 'X' && board[c] === 'X' && board[a] === null) return a;
   }
   
-  if (board[4] === null) return 4;
+  if (board[4] === "") return 4;
   
   const corners = [0, 2, 6, 8];
-  const emptyCorners = corners.filter(i => board[i] === null);
+  const emptyCorners = corners.filter(i => board[i] === "");
   if (emptyCorners.length > 0) {
     return emptyCorners[Math.floor(Math.random() * emptyCorners.length)];
   }
   
-  const emptyIndexes = board.map((val, idx) => val === null ? idx : null).filter(v => v !== null);
+  const emptyIndexes = board.map((val, idx) => val === "" ? idx : null).filter(v => v !== null);
   return emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
 }
 
@@ -398,7 +398,7 @@ async function handleGameOver(result = null, prize = 0) {
     }
   }
 
-  const isDraw = !winner && board.every(cell => cell !== null);
+  const isDraw = !winner && board.every(cell => cell !== "");
 
   if (!winner && !isDraw && !result) return; // Game not over
 
