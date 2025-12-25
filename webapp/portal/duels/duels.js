@@ -223,7 +223,7 @@ async function confirmCreateTable() {
 
     // Reload tables
     if (js.success) {
-        window.location.href = `/webapp/portal/duels/tictactoe/tictactoe.html?table_id=${js.table_id}&uid=${USER_ID}`;
+        window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${js.table_id}&uid=${USER_ID}`;
     }
 
   } catch (e) {
@@ -267,7 +267,7 @@ async function confirmJoinTable() {
 
     const js = await r.json();
     if (js.success) {
-        window.location.href = `/webapp/portal/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
+        window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
     } else {
        
         let msg = js.message;

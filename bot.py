@@ -1965,12 +1965,6 @@ def on_join_user(data):
 
 duels_players = set()
 
-@socketio.on("join_user")
-def handle_join_user(data):
-    user_id = data.get("user_id")
-    if user_id:
-        join_room(f"user_{user_id}")
-        logger.info(f"👤 User {user_id} joined user room user_{user_id}")
 
 @socketio.on("join_duels")
 def handle_join_duels(data):
