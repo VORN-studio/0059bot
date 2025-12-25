@@ -368,14 +368,9 @@ function closeConfirm() {
     const backBtn = document.getElementById("back-btn");
     if (backBtn) {
         backBtn.onclick = () => {
-            if (window.history.length > 1) {
-                history.back();
-            } else {
-                window.location.href =
-                    `/portal/portal.html?uid=${viewerId}&viewer=${viewerId}`;
-            }
+            const uid = viewerId || "";
+            window.location.href = `/app?uid=${uid}`;
         };
-
     }
 
 
