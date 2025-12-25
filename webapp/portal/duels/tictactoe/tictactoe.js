@@ -1,7 +1,7 @@
 const API = window.location.origin;
 const params = new URLSearchParams(window.location.search);
-const USER_ID = params.get("uid");
-const TABLE_ID = params.get("table_id");
+const USER_ID = Number(params.get("uid") || (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id));
+const TABLE_ID = Number(params.get("table_id"));
 const IS_BOT_MODE = !TABLE_ID; 
 let socket;
 let domitBalance = 0;
@@ -54,6 +54,16 @@ function initSocket() {
     console.log("✅ Socket connected");
     socket.emit("join_user", { user_id: USER_ID });
     loadTableState();
+  });
+
+  socket.on("table_joined", (data) => {
+    if (data.table_id == TABLE_ID) {
+      opponentUsername = data.opponent_username || opponentUsername;
+      if (mySymbol === 'X') {
+        document.getElementById("player2-name").textContent = opponentUsername || "Սպասում...";
+      }
+      updateTurnDisplay();
+    }
   });
 
   socket.on("opponent_move", (data) => {
