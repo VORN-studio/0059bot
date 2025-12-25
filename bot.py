@@ -1825,22 +1825,22 @@ def api_duels_get_table_state():
             release_db(conn)
             return jsonify({"success": False, "message": "Таблица не найдена"}), 400
 
-        import json
-        game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+    import json
+    game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
         
-        release_db(conn)
+    release_db(conn)
         
-    return jsonify({
-        "success": True,
-        "game_state": game_state,
-        "status": row[1],
-        "creator_id": row[2],
-        "opponent_id": row[3],
-        "creator_username": row[4],
-        "opponent_username": row[5],
-        "winner_id": row[6],
-        "bet": float(row[7])
-    })
+        return jsonify({
+            "success": True,
+            "game_state": game_state,
+            "status": row[1],
+            "creator_id": row[2],
+            "opponent_id": row[3],
+            "creator_username": row[4],
+            "opponent_username": row[5],
+            "winner_id": row[6],
+            "bet": float(row[7])
+        })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
