@@ -1825,10 +1825,10 @@ def api_duels_get_table_state():
             release_db(conn)
             return jsonify({"success": False, "message": "Таблица не найдена"}), 400
 
-    import json
-    game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+        import json
+        game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
         
-    release_db(conn)
+        release_db(conn)
         
         return jsonify({
             "success": True,
