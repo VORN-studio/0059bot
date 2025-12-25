@@ -5482,14 +5482,30 @@ async def start_bot_webhook():
     await application.start()
 
     port = int(os.environ.get("PORT", "10000"))
-    webhook_url = f"{BASE_URL}/webhook"
-    await application.bot.delete_webhook(drop_pending_updates=True)
-    await application.bot.set_webhook(url=webhook_url)
-    global BOT_READY
-    BOT_READY = True
-    print("🟢 BOT_READY = True")
+    webhook_override = os.getenv("WEBHOOK_URL", "").strip()
+    webhook_url = webhook_override or f"{BASE_URL}/webhook"
 
-    print(f"✅ Webhook set to {webhook_url}")
+    set_ok = False
+    for attempt in range(1, 6):
+        try:
+            await application.bot.delete_webhook(drop_pending_updates=True)
+            await application.bot.set_webhook(url=webhook_url)
+            set_ok = True
+            break
+        except Exception as e:
+            print(f"⚠️ Webhook set failed (attempt {attempt}/5): {e}")
+            try:
+                await asyncio.sleep(10)
+            except Exception:
+                pass
+
+    if set_ok:
+        global BOT_READY
+        BOT_READY = True
+        print("🟢 BOT_READY = True")
+        print(f"✅ Webhook set to {webhook_url}")
+    else:
+        print(f"❌ Failed to set webhook to {webhook_url}. Set WEBHOOK_URL or BASE_URL to a public HTTPS domain.")
 
 async def migrate_posts_cmd(update: Update, context):
     """Admin command to migrate posts media"""
