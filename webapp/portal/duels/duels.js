@@ -293,7 +293,15 @@ async function confirmJoinTable() {
 
     const js = await r.json();
     if (js.success) {
-        const extra = selectedGameType==='chess' ? `&color=b` : '';
+        let extra = '';
+        if (selectedGameType==='chess') {
+          let col = 'w';
+          if (js.color) col = js.color;
+          else if (js.table && js.table.color) col = js.table.color==='w' ? 'b' : 'w';
+          else if (js.creator_color) col = js.creator_color==='w' ? 'b' : 'w';
+          else col = 'w';
+          extra = `&color=${col}`;
+        }
         window.location.href = `${API}/portal/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}${extra}`;
     } else {
        
@@ -309,7 +317,12 @@ async function confirmJoinTable() {
     showStatus("✅ Вы присоединились к столу. Игра начинается.…");
 
     setTimeout(() => {
-      const extra = selectedGameType==='chess' ? `&color=b` : '';
+      let extra = '';
+      if (selectedGameType==='chess') {
+        let col = 'w';
+        // Try to reuse last response cached on window (if we add later), else default to white
+        extra = `&color=${col}`;
+      }
       window.location.href = `${API}/portal/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}${extra}`;
     }, 1000);
 

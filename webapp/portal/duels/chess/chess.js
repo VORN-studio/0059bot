@@ -85,7 +85,10 @@ function onSquareClick(r,c) {
       updateTurnInfo();
       scheduleTurnTimer();
       if (onlineMode) {
-        if (socket) socket.emit('chess_move', { table_id: TABLE_ID, from, to });
+        if (socket) {
+          socket.emit('chess_move', { table_id: TABLE_ID, from, to });
+          socket.emit('opponent_move', { table_id: TABLE_ID, from, to });
+        }
       } else {
         setTimeout(botMove, 500);
       }
@@ -260,14 +263,16 @@ async function init() {
   if (onlineMode) {
     socket = io(API);
     socket.emit('join_table', { table_id: TABLE_ID });
-    socket.on('chess_move', (data)=>{
+    const applyIncoming = (data)=>{
       if (data && data.table_id===TABLE_ID && data.from && data.to) {
         applyMove(data.from, data.to);
         lastMove = {from:{...data.from}, to:{...data.to}};
         currentTurn = PLAYER_COLOR;
         renderBoard(); updateTurnInfo(); scheduleTurnTimer();
       }
-    });
+    };
+    socket.on('chess_move', applyIncoming);
+    socket.on('opponent_move', applyIncoming);
     socket.on('game_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
         endGame(data.result||'lose');
