@@ -6509,7 +6509,11 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
     parsed = urllib.parse.urlparse(url)
 
     if parsed.netloc and 'exe.io' in parsed.netloc:
-        short_url = url
+        await update.message.reply_text(
+            "❌ Տեղադրեք վերջնական կայքի URL-ը, ոչ թե exe.io կարճ հղումը.\n"
+            "✅ Մեր համակարգը ինքն է կարճ հղումը գեներացնում յուրաքանչյուր օգտատիրոջ համար, որպեսզի ճիշտ գրանցվի կատարումը։"
+        )
+        return
     else:
         params = "s1={user_id}&s2={task_id}&subid1={user_id}&subid2={task_id}"
         if parsed.query:
@@ -6549,17 +6553,19 @@ async def task_shorten(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Задача отсутствует.")
         return
     old_url = row[1]
+    release_db(conn)
     import urllib.parse
+    parsed = urllib.parse.urlparse(old_url or "")
+    if parsed.netloc and 'exe.io' in parsed.netloc:
+        await update.message.reply_text("⚠️ Այս task-ը պահում է exe.io հղում։ Խորհուրդ է տրվում պահել վերջնական կայքի հղումը, որպեսզի չստացվի կրկնակի կարճացում։")
+        return
     u_b64 = base64.urlsafe_b64encode((old_url or "").encode()).decode()
     success_url = f"{BASE_URL}/exeio/complete?uid={{user_id}}&task_id={{task_id}}&u={u_b64}"
     short = exeio_shorten(success_url)
     if not short:
-        release_db(conn)
-        await update.message.reply_text("❌ exe.io не вернул короткую ссылку.")
+        await update.message.reply_text("❌ exe.io չվերադարձեց կարճ հղում։")
         return
-    c.execute("UPDATE dom_tasks SET url=%s WHERE id=%s", (short, task_id))
-    conn.commit(); release_db(conn)
-    await update.message.reply_text(f"✅ Task {task_id} сокращен: {short}")
+    await update.message.reply_text(f"🔗 Preview կարճ հղում՝ {short}\nℹ️ DB-ում չենք պահում կարճ հղումը, щоб избежать կրկնակի շղթա։")
 
 
 @app_web.route("/webhook", methods=["POST"])
@@ -6858,6 +6864,15 @@ def api_task_generate_link():
     
     # We use the stored URL as the final destination
     final_dest = row[0]
+
+    # Prevent double-shortening: tasks must store FINAL URL, not exe.io short links
+    try:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(final_dest or "")
+        if parsed.netloc and 'exe.io' in parsed.netloc:
+            return jsonify({"ok": False, "error": "task_url_is_shortened"}), 400
+    except Exception:
+        pass
     
     # If the stored URL is already an exe.io link (legacy), we can't easily track it
     # unless we know the destination. But assuming the admin puts the REAL target in DB now.
