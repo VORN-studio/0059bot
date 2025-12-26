@@ -6740,6 +6740,48 @@ def api_exeio_test():
     short = exeio_shorten(success_url)
     return jsonify({"ok": True, "api_url": EXEIO_API_URL, "short": short, "success_url": success_url})
 
+@app_web.route("/api/task/generate_link", methods=["POST"])
+def api_task_generate_link():
+    """
+    Generate a unique short link for the user to perform a task.
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    task_id = int(data.get("task_id", 0))
+
+    if not user_id or not task_id:
+        return jsonify({"ok": False, "error": "missing_params"}), 400
+
+    conn = db(); c = conn.cursor()
+    c.execute("SELECT url FROM dom_tasks WHERE id=%s", (task_id,))
+    row = c.fetchone()
+    release_db(conn)
+
+    if not row:
+        return jsonify({"ok": False, "error": "task_not_found"}), 404
+    
+    # We use the stored URL as the final destination
+    final_dest = row[0]
+    
+    # If the stored URL is already an exe.io link (legacy), we can't easily track it
+    # unless we know the destination. But assuming the admin puts the REAL target in DB now.
+    
+    # Construct callback URL
+    import urllib.parse
+    u_b64 = base64.urlsafe_b64encode(final_dest.encode()).decode()
+    callback_url = f"{BASE_URL}/exeio/complete?uid={user_id}&task_id={task_id}&u={u_b64}"
+    
+    # Shorten the callback URL
+    short_url = exeio_shorten(callback_url)
+    
+    if not short_url:
+        # Fallback: if shortening fails, just return the callback URL (no ads, but works)
+        # OR return error. Let's return callback to ensure user can at least complete it?
+        # No, the point is to earn money. Return error.
+        return jsonify({"ok": False, "error": "shortener_failed"}), 500
+
+    return jsonify({"ok": True, "url": short_url})
+
 @app_web.route("/exeio/complete")
 def exeio_complete():
     uid = request.args.get("uid", type=int)
@@ -6750,38 +6792,56 @@ def exeio_complete():
         pad = "=" * ((4 - len(u_b64) % 4) % 4)
         dest = base64.urlsafe_b64decode((u_b64 + pad).encode()).decode()
     except Exception:
-        dest = ""
+        dest = "https://google.com"
+
     now = int(time.time())
     if uid and task_id:
         conn = db(); c = conn.cursor()
-        c.execute("""
-            CREATE TABLE IF NOT EXISTS dom_task_attempts (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT,
-                task_id BIGINT,
-                created_at BIGINT
-            )
-        """)
-        c.execute(
-            "INSERT INTO dom_task_attempts (user_id, task_id, created_at) VALUES (%s, %s, %s)",
-            (uid, task_id, now)
-        )
-        c.execute(
-            """
-            INSERT INTO dom_task_completions (user_id, task_id, completed_at)
-            VALUES (%s, %s, %s)
-            ON CONFLICT DO NOTHING
-            """,
-            (uid, task_id, now)
-        )
-        conn.commit(); release_db(conn)
+        
+        # 1. Ensure task exists and get reward
+        c.execute("SELECT reward FROM dom_tasks WHERE id=%s", (task_id,))
+        t_row = c.fetchone()
+        
+        if t_row:
+            reward = float(t_row[0] or 0)
+            
+            # 2. Check if already completed
+            c.execute("SELECT 1 FROM dom_task_completions WHERE user_id=%s AND task_id=%s", (uid, task_id))
+            already_done = c.fetchone()
+            
+            if not already_done:
+                # 3. Mark as completed
+                c.execute(
+                    """
+                    INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (uid, task_id, now)
+                )
+                
+                # 4. Award the user
+                if reward > 0:
+                    c.execute(
+                        "UPDATE dom_users SET usd_balance = usd_balance + %s WHERE user_id=%s",
+                        (reward, uid)
+                    )
+                    
+                conn.commit()
+                print(f"✅ User {uid} completed task {task_id}, reward={reward}")
+            else:
+                print(f"⚠️ User {uid} already completed task {task_id}")
+        
+        release_db(conn)
+
     if dest:
         try:
             dest_final = dest.replace("{user_id}", str(uid or "")).replace("{task_id}", str(task_id or ""))
         except Exception:
             dest_final = dest
         return redirect(dest_final)
-    return jsonify({"ok": True})
+    
+    return "✅ Task Completed! You can close this window."
 
 def migrate_posts_to_files():
     """Migrate posts media from base64 to file system"""

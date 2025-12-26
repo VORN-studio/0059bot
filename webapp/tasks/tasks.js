@@ -120,32 +120,43 @@ function renderTasks(tasks) {
     });
 }
 
-function performTask(taskId) {
+async function performTask(taskId) {
     const uid = new URLSearchParams(window.location.search).get("uid");
 
     const task = window.ALL_TASKS?.find(t => t.id === taskId);
 
-    if (task && task.url) {
-        const realUrl = task.url
-            .replace("{user_id}", uid)
-            .replace("{task_id}", String(taskId));
+    if (task) {
+        // 1. Generate unique link
         try {
-            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-                window.Telegram.WebApp.openLink(realUrl, { try_instant_view: false });
+            const btn = document.querySelector(`button[onclick="performTask(${taskId})"]`);
+            if(btn) btn.textContent = "⏳ Loading...";
+
+            const res = await fetch("/api/task/generate_link", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({user_id: uid, task_id: taskId})
+            });
+            const data = await res.json();
+            
+            if(btn) btn.textContent = "Կատարել → +" + task.reward;
+
+            if (data.ok && data.url) {
+                // 2. Open external
+                if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                    window.Telegram.WebApp.openLink(data.url, {try_instant_view: false});
+                } else {
+                    window.open(data.url, "_blank");
+                }
             } else {
-                window.open(realUrl, "_blank", "noopener,noreferrer");
+                alert("❌ Link generation failed. Try again.");
             }
         } catch (e) {
-            try {
-                navigator.clipboard.writeText(realUrl);
-                alert("Հղումը պատճենվեց։ Բացի՛ր արտաքին բրաուզերում և տեղադրի՛ր.");
-            } catch (_) {
-                window.open(realUrl, "_blank", "noopener,noreferrer");
-            }
+            console.error(e);
+            alert("❌ Error: " + e.message);
         }
     }
 
-    // Attempt register
+    // Attempt register (analytics)
     fetch(`/api/task_attempt_create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
