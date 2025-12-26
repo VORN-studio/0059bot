@@ -16,6 +16,10 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui; overflow-x:hidden}
 .panel{text-align:center;margin-top:10px}
 #notesToggle.toggle{margin-bottom:8px}
 .tools{display:flex;justify-content:center;margin-bottom:6px}
+#difficulty{appearance:none;-webkit-appearance:none;background:radial-gradient(circle at 0 0,#8b5cf6,#7c3aed);border:1px solid rgba(139,92,246,.8);color:#f8fafc;border-radius:999px;padding:8px 14px;font-weight:600;box-shadow:0 8px 18px rgba(139,92,246,.35);cursor:pointer}
+#difficulty:hover{background:radial-gradient(circle at 0 0,#a78bfa,#8b5cf6)}
+#difficulty:focus{outline:none;box-shadow:0 0 0 2px rgba(139,92,246,.6)}
+#difficulty option{background:#0f172a;color:#e5e7eb}
 #numbers{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
 #numbers .btn{background:#1e293b;color:#e5e7eb;border:1px solid #8b5cf6;border-radius:999px;padding:8px 12px;cursor:pointer; min-width:36px}
 #numbers .btn:hover{background:#253049}
