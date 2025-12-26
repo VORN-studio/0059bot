@@ -6850,11 +6850,19 @@ def safe_go() -> str:
                         }}
                     }} catch (_be) {{}}
                     if (isAndroid) {{
-                        var chooser = getIntent(u, '');
-                        try {{ window.location.href = chooser; }} catch(e){{}}
-                        setTimeout(function(){{
-                            var box = document.getElementById('android-box'); if (box) box.style.display = 'block';
-                        }}, 1200);
+                        var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
+                        var launched = false;
+                        for (var i=0; i<pkgs.length; i++) {{
+                            var link = getIntent(u, pkgs[i]);
+                            try {{ window.location.href = link; launched = true; break; }} catch(e){{}}
+                        }}
+                        if (!launched) {{
+                            var chooser = getIntent(u, '');
+                            try {{ window.location.href = chooser; }} catch(e){{}}
+                            setTimeout(function(){{
+                                var box = document.getElementById('android-box'); if (box) box.style.display = 'block';
+                            }}, 800);
+                        }}
                     }} else {{
                         try {{ window.open(u, '_blank'); }} catch (_e) {{ window.location.assign(u); }}
                     }}
@@ -6938,7 +6946,7 @@ def exeio_complete():
     now = int(time.time())
     if uid and task_id:
         ref = request.headers.get('Referer', '')
-        from_exe = ('exe.io' in (ref or ''))
+        from_exe = ('exe.io' in (ref or '') or 'exe-links.com' in (ref or ''))
         conn = db(); c = conn.cursor()
         
         # 1. Ensure task exists and get reward
