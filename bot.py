@@ -6849,7 +6849,14 @@ def safe_go() -> str:
                             fetch('/api/track_click', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: payload }});
                         }}
                     }} catch (_be) {{}}
-                    if (isAndroid) {{
+                    var opened = false;
+                    try {{
+                        var a = document.createElement('a');
+                        a.href = u; a.target = '_blank'; a.rel = 'noopener';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                        opened = true;
+                    }} catch(__e) {{}}
+                    if (isAndroid && !opened) {{
                         var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                         var launched = false;
                         for (var i=0; i<pkgs.length; i++) {{
@@ -6867,9 +6874,14 @@ def safe_go() -> str:
                         try {{ window.open(u, '_blank'); }} catch (_e) {{ window.location.assign(u); }}
                     }}
                     setTimeout(function(){{
+                        if (document.visibilityState === 'visible') {{
+                            try {{ window.location.href = u; }} catch(e){{}}
+                        }}
+                    }}, 800);
+                    setTimeout(function(){{
                         var ml = document.getElementById('manual-link');
                         if (ml) ml.style.display = 'inline-block';
-                    }}, 6000);
+                    }}, 3000);
                 }});
                 var buttons = document.querySelectorAll('#android-box .abtn');
                 buttons.forEach(function(b){{
