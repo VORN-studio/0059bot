@@ -3,8 +3,12 @@
   --bg:#0b1324;--card:#0f1a2e;--muted:#94a3b8;--text:#e5e7eb;
   --accent:#8b5cf6;--accent-2:#7c3aed;--error:#ef4444;
   --line:#334155;--line-2:#475569;
-  /* Responsive fallback: cell size never overflows viewport */
-  --cell9: clamp(22px, calc((min(100vw - 24px, 480px) - 70px)/9), 40px);
+  /* Geometry (keeps three blocks perfectly equal across) */
+  --cell9: clamp(22px, calc((min(100vw - 24px, 480px) - 98px)/9), 40px);
+  --cell-gap: 6px;
+  --block-pad: 6px;
+  --block-border: 1px;
+  --block-size: calc(3*var(--cell9) + 2*var(--block-pad) + 2*var(--cell-gap) + 2*var(--block-border));
 }
 
 body{background:var(--bg);color:var(--text);font-family:system-ui, -apple-system, Segoe UI, Roboto;overflow-x:hidden}
@@ -20,10 +24,10 @@ box-shadow:0 18px 40px rgba(2,8,23,.55);}
 .player-info .vs{color:var(--muted)}
 .badge{background:radial-gradient(circle at 0 0,#1e293b,#0f172a);border:1px solid rgba(139,92,246,.45);color:#cbd5e1;border-radius:999px;padding:6px 10px;font-size:12px}
 
-.grid{display:grid;grid-template-columns:repeat(3,max-content);gap:10px;margin:16px auto;width:100%;justify-content:center}
-.block{display:grid;grid-template-columns:repeat(3,var(--cell9));gap:6px;padding:6px;border-radius:14px;background:
+.grid{display:grid;grid-template-columns:repeat(3,var(--block-size));gap:10px;margin:16px auto;width:100%;justify-content:center}
+.block{display:grid;width:var(--block-size);grid-template-columns:repeat(3,var(--cell9));gap:var(--cell-gap);padding:var(--block-pad);border-radius:14px;background:
   linear-gradient(180deg,#0e1730,#0b1428);
-border:1px solid rgba(148,163,184,.25);box-shadow:inset 0 0 0 1px rgba(59,130,246,.15)}
+border:var(--block-border) solid rgba(148,163,184,.25);box-shadow:inset 0 0 0 1px rgba(59,130,246,.15)}
 .cell{width:var(--cell9);height:var(--cell9);display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;transition:.18s;
   font-weight:700;font-size:calc(var(--cell9)*0.58);color:#e2e8f0;
   background:radial-gradient(160px 100px at 0 0,#17233c,#1a2744);
