@@ -109,6 +109,7 @@ TASKS_DIR = os.path.join(WEBAPP_DIR, "tasks")
 GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
 BOT_READY = False
 ONLINE_USERS = {}
+REMATCH_REQUESTS = {}
 
 app_web = Flask(__name__, static_folder="webapp/static", static_url_path="/static")
 CORS(app_web)
@@ -2313,6 +2314,82 @@ def on_join_global():
 def on_join_feed():
     join_room("feed")
     logger.info("📰 joined feed")
+
+@socketio.on("rematch_request")
+def on_rematch_request(data):
+    try:
+        table_id = int(data.get("table_id", 0))
+        user_id = int(data.get("user_id", 0))
+        if table_id == 0 or user_id == 0:
+            return
+
+        conn = db(); c = conn.cursor()
+        c.execute("""
+            SELECT game_type, creator_id, creator_username, opponent_id, opponent_username, bet, status, game_state
+            FROM dom_duels_tables
+            WHERE id=%s
+        """, (table_id,))
+        row = c.fetchone()
+        if not row:
+            release_db(conn); return
+
+        game_type, creator_id, creator_username, opponent_id, opponent_username, bet, status, game_state = row
+        release_db(conn)
+        if status != 'finished' or not opponent_id:
+            return
+
+        req = REMATCH_REQUESTS.get(table_id, set())
+        req.add(user_id)
+        REMATCH_REQUESTS[table_id] = req
+
+        if creator_id in req and opponent_id in req:
+            import json, time
+            st = json.loads(game_state) if isinstance(game_state, str) else (game_state or {})
+            creator_color = st.get('creator_color', 'w') if game_type == 'chess' else None
+
+            conn2 = db(); c2 = conn2.cursor()
+            now = int(time.time())
+            if game_type == 'chess':
+                initial_state = json.dumps({
+                    'type': 'chess',
+                    'creator_color': creator_color or 'w',
+                    'turn': 'w',
+                    'last_move': None
+                })
+            else:
+                initial_state = json.dumps({
+                    'board': [''] * 9,
+                    'turn': 'X',
+                    'rounds': {'x': 0, 'o': 0, 'current': 1}
+                })
+
+            c2.execute("""
+                INSERT INTO dom_duels_tables (game_type, creator_id, creator_username, bet, status, game_state, created_at)
+                VALUES (%s, %s, %s, %s, 'waiting', %s, %s)
+                RETURNING id
+            """, (game_type, creator_id, creator_username, bet, initial_state, now))
+            new_table_id = c2.fetchone()[0]
+
+            # Join opponent automatically (simulate join)
+            c2.execute("""
+                UPDATE dom_duels_tables
+                SET opponent_id=%s, opponent_username=%s, status='playing', started_at=%s
+                WHERE id=%s
+            """, (opponent_id, opponent_username, now, new_table_id))
+            conn2.commit(); release_db(conn2)
+
+            try:
+                apply_burn_transaction(from_user=creator_id, total_amount=float(bet), transfers=[], burn_amount=0.0, reason="pvp_rematch_creator")
+                apply_burn_transaction(from_user=opponent_id, total_amount=float(bet), transfers=[], burn_amount=0.0, reason="pvp_rematch_opponent")
+            except Exception:
+                logger.exception("rematch burn failed")
+
+            payload = { 'table_id': new_table_id, 'creator_id': creator_id, 'opponent_id': opponent_id, 'creator_color': creator_color }
+            socketio.emit('rematch_ready', payload, room=f'user_{creator_id}')
+            socketio.emit('rematch_ready', payload, room=f'user_{opponent_id}')
+            REMATCH_REQUESTS.pop(table_id, None)
+    except Exception:
+        logger.exception("rematch_request error")
 
 @socketio.on("join_post")
 def on_join_post(data):

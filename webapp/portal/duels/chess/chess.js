@@ -280,7 +280,8 @@ function endGame(result) {
   const st = document.getElementById('status');
   if (result==='win') st.textContent = '🎉 Հաղթեցիր';
   else if (result==='draw') st.textContent = '🤝 Ոչ-ոքի';
-  else st.textContent = '😔 Պարտվեցիր (ժամանակ)';
+  else if (result==='lose_timeout') st.textContent = '😔 Պարտվեցիր (ժամանակ)';
+  else st.textContent = '😔 Պարտվեցիր';
   document.getElementById('newGame').style.display = 'inline-block';
 }
 
@@ -294,12 +295,12 @@ async function onTurnTimeout() {
     });
     const js = await r.json();
     if (js && js.success) {
-      endGame('lose');
+      endGame('lose_timeout');
     } else {
-      endGame('lose');
+      endGame('lose_timeout');
     }
   } catch (e) {
-    endGame('lose');
+    endGame('lose_timeout');
   }
 }
 
@@ -345,7 +346,9 @@ async function init() {
     });
     socket.on('game_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
-        endGame(data.result||'lose');
+        if (data.draw) { endGame('draw'); return; }
+        const winnerId = Number(data.winner_id||0);
+        endGame(winnerId===USER_ID ? 'win' : 'lose');
       }
     });
   }
@@ -360,10 +363,12 @@ async function loadTableState(){
     const js = await r.json();
     if(js && js.success){
       const isCreator = Number(js.creator_id) === Number(USER_ID);
+      CREATOR_ID = Number(js.creator_id);
       const urlColor = params.get('color');
       if (!urlColor) {
         const creatorColor = (js.table && js.table.color) || js.creator_color || js.color || 'w';
         PLAYER_COLOR = isCreator ? creatorColor : (creatorColor==='w'?'b':'w');
+        CREATOR_COLOR = creatorColor;
       }
       if (js.opponent_id) { bothJoined = true; } else { bothJoined = bothJoined || !isCreator; }
       const st = js.game_state;
@@ -373,6 +378,7 @@ async function loadTableState(){
       } else {
         currentTurn = 'w';
       }
+      TABLE_BET = Number(js.bet||0);
       updateTurnInfo();
       scheduleTurnTimer();
     }
@@ -407,4 +413,29 @@ async function makeOnlineMove(from,to,result){
   }catch(e){}
 }
 
+function requestRematch(){
+  if (!onlineMode) { restartGame(); return; }
+  if (!socket) socket = io(API);
+  socket.emit('rematch_request', { table_id: TABLE_ID, user_id: USER_ID });
+  socket.on('rematch_ready', (data)=>{
+    if (!data || !data.table_id) return;
+    const isCreator = Number(data.creator_id)===Number(USER_ID);
+    const creatorColor = data.creator_color || 'w';
+    const myColor = isCreator ? creatorColor : (creatorColor==='w'?'b':'w');
+    window.location.href = `${API}/portal/duels/chess/chess.html?table_id=${data.table_id}&uid=${USER_ID}&color=${myColor}`;
+  });
+}
+
 window.onload = init;
+
+// Rematch
+document.addEventListener('DOMContentLoaded', ()=>{
+  const btn = document.getElementById('newGame');
+  if (btn) {
+    btn.onclick = requestRematch;
+  }
+});
+
+let CREATOR_ID = null;
+let CREATOR_COLOR = 'w';
+let TABLE_BET = 0;
