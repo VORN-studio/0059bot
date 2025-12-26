@@ -25,6 +25,12 @@
       <div class="panel">
         <div class="tools">
           <button id="notesToggle" class="btn toggle" onclick="toggleNotes()">✎ Նշումներ</button>
+          <button id="hintBtn" class="btn toggle" onclick="useHint()">💡 Հուշում</button>
+          <select id="difficulty" class="btn" onchange="changeDifficulty(this.value)" style="margin-left:6px;">
+            <option value="easy">Դյուրին</option>
+            <option value="medium" selected>Միջին</option>
+            <option value="hard">Դժվար</option>
+          </select>
         </div>
         <div id="numbers"></div>
         <div id="numberCounts" class="counts"></div>

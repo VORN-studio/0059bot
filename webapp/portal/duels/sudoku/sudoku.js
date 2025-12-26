@@ -14,6 +14,8 @@ let selected = null;
 let gameOver = false;
 let notesMode = false;
 let candidates = [];
+let solution = null;
+let currentDifficulty = 'medium';
 
 async function loadBalance() {
   try {
@@ -29,20 +31,11 @@ function goBack() {
 }
 
 function setupPuzzle() {
-  const puzzle = [
-    [0,0,0,2,6,0,7,0,1],
-    [6,8,0,0,7,0,0,9,0],
-    [1,9,0,0,0,4,5,0,0],
-    [8,2,0,1,0,0,0,4,0],
-    [0,0,4,6,0,2,9,0,0],
-    [0,5,0,0,0,3,0,2,8],
-    [0,0,9,3,0,0,0,7,4],
-    [0,4,0,0,5,0,0,3,6],
-    [7,0,3,0,1,8,0,0,0]
-  ];
-  grid = puzzle.map(r => r.slice());
-  fixed = puzzle.map(r => r.map(v => v!==0));
+  const puz = generatePuzzle(currentDifficulty);
+  grid = puz.grid.map(r => r.slice());
+  fixed = puz.grid.map(r => r.map(v => v!==0));
   candidates = Array(9).fill(0).map(()=>Array(9).fill(0).map(()=>new Set()));
+  solution = puz.solution;
 }
 
 function renderGrid() {
@@ -124,6 +117,9 @@ function validNumber(r,c,n){
 
 function isSolved(){
   for(let r=0;r<9;r++)for(let c=0;c<9;c++){const v=grid[r][c];if(v<1||v>9)return false; if(!validNumberFinal(r,c,v))return false}
+  if (solution) {
+    for(let r=0;r<9;r++)for(let c=0;c<9;c++){ if(grid[r][c]!==solution[r][c]) return false; }
+  }
   return true
 }
 
@@ -199,6 +195,104 @@ function toggleNotes(){
     btn.textContent = notesMode ? '✎ Նշումներ — ON' : '✎ Նշումներ';
     btn.classList.toggle('on', notesMode);
   }
+  if (notesMode) recomputeAllCandidates();
+}
+
+function recomputeAllCandidates(){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    if (grid[r][c]===0){
+      const s = new Set();
+      for(let n=1;n<=9;n++){ if(validNumber(r,c,n)) s.add(n); }
+      candidates[r][c]=s;
+    } else {
+      candidates[r][c].clear();
+    }
+  }
+}
+
+function useHint(){
+  if (gameOver || !solution) return;
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    if (grid[r][c]===0){
+      grid[r][c]=solution[r][c];
+      candidates[r][c].clear();
+      renderGrid();
+      if (isSolved()) endGame('win');
+      return;
+    }
+  }
+}
+
+function changeDifficulty(val){
+  currentDifficulty = String(val||'medium');
+  restartGame();
+}
+
+function deepCopy(a){ return a.map(r=>r.slice()); }
+
+function generateFullSolution(){
+  const g = Array(9).fill(0).map(()=>Array(9).fill(0));
+  const nums = [1,2,3,4,5,6,7,8,9];
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
+  function isValid(g,r,c,n){
+    for(let i=0;i<9;i++){ if(g[r][i]===n||g[i][c]===n) return false; }
+    const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
+    for(let rr=0;rr<3;rr++)for(let cc=0;cc<3;cc++){ if(g[br+rr][bc+cc]===n) return false; }
+    return true;
+  }
+  function backtrack(pos=0){
+    if(pos===81) return true;
+    const r=Math.floor(pos/9), c=pos%9;
+    const order = nums.slice(); shuffle(order);
+    for(const n of order){ if(isValid(g,r,c,n)){ g[r][c]=n; if(backtrack(pos+1)) return true; g[r][c]=0; } }
+    return false;
+  }
+  backtrack(0);
+  return g;
+}
+
+function countSolutions(gridIn, limit=2){
+  const g = deepCopy(gridIn);
+  function isValid(g,r,c,n){
+    for(let i=0;i<9;i++){ if(g[r][i]===n||g[i][c]===n) return false; }
+    const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
+    for(let rr=0;rr<3;rr++)for(let cc=0;cc<3;cc++){ if(g[br+rr][bc+cc]===n) return false; }
+    return true;
+  }
+  let solutions=0;
+  function backtrack(){
+    let r=-1,c=-1;
+    for(let i=0;i<9;i++)for(let j=0;j<9;j++){ if(g[i][j]===0){ r=i; c=j; break; } }
+    if(r===-1){ solutions++; return solutions<limit; }
+    for(let n=1;n<=9;n++){
+      if(isValid(g,r,c,n)){
+        g[r][c]=n;
+        if(!backtrack()){ g[r][c]=0; return false; }
+        g[r][c]=0;
+      }
+    }
+    return true;
+  }
+  backtrack();
+  return solutions;
+}
+
+function generatePuzzle(difficulty='medium'){
+  const sol = generateFullSolution();
+  let puzzle = deepCopy(sol);
+  const targetClues = difficulty==='easy'? 40 : difficulty==='hard'? 28 : 34;
+  const cells = [];
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++) cells.push([r,c]);
+  for(let i=cells.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cells[i],cells[j]]=[cells[j],cells[i]]; }
+  let removed = 0;
+  for(const [r,c] of cells){
+    if(81-removed<=targetClues) break;
+    const keep = puzzle[r][c];
+    puzzle[r][c]=0;
+    const solCount = countSolutions(puzzle, 2);
+    if(solCount!==1){ puzzle[r][c]=keep; } else { removed++; }
+  }
+  return { grid: puzzle, solution: sol };
 }
 
 function updateNumbersUI(){
