@@ -141,13 +141,16 @@ async function performTask(taskId) {
             if(btn) btn.textContent = "Կատարել → +" + task.reward;
 
             if (data.ok && data.url) {
+                // Construct safe redirect URL
+                const safeUrl = `${window.location.origin}/safe_go?url=${encodeURIComponent(data.url)}`;
+                
                 // 2. Open external - Force external browser to avoid CSRF/cookie issues in Telegram Webview
                 if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
                      // try_instant_view: false ensures it opens in system browser (Chrome/Safari) not internal Telegram browser
-                    window.Telegram.WebApp.openLink(data.url, {try_instant_view: false});
+                    window.Telegram.WebApp.openLink(safeUrl, {try_instant_view: false});
                 } else {
                     // Fallback for non-Telegram environments
-                    window.open(data.url, "_blank");
+                    window.open(safeUrl, "_blank");
                 }
             } else {
                 alert("❌ Link generation failed. Try again.");

@@ -6766,6 +6766,29 @@ def api_exeio_test():
     short = exeio_shorten(success_url)
     return jsonify({"ok": True, "api_url": EXEIO_API_URL, "short": short, "success_url": success_url})
 
+@app_web.route("/safe_go")
+def safe_go():
+    target = request.args.get("url", "")
+    return f"""
+    <html>
+    <head>
+        <title>Starting Task...</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="referrer" content="no-referrer">
+    </head>
+    <body style="background:#121212; color:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;">
+        <div style="text-align:center; padding:20px;">
+            <h2 style="margin-bottom:20px;">🚀 Ready to start?</h2>
+            <p style="margin-bottom:30px; color:#aaa;">Click the button below to proceed to the task.</p>
+            <a href="{target}" id="go-btn" style="background:#0088cc; color:#fff; padding:15px 30px; border-radius:10px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow:0 4px 15px rgba(0,136,204,0.4);">
+               Start Task →
+            </a>
+            <p style="margin-top:20px; font-size:12px; color:#555;">External link: {target[:30]}...</p>
+        </div>
+    </body>
+    </html>
+    """
+
 @app_web.route("/api/task/generate_link", methods=["POST"])
 def api_task_generate_link():
     """
