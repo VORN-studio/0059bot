@@ -6849,6 +6849,9 @@ def safe_go() -> str:
                             fetch('/api/track_click', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: payload }});
                         }}
                     }} catch (_be) {{}}
+                    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{
+                        try {{ window.Telegram.WebApp.openLink(u, {{ try_instant_view: false }}); }} catch(_tg) {{}}
+                    }}
                     var opened = false;
                     try {{
                         var a = document.createElement('a');
@@ -7133,11 +7136,7 @@ if __name__ == "__main__":
                 use_reloader=False,
                 allow_unsafe_werkzeug=True
             )
-        except Exception:
-            logger.exception("Flask failed")
-
-
-
+        
     def run_bot():
         """
         Telegram-бот работает в отдельном потоке со своим собственным циклом событий, по той же самой схеме, что и в VORN.
