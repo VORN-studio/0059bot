@@ -194,13 +194,13 @@ function scheduleTurnTimer() {
   if (gameOver) return;
   if (currentTurn !== 'w') return;
   const el = document.getElementById('turnInfo');
-  const deadline = Date.now() + 20000;
+  const deadline = Date.now() + 30000;
   countdownIntervalId = setInterval(() => {
     const left = Math.max(0, deadline - Date.now());
     const s = Math.ceil(left/1000);
     el.textContent = `Քո հերթն է — ${s}վրկ`;
   }, 250);
-  turnTimeoutId = setTimeout(() => { endGame('lose'); }, 20000);
+  turnTimeoutId = setTimeout(() => { endGame('lose'); }, 30000);
 }
 
 function endGame(result) {
