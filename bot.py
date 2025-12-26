@@ -6769,11 +6769,20 @@ def api_exeio_test():
 @app_web.route("/safe_go")
 def safe_go():
     target = request.args.get("url", "")
+    uid = request.args.get("uid", "")
+    task_id = request.args.get("task_id", "")
     try:
         import json
         safe_js_target = json.dumps(target)
     except Exception:
         safe_js_target = '""'
+    try:
+        import json
+        safe_js_uid = json.dumps(uid)
+        safe_js_tid = json.dumps(task_id)
+    except Exception:
+        safe_js_uid = '""'
+        safe_js_tid = '""'
     return f"""
     <html>
     <head>
@@ -6792,14 +6801,34 @@ def safe_go():
                Start Task →
             </button>
             <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {target[:30]}...</p>
+            <a id=\"manual-link\" href=\"{target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
         </div>
         <script>
             (function(){{
                 var btn = document.getElementById('go-btn');
                 var u = {safe_js_target};
+                var uid = {safe_js_uid};
+                var tid = {safe_js_tid};
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
-                    setTimeout(function(){{ window.location.assign(u); }}, 120);
+                    try {{
+                        var payload = JSON.stringify({{ url: u, user_id: uid, task_id: tid, ts: Date.now() }});
+                        if (navigator.sendBeacon) {{
+                            var blob = new Blob([payload], {{ type: 'application/json' }});
+                            navigator.sendBeacon('/api/track_click', blob);
+                        }} else {{
+                            fetch('/api/track_click', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: payload }});
+                        }}
+                    }} catch (_be) {{}}
+                    try {{
+                        window.open(u, '_blank');
+                    }} catch (_e) {{
+                        window.location.assign(u);
+                    }}
+                    setTimeout(function(){{
+                        var ml = document.getElementById('manual-link');
+                        if (ml) ml.style.display = 'inline-block';
+                    }}, 6000);
                 }});
             }})();
         </script>
@@ -6890,7 +6919,7 @@ def exeio_complete():
                 # 4. Award the user
                 if reward > 0:
                     c.execute(
-                        "UPDATE dom_users SET usd_balance = usd_balance + %s WHERE user_id=%s",
+                        "UPDATE dom_users SET balance_usd = balance_usd + %s WHERE user_id=%s",
                         (reward, uid)
                     )
                     
