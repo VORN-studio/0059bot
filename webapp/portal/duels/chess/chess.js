@@ -11,6 +11,8 @@ let turnTimeoutId = null;
 let countdownIntervalId = null;
 let castle = { w:{k:true,q:true}, b:{k:true,q:true} };
 let enPassant = null;
+let highlights = [];
+let lastMove = null;
 
 const PIECES = {
   w: { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' },
@@ -48,9 +50,13 @@ function renderBoard() {
       d.className = 'sq ' + (((r+c)%2===0)?'light':'dark');
       d.dataset.r = r; d.dataset.c = c;
       const piece = board[r][c];
-      d.textContent = piece ? PIECES[piece.c][piece.p] : '';
-      if (piece) d.classList.add(piece.c === 'w' ? 'pc-w' : 'pc-b');
+      if (piece) {
+        d.innerHTML = `<span class="piece ${piece.c==='w'?'pc-w':'pc-b'}">${PIECES[piece.c][piece.p]}</span>`;
+      }
       if (selected && selected.r===r && selected.c===c) d.classList.add('sel');
+      if (lastMove && ((lastMove.from.r===r && lastMove.from.c===c) || (lastMove.to.r===r && lastMove.to.c===c))) d.classList.add('last');
+      const hint = highlights.find(m=>m.r===r&&m.c===c);
+      if (hint) d.classList.add(hint.cap?'cap':'mv');
       d.onclick = () => onSquareClick(r,c);
       el.appendChild(d);
     }
@@ -62,10 +68,13 @@ function onSquareClick(r,c) {
   const piece = board[r][c];
   if (selected) {
     const from = selected; const to = {r,c};
-    const legal = generateLegalMoves(from).some(m => m.r===to.r && m.c===to.c);
+    const legalMoveList = generateLegalMoves(from);
+    const legal = legalMoveList.some(m => m.r===to.r && m.c===to.c);
     if (legal) {
       makeMove(from, to);
+      lastMove = {from: {...from}, to: {...to}};
       selected = null;
+      highlights = [];
       currentTurn = 'b';
       renderBoard();
       updateTurnInfo();
@@ -74,11 +83,14 @@ function onSquareClick(r,c) {
       return;
     }
     selected = null;
+    highlights = [];
     renderBoard();
     return;
   }
   if (piece && piece.c === 'w' && currentTurn === 'w') {
     selected = {r,c};
+    const ms = generateLegalMoves(selected);
+    highlights = ms.map(m=>({r:m.r,c:m.c,cap:!!board[m.r][m.c] || (enPassant && enPassant.r===m.r && enPassant.c===m.c)}));
     renderBoard();
   }
 }
@@ -171,7 +183,9 @@ function botMove() {
   if(moves.length===0){ if(isKingInCheck('b')) endGame('win'); else endGame('draw'); return; }
   const mv=moves[Math.floor(Math.random()*moves.length)];
   applyMove(mv.from,mv.to);
+  lastMove = {from: {...mv.from}, to: {...mv.to}};
   currentTurn='w';
+  highlights = [];
   renderBoard(); updateTurnInfo(); scheduleTurnTimer();
 }
 

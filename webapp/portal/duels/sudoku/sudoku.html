@@ -9,12 +9,15 @@
 <body>
   <div class="container">
     <div class="top">
-      <button class="btn" onclick="goBack()">← Հետ</button>
+      <button class="btn back" onclick="goBack()">← Հետ</button>
       <div>💎 <span id="domit-balance">0</span></div>
     </div>
     <h2 style="text-align:center;">🔢 Սուդոկու</h2>
     <div id="grid" class="grid"></div>
     <div class="panel">
+      <div class="tools">
+        <button id="notesToggle" class="btn toggle" onclick="toggleNotes()">✎ Նշումներ</button>
+      </div>
       <div id="numbers"></div>
     </div>
     <div id="status" class="status"></div>

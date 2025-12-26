@@ -7,6 +7,8 @@ let grid = [];
 let fixed = [];
 let selected = null;
 let gameOver = false;
+let notesMode = false;
+let candidates = [];
 
 async function loadBalance() {
   try {
@@ -35,6 +37,7 @@ function setupPuzzle() {
   ];
   grid = puzzle.map(r => r.slice());
   fixed = puzzle.map(r => r.map(v => v!==0));
+  candidates = Array(9).fill(0).map(()=>Array(9).fill(0).map(()=>new Set()));
 }
 
 function renderGrid() {
@@ -45,12 +48,24 @@ function renderGrid() {
     let cls = 'cell' + (fixed[r][c]?' prefill':'');
     if (selected && selected.r===r && selected.c===c) cls += ' sel';
     if (selected && (selected.r===r || selected.c===c || (Math.floor(selected.r/3)===Math.floor(r/3) && Math.floor(selected.c/3)===Math.floor(c/3)))) cls += ' rel';
+    const selVal = selected ? grid[selected.r][selected.c] : 0;
+    if (selVal && grid[r][c]===selVal) cls += ' same';
     if (c%3===2) cls += ' blk-r';
     if (r%3===2) cls += ' blk-b';
     if (r===0) cls += ' blk-t';
     if (c===0) cls += ' blk-l';
     d.className = cls;
-    d.textContent = grid[r][c]||'';
+    if (grid[r][c]) { d.textContent = grid[r][c]; }
+    else if (candidates[r][c].size>0) {
+      const cont = document.createElement('div');
+      cont.className = 'notes';
+      for (let nn=1; nn<=9; nn++) {
+        const s = document.createElement('span');
+        s.textContent = candidates[r][c].has(nn) ? nn : '';
+        cont.appendChild(s);
+      }
+      d.appendChild(cont);
+    }
     d.onclick = () => selectCell(r,c);
     el.appendChild(d);
   }
@@ -73,7 +88,6 @@ function renderGrid() {
 
 function selectCell(r,c) {
   if (gameOver) return;
-  if (fixed[r][c]) return;
   selected = {r,c};
   renderGrid();
 }
@@ -101,8 +115,13 @@ function placeNumber(n) {
   if (!selected || gameOver) return;
   const {r,c} = selected;
   if (fixed[r][c]) return;
-  if(!validNumber(r,c,n)) { showStatus('Թիվը հակասում է կանոններին'); return; }
-  grid[r][c] = n;
+  if (notesMode) {
+    if (candidates[r][c].has(n)) candidates[r][c].delete(n); else candidates[r][c].add(n);
+  } else {
+    if(!validNumber(r,c,n)) { showStatus('Թիվը հակասում է կանոններին'); return; }
+    grid[r][c] = n;
+    candidates[r][c].clear();
+  }
   renderGrid();
   if(isSolved()) endGame('win');
 }
@@ -112,6 +131,7 @@ function clearCell(){
   const {r,c} = selected;
   if (fixed[r][c]) return;
   grid[r][c] = 0;
+  candidates[r][c].clear();
   renderGrid();
 }
 
@@ -133,6 +153,12 @@ function restartGame() {
   setupPuzzle(); renderGrid();
   document.getElementById('status').textContent='';
   document.getElementById('newGame').style.display='none';
+}
+
+function toggleNotes(){
+  notesMode = !notesMode;
+  const btn = document.getElementById('notesToggle');
+  if (btn) btn.textContent = notesMode ? '✎ Նշումներ — ON' : '✎ Նշումներ';
 }
 
 async function init() {

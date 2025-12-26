@@ -12,8 +12,14 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui}
 .cell.blk-t{border-top:2px solid #475569}
 .cell.blk-l{border-left:2px solid #475569}
 .panel{text-align:center;margin-top:10px}
+#notesToggle.toggle{margin-bottom:8px}
+.tools{display:flex;justify-content:center;margin-bottom:6px}
 #numbers{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
 #numbers .btn{background:#1e293b;color:#e5e7eb;border:1px solid #8b5cf6;border-radius:999px;padding:8px 12px;cursor:pointer; min-width:36px}
 #numbers .btn:hover{background:#253049}
+.btn.back{background:radial-gradient(circle at 0 0,#1e293b,#0f172a);border:1px solid rgba(139,92,246,.6);border-radius:12px;padding:8px 12px}
+.cell .notes{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:1px;width:100%;height:100%;padding:4px}
+.cell .notes span{font-size:10px;color:#64748b;display:flex;align-items:center;justify-content:center}
+.cell.same{background:#1a2740}
 .status{text-align:center;margin-top:8px;font-size:13px}
 .turn{text-align:center;color:#94a3b8}
