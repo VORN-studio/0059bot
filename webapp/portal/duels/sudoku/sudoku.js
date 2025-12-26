@@ -435,6 +435,7 @@ async function init() {
     renderMistakes();
     if (bothJoined) { startTimer(true); } else { const st = document.getElementById('status'); if (st) st.textContent = 'Սպասում ենք հակառակորդին…'; }
     resizeGrid();
+    const ob = document.getElementById('opponent-bar'); if (ob) ob.style.display = 'flex';
     socket.on('table_joined', (data)=>{
       if (data && data.table_id===TABLE_ID) {
         bothJoined = true;
@@ -442,6 +443,7 @@ async function init() {
         const oppNameEl = document.getElementById('opponent-name');
         if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Հակառակորդ';
         const st = document.getElementById('status'); if (st) st.textContent = '';
+        const ob2 = document.getElementById('opponent-bar'); if (ob2) ob2.style.display = 'flex';
         startTimer(true);
       }
     });
@@ -477,6 +479,7 @@ async function init() {
     renderMistakes();
     startTimer(true);
     resizeGrid();
+    const ob = document.getElementById('opponent-bar'); if (ob) ob.style.display = 'none';
   }
 }
 
