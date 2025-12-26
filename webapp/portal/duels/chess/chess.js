@@ -2,7 +2,7 @@ const API = window.location.origin;
 const params = new URLSearchParams(window.location.search);
 const USER_ID = Number(params.get("uid") || (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id));
 const TABLE_ID = Number(params.get('table_id')||0);
-const PLAYER_COLOR = params.get('color')||'w';
+let PLAYER_COLOR = params.get('color')||'w';
 let domitBalance = 0;
 
 let board = [];
@@ -265,6 +265,7 @@ async function init() {
     socket.emit('join_duels', { user_id: USER_ID });
     socket.emit('join_user', { user_id: USER_ID });
     socket.emit('join_table', { table_id: TABLE_ID });
+    await loadTableState();
     const applyIncoming = (data)=>{
       if (data && data.table_id===TABLE_ID && data.from && data.to) {
         applyMove(data.from, data.to);
@@ -283,6 +284,32 @@ async function init() {
         endGame(data.result||'lose');
       }
     });
+  }
+}
+
+async function loadTableState(){
+  try{
+    const r = await fetch(`${API}/api/duels/get-table-state`, {
+      method: 'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ table_id: TABLE_ID })
+    });
+    const js = await r.json();
+    if(js && js.success){
+      const creatorColor = (js.table && js.table.color) || js.creator_color || js.color || 'w';
+      const isCreator = Number(js.creator_id) === Number(USER_ID);
+      PLAYER_COLOR = isCreator ? creatorColor : (creatorColor==='w'?'b':'w');
+      const st = js.game_state;
+      if(st){
+        currentTurn = st.turn || 'w';
+        // If server provides board state later, we can apply it here
+      } else {
+        currentTurn = 'w';
+      }
+      updateTurnInfo();
+      scheduleTurnTimer();
+    }
+  }catch(e){
+    // silent
   }
 }
 
