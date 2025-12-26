@@ -6769,8 +6769,8 @@ def api_exeio_test():
     short = exeio_shorten(success_url)
     return jsonify({"ok": True, "api_url": EXEIO_API_URL, "short": short, "success_url": success_url})
 
-@app_web.route("/safe_go")
-def safe_go():
+@app_web.route("/safe_go", methods=["GET"])
+def safe_go() -> str:
     target = request.args.get("url", "")
     uid = request.args.get("uid", "")
     task_id = request.args.get("task_id", "")
@@ -6805,6 +6805,18 @@ def safe_go():
             </button>
             <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {target[:30]}...</p>
             <a id=\"manual-link\" href=\"{target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
+            <div id=\"android-box\" style=\"display:none; margin-top:22px;\">
+                <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը Android-ում</p>
+                <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
+                    <button data-pkg=\"\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">System Chooser</button>
+                    <button data-pkg=\"org.mozilla.firefox\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
+                    <button data-pkg=\"com.opera.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera</button>
+                    <button data-pkg=\"com.opera.mini.native\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera Mini</button>
+                    <button data-pkg=\"com.sec.android.app.sbrowser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Samsung Internet</button>
+                    <button data-pkg=\"com.brave.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
+                    <button data-pkg=\"com.yandex.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
+                </div>
+            </div>
         </div>
         <script>
             (function(){{
@@ -6812,6 +6824,20 @@ def safe_go():
                 var u = {safe_js_target};
                 var uid = {safe_js_uid};
                 var tid = {safe_js_tid};
+                var isAndroid = /Android/i.test(navigator.userAgent);
+                function getIntent(u, pkg){{
+                    try {{
+                        var url = new URL(u);
+                        var scheme = url.protocol.replace(':','') || 'https';
+                        var path = url.pathname + (url.search || '');
+                        var base = 'intent://' + url.host + path + '#Intent;scheme=' + scheme + ';action=android.intent.action.VIEW';
+                        if (pkg) base += ';package=' + pkg;
+                        base += ';end';
+                        return base;
+                    }} catch(e){{
+                        return '';
+                    }}
+                }}
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
                     try {{
@@ -6823,15 +6849,27 @@ def safe_go():
                             fetch('/api/track_click', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: payload }});
                         }}
                     }} catch (_be) {{}}
-                    try {{
-                        window.open(u, '_blank');
-                    }} catch (_e) {{
-                        window.location.assign(u);
+                    if (isAndroid) {{
+                        var chooser = getIntent(u, '');
+                        try {{ window.location.href = chooser; }} catch(e){{}}
+                        setTimeout(function(){{
+                            var box = document.getElementById('android-box'); if (box) box.style.display = 'block';
+                        }}, 1200);
+                    }} else {{
+                        try {{ window.open(u, '_blank'); }} catch (_e) {{ window.location.assign(u); }}
                     }}
                     setTimeout(function(){{
                         var ml = document.getElementById('manual-link');
                         if (ml) ml.style.display = 'inline-block';
                     }}, 6000);
+                }});
+                var buttons = document.querySelectorAll('#android-box .abtn');
+                buttons.forEach(function(b){{
+                    b.addEventListener('click', function(){{
+                        var pkg = b.getAttribute('data-pkg') || '';
+                        var link = getIntent(u, pkg);
+                        if (link) {{ try {{ window.location.href = link; }} catch(e){{}} }}
+                    }});
                 }});
             }})();
         </script>
