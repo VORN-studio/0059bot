@@ -90,17 +90,11 @@ sys.stderr = _PrintToLogger(logger, logging.INFO, prefix="STDERR: ")
 
 
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
-if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN env var is missing")
-
-BASE_URL = os.getenv("BASE_URL", "https://domino-play.online").strip()
-EXEIO_API_URL = os.getenv("EXEIO_API_URL", "https://exe.io/api").strip()
-EXEIO_API_KEY = os.getenv("EXEIO_API_KEY", "").strip()
-
-DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL env var is missing (PostgreSQL connection string)")
+BOT_TOKEN = "8419124438:AAEjbuv8DtIb8GdmuBP5SKGtWs48qFEl1hc"
+BASE_URL = "https://domino-play.online"
+EXEIO_API_URL = "https://exe.io/api"
+EXEIO_API_KEY = "dc6e9d1f2d6a8a2be6ceda101464bd97051025a7"
+DATABASE_URL = "postgresql://domino_user:NaReK150503%23@localhost:5432/domin"
 ADMIN_IDS = {5274439601} 
 ADMIN_SECRET = os.getenv("ADMIN_SECRET", "").strip()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -5415,16 +5409,6 @@ def fetch_ton_rate():
         return None
 
 def exeio_shorten(target_url: str) -> Optional[str]:
-    global EXEIO_API_KEY
-    if not EXEIO_API_KEY:
-        print("⚠️ EXEIO_API_KEY missing initially. Attempting to reload .env...")
-        try:
-            from dotenv import load_dotenv
-            load_dotenv(override=True)
-            EXEIO_API_KEY = os.getenv("EXEIO_API_KEY", "").strip()
-        except Exception as e:
-            print(f"⚠️ Error reloading .env: {e}")
-
     if not EXEIO_API_KEY:
         print("❌ EXEIO_API_KEY is missing! Cannot shorten link.")
         return None
