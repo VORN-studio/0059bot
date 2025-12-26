@@ -142,12 +142,8 @@ function placeNumber(n) {
     if (candidates[r][c].has(n)) candidates[r][c].delete(n); else candidates[r][c].add(n);
   } else {
     if(!validNumber(r,c,n)) {
-      mistakes++;
-      renderMistakes();
-      showStatus('Սխալ թիվ');
-      grid[r][c] = n; // թույլ ենք տալիս սխալ թիվը տեղադրել
-      if (onlineMode && socket) socket.emit('sudoku_mistake', { table_id: TABLE_ID, mistakes });
-      if (mistakes>=MAX_MISTAKES) { endGame('lose'); if (onlineMode && socket) socket.emit('sudoku_over', { table_id: TABLE_ID, result:'lose' }); }
+      addMistake();
+      grid[r][c] = n;
     } else {
       grid[r][c] = n;
     }
@@ -155,6 +151,18 @@ function placeNumber(n) {
   }
   renderGrid();
   if(isSolved()) { endGame('win'); if (onlineMode && socket) socket.emit('sudoku_over', { table_id: TABLE_ID, result:'win' }); }
+}
+
+function addMistake(){
+  if (gameOver) return;
+  mistakes = Math.min(mistakes + 1, MAX_MISTAKES);
+  renderMistakes();
+  showStatus('Սխալ թիվ');
+  if (onlineMode && socket) socket.emit('sudoku_mistake', { table_id: TABLE_ID, mistakes });
+  if (mistakes >= MAX_MISTAKES) {
+    endGame('lose');
+    if (onlineMode && socket) socket.emit('sudoku_over', { table_id: TABLE_ID, result:'lose' });
+  }
 }
 
 function clearCell(){
@@ -370,11 +378,13 @@ window.onload = init;
 function resizeGrid(){
   const cont = document.querySelector('.container');
   if (!cont) return;
-  const available = cont.clientWidth - 16;
-  const fixedPaddingAndGaps = 76; // include borders/paddings/gaps
-  let cell = Math.floor((available - fixedPaddingAndGaps) / 9);
-  cell = Math.max(22, Math.min(46, cell));
+  const vw = Math.min(window.innerWidth || cont.clientWidth, cont.clientWidth);
+  const available = vw - 16;
+  const fixed = 70; // 3 blocks borders+padding + outer gaps
+  let cell = Math.floor((available - fixed) / 9);
+  cell = Math.max(20, Math.min(44, cell));
   document.documentElement.style.setProperty('--cell9', `${cell}px`);
 }
 
 window.addEventListener('resize', resizeGrid);
+window.addEventListener('orientationchange', resizeGrid);

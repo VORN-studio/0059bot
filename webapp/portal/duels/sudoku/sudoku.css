@@ -1,5 +1,5 @@
 body{background:#0f172a;color:#e5e7eb;font-family:system-ui; overflow-x:hidden}
-.container{width:min(100vw,520px);margin:20px auto;padding:10px}
+.container{width:min(94vw,480px);margin:20px auto;padding:10px}
 .top{display:flex;align-items:center;justify-content:space-between}
 :root{--cell9:36px}
 .grid{display:grid;grid-template-columns:repeat(3,max-content);gap:8px;margin:16px auto;width:100%;justify-content:center}
