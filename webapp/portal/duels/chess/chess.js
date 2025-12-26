@@ -312,7 +312,12 @@ async function loadTableState(){
     const js = await r.json();
     if(js && js.success){
       const isCreator = Number(js.creator_id) === Number(USER_ID);
-      bothJoined = !isCreator;
+      const urlColor = params.get('color');
+      if (!urlColor) {
+        const creatorColor = (js.table && js.table.color) || js.creator_color || js.color || 'w';
+        PLAYER_COLOR = isCreator ? creatorColor : (creatorColor==='w'?'b':'w');
+      }
+      if (js.opponent_id) { bothJoined = true; } else { bothJoined = bothJoined || !isCreator; }
       const st = js.game_state;
       if(st){
         currentTurn = st.turn || 'w';
