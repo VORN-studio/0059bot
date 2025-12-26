@@ -6899,6 +6899,8 @@ def exeio_complete():
 
     now = int(time.time())
     if uid and task_id:
+        ref = request.headers.get('Referer', '')
+        from_exe = ('exe.io' in (ref or ''))
         conn = db(); c = conn.cursor()
         
         # 1. Ensure task exists and get reward
@@ -6913,25 +6915,27 @@ def exeio_complete():
             already_done = c.fetchone()
             
             if not already_done:
-                # 3. Mark as completed
-                c.execute(
-                    """
-                    INSERT INTO dom_task_completions (user_id, task_id, completed_at)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT DO NOTHING
-                    """,
-                    (uid, task_id, now)
-                )
-                
-                # 4. Award the user
-                if reward > 0:
+                if from_exe:
+                    # 3a. Mark as completed and award (only if referer is exe.io)
                     c.execute(
-                        "UPDATE dom_users SET balance_usd = balance_usd + %s WHERE user_id=%s",
-                        (reward, uid)
+                        """
+                        INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT DO NOTHING
+                        """,
+                        (uid, task_id, now)
                     )
-                    
-                conn.commit()
-                print(f"✅ User {uid} completed task {task_id}, reward={reward}")
+                    if reward > 0:
+                        c.execute(
+                            "UPDATE dom_users SET balance_usd = balance_usd + %s WHERE user_id=%s",
+                            (reward, uid)
+                        )
+                    conn.commit()
+                    print(f"✅ User {uid} completed task {task_id} via exe.io, reward={reward} ref={ref}")
+                else:
+                    # 3b. Do NOT award if not coming from exe.io (no monetization)
+                    conn.commit()
+                    print(f"⏳ No reward: uid={uid} task_id={task_id} ref={ref}")
             else:
                 print(f"⚠️ User {uid} already completed task {task_id}")
         

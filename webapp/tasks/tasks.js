@@ -141,8 +141,8 @@ async function performTask(taskId) {
             if(btn) btn.textContent = "Կատարել → +" + task.reward;
 
             if (data.ok) {
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                const chosen = (isMobile && data.direct_url) ? data.direct_url : (data.short_url || data.direct_url);
+                // Always prefer exe.io short_url for monetization; fallback to direct_url
+                const chosen = data.short_url || data.direct_url;
                 if (!chosen) {
                     alert("❌ Link generation failed. Try again.");
                     return;
