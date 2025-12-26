@@ -1,6 +1,11 @@
 const API = window.location.origin;
 const params = new URLSearchParams(window.location.search);
 const USER_ID = Number(params.get("uid") || (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id));
+const TABLE_ID = Number(params.get('table_id')||0);
+let onlineMode = !!TABLE_ID;
+let socket = null;
+let mistakes = 0;
+const MAX_MISTAKES = 3;
 let domitBalance = 0;
 
 let grid = [];
@@ -86,6 +91,13 @@ function renderGrid() {
   }
 }
 
+function renderMistakes(){
+  const el = document.getElementById('mistakesInfo');
+  if (!el) return;
+  if (onlineMode) el.textContent = `Սխալների սահման՝ ${mistakes}/${MAX_MISTAKES}`;
+  else el.textContent = '';
+}
+
 function selectCell(r,c) {
   if (gameOver) return;
   selected = {r,c};
@@ -118,12 +130,19 @@ function placeNumber(n) {
   if (notesMode) {
     if (candidates[r][c].has(n)) candidates[r][c].delete(n); else candidates[r][c].add(n);
   } else {
-    if(!validNumber(r,c,n)) { showStatus('Թիվը հակասում է կանոններին'); return; }
+    if(!validNumber(r,c,n)) {
+      mistakes++;
+      renderMistakes();
+      showStatus('Սխալ թիվ');
+      if (onlineMode && socket) socket.emit('sudoku_mistake', { table_id: TABLE_ID, mistakes });
+      if (mistakes>=MAX_MISTAKES) { endGame('lose'); if (onlineMode && socket) socket.emit('sudoku_over', { table_id: TABLE_ID, result:'lose' }); }
+      return;
+    }
     grid[r][c] = n;
     candidates[r][c].clear();
   }
   renderGrid();
-  if(isSolved()) endGame('win');
+  if(isSolved()) { endGame('win'); if (onlineMode && socket) socket.emit('sudoku_over', { table_id: TABLE_ID, result:'win' }); }
 }
 
 function clearCell(){
@@ -144,7 +163,7 @@ function showStatus(msg){
 function endGame(result) {
   gameOver = true;
   const st = document.getElementById('status');
-  st.textContent = '🎉 Հաղթեցիր';
+  st.textContent = result==='win' ? '🎉 Հաղթեցիր' : '😔 Պարտվեցիր';
   document.getElementById('newGame').style.display='inline-block';
 }
 
@@ -168,6 +187,16 @@ async function init() {
   await loadBalance();
   setupPuzzle();
   renderGrid();
+  renderMistakes();
+  if (onlineMode) {
+    socket = io(API);
+    socket.emit('join_table', { table_id: TABLE_ID });
+    socket.on('sudoku_over', (data)=>{
+      if (data && data.table_id===TABLE_ID) {
+        if (!gameOver) endGame(data.result==='win' ? 'lose' : 'win');
+      }
+    });
+  }
 }
 
 window.onload = init;

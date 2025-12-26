@@ -5,6 +5,7 @@ let USER_ID = null;
 let USERNAME = "Player";
 let domitBalance = 0;
 let socket = null;
+let selectedGameType = 'tictactoe';
 
 let activeBotSession = null;
 let selectedTableId = null;
@@ -66,10 +67,10 @@ function connectWebSocket() {
   });
 
   socket.on("table_joined", (data) => {
-    showStatus(`✅ К вашему столику кто-то присоединился.`);
-    
+    showStatus(`✅ Սեղանին միացան.`);
+    const gt = data.game_type || selectedGameType || 'tictactoe';
     setTimeout(() => {
-      window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${data.table_id}&uid=${USER_ID}`;
+      window.location.href = `${API}/duels/${gt}/${gt}.html?table_id=${data.table_id}&uid=${USER_ID}`;
     }, 1000);
   });
 
@@ -86,11 +87,11 @@ function connectWebSocket() {
 
 async function loadTables() {
   try {
-    const r = await fetch(`${API}/api/duels/get-tables`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ game_type: "tictactoe" })
-    });
+  const r = await fetch(`${API}/api/duels/get-tables`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ game_type: selectedGameType })
+  });
 
     const js = await r.json();
     if (js.success) {
@@ -115,6 +116,8 @@ function renderTables(tables) {
     return;
   }
 
+  const iconMap = { tictactoe: '❌⭕', chess: '♟️', sudoku: '🔢' };
+  const nameMap = { tictactoe: 'Tic-Tac-Toe', chess: 'Շախմատ', sudoku: 'Սուդոկու' };
   container.innerHTML = tables
     .map((t) => {
       const now = Math.floor(Date.now() / 1000);
@@ -125,9 +128,9 @@ function renderTables(tables) {
 
       return `
         <div class="table-card" onclick="openJoinModal(${t.id}, '${t.creator}', ${t.bet})">
-          <div class="table-game-icon">❌⭕</div>
+          <div class="table-game-icon">${iconMap[selectedGameType]}</div>
           <div class="table-info">
-            <div class="table-game-name">Tic-Tac-Toe</div>
+            <div class="table-game-name">${nameMap[selectedGameType]}</div>
             <div class="table-creator">Создатель՝ ${t.creator}</div>
           </div>
           <div style="text-align: right;">
@@ -191,6 +194,7 @@ function closeCreateTableModal() {
 async function confirmCreateTable() {
   const game_type = document.getElementById("game-type").value;
   const bet = Number(document.getElementById("bet-amount").value);
+  const color = document.getElementById("color-select")?.value || null;
 
   if (!bet || bet <= 0) {
     document.getElementById("create-error").textContent = "Напишите правильную сумму։";
@@ -208,7 +212,7 @@ async function confirmCreateTable() {
     const r = await fetch(`${API}/api/duels/create-table`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: USER_ID, game_type, bet })
+      body: JSON.stringify({ user_id: USER_ID, game_type, bet, color })
     });
 
     const js = await r.json();
@@ -223,7 +227,8 @@ async function confirmCreateTable() {
 
     // Reload tables
     if (js.success) {
-        window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${js.table_id}&uid=${USER_ID}`;
+        const extra = game_type==='chess' && color ? `&color=${color}` : '';
+        window.location.href = `${API}/duels/${game_type}/${game_type}.html?table_id=${js.table_id}&uid=${USER_ID}${extra}`;
     }
 
   } catch (e) {
@@ -237,7 +242,8 @@ async function confirmCreateTable() {
 function openJoinModal(tableId, creator, bet) {
   selectedTableId = tableId;
 
-  document.getElementById("join-game-type").textContent = "❌⭕ Tic-Tac-Toe";
+  const nameMap = { tictactoe: '❌⭕ Tic-Tac-Toe', chess: '♟️ Շախմատ', sudoku: '🔢 Սուդոկու' };
+  document.getElementById("join-game-type").textContent = nameMap[selectedGameType];
   document.getElementById("join-bet").textContent = bet;
   document.getElementById("join-creator").textContent = creator;
   document.getElementById("join-error").textContent = "";
@@ -267,7 +273,7 @@ async function confirmJoinTable() {
 
     const js = await r.json();
     if (js.success) {
-        window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
+        window.location.href = `${API}/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}`;
     } else {
        
         let msg = js.message;
@@ -282,7 +288,7 @@ async function confirmJoinTable() {
     showStatus("✅ Вы присоединились к столу. Игра начинается.…");
 
     setTimeout(() => {
-      window.location.href = `${API}/duels/tictactoe/tictactoe.html?table_id=${selectedTableId}&uid=${USER_ID}`;
+      window.location.href = `${API}/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}`;
     }, 1000);
 
   } catch (e) {
@@ -303,6 +309,8 @@ window.onload = () => {
   USER_ID = tg?.initDataUnsafe?.user?.id || getUidFromUrl();
   loadUser();
   connectWebSocket();
+  const gtSel = document.getElementById('game-type');
+  if (gtSel) gtSel.addEventListener('change', ()=>{ selectedGameType = gtSel.value; loadTables(); });
   
   // Refresh tables every 5 seconds
   setInterval(loadTables, 5000);

@@ -1,6 +1,8 @@
 const API = window.location.origin;
 const params = new URLSearchParams(window.location.search);
 const USER_ID = Number(params.get("uid") || (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id));
+const TABLE_ID = Number(params.get('table_id')||0);
+const PLAYER_COLOR = params.get('color')||'w';
 let domitBalance = 0;
 
 let board = [];
@@ -13,6 +15,8 @@ let castle = { w:{k:true,q:true}, b:{k:true,q:true} };
 let enPassant = null;
 let highlights = [];
 let lastMove = null;
+let socket = null;
+let onlineMode = !!TABLE_ID;
 
 const PIECES = {
   w: { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' },
@@ -66,6 +70,7 @@ function renderBoard() {
 function onSquareClick(r,c) {
   if (gameOver) return;
   const piece = board[r][c];
+  if (onlineMode && currentTurn !== PLAYER_COLOR) return;
   if (selected) {
     const from = selected; const to = {r,c};
     const legalMoveList = generateLegalMoves(from);
@@ -75,11 +80,15 @@ function onSquareClick(r,c) {
       lastMove = {from: {...from}, to: {...to}};
       selected = null;
       highlights = [];
-      currentTurn = 'b';
+      currentTurn = (PLAYER_COLOR==='w')?'b':'w';
       renderBoard();
       updateTurnInfo();
       scheduleTurnTimer();
-      setTimeout(botMove, 500);
+      if (onlineMode) {
+        if (socket) socket.emit('chess_move', { table_id: TABLE_ID, from, to });
+      } else {
+        setTimeout(botMove, 500);
+      }
       return;
     }
     selected = null;
@@ -87,7 +96,8 @@ function onSquareClick(r,c) {
     renderBoard();
     return;
   }
-  if (piece && piece.c === 'w' && currentTurn === 'w') {
+  const myColor = onlineMode ? PLAYER_COLOR : 'w';
+  if (piece && piece.c === myColor && currentTurn === myColor) {
     selected = {r,c};
     const ms = generateLegalMoves(selected);
     highlights = ms.map(m=>({r:m.r,c:m.c,cap:!!board[m.r][m.c] || (enPassant && enPassant.r===m.r && enPassant.c===m.c)}));
@@ -169,7 +179,7 @@ function applyMove(from,to){
 function makeMove(from,to){applyMove(from,to)}
 
 function botMove() {
-  if (gameOver) return;
+  if (gameOver || onlineMode) return;
   const moves=[];
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=board[r][c];if(!p||p.c!=='b')continue;const from={r,c};
     const pseudo=generatePseudoMoves(from);
@@ -191,8 +201,14 @@ function botMove() {
 
 function updateTurnInfo() {
   const el = document.getElementById('turnInfo');
-  if (currentTurn === 'w') { el.textContent = 'Քո հերթն է'; el.style.color = '#8b5cf6'; }
-  else { el.textContent = 'Բոտի հերթն է'; el.style.color = '#94a3b8'; }
+  if (!onlineMode) {
+    if (currentTurn === 'w') { el.textContent = 'Քո հերթն է'; el.style.color = '#8b5cf6'; }
+    else { el.textContent = 'Բոտի հերթն է'; el.style.color = '#94a3b8'; }
+  } else {
+    const mine = PLAYER_COLOR===currentTurn;
+    el.textContent = mine ? `Քո հերթն է (${PLAYER_COLOR==='w'?'սպիտակ':'սև'})` : `Մրցակցի հերթն է`;
+    el.style.color = mine ? '#8b5cf6' : '#94a3b8';
+  }
   const wCheck=isKingInCheck('w'); const bCheck=isKingInCheck('b');
   if(currentTurn==='w'&&wCheck) el.textContent+=' — Շախ';
   if(currentTurn==='b'&&bCheck) el.textContent+=' — Շախ';
@@ -206,7 +222,8 @@ function clearTurnTimers() {
 function scheduleTurnTimer() {
   clearTurnTimers();
   if (gameOver) return;
-  if (currentTurn !== 'w') return;
+  if (onlineMode && currentTurn !== PLAYER_COLOR) return;
+  if (!onlineMode && currentTurn !== 'w') return;
   const el = document.getElementById('turnInfo');
   const deadline = Date.now() + 30000;
   countdownIntervalId = setInterval(() => {
@@ -239,6 +256,23 @@ async function init() {
   renderBoard();
   updateTurnInfo();
   scheduleTurnTimer();
+  if (onlineMode) {
+    socket = io(API);
+    socket.emit('join_table', { table_id: TABLE_ID });
+    socket.on('chess_move', (data)=>{
+      if (data && data.table_id===TABLE_ID && data.from && data.to) {
+        applyMove(data.from, data.to);
+        lastMove = {from:{...data.from}, to:{...data.to}};
+        currentTurn = PLAYER_COLOR;
+        renderBoard(); updateTurnInfo(); scheduleTurnTimer();
+      }
+    });
+    socket.on('game_over', (data)=>{
+      if (data && data.table_id===TABLE_ID) {
+        endGame(data.result||'lose');
+      }
+    });
+  }
 }
 
 window.onload = init;

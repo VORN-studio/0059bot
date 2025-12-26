@@ -89,9 +89,17 @@
       <label class="modal-label">Խաղ</label>
       <select id="game-type" class="modal-select">
         <option value="tictactoe">❌⭕ Tic-Tac-Toe</option>
-        <option value="chess" disabled>♟️ Շախմատ (շուտով)</option>
-        <option value="sudoku" disabled>🔢 Սուդոկու (շուտով)</option>
+        <option value="chess">♟️ Շախմատ</option>
+        <option value="sudoku">🔢 Սուդոկու</option>
       </select>
+
+      <div id="color-row" style="display:none; margin-top:8px;">
+        <label class="modal-label">Շախմատի գույն</label>
+        <select id="color-select" class="modal-select">
+          <option value="w">Սպիտակ</option>
+          <option value="b">Սև</option>
+        </select>
+      </div>
 
       <label class="modal-label">Bet գումարը (DOMIT)</label>
       <input
@@ -134,5 +142,10 @@
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="duels.js"></script>
+  <script>
+    const gt = document.getElementById('game-type');
+    const cr = document.getElementById('color-row');
+    gt.addEventListener('change', ()=>{ cr.style.display = gt.value==='chess' ? 'block' : 'none'; });
+  </script>
 </body>
 </html>
