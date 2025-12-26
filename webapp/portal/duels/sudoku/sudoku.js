@@ -57,7 +57,12 @@ function renderGrid() {
           if (selVal && grid[r][c]===selVal) cls += ' same';
           d.className = cls;
           d.id = `cell-${r}-${c}`;
-          if (grid[r][c]) { d.textContent = grid[r][c]; }
+          if (grid[r][c]) { 
+            d.textContent = grid[r][c];
+            if (!fixed[r][c] && !validNumberFinal(r,c,grid[r][c])) {
+              d.classList.add('error');
+            }
+          }
           else if (candidates[r][c].size>0) {
             const cont = document.createElement('div');
             cont.className = 'notes';
@@ -141,16 +146,12 @@ function placeNumber(n) {
       mistakes++;
       renderMistakes();
       showStatus('Սխալ թիվ');
-      const errEl = document.getElementById(`cell-${r}-${c}`);
-      if (errEl) {
-        errEl.classList.add('error');
-        setTimeout(()=>{ errEl.classList.remove('error'); }, 600);
-      }
+      grid[r][c] = n; // թույլ ենք տալիս սխալ թիվը տեղադրել
       if (onlineMode && socket) socket.emit('sudoku_mistake', { table_id: TABLE_ID, mistakes });
       if (mistakes>=MAX_MISTAKES) { endGame('lose'); if (onlineMode && socket) socket.emit('sudoku_over', { table_id: TABLE_ID, result:'lose' }); }
-      return;
+    } else {
+      grid[r][c] = n;
     }
-    grid[r][c] = n;
     candidates[r][c].clear();
   }
   renderGrid();
@@ -225,7 +226,11 @@ function useHint(){
 
 function changeDifficulty(val){
   currentDifficulty = String(val||'medium');
-  restartGame();
+  const cont = document.querySelector('.container');
+  if (cont){
+    cont.classList.remove('diff-easy','diff-medium','diff-hard');
+    cont.classList.add('diff-'+currentDifficulty);
+  }
 }
 
 function deepCopy(a){ return a.map(r=>r.slice()); }
@@ -299,18 +304,7 @@ function updateNumbersUI(){
   const nums = document.getElementById('numbers');
   if (!nums) return;
   const btns = Array.from(nums.querySelectorAll('.btn.num'));
-  if (!selected) {
-    btns.forEach(b=>{ b.classList.remove('disabled'); b.disabled=false; });
-    return;
-  }
-  const {r,c} = selected;
-  btns.forEach(b=>{
-    const n = Number(b.getAttribute('data-num')) || 0;
-    if (!n) { b.classList.remove('disabled'); b.disabled=false; return; }
-    const ok = validNumber(r,c,n);
-    b.classList.toggle('disabled', !ok);
-    b.disabled = !ok;
-  });
+  btns.forEach(b=>{ b.classList.remove('disabled'); b.disabled=false; });
 }
 
 function updateProgressAndCounts(){

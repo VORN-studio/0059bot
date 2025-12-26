@@ -8,7 +8,7 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui}
 .cell.prefill{background:#1b2640;color:#e2e8f0}
 .cell.sel{outline:2px solid #8b5cf6; outline-offset:-2px}
 .cell.rel{background:#202e4d}
-.cell.error{outline:2px solid #ef4444; outline-offset:-2px; box-shadow:0 0 0 1px rgba(239,68,68,.6)}
+.cell.error{outline:2px solid #ef4444; outline-offset:-2px; box-shadow:0 0 0 1px rgba(239,68,68,.6); color:#ef4444}
 .cell.blk-r{border-right:2px solid #475569}
 .cell.blk-b{border-bottom:2px solid #475569}
 .cell.blk-t{border-top:2px solid #475569}
@@ -34,5 +34,9 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui}
 .progress-text{position:absolute;right:8px;top:-24px;font-size:12px;color:#cbd5e1}
 .counts{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-top:8px}
 .counts .count{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 8px;font-size:12px;color:#cbd5e1}
+
+/* Difficulty visual tweaks (design-only) */
+.container.diff-easy .block{border-color:#a78bfa}
+.container.diff-hard .block{border-color:#334155}
 .status{text-align:center;margin-top:8px;font-size:13px}
 .turn{text-align:center;color:#94a3b8}
