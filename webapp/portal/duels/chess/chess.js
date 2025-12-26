@@ -49,6 +49,7 @@ function renderBoard() {
       d.dataset.r = r; d.dataset.c = c;
       const piece = board[r][c];
       d.textContent = piece ? PIECES[piece.c][piece.p] : '';
+      if (piece) d.classList.add(piece.c === 'w' ? 'pc-w' : 'pc-b');
       if (selected && selected.r===r && selected.c===c) d.classList.add('sel');
       d.onclick = () => onSquareClick(r,c);
       el.appendChild(d);
