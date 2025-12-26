@@ -17,6 +17,8 @@ let highlights = [];
 let lastMove = null;
 let socket = null;
 let onlineMode = !!TABLE_ID;
+let bothJoined = false;
+let gameStarted = false;
 
 const PIECES = {
   w: { K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙' },
@@ -71,6 +73,7 @@ function renderBoard() {
 function onSquareClick(r,c) {
   if (gameOver) return;
   const piece = board[r][c];
+  if (onlineMode && !bothJoined) return;
   if (onlineMode && currentTurn !== PLAYER_COLOR) return;
   if (selected) {
     const from = selected; const to = {r,c};
@@ -90,6 +93,7 @@ function onSquareClick(r,c) {
         if (socket) {
           socket.emit('chess_move', { table_id: TABLE_ID, from, to });
         }
+        gameStarted = true;
       } else {
         setTimeout(botMove, 500);
       }
@@ -210,6 +214,7 @@ function updateTurnInfo() {
     if (currentTurn === 'w') { el.textContent = 'Քո հերթն է'; el.style.color = '#8b5cf6'; }
     else { el.textContent = 'Բոտի հերթն է'; el.style.color = '#94a3b8'; }
   } else {
+    if (!bothJoined) { el.textContent = 'Սպասում ենք հակառակորդին…'; el.style.color = '#94a3b8'; return; }
     const mine = PLAYER_COLOR===currentTurn;
     el.textContent = mine ? `Քո հերթն է (${PLAYER_COLOR==='w'?'սպիտակ':'սև'})` : `Մրցակցի հերթն է`;
     el.style.color = mine ? '#8b5cf6' : '#94a3b8';
@@ -227,6 +232,8 @@ function clearTurnTimers() {
 function scheduleTurnTimer() {
   clearTurnTimers();
   if (gameOver) return;
+  if (onlineMode && !bothJoined) return;
+  if (onlineMode && !gameStarted) return;
   if (onlineMode && currentTurn !== PLAYER_COLOR) return;
   if (!onlineMode && currentTurn !== 'w') return;
   const el = document.getElementById('turnInfo');
@@ -285,7 +292,7 @@ async function init() {
     socket.on('chess_move', applyIncoming);
     socket.on('opponent_move', applyIncoming);
     socket.on('table_joined', (data)=>{
-      if (data && data.table_id===TABLE_ID) {}
+      if (data && data.table_id===TABLE_ID) { bothJoined = true; }
     });
     socket.on('game_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
@@ -306,6 +313,7 @@ async function loadTableState(){
       const creatorColor = (js.table && js.table.color) || js.creator_color || js.color || 'w';
       const isCreator = Number(js.creator_id) === Number(USER_ID);
       PLAYER_COLOR = isCreator ? creatorColor : (creatorColor==='w'?'b':'w');
+      bothJoined = !isCreator;
       const st = js.game_state;
       if(st){
         currentTurn = st.turn || 'w';
