@@ -263,6 +263,7 @@ async function init() {
   renderGrid();
   renderMistakes();
   startTimer(true);
+  resizeGrid();
   if (onlineMode) {
     socket = io(API);
     socket.emit('join_table', { table_id: TABLE_ID });
@@ -275,3 +276,15 @@ async function init() {
 }
 
 window.onload = init;
+
+function resizeGrid(){
+  const cont = document.querySelector('.container');
+  if (!cont) return;
+  const available = cont.clientWidth - 20;
+  const fixedPaddingAndGaps = 96; // 3 blocks padding+inner gaps + outer gaps
+  let cell = Math.floor((available - fixedPaddingAndGaps) / 9);
+  cell = Math.max(26, Math.min(52, cell));
+  document.documentElement.style.setProperty('--cell9', `${cell}px`);
+}
+
+window.addEventListener('resize', resizeGrid);
