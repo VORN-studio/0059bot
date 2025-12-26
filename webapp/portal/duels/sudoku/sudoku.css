@@ -3,11 +3,12 @@
   --bg:#0b1324;--card:#0f1a2e;--muted:#94a3b8;--text:#e5e7eb;
   --accent:#8b5cf6;--accent-2:#7c3aed;--error:#ef4444;
   --line:#334155;--line-2:#475569;
-  --cell9:36px;
+  /* Responsive fallback: cell size never overflows viewport */
+  --cell9: clamp(22px, calc((min(100vw - 24px, 480px) - 70px)/9), 40px);
 }
 
 body{background:var(--bg);color:var(--text);font-family:system-ui, -apple-system, Segoe UI, Roboto;overflow-x:hidden}
-.container{width:min(92vw,480px);margin:18px auto;padding:14px;border-radius:16px;background:
+.container{width:min(100vw - 24px,480px);margin:18px auto;padding:14px;border-radius:16px;background:
   radial-gradient(1200px 300px at 0% -10%, rgba(139,92,246,.15), transparent 60%),
   linear-gradient(180deg, rgba(16,24,40,.65), rgba(12,18,32,.75));
 box-shadow:0 18px 40px rgba(2,8,23,.55);}
