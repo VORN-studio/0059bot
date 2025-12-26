@@ -6910,6 +6910,15 @@ def exeio_complete():
     
     return "✅ Task Completed! You can close this window."
 
+@app_web.route('/api/track_click', methods=['POST'])
+def api_track_click():
+    data = request.get_json(silent=True) or {}
+    url = data.get('url', '')
+    ua = request.headers.get('User-Agent', '')
+    ref = request.headers.get('Referer', '')
+    print(f"🟦 CLICK track: ua={ua} referer={ref} url={url}")
+    return jsonify({"ok": True})
+
 def migrate_posts_to_files():
     """Migrate posts media from base64 to file system"""
     print("🔍 Starting posts media migration...")
