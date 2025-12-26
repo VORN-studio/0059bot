@@ -5416,29 +5416,52 @@ def fetch_ton_rate():
 
 def exeio_shorten(target_url: str) -> Optional[str]:
     if not EXEIO_API_KEY:
+        print("❌ EXEIO_API_KEY is missing! Cannot shorten link.")
         return None
     try:
         import urllib.parse
-        req = f"{EXEIO_API_URL}?api={EXEIO_API_KEY}&url={urllib.parse.quote_plus(target_url)}&format=json"
-        resp = requests.get(req, timeout=10)
+        # Ensure we use the correct API URL for exe.io
+        api_url = EXEIO_API_URL
+        if "exe.io" in api_url and "api" not in api_url:
+             api_url = api_url.rstrip("/") + "/api"
+             
+        req = f"{api_url}?api={EXEIO_API_KEY}&url={urllib.parse.quote_plus(target_url)}&format=json"
+        print(f"🌐 Requesting exe.io: {req.replace(EXEIO_API_KEY, 'HIDDEN_KEY')}")
+        
+        resp = requests.get(req, timeout=15)
         print(f"EXEIO shorten status={resp.status_code} body={resp.text[:300]}")
+        
+        if resp.status_code != 200:
+            print(f"❌ exe.io returned non-200 status: {resp.status_code}")
+            return None
+
         short = None
         try:
             js = resp.json()
             if isinstance(js, dict):
+                # Check for error in JSON
+                if js.get("status") == "error":
+                    print(f"❌ exe.io API Error: {js.get('message')}")
+                    return None
+                    
                 for k in ("shortenedUrl", "shortened_url", "shortenUrl", "result_url", "short", "short_url", "url"):
                     v = js.get(k)
                     if v:
                         short = str(v)
                         break
-        except Exception:
+        except Exception as e:
+            print(f"❌ JSON parse error: {e}")
             pass
+            
         if not short:
+            # Fallback for plain text response
             txt = (resp.text or "").strip()
             if txt.startswith("http"):
                 short = txt
+                
         return short
-    except Exception:
+    except Exception as e:
+        print(f"🔥 exeio_shorten exception: {e}")
         return None
 
 def ton_rate_updater():
