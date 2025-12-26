@@ -6482,16 +6482,17 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
 
     parsed = urllib.parse.urlparse(url)
 
-    params = "s1={user_id}&s2={task_id}&subid1={user_id}&subid2={task_id}"
-
-    if parsed.query:
-        final_url = url + "&" + params
+    if parsed.netloc and 'exe.io' in parsed.netloc:
+        short_url = url
     else:
-        final_url = url + "?" + params
-
-    u_b64 = base64.urlsafe_b64encode(final_url.encode()).decode()
-    success_url = f"{BASE_URL}/exeio/complete?uid={{user_id}}&task_id={{task_id}}&u={u_b64}"
-    short_url = exeio_shorten(success_url) or success_url
+        params = "s1={user_id}&s2={task_id}&subid1={user_id}&subid2={task_id}"
+        if parsed.query:
+            final_url = url + "&" + params
+        else:
+            final_url = url + "?" + params
+        u_b64 = base64.urlsafe_b64encode(final_url.encode()).decode()
+        success_url = f"{BASE_URL}/exeio/complete?uid={{user_id}}&task_id={{task_id}}&u={u_b64}"
+        short_url = exeio_shorten(success_url) or success_url
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
