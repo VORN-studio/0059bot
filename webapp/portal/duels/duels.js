@@ -153,9 +153,8 @@ function renderTables(tables) {
 
 function setSelectedGame(game) {
   selectedGameType = game;
-  const ids = ['seg-ttt','seg-chess','seg-sudoku'];
-  ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
-  const map = { tictactoe:'seg-ttt', chess:'seg-chess', sudoku:'seg-sudoku' };
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+  const map = { tictactoe:'flt-ttt', chess:'flt-chess', sudoku:'flt-sudoku' };
   const el = document.getElementById(map[game]); if (el) el.classList.add('active');
   loadTables();
 }

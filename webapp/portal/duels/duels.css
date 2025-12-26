@@ -295,6 +295,29 @@ body::after {
   padding-right: 4px;
 }
 
+/* ========= FILTERS BAR ========= */
+.filters-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 8px 0 12px 0;
+}
+.filter-btn {
+  background: radial-gradient(circle at top left, #1e293b, #0f172a);
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  color: #e5e7eb;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.filter-btn:hover { border-color: rgba(139, 92, 246, 0.9); }
+.filter-btn.active {
+  background: radial-gradient(circle at 0 0, #8b5cf6, #7c3aed);
+  border-color: rgba(139, 92, 246, 0.9);
+}
+
 .tables-list::-webkit-scrollbar {
   width: 6px;
 }

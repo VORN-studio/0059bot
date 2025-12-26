@@ -62,11 +62,13 @@
           <div class="online-count">
             🟢 Օնլայն՝ <span id="online-count">0</span>
           </div>
-          <div class="segmented" style="margin-left:auto;">
-            <button id="seg-ttt" class="seg-btn active" onclick="setSelectedGame('tictactoe')">❌⭕</button>
-            <button id="seg-chess" class="seg-btn" onclick="setSelectedGame('chess')">♟️</button>
-            <button id="seg-sudoku" class="seg-btn" onclick="setSelectedGame('sudoku')">🔢</button>
-          </div>
+        </div>
+
+        <!-- FILTERS INSIDE LIST HEADER -->
+        <div class="filters-bar">
+          <button id="flt-ttt" class="filter-btn active" title="Tic-Tac-Toe" onclick="setSelectedGame('tictactoe')">❌⭕</button>
+          <button id="flt-chess" class="filter-btn" title="Շախմատ" onclick="setSelectedGame('chess')">♟️</button>
+          <button id="flt-sudoku" class="filter-btn" title="Սուդոկու" onclick="setSelectedGame('sudoku')">🔢</button>
         </div>
 
         <!-- TABLES LIST -->
