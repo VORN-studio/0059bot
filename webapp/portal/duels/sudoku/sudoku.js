@@ -158,7 +158,10 @@ function restartGame() {
 function toggleNotes(){
   notesMode = !notesMode;
   const btn = document.getElementById('notesToggle');
-  if (btn) btn.textContent = notesMode ? '✎ Նշումներ — ON' : '✎ Նշումներ';
+  if (btn) {
+    btn.textContent = notesMode ? '✎ Նշումներ — ON' : '✎ Նշումներ';
+    btn.classList.toggle('on', notesMode);
+  }
 }
 
 async function init() {
