@@ -262,6 +262,8 @@ async function init() {
   scheduleTurnTimer();
   if (onlineMode) {
     socket = io(API);
+    socket.emit('join_duels', { user_id: USER_ID });
+    socket.emit('join_user', { user_id: USER_ID });
     socket.emit('join_table', { table_id: TABLE_ID });
     const applyIncoming = (data)=>{
       if (data && data.table_id===TABLE_ID && data.from && data.to) {
@@ -273,6 +275,9 @@ async function init() {
     };
     socket.on('chess_move', applyIncoming);
     socket.on('opponent_move', applyIncoming);
+    socket.on('table_joined', (data)=>{
+      if (data && data.table_id===TABLE_ID) {}
+    });
     socket.on('game_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
         endGame(data.result||'lose');

@@ -295,11 +295,10 @@ async function confirmJoinTable() {
     if (js.success) {
         let extra = '';
         if (selectedGameType==='chess') {
-          let col = 'w';
+          let col = 'b';
           if (js.color) col = js.color;
           else if (js.table && js.table.color) col = js.table.color==='w' ? 'b' : 'w';
           else if (js.creator_color) col = js.creator_color==='w' ? 'b' : 'w';
-          else col = 'w';
           extra = `&color=${col}`;
         }
         window.location.href = `${API}/portal/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}${extra}`;
@@ -319,9 +318,7 @@ async function confirmJoinTable() {
     setTimeout(() => {
       let extra = '';
       if (selectedGameType==='chess') {
-        let col = 'w';
-        // Try to reuse last response cached on window (if we add later), else default to white
-        extra = `&color=${col}`;
+        extra = `&color=b`;
       }
       window.location.href = `${API}/portal/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}${extra}`;
     }, 1000);
