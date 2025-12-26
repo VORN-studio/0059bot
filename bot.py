@@ -6877,7 +6877,6 @@ def safe_go() -> str:
                             try {{ window.open(primary, '_blank'); }} catch (_e) {{ window.location.assign(primary); }}
                         }}
                     }}
-                    // no automatic direct fallback; use manual link/chooser if needed
                     setTimeout(function(){{
                         var ml = document.getElementById('manual-link');
                         if (ml) ml.style.display = 'inline-block';
