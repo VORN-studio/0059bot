@@ -60,6 +60,7 @@ function renderGrid() {
     if (r===0) cls += ' blk-t';
     if (c===0) cls += ' blk-l';
     d.className = cls;
+    d.id = `cell-${r}-${c}`;
     if (grid[r][c]) { d.textContent = grid[r][c]; }
     else if (candidates[r][c].size>0) {
       const cont = document.createElement('div');
@@ -86,9 +87,12 @@ function renderGrid() {
     b.className = 'btn num';
     b.style.margin = '2px';
     b.textContent = n;
+    b.setAttribute('data-num', String(n));
     b.onclick = () => placeNumber(n);
     nums.appendChild(b);
   }
+  updateNumbersUI();
+  updateProgressAndCounts();
 }
 
 function renderMistakes(){
@@ -134,6 +138,11 @@ function placeNumber(n) {
       mistakes++;
       renderMistakes();
       showStatus('Սխալ թիվ');
+      const errEl = document.getElementById(`cell-${r}-${c}`);
+      if (errEl) {
+        errEl.classList.add('error');
+        setTimeout(()=>{ errEl.classList.remove('error'); }, 600);
+      }
       if (onlineMode && socket) socket.emit('sudoku_mistake', { table_id: TABLE_ID, mistakes });
       if (mistakes>=MAX_MISTAKES) { endGame('lose'); if (onlineMode && socket) socket.emit('sudoku_over', { table_id: TABLE_ID, result:'lose' }); }
       return;
@@ -165,6 +174,7 @@ function endGame(result) {
   const st = document.getElementById('status');
   st.textContent = result==='win' ? '🎉 Հաղթեցիր' : '😔 Պարտվեցիր';
   document.getElementById('newGame').style.display='inline-block';
+  stopTimer();
 }
 
 function restartGame() {
@@ -172,6 +182,7 @@ function restartGame() {
   setupPuzzle(); renderGrid();
   document.getElementById('status').textContent='';
   document.getElementById('newGame').style.display='none';
+  startTimer(true);
 }
 
 function toggleNotes(){
@@ -183,11 +194,68 @@ function toggleNotes(){
   }
 }
 
+function updateNumbersUI(){
+  const nums = document.getElementById('numbers');
+  if (!nums) return;
+  const btns = Array.from(nums.querySelectorAll('.btn.num'));
+  if (!selected) {
+    btns.forEach(b=>{ b.classList.remove('disabled'); b.disabled=false; });
+    return;
+  }
+  const {r,c} = selected;
+  btns.forEach(b=>{
+    const n = Number(b.getAttribute('data-num')) || 0;
+    if (!n) { b.classList.remove('disabled'); b.disabled=false; return; }
+    const ok = validNumber(r,c,n);
+    b.classList.toggle('disabled', !ok);
+    b.disabled = !ok;
+  });
+}
+
+function updateProgressAndCounts(){
+  let filled = 0;
+  const counts = Array(10).fill(0);
+  for(let r=0;r<9;r++) for(let c=0;c<9;c++) { const v=grid[r][c]; if (v>0) { filled++; counts[v]++; } }
+  const pct = Math.round((filled/81)*100);
+  const bar = document.getElementById('progress-bar');
+  const txt = document.getElementById('progress-text');
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = pct + '%';
+  const nc = document.getElementById('numberCounts');
+  if (nc) {
+    nc.innerHTML = '';
+    for(let n=1;n<=9;n++) {
+      const div = document.createElement('div');
+      div.className = 'count';
+      div.textContent = `${n} — ${counts[n]}`;
+      nc.appendChild(div);
+    }
+  }
+}
+
+let timerStart = 0;
+let timerInterval = null;
+function startTimer(reset=false){
+  if (reset) timerStart = Date.now(); else if (!timerStart) timerStart = Date.now();
+  const el = document.getElementById('timer');
+  if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+  timerInterval = setInterval(()=>{
+    const ms = Date.now() - timerStart;
+    const m = Math.floor(ms/60000);
+    const s = Math.floor((ms%60000)/1000);
+    if (el) el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }, 250);
+}
+function stopTimer(){
+  if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+}
+
 async function init() {
   await loadBalance();
   setupPuzzle();
   renderGrid();
   renderMistakes();
+  startTimer(true);
   if (onlineMode) {
     socket = io(API);
     socket.emit('join_table', { table_id: TABLE_ID });

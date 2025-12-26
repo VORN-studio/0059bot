@@ -6,27 +6,35 @@
   <title>Sudoku | Domino</title>
   <link rel="stylesheet" href="/portal/duels/sudoku/sudoku.css"/>
 </head>
-<body>
-  <div class="container">
-    <div class="top">
-      <button class="btn back" onclick="goBack()">← Հետ</button>
-      <div>💎 <span id="domit-balance">0</span></div>
-    </div>
-    <h2 style="text-align:center;">🔢 Սուդոկու</h2>
-    <div id="mistakesInfo" class="turn"></div>
-    <div id="grid" class="grid"></div>
-    <div class="panel">
-      <div class="tools">
-        <button id="notesToggle" class="btn toggle" onclick="toggleNotes()">✎ Նշումներ</button>
+  <body>
+    <div class="container">
+      <div class="top">
+        <button class="btn back" onclick="goBack()">← Հետ</button>
+        <div>💎 <span id="domit-balance">0</span></div>
       </div>
-      <div id="numbers"></div>
+      <h2 style="text-align:center;">🔢 Սուդոկու</h2>
+      <div class="info-bar">
+        <div id="timer" class="badge">00:00</div>
+        <div id="progress" class="progress">
+          <div id="progress-bar" class="progress-bar" style="width:0%"></div>
+          <span id="progress-text" class="progress-text">0%</span>
+        </div>
+      </div>
+      <div id="mistakesInfo" class="turn"></div>
+      <div id="grid" class="grid"></div>
+      <div class="panel">
+        <div class="tools">
+          <button id="notesToggle" class="btn toggle" onclick="toggleNotes()">✎ Նշումներ</button>
+        </div>
+        <div id="numbers"></div>
+        <div id="numberCounts" class="counts"></div>
+      </div>
+      <div id="status" class="status"></div>
+      <div style="text-align:center; margin-top:10px;">
+        <button id="newGame" class="btn" style="display:none;" onclick="restartGame()">🔄 Նոր խաղ</button>
+      </div>
     </div>
-    <div id="status" class="status"></div>
-    <div style="text-align:center; margin-top:10px;">
-      <button id="newGame" class="btn" style="display:none;" onclick="restartGame()">🔄 Նոր խաղ</button>
-    </div>
-  </div>
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="/portal/duels/sudoku/sudoku.js"></script>
-</body>
-</html>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/portal/duels/sudoku/sudoku.js"></script>
+  </body>
+  </html>

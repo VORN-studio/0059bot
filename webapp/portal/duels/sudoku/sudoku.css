@@ -7,6 +7,7 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui}
 .cell.prefill{background:#334155;color:#cbd5e1}
 .cell.sel{outline:2px solid #8b5cf6; outline-offset:-2px}
 .cell.rel{background:#17233b}
+.cell.error{outline:2px solid #ef4444; outline-offset:-2px; box-shadow:0 0 0 1px rgba(239,68,68,.6)}
 .cell.blk-r{border-right:2px solid #475569}
 .cell.blk-b{border-bottom:2px solid #475569}
 .cell.blk-t{border-top:2px solid #475569}
@@ -17,6 +18,7 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui}
 #numbers{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
 #numbers .btn{background:#1e293b;color:#e5e7eb;border:1px solid #8b5cf6;border-radius:999px;padding:8px 12px;cursor:pointer; min-width:36px}
 #numbers .btn:hover{background:#253049}
+#numbers .btn.disabled{opacity:.45;border-color:#475569;cursor:not-allowed}
 .btn.toggle{background:radial-gradient(circle at 0 0,#8b5cf6,#7c3aed);border:1px solid rgba(139,92,246,.8);color:#f8fafc;border-radius:999px;padding:8px 14px;font-weight:600;box-shadow:0 8px 18px rgba(139,92,246,.35)}
 .btn.toggle.on{background:radial-gradient(circle at 0 0,#a78bfa,#8b5cf6);box-shadow:0 10px 22px rgba(139,92,246,.45)}
 .btn.toggle:active{transform:translateY(1px)}
@@ -24,5 +26,12 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui}
 .cell .notes{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:1px;width:100%;height:100%;padding:4px}
 .cell .notes span{font-size:10px;color:#64748b;display:flex;align-items:center;justify-content:center}
 .cell.same{background:#1a2740}
+
+.info-bar{display:flex;align-items:center;gap:8px;justify-content:space-between;margin:8px 0}
+.progress{position:relative;flex:1;height:10px;background:#0f1a2e;border:1px solid #334155;border-radius:999px;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,#8b5cf6,#7c3aed)}
+.progress-text{position:absolute;right:8px;top:-24px;font-size:12px;color:#cbd5e1}
+.counts{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-top:8px}
+.counts .count{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:6px 8px;font-size:12px;color:#cbd5e1}
 .status{text-align:center;margin-top:8px;font-size:13px}
 .turn{text-align:center;color:#94a3b8}
