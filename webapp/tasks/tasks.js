@@ -141,19 +141,13 @@ async function performTask(taskId) {
             if(btn) btn.textContent = "Կատարել → +" + task.reward;
 
             if (data.ok) {
-                // Prefer direct_url on Android/Chromium/Telegram WebView to avoid exe.io ad hijacks
-                const ua = navigator.userAgent || "";
-                const isAndroid = /Android/i.test(ua);
-                const isChromium = /Chrome|CriOS|Edg|YaBrowser|OPR/i.test(ua);
-                const isTelegramWV = !!(window.Telegram && window.Telegram.WebApp);
-                const preferDirect = isAndroid || isChromium || isTelegramWV;
-                const chosen = preferDirect ? data.direct_url : (data.short_url || data.direct_url);
-                if (!chosen) {
+                const shortU = data.short_url || "";
+                const directU = data.direct_url || "";
+                if (!shortU && !directU) {
                     alert("❌ Link generation failed. Try again.");
                     return;
                 }
-                // Construct safe redirect URL with tracking params
-                const safeUrl = `${window.location.origin}/safe_go?url=${encodeURIComponent(chosen)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}`;
+                const safeUrl = `${window.location.origin}/safe_go?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}`;
                 
                 // 2. Open external - Force external browser to avoid CSRF/cookie issues in Telegram Webview
                 if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {

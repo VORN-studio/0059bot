@@ -6771,14 +6771,19 @@ def api_exeio_test():
 
 @app_web.route("/safe_go", methods=["GET"])
 def safe_go() -> str:
-    target = request.args.get("url", "")
+    target_short = request.args.get("short", "")
+    target_direct = request.args.get("direct", "")
+    target_legacy = request.args.get("url", "")
+    display_target = target_short or target_direct or target_legacy
     uid = request.args.get("uid", "")
     task_id = request.args.get("task_id", "")
     try:
         import json
-        safe_js_target = json.dumps(target)
+        safe_js_short = json.dumps(target_short)
+        safe_js_direct = json.dumps(target_direct)
     except Exception:
-        safe_js_target = '""'
+        safe_js_short = '""'
+        safe_js_direct = '""'
     try:
         import json
         safe_js_uid = json.dumps(uid)
@@ -6803,8 +6808,8 @@ def safe_go() -> str:
             <button id=\"go-btn\" style=\"background:#0088cc; color:#fff; padding:15px 30px; border:none; border-radius:10px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow:0 4px 15px rgba(0,136,204,0.4);\">
                Start Task →
             </button>
-            <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {target[:30]}...</p>
-            <a id=\"manual-link\" href=\"{target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
+            <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {display_target[:30]}...</p>
+            <a id=\"manual-link\" href=\"{display_target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
             <div id=\"android-box\" style=\"display:none; margin-top:22px;\">
                 <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը Android-ում</p>
                 <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
@@ -6821,7 +6826,8 @@ def safe_go() -> str:
         <script>
             (function(){{
                 var btn = document.getElementById('go-btn');
-                var u = {safe_js_target};
+                var shortU = {safe_js_short};
+                var directU = {safe_js_direct};
                 var uid = {safe_js_uid};
                 var tid = {safe_js_tid};
                 var isAndroid = /Android/i.test(navigator.userAgent);
@@ -6841,7 +6847,7 @@ def safe_go() -> str:
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
                     try {{
-                        var payload = JSON.stringify({{ url: u, user_id: uid, task_id: tid, ts: Date.now() }});
+                        var payload = JSON.stringify({{ url: shortU || directU, user_id: uid, task_id: tid, ts: Date.now() }});
                         if (navigator.sendBeacon) {{
                             var blob = new Blob([payload], {{ type: 'application/json' }});
                             navigator.sendBeacon('/api/track_click', blob);
@@ -6849,13 +6855,14 @@ def safe_go() -> str:
                             fetch('/api/track_click', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: payload }});
                         }}
                     }} catch (_be) {{}}
+                    var primary = shortU || directU;
                     if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{
-                        try {{ window.Telegram.WebApp.openLink(u, {{ try_instant_view: false }}); }} catch(_tg) {{}}
+                        try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); }} catch(_tg) {{}}
                     }}
                     var opened = false;
                     try {{
                         var a = document.createElement('a');
-                        a.href = u; a.target = '_blank'; a.rel = 'noopener';
+                        a.href = primary; a.target = '_blank'; a.rel = 'noopener';
                         document.body.appendChild(a); a.click(); document.body.removeChild(a);
                         opened = true;
                     }} catch(__e) {{}}
@@ -6863,22 +6870,26 @@ def safe_go() -> str:
                         var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                         var launched = false;
                         for (var i=0; i<pkgs.length; i++) {{
-                            var link = getIntent(u, pkgs[i]);
+                            var link = getIntent(primary, pkgs[i]);
                             try {{ window.location.href = link; launched = true; break; }} catch(e){{}}
                         }}
                         if (!launched) {{
-                            var chooser = getIntent(u, '');
+                            var chooser = getIntent(primary, '');
                             try {{ window.location.href = chooser; }} catch(e){{}}
                             setTimeout(function(){{
                                 var box = document.getElementById('android-box'); if (box) box.style.display = 'block';
                             }}, 800);
                         }}
                     }} else {{
-                        try {{ window.open(u, '_blank'); }} catch (_e) {{ window.location.assign(u); }}
+                        try {{ window.open(primary, '_blank'); }} catch (_e) {{ window.location.assign(primary); }}
                     }}
                     setTimeout(function(){{
                         if (document.visibilityState === 'visible') {{
-                            try {{ window.location.href = u; }} catch(e){{}}
+                            if (shortU && directU) {{
+                                try {{ window.location.href = directU; }} catch(e){{}}
+                            }} else {{
+                                try {{ window.location.href = primary; }} catch(e){{}}
+                            }}
                         }}
                     }}, 800);
                     setTimeout(function(){{
@@ -6890,7 +6901,7 @@ def safe_go() -> str:
                 buttons.forEach(function(b){{
                     b.addEventListener('click', function(){{
                         var pkg = b.getAttribute('data-pkg') || '';
-                        var link = getIntent(u, pkg);
+                        var link = getIntent(shortU || directU, pkg);
                         if (link) {{ try {{ window.location.href = link; }} catch(e){{}} }}
                     }});
                 }});
