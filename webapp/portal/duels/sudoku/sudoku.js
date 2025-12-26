@@ -110,6 +110,7 @@ function renderMistakes(){
 
 function selectCell(r,c) {
   if (gameOver) return;
+  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
   selected = {r,c};
   renderGrid();
 }
@@ -138,6 +139,7 @@ function validNumberFinal(r,c,n){
 
 function placeNumber(n) {
   if (!selected || gameOver) return;
+  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
   const {r,c} = selected;
   if (fixed[r][c]) return;
   if (notesMode) {
@@ -169,6 +171,7 @@ function addMistake(){
 
 function clearCell(){
   if (!selected || gameOver) return;
+  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
   const {r,c} = selected;
   if (fixed[r][c]) return;
   grid[r][c] = 0;
@@ -205,6 +208,7 @@ function restartGame() {
 }
 
 function toggleNotes(){
+  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
   notesMode = !notesMode;
   const btn = document.getElementById('notesToggle');
   if (btn) {
@@ -228,6 +232,7 @@ function recomputeAllCandidates(){
 
 function useHint(){
   if (gameOver || !solution) return;
+  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
   for(let r=0;r<9;r++)for(let c=0;c<9;c++){
     if (grid[r][c]===0){
       grid[r][c]=solution[r][c];
@@ -359,7 +364,7 @@ function updateProgressAndCounts(){
       nc.appendChild(div);
     }
   }
-  if (onlineMode && socket) {
+  if (onlineMode && socket && bothJoined) {
     socket.emit('sudoku_progress', { table_id: TABLE_ID, percent: pct });
   }
 }
@@ -424,10 +429,11 @@ async function init() {
   await loadBalance();
   if (onlineMode) {
     socket = io(API);
+    socket.emit('join_user', { user_id: USER_ID });
     socket.emit('join_table', { table_id: TABLE_ID });
     await loadTableState();
     renderMistakes();
-    startTimer(true);
+    if (bothJoined) { startTimer(true); } else { const st = document.getElementById('status'); if (st) st.textContent = 'Սպասում ենք հակառակորդին…'; }
     resizeGrid();
     socket.on('table_joined', (data)=>{
       if (data && data.table_id===TABLE_ID) {
@@ -435,6 +441,8 @@ async function init() {
         opponentUsername = data.opponent_username || opponentUsername;
         const oppNameEl = document.getElementById('opponent-name');
         if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Հակառակորդ';
+        const st = document.getElementById('status'); if (st) st.textContent = '';
+        startTimer(true);
       }
     });
     socket.on('sudoku_over', (data)=>{
