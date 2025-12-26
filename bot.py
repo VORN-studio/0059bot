@@ -5802,64 +5802,73 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
             release_db(conn)
 
 async def start_bot_webhook():
-    """
-    Мы настраиваем Telegram в режиме веб-хука,
-    используя ту же логику, что и в боте VORN.
-    """
     global application
     print("🤖 Initializing Domino Telegram bot (Webhook Mode)...")
 
-    application = ApplicationBuilder().token(BOT_TOKEN).build()
-    application.add_handler(CommandHandler("start", start_cmd))
-    application.add_handler(CommandHandler("stats", stats_cmd))
-    application.add_handler(CallbackQueryHandler(btn_handler))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, block_text))
-    application.add_handler(CommandHandler("admin_add", admin_add))
-    application.add_handler(CommandHandler("admin_withdrawals", admin_withdrawals))
-    application.add_handler(CommandHandler("admin_approve", admin_approve))
-    application.add_handler(CommandHandler("admin_reject", admin_reject))
-    application.add_handler(CommandHandler("task_add_video", task_add_video))
-    application.add_handler(CommandHandler("task_add_follow", task_add_follow))
-    application.add_handler(CommandHandler("task_add_invite", task_add_invite))
-    application.add_handler(CommandHandler("task_add_game", task_add_game))
-    application.add_handler(CommandHandler("task_add_special", task_add_special))
-    application.add_handler(CommandHandler("task_list", task_list))
-    application.add_handler(CommandHandler("task_delete", task_delete))
-    application.add_handler(CommandHandler("task_toggle", task_toggle))
-    application.add_handler(CommandHandler("burn_stats", burn_stats))
-    application.add_handler(CommandHandler("burn_reward", burn_reward))
-    application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
-    application.add_handler(CommandHandler("init_domit_data", init_domit_data))
-    application.add_handler(CommandHandler("set_domit_range", set_domit_range))
-    application.add_handler(CommandHandler("admin_test_withdraw", admin_test_withdraw))
-    await application.initialize()
-    await application.start()
-
-    port = int(os.environ.get("PORT", "10000"))
-    webhook_override = os.getenv("WEBHOOK_URL", "").strip()
-    webhook_url = webhook_override or f"{BASE_URL}/webhook"
-
-    set_ok = False
-    for attempt in range(1, 6):
+    backoff = 5
+    while True:
         try:
-            await application.bot.delete_webhook(drop_pending_updates=True)
-            await application.bot.set_webhook(url=webhook_url)
-            set_ok = True
-            break
+            application = ApplicationBuilder().token(BOT_TOKEN).build()
+            application.add_handler(CommandHandler("start", start_cmd))
+            application.add_handler(CommandHandler("stats", stats_cmd))
+            application.add_handler(CallbackQueryHandler(btn_handler))
+            application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, block_text))
+            application.add_handler(CommandHandler("admin_add", admin_add))
+            application.add_handler(CommandHandler("admin_withdrawals", admin_withdrawals))
+            application.add_handler(CommandHandler("admin_approve", admin_approve))
+            application.add_handler(CommandHandler("admin_reject", admin_reject))
+            application.add_handler(CommandHandler("task_add_video", task_add_video))
+            application.add_handler(CommandHandler("task_add_follow", task_add_follow))
+            application.add_handler(CommandHandler("task_add_invite", task_add_invite))
+            application.add_handler(CommandHandler("task_add_game", task_add_game))
+            application.add_handler(CommandHandler("task_add_special", task_add_special))
+            application.add_handler(CommandHandler("task_list", task_list))
+            application.add_handler(CommandHandler("task_delete", task_delete))
+            application.add_handler(CommandHandler("task_toggle", task_toggle))
+            application.add_handler(CommandHandler("burn_stats", burn_stats))
+            application.add_handler(CommandHandler("burn_reward", burn_reward))
+            application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
+            application.add_handler(CommandHandler("init_domit_data", init_domit_data))
+            application.add_handler(CommandHandler("set_domit_range", set_domit_range))
+            application.add_handler(CommandHandler("admin_test_withdraw", admin_test_withdraw))
+
+            await application.initialize()
+            await application.start()
+
+            port = int(os.environ.get("PORT", "10000"))
+            webhook_override = os.getenv("WEBHOOK_URL", "").strip()
+            webhook_url = webhook_override or f"{BASE_URL}/webhook"
+
+            set_ok = False
+            for attempt in range(1, 6):
+                try:
+                    await application.bot.delete_webhook(drop_pending_updates=True, timeout=30)
+                    await application.bot.set_webhook(url=webhook_url, timeout=30)
+                    set_ok = True
+                    break
+                except Exception as e:
+                    print(f"⚠️ Webhook set failed (attempt {attempt}/5): {e}")
+                    try:
+                        await asyncio.sleep(10)
+                    except Exception:
+                        pass
+
+            if set_ok:
+                global BOT_READY
+                BOT_READY = True
+                print("🟢 BOT_READY = True")
+                print(f"✅ Webhook set to {webhook_url}")
+                return
+            else:
+                print(f"❌ Failed to set webhook to {webhook_url}. Set WEBHOOK_URL or BASE_URL to a public HTTPS domain.")
+                return
         except Exception as e:
-            print(f"⚠️ Webhook set failed (attempt {attempt}/5): {e}")
+            print(f"⚠️ Bot init failed: {e}")
             try:
-                await asyncio.sleep(10)
+                await asyncio.sleep(backoff)
             except Exception:
                 pass
-
-    if set_ok:
-        global BOT_READY
-        BOT_READY = True
-        print("🟢 BOT_READY = True")
-        print(f"✅ Webhook set to {webhook_url}")
-    else:
-        print(f"❌ Failed to set webhook to {webhook_url}. Set WEBHOOK_URL or BASE_URL to a public HTTPS domain.")
+            backoff = min(backoff * 2, 60)
 
 async def migrate_posts_cmd(update: Update, context):
     """Admin command to migrate posts media"""
