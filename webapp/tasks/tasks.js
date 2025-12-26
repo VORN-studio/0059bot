@@ -140,9 +140,15 @@ async function performTask(taskId) {
             
             if(btn) btn.textContent = "Կատարել → +" + task.reward;
 
-            if (data.ok && data.url) {
+            if (data.ok) {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const chosen = (isMobile && data.direct_url) ? data.direct_url : (data.short_url || data.direct_url);
+                if (!chosen) {
+                    alert("❌ Link generation failed. Try again.");
+                    return;
+                }
                 // Construct safe redirect URL with tracking params
-                const safeUrl = `${window.location.origin}/safe_go?url=${encodeURIComponent(data.url)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}`;
+                const safeUrl = `${window.location.origin}/safe_go?url=${encodeURIComponent(chosen)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}`;
                 
                 // 2. Open external - Force external browser to avoid CSRF/cookie issues in Telegram Webview
                 if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {

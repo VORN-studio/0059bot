@@ -6520,16 +6520,13 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
             final_url = url + "&" + params
         else:
             final_url = url + "?" + params
-        u_b64 = base64.urlsafe_b64encode(final_url.encode()).decode()
-        success_url = f"{BASE_URL}/exeio/complete?uid={{user_id}}&task_id={{task_id}}&u={u_b64}"
-        short_url = exeio_shorten(success_url) or success_url
 
     now = int(time.time())
     conn = db(); c = conn.cursor()
     c.execute("""
         INSERT INTO dom_tasks (title, description, url, reward, category, is_active, created_at)
         VALUES (%s, %s, %s, %s, %s, TRUE, %s)
-    """, (title, desc, short_url, reward, category, now))
+    """, (title, desc, final_url, reward, category, now))
     conn.commit()
     release_db(conn)
 
@@ -6884,14 +6881,9 @@ def api_task_generate_link():
     
     # Shorten the callback URL
     short_url = exeio_shorten(callback_url)
-    
-    if not short_url:
-        # Fallback: if shortening fails, just return the callback URL (no ads, but works)
-        # OR return error. Let's return callback to ensure user can at least complete it?
-        # No, the point is to earn money. Return error.
-        return jsonify({"ok": False, "error": "shortener_failed"}), 500
 
-    return jsonify({"ok": True, "url": short_url})
+    # Always return both: exe.io short and direct callback
+    return jsonify({"ok": True, "short_url": short_url, "direct_url": callback_url})
 
 @app_web.route("/exeio/complete")
 def exeio_complete():
