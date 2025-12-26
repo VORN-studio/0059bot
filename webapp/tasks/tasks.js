@@ -131,12 +131,17 @@ function performTask(taskId) {
             .replace("{task_id}", String(taskId));
         try {
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-                window.Telegram.WebApp.openLink(realUrl);
+                window.Telegram.WebApp.openLink(realUrl, { try_instant_view: false });
             } else {
-                window.open(realUrl, "_blank");
+                window.open(realUrl, "_blank", "noopener,noreferrer");
             }
         } catch (e) {
-            window.open(realUrl, "_blank");
+            try {
+                navigator.clipboard.writeText(realUrl);
+                alert("Հղումը պատճենվեց։ Բացի՛ր արտաքին բրաուզերում և տեղադրի՛ր.");
+            } catch (_) {
+                window.open(realUrl, "_blank", "noopener,noreferrer");
+            }
         }
     }
 
