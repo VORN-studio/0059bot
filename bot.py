@@ -6316,6 +6316,7 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("task_list", task_list))
             application.add_handler(CommandHandler("task_delete", task_delete))
             application.add_handler(CommandHandler("task_toggle", task_toggle))
+            application.add_handler(CommandHandler("task_shorten", task_shorten))
             application.add_handler(CommandHandler("burn_stats", burn_stats))
             application.add_handler(CommandHandler("burn_reward", burn_reward))
             application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
@@ -6503,6 +6504,35 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
 
     await update.message.reply_text(f"✔ Добавлена ​​задача `{category}` в отделе.")
 
+
+async def task_shorten(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
+        return
+    if len(context.args) != 1:
+        await update.message.reply_text("Использование՝ /task_shorten ID")
+        return
+    task_id = int(context.args[0])
+    conn = db(); c = conn.cursor()
+    c.execute("SELECT id, url FROM dom_tasks WHERE id=%s", (task_id,))
+    row = c.fetchone()
+    if not row:
+        release_db(conn)
+        await update.message.reply_text("❌ Задача отсутствует.")
+        return
+    old_url = row[1]
+    import urllib.parse
+    u_b64 = base64.urlsafe_b64encode((old_url or "").encode()).decode()
+    success_url = f"{BASE_URL}/exeio/complete?uid={{user_id}}&task_id={{task_id}}&u={u_b64}"
+    short = exeio_shorten(success_url)
+    if not short:
+        release_db(conn)
+        await update.message.reply_text("❌ exe.io не вернул короткую ссылку.")
+        return
+    c.execute("UPDATE dom_tasks SET url=%s WHERE id=%s", (short, task_id))
+    conn.commit(); release_db(conn)
+    await update.message.reply_text(f"✅ Task {task_id} сокращен: {short}")
 
 
 @app_web.route("/webhook", methods=["POST"])
