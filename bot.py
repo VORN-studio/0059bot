@@ -5415,6 +5415,16 @@ def fetch_ton_rate():
         return None
 
 def exeio_shorten(target_url: str) -> Optional[str]:
+    global EXEIO_API_KEY
+    if not EXEIO_API_KEY:
+        print("⚠️ EXEIO_API_KEY missing initially. Attempting to reload .env...")
+        try:
+            from dotenv import load_dotenv
+            load_dotenv(override=True)
+            EXEIO_API_KEY = os.getenv("EXEIO_API_KEY", "").strip()
+        except Exception as e:
+            print(f"⚠️ Error reloading .env: {e}")
+
     if not EXEIO_API_KEY:
         print("❌ EXEIO_API_KEY is missing! Cannot shorten link.")
         return None
