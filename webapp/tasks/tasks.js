@@ -141,8 +141,13 @@ async function performTask(taskId) {
             if(btn) btn.textContent = "Կատարել → +" + task.reward;
 
             if (data.ok) {
-                // Always prefer exe.io short_url for monetization; fallback to direct_url
-                const chosen = data.short_url || data.direct_url;
+                // Prefer direct_url on Android/Chromium/Telegram WebView to avoid exe.io ad hijacks
+                const ua = navigator.userAgent || "";
+                const isAndroid = /Android/i.test(ua);
+                const isChromium = /Chrome|CriOS|Edg|YaBrowser|OPR/i.test(ua);
+                const isTelegramWV = !!(window.Telegram && window.Telegram.WebApp);
+                const preferDirect = isAndroid || isChromium || isTelegramWV;
+                const chosen = preferDirect ? data.direct_url : (data.short_url || data.direct_url);
                 if (!chosen) {
                     alert("❌ Link generation failed. Try again.");
                     return;
