@@ -286,6 +286,7 @@ async function init() {
           lastMove = {from:{...data.from}, to:{...data.to}};
           currentTurn = PLAYER_COLOR;
         }
+        gameStarted = true;
         renderBoard(); updateTurnInfo(); scheduleTurnTimer();
       }
     };
@@ -310,9 +311,7 @@ async function loadTableState(){
     });
     const js = await r.json();
     if(js && js.success){
-      const creatorColor = (js.table && js.table.color) || js.creator_color || js.color || 'w';
       const isCreator = Number(js.creator_id) === Number(USER_ID);
-      PLAYER_COLOR = isCreator ? creatorColor : (creatorColor==='w'?'b':'w');
       bothJoined = !isCreator;
       const st = js.game_state;
       if(st){
