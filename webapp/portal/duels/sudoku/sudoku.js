@@ -48,32 +48,39 @@ function setupPuzzle() {
 function renderGrid() {
   const el = document.getElementById('grid');
   el.innerHTML = '';
-  for (let r=0;r<9;r++) for (let c=0;c<9;c++) {
-    const d = document.createElement('div');
-    let cls = 'cell' + (fixed[r][c]?' prefill':'');
-    if (selected && selected.r===r && selected.c===c) cls += ' sel';
-    if (selected && (selected.r===r || selected.c===c || (Math.floor(selected.r/3)===Math.floor(r/3) && Math.floor(selected.c/3)===Math.floor(c/3)))) cls += ' rel';
-    const selVal = selected ? grid[selected.r][selected.c] : 0;
-    if (selVal && grid[r][c]===selVal) cls += ' same';
-    if (c%3===2) cls += ' blk-r';
-    if (r%3===2) cls += ' blk-b';
-    if (r===0) cls += ' blk-t';
-    if (c===0) cls += ' blk-l';
-    d.className = cls;
-    d.id = `cell-${r}-${c}`;
-    if (grid[r][c]) { d.textContent = grid[r][c]; }
-    else if (candidates[r][c].size>0) {
-      const cont = document.createElement('div');
-      cont.className = 'notes';
-      for (let nn=1; nn<=9; nn++) {
-        const s = document.createElement('span');
-        s.textContent = candidates[r][c].has(nn) ? nn : '';
-        cont.appendChild(s);
+  for (let br=0;br<3;br++) {
+    for (let bc=0;bc<3;bc++) {
+      const block = document.createElement('div');
+      block.className = 'block';
+      for (let rr=0; rr<3; rr++) {
+        for (let cc=0; cc<3; cc++) {
+          const r = br*3 + rr;
+          const c = bc*3 + cc;
+          const d = document.createElement('div');
+          let cls = 'cell' + (fixed[r][c]?' prefill':'');
+          if (selected && selected.r===r && selected.c===c) cls += ' sel';
+          if (selected && (selected.r===r || selected.c===c || (Math.floor(selected.r/3)===Math.floor(r/3) && Math.floor(selected.c/3)===Math.floor(c/3)))) cls += ' rel';
+          const selVal = selected ? grid[selected.r][selected.c] : 0;
+          if (selVal && grid[r][c]===selVal) cls += ' same';
+          d.className = cls;
+          d.id = `cell-${r}-${c}`;
+          if (grid[r][c]) { d.textContent = grid[r][c]; }
+          else if (candidates[r][c].size>0) {
+            const cont = document.createElement('div');
+            cont.className = 'notes';
+            for (let nn=1; nn<=9; nn++) {
+              const s = document.createElement('span');
+              s.textContent = candidates[r][c].has(nn) ? nn : '';
+              cont.appendChild(s);
+            }
+            d.appendChild(cont);
+          }
+          d.onclick = () => selectCell(r,c);
+          block.appendChild(d);
+        }
       }
-      d.appendChild(cont);
+      el.appendChild(block);
     }
-    d.onclick = () => selectCell(r,c);
-    el.appendChild(d);
   }
   const nums = document.getElementById('numbers');
   nums.innerHTML = '';
