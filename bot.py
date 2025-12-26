@@ -94,7 +94,7 @@ BOT_TOKEN = "8419124438:AAEjbuv8DtIb8GdmuBP5SKGtWs48qFEl1hc"
 BASE_URL = "https://domino-play.online"
 EXEIO_API_URL = "https://exe.io/api"
 EXEIO_API_KEY = "dc6e9d1f2d6a8a2be6ceda101464bd97051025a7"
-DATABASE_URL = "postgresql://domino_user:NaReK150503%23@localhost:5432/domin"
+DATABASE_URL = "postgresql://domino_user:NaReK150503%23@localhost:5432/domino"
 ADMIN_IDS = {5274439601} 
 ADMIN_SECRET = os.getenv("ADMIN_SECRET", "").strip()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -5394,12 +5394,21 @@ from flask import request
 def fetch_ton_rate():
     try:
         print("🌐 Calling tonapi.io ...")
+        # Added sleep to avoid immediate retry spam in logs if called frequently
         r = requests.get(TON_RATE_URL, timeout=10)
+        
+        if r.status_code == 429:
+             print("⚠️ TON API rate limit reached (429). Skipping update.")
+             return None
 
         print("📦 API status:", r.status_code)
-        print("📦 API raw body:", r.text)
+        # print("📦 API raw body:", r.text) # Reduced log spam
 
         data = r.json()
+        if "rates" not in data or "TON" not in data["rates"]:
+             print("⚠️ Unexpected TON API response format.")
+             return None
+             
         rate = float(data["rates"]["TON"]["prices"]["USD"])
         print("📊 Parsed rate:", rate)
         return rate
