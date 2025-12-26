@@ -6856,17 +6856,7 @@ def safe_go() -> str:
                         }}
                     }} catch (_be) {{}}
                     var primary = shortU || directU;
-                    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{
-                        try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); }} catch(_tg) {{}}
-                    }}
-                    var opened = false;
-                    try {{
-                        var a = document.createElement('a');
-                        a.href = primary; a.target = '_blank'; a.rel = 'noopener';
-                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                        opened = true;
-                    }} catch(__e) {{}}
-                    if (isAndroid && !opened) {{
+                    if (isAndroid) {{
                         var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                         var launched = false;
                         for (var i=0; i<pkgs.length; i++) {{
@@ -6881,7 +6871,11 @@ def safe_go() -> str:
                             }}, 800);
                         }}
                     }} else {{
-                        try {{ window.open(primary, '_blank'); }} catch (_e) {{ window.location.assign(primary); }}
+                        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{
+                            try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); }} catch(_tg) {{}}
+                        }} else {{
+                            try {{ window.open(primary, '_blank'); }} catch (_e) {{ window.location.assign(primary); }}
+                        }}
                     }}
                     setTimeout(function(){{
                         if (document.visibilityState === 'visible') {{
