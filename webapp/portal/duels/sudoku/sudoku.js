@@ -182,10 +182,12 @@ function endGame(result) {
 
 function restartGame() {
   gameOver = false; selected=null;
+  mistakes = 0;
   setupPuzzle(); renderGrid();
   document.getElementById('status').textContent='';
   document.getElementById('newGame').style.display='none';
   startTimer(true);
+  renderMistakes();
 }
 
 function toggleNotes(){
@@ -369,9 +371,9 @@ function resizeGrid(){
   const cont = document.querySelector('.container');
   if (!cont) return;
   const available = cont.clientWidth - 16;
-  const fixedPaddingAndGaps = 64;
+  const fixedPaddingAndGaps = 76; // include borders/paddings/gaps
   let cell = Math.floor((available - fixedPaddingAndGaps) / 9);
-  cell = Math.max(26, Math.min(52, cell));
+  cell = Math.max(22, Math.min(46, cell));
   document.documentElement.style.setProperty('--cell9', `${cell}px`);
 }
 
