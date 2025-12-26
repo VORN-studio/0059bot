@@ -129,7 +129,15 @@ function performTask(taskId) {
         const realUrl = task.url
             .replace("{user_id}", uid)
             .replace("{task_id}", String(taskId));
-        window.open(realUrl, "_blank");
+        try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                window.Telegram.WebApp.openLink(realUrl);
+            } else {
+                window.open(realUrl, "_blank");
+            }
+        } catch (e) {
+            window.open(realUrl, "_blank");
+        }
     }
 
     // Attempt register

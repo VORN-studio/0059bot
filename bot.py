@@ -95,7 +95,7 @@ if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN env var is missing")
 
 BASE_URL = os.getenv("BASE_URL", "https://domino-play.online").strip()
-EXEIO_API_URL = os.getenv("EXEIO_API_URL", "https://exe.io/st").strip()
+EXEIO_API_URL = os.getenv("EXEIO_API_URL", "https://exe.io/api").strip()
 EXEIO_API_KEY = os.getenv("EXEIO_API_KEY", "").strip()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
@@ -5421,11 +5421,12 @@ def exeio_shorten(target_url: str) -> Optional[str]:
         import urllib.parse
         req = f"{EXEIO_API_URL}?api={EXEIO_API_KEY}&url={urllib.parse.quote_plus(target_url)}&format=json"
         resp = requests.get(req, timeout=10)
+        print(f"EXEIO shorten status={resp.status_code} body={resp.text[:300]}")
         short = None
         try:
             js = resp.json()
             if isinstance(js, dict):
-                for k in ("shortenedUrl", "shortened_url", "shortenUrl", "result_url", "short"):
+                for k in ("shortenedUrl", "shortened_url", "shortenUrl", "result_url", "short", "short_url", "url"):
                     v = js.get(k)
                     if v:
                         short = str(v)
@@ -6690,6 +6691,23 @@ def api_task_attempt_create():
     release_db(conn)
 
     return jsonify({"ok": True})
+
+@app_web.route("/api/exeio/test")
+def api_exeio_test():
+    uid = request.args.get("uid", type=int) or 123
+    task_id = request.args.get("task_id", type=int) or 1
+    base_target = request.args.get("target", "https://example.com")
+    import urllib.parse
+    params = "s1={user_id}&s2={task_id}&subid1={user_id}&subid2={task_id}"
+    parsed = urllib.parse.urlparse(base_target)
+    if parsed.query:
+        final_url = base_target + "&" + params
+    else:
+        final_url = base_target + "?" + params
+    u_b64 = base64.urlsafe_b64encode(final_url.encode()).decode()
+    success_url = f"{BASE_URL}/exeio/complete?uid={uid}&task_id={task_id}&u={u_b64}"
+    short = exeio_shorten(success_url)
+    return jsonify({"ok": True, "api_url": EXEIO_API_URL, "short": short, "success_url": success_url})
 
 @app_web.route("/exeio/complete")
 def exeio_complete():
