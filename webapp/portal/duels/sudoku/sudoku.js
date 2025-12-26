@@ -489,8 +489,8 @@ function resizeGrid(){
   const cont = document.querySelector('.container');
   if (!cont) return;
   const vw = Math.min(window.innerWidth || cont.clientWidth, cont.clientWidth);
-  const available = vw - 16;
-  const fixed = 70;
+  const available = vw - 24;
+  const fixed = 98; // 3 blocks × padding/border/inner gaps + outer gaps
   let cell = Math.floor((available - fixed) / 9);
   cell = Math.max(18, Math.min(40, cell));
   document.documentElement.style.setProperty('--cell9', `${cell}px`);
