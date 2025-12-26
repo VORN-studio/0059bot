@@ -314,7 +314,23 @@ function updateNumbersUI(){
   const nums = document.getElementById('numbers');
   if (!nums) return;
   const btns = Array.from(nums.querySelectorAll('.btn.num'));
-  btns.forEach(b=>{ b.classList.remove('disabled'); b.disabled=false; });
+  const counts = Array(10).fill(0);
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){ const v=grid[r][c]; if(v>0) counts[v]++; }
+  const validPlacements = Array(10).fill(0);
+  for(let n=1;n<=9;n++){
+    let vp=0;
+    for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+      if(grid[r][c]===0 && validNumber(r,c,n)) vp++;
+    }
+    validPlacements[n]=vp;
+  }
+  btns.forEach(b=>{
+    const n = Number(b.getAttribute('data-num')) || 0;
+    if(!n){ b.classList.remove('hidden'); b.classList.remove('disabled'); b.disabled=false; return; }
+    const hide = counts[n] >= 9 || validPlacements[n] === 0;
+    b.classList.toggle('hidden', hide);
+    b.classList.remove('disabled'); b.disabled=false;
+  });
 }
 
 function updateProgressAndCounts(){

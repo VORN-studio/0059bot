@@ -16,6 +16,12 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui; overflow-x:hidden}
 .panel{text-align:center;margin-top:10px}
 #notesToggle.toggle{margin-bottom:8px}
 .tools{display:flex;justify-content:center;margin-bottom:6px}
+#newGame{background:radial-gradient(circle at 0 0,#8b5cf6,#7c3aed);border:1px solid rgba(139,92,246,.85);color:#f8fafc;border-radius:999px;padding:10px 16px;font-weight:700;box-shadow:0 10px 22px rgba(139,92,246,.45);cursor:pointer}
+#newGame:hover{background:radial-gradient(circle at 0 0,#a78bfa,#8b5cf6)}
+#newGame:active{transform:translateY(1px)}
+.status{margin-top:8px;text-align:center;font-weight:700}
+.status.win{color:#a78bfa}
+.status.lose{color:#ef4444}
 #difficulty{appearance:none;-webkit-appearance:none;background:radial-gradient(circle at 0 0,#8b5cf6,#7c3aed);border:1px solid rgba(139,92,246,.8);color:#f8fafc;border-radius:999px;padding:8px 14px;font-weight:600;box-shadow:0 8px 18px rgba(139,92,246,.35);cursor:pointer}
 #difficulty:hover{background:radial-gradient(circle at 0 0,#a78bfa,#8b5cf6)}
 #difficulty:focus{outline:none;box-shadow:0 0 0 2px rgba(139,92,246,.6)}
@@ -23,6 +29,7 @@ body{background:#0f172a;color:#e5e7eb;font-family:system-ui; overflow-x:hidden}
 #numbers{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
 #numbers .btn{background:#1e293b;color:#e5e7eb;border:1px solid #8b5cf6;border-radius:999px;padding:8px 12px;cursor:pointer; min-width:36px}
 #numbers .btn:hover{background:#253049}
+#numbers .btn.hidden{display:none}
 #numbers .btn.disabled{opacity:.45;border-color:#475569;cursor:not-allowed}
 .btn.toggle{background:radial-gradient(circle at 0 0,#8b5cf6,#7c3aed);border:1px solid rgba(139,92,246,.8);color:#f8fafc;border-radius:999px;padding:8px 14px;font-weight:600;box-shadow:0 8px 18px rgba(139,92,246,.35)}
 .btn.toggle.on{background:radial-gradient(circle at 0 0,#a78bfa,#8b5cf6);box-shadow:0 10px 22px rgba(139,92,246,.45)}
