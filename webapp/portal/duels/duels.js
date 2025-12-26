@@ -79,7 +79,7 @@ function connectWebSocket() {
   });
 }
 
-// ================= LOAD TABLES =================
+// ================= LOAD TABLESS =================
 
 async function loadTables() {
   try {
