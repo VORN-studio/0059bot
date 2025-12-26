@@ -243,7 +243,7 @@ function scheduleTurnTimer() {
     const s = Math.ceil(left/1000);
     el.textContent = `Քո հերթն է — ${s}վրկ`;
   }, 250);
-  turnTimeoutId = setTimeout(() => { endGame('lose'); }, 30000);
+  turnTimeoutId = setTimeout(onTurnTimeout, 30000);
 }
 
 function endGame(result) {
@@ -253,6 +253,25 @@ function endGame(result) {
   if (result==='win') st.textContent = '🎉 Հաղթեցիր';
   else st.textContent = '😔 Պարտվեցիր (ժամանակ)';
   document.getElementById('newGame').style.display = 'inline-block';
+}
+
+async function onTurnTimeout() {
+  clearTurnTimers();
+  if (!onlineMode || gameOver) { endGame('lose'); return; }
+  try {
+    const r = await fetch(`${API}/api/duels/forfeit`, {
+      method: 'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ table_id: TABLE_ID, user_id: USER_ID })
+    });
+    const js = await r.json();
+    if (js && js.success) {
+      endGame('lose');
+    } else {
+      endGame('lose');
+    }
+  } catch (e) {
+    endGame('lose');
+  }
 }
 
 function restartGame() {

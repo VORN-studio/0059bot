@@ -1399,6 +1399,7 @@ def api_duels_create_table():
         user_id = data.get('user_id')
         bet = float(data.get('bet', 0))
         game_type = data.get('game_type', 'tictactoe')
+        color = (data.get('color') or 'w') if game_type == 'chess' else None
 
         if bet <= 0:
             return jsonify({"success": False, "message": "Сумма должна быть больше 0."}), 400
@@ -1420,14 +1421,30 @@ def api_duels_create_table():
         username = row[0] if row else "User"
         new_balance = float(row[1]) if row else 0.0
 
-        # Create table with BIGINT timestamp
+        # Initial game state
+        import json
         now = int(time.time())
+        if game_type == 'chess':
+            initial_state = json.dumps({
+                'type': 'chess',
+                'creator_color': color or 'w',
+                'turn': 'w',
+                'last_move': None
+            })
+        else:
+            initial_state = json.dumps({
+                'board': [''] * 9,
+                'turn': 'X',
+                'rounds': {'x': 0, 'o': 0, 'current': 1}
+            })
+
+        # Create table with BIGINT timestamp and initial state
         c.execute("""
             INSERT INTO dom_duels_tables 
-            (game_type, creator_id, creator_username, bet, status, created_at)
-            VALUES (%s, %s, %s, %s, 'waiting', %s)
+            (game_type, creator_id, creator_username, bet, status, game_state, created_at)
+            VALUES (%s, %s, %s, %s, 'waiting', %s, %s)
             RETURNING id
-        """, (game_type, user_id, username, bet, now))
+        """, (game_type, user_id, username, bet, initial_state, now))
 
         table_id = c.fetchone()[0]
         conn.commit()
@@ -1436,7 +1453,8 @@ def api_duels_create_table():
         return jsonify({
             "success": True,
             "table_id": table_id,
-            "new_balance": new_balance
+            "new_balance": new_balance,
+            "creator_color": color if game_type == 'chess' else None
         })
     
     except ValueError as e:
@@ -1464,7 +1482,7 @@ def api_duels_join_table():
 
         # Get table info
         c.execute("""
-            SELECT creator_id, bet, status, creator_username
+            SELECT creator_id, bet, status, creator_username, game_type, game_state
             FROM dom_duels_tables
             WHERE id=%s
         """, (table_id,))
@@ -1474,7 +1492,7 @@ def api_duels_join_table():
             release_db(conn)
             return jsonify({"success": False, "message": "Սեղանը չի գտնվել"}), 400
 
-        creator_id, bet, status, creator_username = table_row
+        creator_id, bet, status, creator_username, game_type, game_state = table_row
 
         if status != 'waiting':
             release_db(conn)
@@ -1484,22 +1502,13 @@ def api_duels_join_table():
             release_db(conn)
             return jsonify({"success": True, "is_owner": True})
 
-        # Հիմա ենք թարմացնում բազան, երբ ստուգումներն անցան
-        # Ստեղծում ենք խաղի սկզբնական վիճակը
-        import json
-        initial_state = json.dumps({
-            'board': [''] * 9,
-            'turn': 'X',
-            'rounds': {'x': 0, 'o': 0, 'current': 1}
-        })
-
-        # Գրանցում ենք հակառակորդին և լցնում game_state-ը
+        # Register opponent and start the game (do NOT override existing game_state)
         c.execute("""
             UPDATE dom_duels_tables
-            SET opponent_id=%s, status='playing', game_state=%s,
+            SET opponent_id=%s, status='playing',
                 opponent_username=(SELECT username FROM dom_users WHERE user_id=%s)
             WHERE id=%s AND status='waiting'
-        """, (user_id, initial_state, user_id, table_id))
+        """, (user_id, user_id, table_id))
         conn.commit()
 
         if int(creator_id) == int(user_id):
@@ -1548,11 +1557,24 @@ def api_duels_join_table():
         socketio.emit('table_joined', payload, room=f'user_{creator_id}')
         socketio.emit('table_joined', payload, room='duels_room')
 
-        return jsonify({
+        # Compute colors for chess
+        resp = {
             "success": True,
             "new_balance": new_balance,
             "creator_username": creator_username
-        })
+        }
+        try:
+            if game_type == 'chess':
+                import json
+                st = json.loads(game_state) if isinstance(game_state, str) else (game_state or {})
+                creator_color = st.get('creator_color', 'w')
+                joiner_color = 'b' if creator_color == 'w' else 'w'
+                resp["creator_color"] = creator_color
+                resp["color"] = joiner_color
+        except Exception:
+            pass
+
+        return jsonify(resp)
     
     except ValueError as e:
         if str(e) == "low_balance":
@@ -1606,7 +1628,7 @@ def api_duels_make_move():
         c = conn.cursor()
         c.execute(
             """
-            SELECT game_state, creator_id, opponent_id, status, bet
+            SELECT game_state, creator_id, opponent_id, status, bet, game_type
             FROM dom_duels_tables 
             WHERE id=%s
             """,
@@ -1618,14 +1640,42 @@ def api_duels_make_move():
             release_db(conn)
             return jsonify({"success": False, "message": "Таблица не найдена"}), 400
 
-        game_state, creator_id, opponent_id, status, bet = row
+        game_state, creator_id, opponent_id, status, bet, game_type = row
 
         if status != 'playing':
             release_db(conn)
             return jsonify({"success": False, "message": "Игра ещё не началась или не закончилась."}), 400
 
         import json, random
-        state = json.loads(game_state) if isinstance(game_state, str) else game_state
+        state = json.loads(game_state) if isinstance(game_state, str) else (game_state or {})
+
+        if game_type == 'chess':
+            creator_color = state.get('creator_color', 'w')
+            my_color = creator_color if int(user_id) == int(creator_id) else ('b' if creator_color == 'w' else 'w')
+            turn = state.get('turn', 'w')
+            if turn != my_color:
+                release_db(conn)
+                return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+
+            last_move = move
+            next_turn = 'b' if my_color == 'w' else 'w'
+            new_state = {**state, 'last_move': last_move, 'turn': next_turn}
+
+            c.execute(
+                """
+                UPDATE dom_duels_tables
+                SET game_state=%s
+                WHERE id=%s
+                """,
+                (json.dumps(new_state), table_id),
+            )
+            conn.commit()
+            release_db(conn)
+            opponent = opponent_id if int(user_id) == int(creator_id) else creator_id
+            socketio.emit('opponent_move', {'table_id': table_id, 'from': move.get('from'), 'to': move.get('to'), 'game_state': new_state}, room=f'user_{opponent}')
+            return jsonify({"success": True, "game_state": new_state})
+
+        # tic-tac-toe logic (default)
         board = state.get('board', [''] * 9)
         turn = state.get('turn', 'X')
         player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
@@ -1815,7 +1865,7 @@ def api_duels_get_table_state():
         c = conn.cursor()
         c.execute("""
             SELECT game_state, status, creator_id, opponent_id, 
-                   creator_username, opponent_username, winner_id, bet
+                   creator_username, opponent_username, winner_id, bet, game_type
             FROM dom_duels_tables 
             WHERE id=%s
         """, (table_id,))
@@ -1827,6 +1877,13 @@ def api_duels_get_table_state():
 
         import json
         game_state = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+        game_type = row[8]
+        color = None
+        try:
+            if game_type == 'chess' and isinstance(game_state, dict):
+                color = game_state.get('creator_color', 'w')
+        except Exception:
+            color = None
         
         release_db(conn)
         
@@ -1839,7 +1896,10 @@ def api_duels_get_table_state():
             "creator_username": row[4],
             "opponent_username": row[5],
             "winner_id": row[6],
-            "bet": float(row[7])
+            "bet": float(row[7]),
+            "game_type": game_type,
+            "creator_color": color,
+            "color": color
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -1871,7 +1931,7 @@ def api_duels_forfeit():
         c = conn.cursor()
         c.execute(
             """
-            SELECT game_state, creator_id, opponent_id, status, bet
+            SELECT game_state, creator_id, opponent_id, status, bet, game_type
             FROM dom_duels_tables
             WHERE id=%s
             """,
@@ -1883,22 +1943,29 @@ def api_duels_forfeit():
             release_db(conn)
             return jsonify({"success": False, "message": "Տախտակ չի գտնվել"}), 400
 
-        game_state, creator_id, opponent_id, status, bet = row
+        game_state, creator_id, opponent_id, status, bet, game_type = row
 
         if status != 'playing':
             release_db(conn)
             return jsonify({"success": False, "message": "Խաղը չի գտնվում ակտիվ փուլում"}), 400
 
         import json
-        state = json.loads(game_state) if isinstance(game_state, str) else game_state
-        turn = state.get('turn', 'X')
-        player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
-
-        if turn != player_symbol:
-            release_db(conn)
-            return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
-
-        winner_id = opponent_id if int(user_id) == int(creator_id) else creator_id
+        state = json.loads(game_state) if isinstance(game_state, str) else (game_state or {})
+        if game_type == 'chess':
+            creator_color = state.get('creator_color', 'w')
+            my_color = creator_color if int(user_id) == int(creator_id) else ('b' if creator_color == 'w' else 'w')
+            turn = state.get('turn', 'w')
+            if turn != my_color:
+                release_db(conn)
+                return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+            winner_id = opponent_id if int(user_id) == int(creator_id) else creator_id
+        else:
+            turn = state.get('turn', 'X')
+            player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
+            if turn != player_symbol:
+                release_db(conn)
+                return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+            winner_id = opponent_id if int(user_id) == int(creator_id) else creator_id
         now = int(time.time())
 
         c.execute(

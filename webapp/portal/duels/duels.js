@@ -315,13 +315,7 @@ async function confirmJoinTable() {
 
     showStatus("✅ Вы присоединились к столу. Игра начинается.…");
 
-    setTimeout(() => {
-      let extra = '';
-      if (selectedGameType==='chess') {
-        extra = `&color=b`;
-      }
-      window.location.href = `${API}/portal/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}${extra}`;
-    }, 1000);
+    // navigation done above; do not override color
 
   } catch (e) {
     console.log("joinTable error", e);
