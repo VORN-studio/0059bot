@@ -106,6 +106,15 @@
         </select>
       </div>
 
+      <div id="sudoku-difficulty-row" style="display:none; margin-top:8px;">
+        <label class="modal-label">Սուդոկու բարդություն</label>
+        <select id="sudoku-difficulty" class="modal-select">
+          <option value="easy">Դյուրին</option>
+          <option value="medium" selected>Միջին</option>
+          <option value="hard">Դժվար</option>
+        </select>
+      </div>
+
       <label class="modal-label">Bet գումարը (DOMIT)</label>
       <input
         id="bet-amount"
@@ -150,7 +159,12 @@
   <script>
     const gt = document.getElementById('game-type');
     const cr = document.getElementById('color-row');
+    const sr = document.getElementById('sudoku-difficulty-row');
     gt.addEventListener('change', ()=>{ cr.style.display = gt.value==='chess' ? 'block' : 'none'; });
+    gt.addEventListener('change', ()=>{ sr.style.display = gt.value==='sudoku' ? 'block' : 'none'; });
+    // initialize visibility
+    cr.style.display = gt.value==='chess' ? 'block' : 'none';
+    sr.style.display = gt.value==='sudoku' ? 'block' : 'none';
   </script>
 </body>
 </html>

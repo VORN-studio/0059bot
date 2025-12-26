@@ -205,6 +205,8 @@ function openCreateTableModal() {
   const gtSel = document.getElementById('game-type');
   const row = document.getElementById('color-row');
   if (gtSel && row) { row.style.display = gtSel.value==='chess' ? 'block' : 'none'; }
+  const sRow = document.getElementById('sudoku-difficulty-row');
+  if (gtSel && sRow) { sRow.style.display = gtSel.value==='sudoku' ? 'block' : 'none'; }
 }
 
 function closeCreateTableModal() {
@@ -215,6 +217,7 @@ async function confirmCreateTable() {
   const game_type = document.getElementById("game-type").value;
   const bet = Number(document.getElementById("bet-amount").value);
   const color = document.getElementById("color-select")?.value || null;
+  const difficulty = document.getElementById("sudoku-difficulty")?.value || null;
 
   if (!bet || bet <= 0) {
     document.getElementById("create-error").textContent = "Напишите правильную сумму։";
@@ -232,7 +235,7 @@ async function confirmCreateTable() {
     const r = await fetch(`${API}/api/duels/create-table`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: USER_ID, game_type, bet, color })
+      body: JSON.stringify({ user_id: USER_ID, game_type, bet, color, difficulty })
     });
 
     const js = await r.json();
@@ -337,9 +340,11 @@ window.onload = () => {
   connectWebSocket();
   const gtSel = document.getElementById('game-type');
   if (gtSel) {
-    gtSel.addEventListener('change', ()=>{ selectedGameType = gtSel.value; loadTables(); const row = document.getElementById('color-row'); if (row) row.style.display = gtSel.value==='chess' ? 'block' : 'none'; });
+    gtSel.addEventListener('change', ()=>{ selectedGameType = gtSel.value; loadTables(); const row = document.getElementById('color-row'); if (row) row.style.display = gtSel.value==='chess' ? 'block' : 'none'; const sRow = document.getElementById('sudoku-difficulty-row'); if (sRow) sRow.style.display = gtSel.value==='sudoku' ? 'block' : 'none'; });
     const row = document.getElementById('color-row');
     if (row) row.style.display = gtSel.value==='chess' ? 'block' : 'none';
+    const sRow = document.getElementById('sudoku-difficulty-row');
+    if (sRow) sRow.style.display = gtSel.value==='sudoku' ? 'block' : 'none';
   }
   
   // Refresh tables every 5 seconds

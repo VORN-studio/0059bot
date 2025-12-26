@@ -189,13 +189,17 @@ function endGame(result) {
 }
 
 function restartGame() {
-  gameOver = false; selected=null;
-  mistakes = 0;
-  setupPuzzle(); renderGrid();
-  document.getElementById('status').textContent='';
-  document.getElementById('newGame').style.display='none';
-  startTimer(true);
-  renderMistakes();
+  if (onlineMode) {
+    window.location.href = `${API}/portal/duels/duels.html?uid=${USER_ID}`;
+  } else {
+    gameOver = false; selected=null;
+    mistakes = 0;
+    setupPuzzle(); renderGrid();
+    document.getElementById('status').textContent='';
+    document.getElementById('newGame').style.display='none';
+    startTimer(true);
+    renderMistakes();
+  }
 }
 
 function toggleNotes(){
@@ -234,6 +238,7 @@ function useHint(){
 }
 
 function changeDifficulty(val){
+  if (onlineMode) { showStatus('Օնլայն խաղում բարդությունը չի փոխվում'); return; }
   currentDifficulty = String(val||'medium');
   const cont = document.querySelector('.container');
   if (cont){
@@ -371,21 +376,54 @@ function stopTimer(){
   if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
 }
 
+async function loadTableState(){
+  try{
+    const r = await fetch(`${API}/api/duels/get-table-state`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ table_id: TABLE_ID })
+    });
+    const js = await r.json();
+    if(js.success){
+      const st = js.game_state || {};
+      if(st.type==='sudoku'){
+        currentDifficulty = String(st.difficulty||'medium');
+        grid = (st.grid||[]).map(r=>r.slice());
+        fixed = grid.map(row=>row.map(v=>v!==0));
+        candidates = Array(9).fill(0).map(()=>Array(9).fill(0).map(()=>new Set()));
+        solution = st.solution || null;
+        renderGrid();
+        const cont = document.querySelector('.container');
+        if (cont){
+          cont.classList.remove('diff-easy','diff-medium','diff-hard');
+          cont.classList.add('diff-'+currentDifficulty);
+        }
+        const diffSel = document.getElementById('difficulty');
+        if (diffSel){ diffSel.value = currentDifficulty; diffSel.disabled = true; }
+      }
+    }
+  }catch(e){}
+}
+
 async function init() {
   await loadBalance();
-  setupPuzzle();
-  renderGrid();
-  renderMistakes();
-  startTimer(true);
-  resizeGrid();
   if (onlineMode) {
     socket = io(API);
     socket.emit('join_table', { table_id: TABLE_ID });
+    await loadTableState();
+    renderMistakes();
+    startTimer(true);
+    resizeGrid();
     socket.on('sudoku_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
         if (!gameOver) endGame(data.result==='win' ? 'lose' : 'win');
       }
     });
+  } else {
+    setupPuzzle();
+    renderGrid();
+    renderMistakes();
+    startTimer(true);
+    resizeGrid();
   }
 }
 

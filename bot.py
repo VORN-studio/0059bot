@@ -1401,6 +1401,7 @@ def api_duels_create_table():
         bet = float(data.get('bet', 0))
         game_type = data.get('game_type', 'tictactoe')
         color = (data.get('color') or 'w') if game_type == 'chess' else None
+        difficulty = (data.get('difficulty') or None) if game_type == 'sudoku' else None
 
         if bet <= 0:
             return jsonify({"success": False, "message": "Сумма должна быть больше 0."}), 400
@@ -1431,6 +1432,18 @@ def api_duels_create_table():
                 'creator_color': color or 'w',
                 'turn': 'w',
                 'last_move': None
+            })
+        elif game_type == 'sudoku':
+            diff = str(difficulty or 'medium').lower()
+            if diff not in ('easy','medium','hard'):
+                diff = 'medium'
+            sol = sudoku_generate_full_solution()
+            puz_grid, sol_grid = sudoku_generate_puzzle(sol, diff)
+            initial_state = json.dumps({
+                'type': 'sudoku',
+                'difficulty': diff,
+                'grid': puz_grid,
+                'solution': sol_grid
             })
         else:
             initial_state = json.dumps({
@@ -2003,6 +2016,97 @@ def check_winner(board):
     
     return None
 
+def sudoku_generate_full_solution():
+    g = [[0 for _ in range(9)] for _ in range(9)]
+    nums = list(range(1, 10))
+    import random
+    def is_valid(r, c, n):
+        for i in range(9):
+            if g[r][i] == n or g[i][c] == n:
+                return False
+        br = (r // 3) * 3
+        bc = (c // 3) * 3
+        for rr in range(3):
+            for cc in range(3):
+                if g[br + rr][bc + cc] == n:
+                    return False
+        return True
+    def backtrack(pos=0):
+        if pos == 81:
+            return True
+        r = pos // 9
+        c = pos % 9
+        order = nums[:]
+        random.shuffle(order)
+        for n in order:
+            if is_valid(r, c, n):
+                g[r][c] = n
+                if backtrack(pos + 1):
+                    return True
+                g[r][c] = 0
+        return False
+    backtrack(0)
+    return g
+
+def sudoku_count_solutions(grid_in, limit=2):
+    g = [row[:] for row in grid_in]
+    def is_valid(r, c, n):
+        for i in range(9):
+            if g[r][i] == n or g[i][c] == n:
+                return False
+        br = (r // 3) * 3
+        bc = (c // 3) * 3
+        for rr in range(3):
+            for cc in range(3):
+                if g[br + rr][bc + cc] == n:
+                    return False
+        return True
+    solutions = 0
+    def backtrack():
+        nonlocal solutions
+        r = -1
+        c = -1
+        for i in range(9):
+            for j in range(9):
+                if g[i][j] == 0:
+                    r = i
+                    c = j
+                    break
+            if r != -1:
+                break
+        if r == -1:
+            solutions += 1
+            return solutions < limit
+        for n in range(1, 10):
+            if is_valid(r, c, n):
+                g[r][c] = n
+                if not backtrack():
+                    g[r][c] = 0
+                    return False
+                g[r][c] = 0
+        return True
+    backtrack()
+    return solutions
+
+def sudoku_generate_puzzle(solution_grid, difficulty='medium'):
+    sol = [row[:] for row in solution_grid]
+    puzzle = [row[:] for row in solution_grid]
+    target = 40 if difficulty == 'easy' else (28 if difficulty == 'hard' else 34)
+    cells = [(r, c) for r in range(9) for c in range(9)]
+    import random
+    random.shuffle(cells)
+    removed = 0
+    for r, c in cells:
+        if 81 - removed <= target:
+            break
+        keep = puzzle[r][c]
+        puzzle[r][c] = 0
+        if sudoku_count_solutions(puzzle, 2) != 1:
+            puzzle[r][c] = keep
+        else:
+            removed += 1
+    return puzzle, sol
+
 
 @app_web.route('/api/duels/forfeit', methods=['POST'])
 def api_duels_forfeit():
@@ -2296,6 +2400,95 @@ def handle_join_duels(data):
         
         emit("update_online_count", {"count": len(duels_players)}, room="duels_room")
 
+def _current_user_id():
+    for uid, sid in ONLINE_USERS.items():
+        if sid == request.sid:
+            return uid
+    return None
+
+@socketio.on("join_table")
+def on_join_table(data):
+    try:
+        table_id = int(data.get("table_id", 0))
+    except Exception:
+        table_id = 0
+    if table_id:
+        join_room(f"table_{table_id}")
+
+@socketio.on("sudoku_mistake")
+def on_sudoku_mistake(data):
+    try:
+        table_id = int(data.get("table_id", 0))
+        mistakes = int(data.get("mistakes", 0))
+    except Exception:
+        table_id = 0
+        mistakes = 0
+    uid = _current_user_id()
+    if table_id and uid:
+        emit("sudoku_mistake", {"table_id": table_id, "user_id": uid, "mistakes": mistakes}, room=f"table_{table_id}")
+
+@socketio.on("sudoku_over")
+def on_sudoku_over(data):
+    try:
+        table_id = int(data.get("table_id", 0))
+    except Exception:
+        table_id = 0
+    result = (data.get("result") or "").strip()
+    uid = _current_user_id()
+    if not table_id or not uid or result not in ("win", "lose"):
+        return
+    conn = db(); c = conn.cursor()
+    c.execute("""
+        SELECT creator_id, opponent_id, status, bet
+        FROM dom_duels_tables
+        WHERE id=%s
+    """, (table_id,))
+    row = c.fetchone()
+    if not row:
+        release_db(conn); return
+    creator_id, opponent_id, status, bet = row
+    if status != 'playing' or not opponent_id:
+        release_db(conn); return
+    winner_id = uid if result == 'win' else (opponent_id if int(uid) == int(creator_id) else creator_id)
+    now = int(time.time())
+    c.execute("""
+        UPDATE dom_duels_tables
+        SET status='finished', winner_id=%s, finished_at=%s
+        WHERE id=%s AND status='playing'
+    """, (winner_id, now, table_id))
+    c.execute("""
+        UPDATE dom_users
+        SET total_games = COALESCE(total_games,0) + 1
+        WHERE user_id IN (%s, %s)
+    """, (creator_id, opponent_id))
+    c.execute("""
+        UPDATE dom_users
+        SET total_wins = COALESCE(total_wins,0) + 1
+        WHERE user_id=%s
+    """, (winner_id,))
+    prize = float(bet) * 1.75
+    c.execute("""
+        UPDATE dom_users
+        SET balance_usd = balance_usd + %s
+        WHERE user_id=%s
+    """, (prize, winner_id))
+    burn_amount = float(bet) * 0.25
+    loser_id = opponent_id if int(winner_id) == int(creator_id) else creator_id
+    c.execute("""
+        INSERT INTO dom_burn_ledger (user_id, amount, reason, created_at)
+        VALUES (%s, %s, %s, %s)
+    """, (loser_id, burn_amount, 'pvp_sudoku_loss_burn', now))
+    c.execute("""
+        UPDATE dom_burn_account
+        SET total_burned = total_burned + %s,
+            last_updated = %s
+        WHERE id = 1
+    """, (burn_amount, now))
+    conn.commit(); release_db(conn)
+    emit("sudoku_over", {"table_id": table_id, "result": result}, room=f"table_{table_id}")
+    socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{creator_id}')
+    socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{opponent_id}')
+
 @socketio.on("leave_duels")
 def handle_leave_duels(data):
     user_id = data.get("user_id")
@@ -2346,6 +2539,7 @@ def on_rematch_request(data):
             import json, time
             st = json.loads(game_state) if isinstance(game_state, str) else (game_state or {})
             creator_color = st.get('creator_color', 'w') if game_type == 'chess' else None
+            sudoku_diff = st.get('difficulty', 'medium') if game_type == 'sudoku' else None
 
             conn2 = db(); c2 = conn2.cursor()
             now = int(time.time())
@@ -2355,6 +2549,18 @@ def on_rematch_request(data):
                     'creator_color': creator_color or 'w',
                     'turn': 'w',
                     'last_move': None
+                })
+            elif game_type == 'sudoku':
+                diff = str(sudoku_diff or 'medium').lower()
+                if diff not in ('easy','medium','hard'):
+                    diff = 'medium'
+                solg = sudoku_generate_full_solution()
+                puz, sol = sudoku_generate_puzzle(solg, diff)
+                initial_state = json.dumps({
+                    'type': 'sudoku',
+                    'difficulty': diff,
+                    'grid': puz,
+                    'solution': sol
                 })
             else:
                 initial_state = json.dumps({
