@@ -70,7 +70,7 @@ function connectWebSocket() {
     showStatus(`✅ Սեղանին միացան.`);
     const gt = data.game_type || selectedGameType || 'tictactoe';
     setTimeout(() => {
-      window.location.href = `${API}/duels/${gt}/${gt}.html?table_id=${data.table_id}&uid=${USER_ID}`;
+      window.location.href = `${API}/portal/duels/${gt}/${gt}.html?table_id=${data.table_id}&uid=${USER_ID}`;
     }, 1000);
   });
 
@@ -168,7 +168,7 @@ function setSelectedGame(game) {
 
 async function playBotGame(game) {
   if (activeBotSession && activeBotSession.game === game) {
-    window.location.href = `${API}/duels/${game}/${game}.html?uid=${USER_ID}`;
+    window.location.href = `${API}/portal/duels/${game}/${game}.html?uid=${USER_ID}`;
     return;
   }
 
@@ -193,7 +193,7 @@ async function playBotGame(game) {
 
     activeBotSession = { game, paid: true };
 
-    window.location.href = `${API}/duels/${game}/${game}.html?uid=${USER_ID}`;
+    window.location.href = `${API}/portal/duels/${game}/${game}.html?uid=${USER_ID}`;
   } catch (e) {
     console.log("payBot error", e);
     showStatus("❌ Ошибка сервера", "lose");
@@ -249,7 +249,7 @@ async function confirmCreateTable() {
     // Reload tables
     if (js.success) {
         const extra = game_type==='chess' && color ? `&color=${color}` : '';
-        window.location.href = `${API}/duels/${game_type}/${game_type}.html?table_id=${js.table_id}&uid=${USER_ID}${extra}`;
+        window.location.href = `${API}/portal/duels/${game_type}/${game_type}.html?table_id=${js.table_id}&uid=${USER_ID}${extra}`;
     }
 
   } catch (e) {
@@ -294,7 +294,8 @@ async function confirmJoinTable() {
 
     const js = await r.json();
     if (js.success) {
-        window.location.href = `${API}/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}`;
+        const extra = selectedGameType==='chess' ? `&color=b` : '';
+        window.location.href = `${API}/portal/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}${extra}`;
     } else {
        
         let msg = js.message;
@@ -309,7 +310,8 @@ async function confirmJoinTable() {
     showStatus("✅ Вы присоединились к столу. Игра начинается.…");
 
     setTimeout(() => {
-      window.location.href = `${API}/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}`;
+      const extra = selectedGameType==='chess' ? `&color=b` : '';
+      window.location.href = `${API}/portal/duels/${selectedGameType}/${selectedGameType}.html?table_id=${selectedTableId}&uid=${USER_ID}${extra}`;
     }, 1000);
 
   } catch (e) {

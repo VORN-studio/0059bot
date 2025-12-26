@@ -151,12 +151,13 @@ function squareAttacked(r,c,byColor){
 function isKingInCheck(color){const kp=kingPos(color);if(!kp)return false;return squareAttacked(kp.r,kp.c,color==='w'?'b':'w')}
 
 function generateLegalMoves(from){
-  const piece=board[from.r][from.c]; if(!piece||piece.c!=='w')return [];
+  const piece=board[from.r][from.c]; if(!piece) return [];
+  const color = piece.c;
   const moves=generatePseudoMoves(from); const legal=[];
   for(const m of moves){const savedEP=enPassant;const savedCastle=JSON.parse(JSON.stringify(castle));
     const snapshot=JSON.parse(JSON.stringify(board));
     applyMove(from,m);
-    if(!isKingInCheck('w'))legal.push(m);
+    if(!isKingInCheck(color))legal.push(m);
     board=snapshot; enPassant=savedEP; castle=savedCastle;
   }
   return legal;
