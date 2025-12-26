@@ -48,11 +48,12 @@ function setupBoard() {
 function renderBoard() {
   const el = document.getElementById('board');
   el.innerHTML = '';
-  for (let r=0;r<8;r++) {
-    for (let c=0;c<8;c++) {
+  for (let vr=0;vr<8;vr++) {
+    for (let vc=0;vc<8;vc++) {
+      const r = PLAYER_COLOR==='w' ? vr : 7-vr;
+      const c = PLAYER_COLOR==='w' ? vc : 7-vc;
       const d = document.createElement('div');
-      d.className = 'sq ' + (((r+c)%2===0)?'light':'dark');
-      d.dataset.r = r; d.dataset.c = c;
+      d.className = 'sq ' + (((vr+vc)%2===0)?'light':'dark');
       const piece = board[r][c];
       if (piece) {
         d.innerHTML = `<span class="piece ${piece.c==='w'?'pc-w':'pc-b'}">${PIECES[piece.c][piece.p]}</span>`;
@@ -85,9 +86,9 @@ function onSquareClick(r,c) {
       updateTurnInfo();
       scheduleTurnTimer();
       if (onlineMode) {
+        makeOnlineMove(from, to);
         if (socket) {
           socket.emit('chess_move', { table_id: TABLE_ID, from, to });
-          socket.emit('opponent_move', { table_id: TABLE_ID, from, to });
         }
       } else {
         setTimeout(botMove, 500);
@@ -267,10 +268,17 @@ async function init() {
     socket.emit('join_table', { table_id: TABLE_ID });
     await loadTableState();
     const applyIncoming = (data)=>{
-      if (data && data.table_id===TABLE_ID && data.from && data.to) {
-        applyMove(data.from, data.to);
-        lastMove = {from:{...data.from}, to:{...data.to}};
-        currentTurn = PLAYER_COLOR;
+      if (data && data.table_id===TABLE_ID) {
+        if (data.game_state && data.game_state.last_move && data.game_state.last_move.from && data.game_state.last_move.to) {
+          const mv = data.game_state.last_move;
+          applyMove(mv.from, mv.to);
+          lastMove = {from:{...mv.from}, to:{...mv.to}};
+          currentTurn = data.game_state.turn || PLAYER_COLOR;
+        } else if (data.from && data.to) {
+          applyMove(data.from, data.to);
+          lastMove = {from:{...data.from}, to:{...data.to}};
+          currentTurn = PLAYER_COLOR;
+        }
         renderBoard(); updateTurnInfo(); scheduleTurnTimer();
       }
     };
@@ -311,6 +319,19 @@ async function loadTableState(){
   }catch(e){
     // silent
   }
+}
+
+async function makeOnlineMove(from,to){
+  try{
+    const r = await fetch(`${API}/api/duels/make-move`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ table_id: TABLE_ID, user_id: USER_ID, move: { from, to } })
+    });
+    const js = await r.json();
+    if(js && js.game_state){
+      currentTurn = js.game_state.turn || currentTurn;
+    }
+  }catch(e){}
 }
 
 window.onload = init;
