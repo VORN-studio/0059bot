@@ -7,8 +7,6 @@ let grid = [];
 let fixed = [];
 let selected = null;
 let gameOver = false;
-let turnTimeoutId = null;
-let countdownIntervalId = null;
 
 async function loadBalance() {
   try {
@@ -44,16 +42,28 @@ function renderGrid() {
   el.innerHTML = '';
   for (let r=0;r<9;r++) for (let c=0;c<9;c++) {
     const d = document.createElement('div');
-    d.className = 'cell' + (fixed[r][c]?' prefill':'');
+    let cls = 'cell' + (fixed[r][c]?' prefill':'');
+    if (selected && selected.r===r && selected.c===c) cls += ' sel';
+    if (selected && (selected.r===r || selected.c===c || (Math.floor(selected.r/3)===Math.floor(r/3) && Math.floor(selected.c/3)===Math.floor(c/3)))) cls += ' rel';
+    if (c%3===2) cls += ' blk-r';
+    if (r%3===2) cls += ' blk-b';
+    if (r===0) cls += ' blk-t';
+    if (c===0) cls += ' blk-l';
+    d.className = cls;
     d.textContent = grid[r][c]||'';
     d.onclick = () => selectCell(r,c);
     el.appendChild(d);
   }
   const nums = document.getElementById('numbers');
   nums.innerHTML = '';
+  const clr = document.createElement('button');
+  clr.className = 'btn num';
+  clr.textContent = '⌫';
+  clr.onclick = clearCell;
+  nums.appendChild(clr);
   for (let n=1;n<=9;n++) {
     const b = document.createElement('button');
-    b.className = 'btn';
+    b.className = 'btn num';
     b.style.margin = '2px';
     b.textContent = n;
     b.onclick = () => placeNumber(n);
@@ -65,6 +75,7 @@ function selectCell(r,c) {
   if (gameOver) return;
   if (fixed[r][c]) return;
   selected = {r,c};
+  renderGrid();
 }
 
 function validNumber(r,c,n){
@@ -90,47 +101,36 @@ function placeNumber(n) {
   if (!selected || gameOver) return;
   const {r,c} = selected;
   if (fixed[r][c]) return;
-  if(!validNumber(r,c,n))return;
+  if(!validNumber(r,c,n)) { showStatus('Թիվը հակասում է կանոններին'); return; }
   grid[r][c] = n;
   renderGrid();
-  resetTurnTimer();
   if(isSolved()) endGame('win');
 }
 
-function clearTurnTimers() {
-  if (turnTimeoutId) { clearTimeout(turnTimeoutId); turnTimeoutId=null; }
-  if (countdownIntervalId) { clearInterval(countdownIntervalId); countdownIntervalId=null; }
+function clearCell(){
+  if (!selected || gameOver) return;
+  const {r,c} = selected;
+  if (fixed[r][c]) return;
+  grid[r][c] = 0;
+  renderGrid();
 }
 
-function resetTurnTimer() {
-  clearTurnTimers();
-  if (gameOver) return;
-  const el = document.getElementById('turnInfo');
-  const deadline = Date.now() + 20000;
-  countdownIntervalId = setInterval(() => {
-    const left = Math.max(0, deadline - Date.now());
-    const s = Math.ceil(left/1000);
-    el.textContent = `Քո քայլերը — ${s}վրկ`;
-  }, 250);
-  turnTimeoutId = setTimeout(onTimeout, 20000);
-}
-
-function onTimeout() {
-  endGame('lose');
+function showStatus(msg){
+  const st = document.getElementById('status');
+  st.textContent = msg;
+  setTimeout(()=>{ if (st.textContent===msg) st.textContent=''; }, 1200);
 }
 
 function endGame(result) {
   gameOver = true;
-  clearTurnTimers();
   const st = document.getElementById('status');
-  if (result==='lose') st.textContent = '😔 Պարտվեցիր (ժամանակ)';
-  else st.textContent = '🎉 Հաղթեցիր';
+  st.textContent = '🎉 Հաղթեցիր';
   document.getElementById('newGame').style.display='inline-block';
 }
 
 function restartGame() {
   gameOver = false; selected=null;
-  setupPuzzle(); renderGrid(); resetTurnTimer();
+  setupPuzzle(); renderGrid();
   document.getElementById('status').textContent='';
   document.getElementById('newGame').style.display='none';
 }
@@ -139,7 +139,6 @@ async function init() {
   await loadBalance();
   setupPuzzle();
   renderGrid();
-  resetTurnTimer();
 }
 
 window.onload = init;
