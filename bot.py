@@ -1658,22 +1658,105 @@ def api_duels_make_move():
                 return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
 
             last_move = move
+            result = data.get('result')
             next_turn = 'b' if my_color == 'w' else 'w'
             new_state = {**state, 'last_move': last_move, 'turn': next_turn}
 
-            c.execute(
-                """
-                UPDATE dom_duels_tables
-                SET game_state=%s
-                WHERE id=%s
-                """,
-                (json.dumps(new_state), table_id),
-            )
-            conn.commit()
-            release_db(conn)
-            opponent = opponent_id if int(user_id) == int(creator_id) else creator_id
-            socketio.emit('opponent_move', {'table_id': table_id, 'from': move.get('from'), 'to': move.get('to'), 'game_state': new_state}, room=f'user_{opponent}')
-            return jsonify({"success": True, "game_state": new_state})
+            now = int(time.time())
+            if result == 'mate':
+                winner_id = int(user_id)
+                c.execute(
+                    """
+                    UPDATE dom_duels_tables
+                    SET game_state=%s, status='finished', winner_id=%s, finished_at=%s
+                    WHERE id=%s
+                    """,
+                    (json.dumps(new_state), winner_id, now, table_id),
+                )
+                c.execute("""
+                    UPDATE dom_users
+                    SET total_games = COALESCE(total_games,0) + 1
+                    WHERE user_id IN (%s, %s)
+                """, (creator_id, opponent_id))
+                c.execute("""
+                    UPDATE dom_users
+                    SET total_wins = COALESCE(total_wins,0) + 1
+                    WHERE user_id=%s
+                """, (winner_id,))
+                prize = float(bet) * 1.75
+                c.execute("""
+                    UPDATE dom_users 
+                    SET balance_usd = balance_usd + %s 
+                    WHERE user_id=%s
+                """, (prize, winner_id))
+                burn_amount = float(bet) * 0.25
+                loser_id = opponent_id if int(winner_id) == int(creator_id) else creator_id
+                c.execute("""
+                    INSERT INTO dom_burn_ledger (user_id, amount, reason, created_at)
+                    VALUES (%s, %s, %s, %s)
+                """, (loser_id, burn_amount, 'pvp_chess_mate_burn', now))
+                c.execute("""
+                    UPDATE dom_burn_account
+                    SET total_burned = total_burned + %s,
+                        last_updated = %s
+                    WHERE id = 1
+                """, (burn_amount, now))
+                conn.commit()
+                release_db(conn)
+                socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{creator_id}')
+                socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{opponent_id}')
+                try:
+                    add_intellect_event(creator_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(opponent_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(winner_id, "pvp_win", meta={"table_id": table_id, "bet": float(bet)})
+                except Exception:
+                    logger.exception("intellect_event pvp_win failed")
+                return jsonify({"success": True, "game_state": new_state, "winner": winner_id, "prize": prize})
+            elif result == 'stalemate':
+                c.execute(
+                    """
+                    UPDATE dom_duels_tables
+                    SET game_state=%s, status='finished', finished_at=%s
+                    WHERE id=%s
+                    """,
+                    (json.dumps(new_state), now, table_id),
+                )
+                c.execute("""
+                    UPDATE dom_users
+                    SET total_games = COALESCE(total_games,0) + 1
+                    WHERE user_id IN (%s, %s)
+                """, (creator_id, opponent_id))
+                c.execute("""
+                    UPDATE dom_users 
+                    SET balance_usd = balance_usd + %s 
+                    WHERE user_id IN (%s, %s)
+                """, (float(bet), creator_id, opponent_id))
+                conn.commit()
+                release_db(conn)
+                socketio.emit('game_over', {'table_id': table_id, 'winner_id': None, 'draw': True}, room=f'user_{creator_id}')
+                socketio.emit('game_over', {'table_id': table_id, 'winner_id': None, 'draw': True}, room=f'user_{opponent_id}')
+                try:
+                    add_intellect_event(creator_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(opponent_id, "pvp_played", meta={"table_id": table_id, "bet": float(bet)})
+                    add_intellect_event(creator_id, "pvp_draw", meta={"table_id": table_id})
+                    add_intellect_event(opponent_id, "pvp_draw", meta={"table_id": table_id})
+                except Exception:
+                    logger.exception("intellect_event pvp_draw failed")
+                return jsonify({"success": True, "game_state": new_state, "draw": True})
+            else:
+                c.execute(
+                    """
+                    UPDATE dom_duels_tables
+                    SET game_state=%s
+                    WHERE id=%s
+                    """,
+                    (json.dumps(new_state), table_id),
+                )
+                conn.commit()
+                release_db(conn)
+                opponent = opponent_id if int(user_id) == int(creator_id) else creator_id
+                socketio.emit('opponent_move', {'table_id': table_id, 'from': move.get('from'), 'to': move.get('to'), 'game_state': new_state}, room=f'user_{opponent}')
+                return jsonify({"success": True, "game_state": new_state})
 
         # tic-tac-toe logic (default)
         board = state.get('board', [''] * 9)

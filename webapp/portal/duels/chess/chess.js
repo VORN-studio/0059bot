@@ -86,6 +86,22 @@ function onSquareClick(r,c) {
       highlights = [];
       currentTurn = (PLAYER_COLOR==='w')?'b':'w';
       renderBoard();
+      const opp = currentTurn;
+      const oppHasMove = hasAnyLegalMove(opp);
+      const oppInCheck = isKingInCheck(opp);
+      if (oppInCheck && !oppHasMove) {
+        if (onlineMode) {
+          makeOnlineMove(from, to, 'mate');
+        }
+        endGame('win');
+        return;
+      } else if (!oppInCheck && !oppHasMove) {
+        if (onlineMode) {
+          makeOnlineMove(from, to, 'stalemate');
+        }
+        endGame('draw');
+        return;
+      }
       updateTurnInfo();
       scheduleTurnTimer();
       if (onlineMode) {
@@ -171,6 +187,18 @@ function generateLegalMoves(from){
   return legal;
 }
 
+function hasAnyLegalMove(color){
+  for(let r=0;r<8;r++){
+    for(let c=0;c<8;c++){
+      const p=board[r][c];
+      if(!p||p.c!==color) continue;
+      const ms=generateLegalMoves({r,c});
+      if(ms.length>0) return true;
+    }
+  }
+  return false;
+}
+
 function applyMove(from,to){
   const piece=board[from.r][from.c];
   enPassant=null;
@@ -251,6 +279,7 @@ function endGame(result) {
   clearTurnTimers();
   const st = document.getElementById('status');
   if (result==='win') st.textContent = '🎉 Հաղթեցիր';
+  else if (result==='draw') st.textContent = '🤝 Ոչ-ոքի';
   else st.textContent = '😔 Պարտվեցիր (ժամանակ)';
   document.getElementById('newGame').style.display = 'inline-block';
 }
@@ -357,6 +386,19 @@ async function makeOnlineMove(from,to){
     const r = await fetch(`${API}/api/duels/make-move`,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ table_id: TABLE_ID, user_id: USER_ID, move: { from, to } })
+    });
+    const js = await r.json();
+    if(js && js.game_state){
+      currentTurn = js.game_state.turn || currentTurn;
+    }
+  }catch(e){}
+}
+
+async function makeOnlineMove(from,to,result){
+  try{
+    const r = await fetch(`${API}/api/duels/make-move`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ table_id: TABLE_ID, user_id: USER_ID, move: { from, to }, result })
     });
     const js = await r.json();
     if(js && js.game_state){
