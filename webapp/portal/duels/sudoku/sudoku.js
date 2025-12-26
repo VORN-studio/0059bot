@@ -103,8 +103,7 @@ function renderGrid() {
 function renderMistakes(){
   const el = document.getElementById('mistakesInfo');
   if (!el) return;
-  if (onlineMode) el.textContent = `Սխալների սահման՝ ${mistakes}/${MAX_MISTAKES}`;
-  else el.textContent = '';
+  el.textContent = `Սխալների սահման՝ ${mistakes}/${MAX_MISTAKES}`;
 }
 
 function selectCell(r,c) {
@@ -231,6 +230,7 @@ function changeDifficulty(val){
     cont.classList.remove('diff-easy','diff-medium','diff-hard');
     cont.classList.add('diff-'+currentDifficulty);
   }
+  restartGame();
 }
 
 function deepCopy(a){ return a.map(r=>r.slice()); }
@@ -368,8 +368,8 @@ window.onload = init;
 function resizeGrid(){
   const cont = document.querySelector('.container');
   if (!cont) return;
-  const available = cont.clientWidth - 20;
-  const fixedPaddingAndGaps = 96; // 3 blocks padding+inner gaps + outer gaps
+  const available = cont.clientWidth - 16;
+  const fixedPaddingAndGaps = 64;
   let cell = Math.floor((available - fixedPaddingAndGaps) / 9);
   cell = Math.max(26, Math.min(52, cell));
   document.documentElement.style.setProperty('--cell9', `${cell}px`);

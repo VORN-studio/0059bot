@@ -1,9 +1,9 @@
 body{background:#0f172a;color:#e5e7eb;font-family:system-ui}
-.container{width:min(96vw,520px);margin:20px auto;padding:10px}
+.container{width:min(100vw,520px);margin:20px auto;padding:10px}
 .top{display:flex;align-items:center;justify-content:space-between}
 :root{--cell9:36px}
-.grid{display:grid;grid-template-columns:repeat(3,max-content);gap:12px;margin:16px auto;width:100%;justify-content:center}
-.block{display:grid;grid-template-columns:repeat(3,var(--cell9));gap:6px;padding:6px;background:#0c1427;border:1px solid #475569;border-radius:12px}
+.grid{display:grid;grid-template-columns:repeat(3,max-content);gap:8px;margin:16px auto;width:100%;justify-content:center}
+.block{display:grid;grid-template-columns:repeat(3,var(--cell9));gap:4px;padding:4px;background:#0c1427;border:1px solid #3b4a64;border-radius:12px}
 .cell{width:var(--cell9);height:var(--cell9);display:flex;align-items:center;justify-content:center;background:#1b2640;border:1px solid #334155;border-radius:8px;cursor:pointer;transition:.15s; font-weight:600; font-size:calc(var(--cell9)*0.55); color:#e2e8f0}
 .cell.prefill{background:#1b2640;color:#e2e8f0}
 .cell.sel{outline:2px solid #8b5cf6; outline-offset:-2px}
