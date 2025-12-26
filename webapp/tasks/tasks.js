@@ -126,7 +126,9 @@ function performTask(taskId) {
     const task = window.ALL_TASKS?.find(t => t.id === taskId);
 
     if (task && task.url) {
-        const realUrl = task.url.replace("{user_id}", uid);
+        const realUrl = task.url
+            .replace("{user_id}", uid)
+            .replace("{task_id}", String(taskId));
         window.open(realUrl, "_blank");
     }
 

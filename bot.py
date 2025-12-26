@@ -14,7 +14,7 @@ import time
 import sys
 import threading
 from typing import Optional
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request, redirect
 from werkzeug.utils import secure_filename
 import subprocess
 from flask_cors import CORS
@@ -95,6 +95,8 @@ if not BOT_TOKEN:
     raise RuntimeError("BOT_TOKEN env var is missing")
 
 BASE_URL = os.getenv("BASE_URL", "https://domino-play.online").strip()
+EXEIO_API_URL = os.getenv("EXEIO_API_URL", "https://exe.io/st").strip()
+EXEIO_API_KEY = os.getenv("EXEIO_API_KEY", "").strip()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 if not DATABASE_URL:
@@ -5412,6 +5414,32 @@ def fetch_ton_rate():
         print("🔥 ERROR in fetch_ton_rate():", e)
         return None
 
+def exeio_shorten(target_url: str) -> Optional[str]:
+    if not EXEIO_API_KEY:
+        return None
+    try:
+        import urllib.parse
+        req = f"{EXEIO_API_URL}?api={EXEIO_API_KEY}&url={urllib.parse.quote_plus(target_url)}&format=json"
+        resp = requests.get(req, timeout=10)
+        short = None
+        try:
+            js = resp.json()
+            if isinstance(js, dict):
+                for k in ("shortenedUrl", "shortened_url", "shortenUrl", "result_url", "short"):
+                    v = js.get(k)
+                    if v:
+                        short = str(v)
+                        break
+        except Exception:
+            pass
+        if not short:
+            txt = (resp.text or "").strip()
+            if txt.startswith("http"):
+                short = txt
+        return short
+    except Exception:
+        return None
+
 def ton_rate_updater():
     print("🔄 TON updater thread started")
 
@@ -5711,6 +5739,15 @@ def update_current_candle():
                 logger.warning(f"Connection release warning: {e}")
 
 
+# exe.io stats polling
+def exeio_poll_stats():
+    if not EXEIO_API_KEY:
+        return
+    try:
+        pass
+    except Exception:
+        pass
+
 # Scheduler jobs
 scheduler.add_job(
     create_new_candle,
@@ -5724,6 +5761,14 @@ scheduler.add_job(
     'interval',
     seconds=5,  
     id='domit_candle_update',
+    replace_existing=True
+)
+
+scheduler.add_job(
+    exeio_poll_stats,
+    'interval',
+    minutes=5,
+    id='exeio_poll',
     replace_existing=True
 )
 
@@ -6442,12 +6487,16 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
     else:
         final_url = url + "?" + params
 
+    u_b64 = base64.urlsafe_b64encode(final_url.encode()).decode()
+    success_url = f"{BASE_URL}/exeio/complete?uid={{user_id}}&task_id={{task_id}}&u={u_b64}"
+    short_url = exeio_shorten(success_url) or success_url
+
     now = int(time.time())
     conn = db(); c = conn.cursor()
     c.execute("""
         INSERT INTO dom_tasks (title, description, url, reward, category, is_active, created_at)
         VALUES (%s, %s, %s, %s, %s, TRUE, %s)
-    """, (title, desc, final_url, reward, category, now))
+    """, (title, desc, short_url, reward, category, now))
     conn.commit()
     release_db(conn)
 
@@ -6640,6 +6689,49 @@ def api_task_attempt_create():
     conn.commit()
     release_db(conn)
 
+    return jsonify({"ok": True})
+
+@app_web.route("/exeio/complete")
+def exeio_complete():
+    uid = request.args.get("uid", type=int)
+    task_id = request.args.get("task_id", type=int)
+    u_b64 = request.args.get("u", "")
+    dest = ""
+    try:
+        pad = "=" * ((4 - len(u_b64) % 4) % 4)
+        dest = base64.urlsafe_b64decode((u_b64 + pad).encode()).decode()
+    except Exception:
+        dest = ""
+    now = int(time.time())
+    if uid and task_id:
+        conn = db(); c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS dom_task_attempts (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT,
+                task_id BIGINT,
+                created_at BIGINT
+            )
+        """)
+        c.execute(
+            "INSERT INTO dom_task_attempts (user_id, task_id, created_at) VALUES (%s, %s, %s)",
+            (uid, task_id, now)
+        )
+        c.execute(
+            """
+            INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+            VALUES (%s, %s, %s)
+            ON CONFLICT DO NOTHING
+            """,
+            (uid, task_id, now)
+        )
+        conn.commit(); release_db(conn)
+    if dest:
+        try:
+            dest_final = dest.replace("{user_id}", str(uid or "")).replace("{task_id}", str(task_id or ""))
+        except Exception:
+            dest_final = dest
+        return redirect(dest_final)
     return jsonify({"ok": True})
 
 def migrate_posts_to_files():
