@@ -86,7 +86,7 @@ class _PrintToLogger:
 
 # Redirect stdout/stderr (captures print() from anywhere in the process)
 sys.stdout = _PrintToLogger(logger, logging.INFO, prefix="")
-sys.stderr = _PrintToLogger(logger, logging.ERROR, prefix="STDERR: ")
+sys.stderr = _PrintToLogger(logger, logging.INFO, prefix="STDERR: ")
 
 
 
@@ -5842,8 +5842,8 @@ async def start_bot_webhook():
             set_ok = False
             for attempt in range(1, 6):
                 try:
-                    await application.bot.delete_webhook(drop_pending_updates=True, timeout=30)
-                    await application.bot.set_webhook(url=webhook_url, timeout=30)
+                    await application.bot.delete_webhook(drop_pending_updates=True)
+                    await application.bot.set_webhook(url=webhook_url)
                     set_ok = True
                     break
                 except Exception as e:
