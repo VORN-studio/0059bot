@@ -68,10 +68,6 @@ function connectWebSocket() {
 
   socket.on("table_joined", (data) => {
     showStatus(`✅ Սեղանին միացան.`);
-    const gt = data.game_type || selectedGameType || 'tictactoe';
-    setTimeout(() => {
-      window.location.href = `${API}/portal/duels/${gt}/${gt}.html?table_id=${data.table_id}&uid=${USER_ID}`;
-    }, 1000);
   });
 
   socket.on("opponent_move", (data) => {
@@ -206,6 +202,9 @@ function openCreateTableModal() {
   document.getElementById("bet-amount").value = "";
   document.getElementById("create-error").textContent = "";
   document.getElementById("create-modal").classList.remove("hidden");
+  const gtSel = document.getElementById('game-type');
+  const row = document.getElementById('color-row');
+  if (gtSel && row) { row.style.display = gtSel.value==='chess' ? 'block' : 'none'; }
 }
 
 function closeCreateTableModal() {
@@ -333,7 +332,11 @@ window.onload = () => {
   loadUser();
   connectWebSocket();
   const gtSel = document.getElementById('game-type');
-  if (gtSel) gtSel.addEventListener('change', ()=>{ selectedGameType = gtSel.value; loadTables(); });
+  if (gtSel) {
+    gtSel.addEventListener('change', ()=>{ selectedGameType = gtSel.value; loadTables(); const row = document.getElementById('color-row'); if (row) row.style.display = gtSel.value==='chess' ? 'block' : 'none'; });
+    const row = document.getElementById('color-row');
+    if (row) row.style.display = gtSel.value==='chess' ? 'block' : 'none';
+  }
   
   // Refresh tables every 5 seconds
   setInterval(loadTables, 5000);
