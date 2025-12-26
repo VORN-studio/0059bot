@@ -396,9 +396,9 @@ function resizeGrid(){
   if (!cont) return;
   const vw = Math.min(window.innerWidth || cont.clientWidth, cont.clientWidth);
   const available = vw - 16;
-  const fixed = 70; // 3 blocks borders+padding + outer gaps
+  const fixed = 70;
   let cell = Math.floor((available - fixed) / 9);
-  cell = Math.max(20, Math.min(44, cell));
+  cell = Math.max(18, Math.min(40, cell));
   document.documentElement.style.setProperty('--cell9', `${cell}px`);
 }
 
