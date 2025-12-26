@@ -6769,22 +6769,40 @@ def api_exeio_test():
 @app_web.route("/safe_go")
 def safe_go():
     target = request.args.get("url", "")
+    try:
+        import json
+        safe_js_target = json.dumps(target)
+    except Exception:
+        safe_js_target = '""'
     return f"""
     <html>
     <head>
-        <title>Starting Task...</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="referrer" content="no-referrer">
+        <title>Start Task</title>
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+        <meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\" />
+        <meta http-equiv=\"Pragma\" content=\"no-cache\" />
+        <meta http-equiv=\"Expires\" content=\"0\" />
+        <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">
     </head>
-    <body style="background:#121212; color:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;">
-        <div style="text-align:center; padding:20px;">
-            <h2 style="margin-bottom:20px;">🚀 Ready to start?</h2>
-            <p style="margin-bottom:30px; color:#aaa;">Click the button below to proceed to the task.</p>
-            <a href="{target}" id="go-btn" style="background:#0088cc; color:#fff; padding:15px 30px; border-radius:10px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow:0 4px 15px rgba(0,136,204,0.4);">
+    <body style=\"background:#121212; color:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;\">
+        <div style=\"text-align:center; padding:20px;\">
+            <h2 style=\"margin-bottom:20px;\">🚀 Ready to start?</h2>
+            <p style=\"margin-bottom:30px; color:#aaa;\">Press the button to continue.</p>
+            <button id=\"go-btn\" style=\"background:#0088cc; color:#fff; padding:15px 30px; border:none; border-radius:10px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow:0 4px 15px rgba(0,136,204,0.4);\">
                Start Task →
-            </a>
-            <p style="margin-top:20px; font-size:12px; color:#555;">External link: {target[:30]}...</p>
+            </button>
+            <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {target[:30]}...</p>
         </div>
+        <script>
+            (function(){{
+                var btn = document.getElementById('go-btn');
+                var u = {safe_js_target};
+                btn.addEventListener('click', function(e){{
+                    e.preventDefault();
+                    setTimeout(function(){{ window.location.assign(u); }}, 120);
+                }});
+            }})();
+        </script>
     </body>
     </html>
     """
