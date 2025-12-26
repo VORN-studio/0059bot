@@ -8,17 +8,19 @@
 </head>
 <body>
   <div class="container">
-    <div class="top">
+    <div class="header">
       <button class="btn" onclick="goBack()">← Հետ</button>
-      <div>💎 <span id="domit-balance">0</span></div>
+      <h1>♟️ Շախմատ</h1>
+      <div class="balance">💎 <span id="domit-balance">0</span></div>
     </div>
-    <h2 style="text-align:center;">♟️ Շախմատ</h2>
-    <div class="turn" id="players-bar">
-      <span id="chess-my-name">Դու</span>
-      <span style="margin:0 6px;">VS</span>
-      <span id="chess-opp-name">Սպասում...</span>
+    <div class="game-info">
+      <div class="player-info turn" id="players-bar">
+        <span id="chess-my-name">Դու</span>
+        <span class="vs">VS</span>
+        <span id="chess-opp-name">Բոտ</span>
+      </div>
+      <div id="turnInfo" class="turn">Քո հերթն է</div>
     </div>
-    <div id="turnInfo" class="turn">Քո հերթն է</div>
     <div id="board" class="board"></div>
     <div id="status" class="status"></div>
     <div style="text-align:center; margin-top:10px;">

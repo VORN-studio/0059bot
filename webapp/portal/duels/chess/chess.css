@@ -5,7 +5,12 @@ body{background:var(--bg);color:var(--text);font-family:system-ui, -apple-system
   radial-gradient(1200px 300px at 0% -10%, rgba(139,92,246,.12), transparent 60%),
   linear-gradient(180deg, rgba(16,24,40,.65), rgba(12,18,32,.75));
 box-shadow:0 18px 40px rgba(2,8,23,.55)}
-.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.header h1{font-size:18px;margin:0;color:#e5e7eb}
+.balance{color:#cbd5e1}
+.game-info{display:flex;flex-direction:column;gap:10px}
+.player-info{display:flex;align-items:center;justify-content:center;gap:8px}
+.player-info .vs{color:var(--muted)}
 .btn{background:#1e293b;color:#e5e7eb;border:1px solid rgba(139,92,246,.6);border-radius:12px;padding:8px 12px;cursor:pointer}
 
 :root{--cell:clamp(30px,10.2vw,60px)}
