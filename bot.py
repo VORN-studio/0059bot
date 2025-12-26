@@ -2489,6 +2489,18 @@ def on_sudoku_over(data):
     socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{creator_id}')
     socketio.emit('game_over', {'table_id': table_id, 'winner_id': winner_id, 'prize': prize}, room=f'user_{opponent_id}')
 
+@socketio.on("sudoku_progress")
+def on_sudoku_progress(data):
+    try:
+        table_id = int(data.get("table_id", 0))
+        percent = int(data.get("percent", 0))
+    except Exception:
+        table_id = 0
+        percent = 0
+    uid = _current_user_id()
+    if table_id and uid:
+        emit("sudoku_progress", {"table_id": table_id, "user_id": uid, "percent": percent}, room=f"table_{table_id}")
+
 @socketio.on("leave_duels")
 def handle_leave_duels(data):
     user_id = data.get("user_id")

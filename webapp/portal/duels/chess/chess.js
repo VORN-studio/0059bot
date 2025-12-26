@@ -342,7 +342,7 @@ async function init() {
     socket.on('chess_move', applyIncoming);
     socket.on('opponent_move', applyIncoming);
     socket.on('table_joined', (data)=>{
-      if (data && data.table_id===TABLE_ID) { bothJoined = true; }
+      if (data && data.table_id===TABLE_ID) { bothJoined = true; const oppEl = document.getElementById('chess-opp-name'); if (oppEl) oppEl.textContent = data.opponent_username || 'Հակառակորդ'; }
     });
     socket.on('game_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
@@ -364,6 +364,13 @@ async function loadTableState(){
     if(js && js.success){
       const isCreator = Number(js.creator_id) === Number(USER_ID);
       CREATOR_ID = Number(js.creator_id);
+      const cuser = js.creator_username || '';
+      const ouser = js.opponent_username || '';
+      const oppName = isCreator ? ouser : cuser;
+      const meEl = document.getElementById('chess-my-name');
+      const oppEl = document.getElementById('chess-opp-name');
+      if (meEl) meEl.textContent = 'Դու';
+      if (oppEl) oppEl.textContent = oppName || 'Սպասում...';
       const urlColor = params.get('color');
       if (!urlColor) {
         const creatorColor = (js.table && js.table.color) || js.creator_color || js.color || 'w';

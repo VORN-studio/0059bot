@@ -16,6 +16,8 @@ let notesMode = false;
 let candidates = [];
 let solution = null;
 let currentDifficulty = 'medium';
+let bothJoined = false;
+let opponentUsername = '';
 
 async function loadBalance() {
   try {
@@ -357,6 +359,9 @@ function updateProgressAndCounts(){
       nc.appendChild(div);
     }
   }
+  if (onlineMode && socket) {
+    socket.emit('sudoku_progress', { table_id: TABLE_ID, percent: pct });
+  }
 }
 
 let timerStart = 0;
@@ -385,6 +390,17 @@ async function loadTableState(){
     const js = await r.json();
     if(js.success){
       const st = js.game_state || {};
+      const cid = Number(js.creator_id||0);
+      const oid = Number(js.opponent_id||0);
+      const cuser = js.creator_username||'';
+      const ouser = js.opponent_username||'';
+      const meIsCreator = cid===USER_ID;
+      opponentUsername = meIsCreator ? ouser : cuser;
+      const myNameEl = document.getElementById('my-name');
+      const oppNameEl = document.getElementById('opponent-name');
+      if (myNameEl) myNameEl.textContent = 'Դու';
+      if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Սպասում...';
+      bothJoined = !!ouser;
       if(st.type==='sudoku'){
         currentDifficulty = String(st.difficulty||'medium');
         grid = (st.grid||[]).map(r=>r.slice());
@@ -413,9 +429,38 @@ async function init() {
     renderMistakes();
     startTimer(true);
     resizeGrid();
+    socket.on('table_joined', (data)=>{
+      if (data && data.table_id===TABLE_ID) {
+        bothJoined = true;
+        opponentUsername = data.opponent_username || opponentUsername;
+        const oppNameEl = document.getElementById('opponent-name');
+        if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Հակառակորդ';
+      }
+    });
     socket.on('sudoku_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
         if (!gameOver) endGame(data.result==='win' ? 'lose' : 'win');
+      }
+    });
+    socket.on('sudoku_mistake', (data)=>{
+      if (data && data.table_id===TABLE_ID) {
+        const uid = Number(data.user_id||0);
+        if (uid && uid!==USER_ID) {
+          const el = document.getElementById('opp-mistakes');
+          if (el) el.textContent = `Հակառակորդի սխալներ՝ ${data.mistakes}/${MAX_MISTAKES}`;
+        }
+      }
+    });
+    socket.on('sudoku_progress', (data)=>{
+      if (data && data.table_id===TABLE_ID) {
+        const uid = Number(data.user_id||0);
+        if (uid && uid!==USER_ID) {
+          const p = Math.max(0, Math.min(100, Number(data.percent||0)));
+          const bar = document.getElementById('opp-progress-bar');
+          const txt = document.getElementById('opp-progress-text');
+          if (bar) bar.style.width = `${p}%`;
+          if (txt) txt.textContent = `${Math.round(p)}%`;
+        }
       }
     });
   } else {
