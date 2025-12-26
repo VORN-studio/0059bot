@@ -276,6 +276,10 @@ body::after {
   margin-left: auto;
 }
 
+.segmented { display: flex; gap: 8px; }
+.seg-btn { background: radial-gradient(circle at top left, #1e293b, #0f172a); border: 1px solid rgba(139, 92, 246, 0.5); color: #e5e7eb; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+.seg-btn.active { background: radial-gradient(circle at 0 0, #8b5cf6, #7c3aed); border-color: rgba(139, 92, 246, 0.9); }
+
 .online-count span {
   font-weight: 600;
   color: #4ade80;

@@ -118,9 +118,21 @@ function renderTables(tables) {
 
   const iconMap = { tictactoe: '❌⭕', chess: '♟️', sudoku: '🔢' };
   const nameMap = { tictactoe: 'Tic-Tac-Toe', chess: 'Շախմատ', sudoku: 'Սուդոկու' };
-  container.innerHTML = tables
+  const now = Math.floor(Date.now() / 1000);
+  const active = tables.filter(t => (now - t.created_at) < 300);
+  if (!active || active.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">🎮</span>
+        <p>Ակտիվ սեղաններ չկան</p>
+        <p class="empty-hint">Ստեղծիր առաջին սեղանը։</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = active
     .map((t) => {
-      const now = Math.floor(Date.now() / 1000);
       const elapsed = now - t.created_at;
       const timeLeft = Math.max(0, 300 - elapsed);
       const minutes = Math.floor(timeLeft / 60);
@@ -141,6 +153,15 @@ function renderTables(tables) {
       `;
     })
     .join("");
+}
+
+function setSelectedGame(game) {
+  selectedGameType = game;
+  const ids = ['seg-ttt','seg-chess','seg-sudoku'];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+  const map = { tictactoe:'seg-ttt', chess:'seg-chess', sudoku:'seg-sudoku' };
+  const el = document.getElementById(map[game]); if (el) el.classList.add('active');
+  loadTables();
 }
 
 // ================= BOT GAME =================
