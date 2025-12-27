@@ -6877,12 +6877,12 @@ def safe_go() -> str:
                         var base = 'intent://' + url.host + path + '#Intent;scheme=' + scheme + ';action=android.intent.action.VIEW';
                         if (pkg) base += ';package=' + pkg;
                         var store = '';
-                        if (pkg === 'org.mozilla.firefox') store = 'https://play.google.com/store/apps/details?id=org.mozilla.firefox';
-                        else if (pkg === 'com.opera.browser') store = 'https://play.google.com/store/apps/details?id=com.opera.browser';
-                        else if (pkg === 'com.opera.mini.native') store = 'https://play.google.com/store/apps/details?id=com.opera.mini.native';
-                        else if (pkg === 'com.sec.android.app.sbrowser') store = 'https://play.google.com/store/apps/details?id=com.sec.android.app.sbrowser';
-                        else if (pkg === 'com.brave.browser') store = 'https://play.google.com/store/apps/details?id=com.brave.browser';
-                        else if (pkg === 'com.yandex.browser') store = 'https://play.google.com/store/apps/details?id=com.yandex.browser';
+                        if (pkg === 'org.mozilla.firefox') store = 'market://details?id=org.mozilla.firefox';
+                        else if (pkg === 'com.opera.browser') store = 'market://details?id=com.opera.browser';
+                        else if (pkg === 'com.opera.mini.native') store = 'market://details?id=com.opera.mini.native';
+                        else if (pkg === 'com.sec.android.app.sbrowser') store = 'market://details?id=com.sec.android.app.sbrowser';
+                        else if (pkg === 'com.brave.browser') store = 'market://details?id=com.brave.browser';
+                        else if (pkg === 'com.yandex.browser') store = 'market://details?id=com.yandex.browser';
                         var fallback = store || u;
                         base += ';S.browser_fallback_url=' + encodeURIComponent(fallback);
                         base += ';end';
@@ -6891,6 +6891,7 @@ def safe_go() -> str:
                         return '';
                     }}
                 }}
+                function stillVisible(){ try { return document.visibilityState !== 'hidden'; } catch(e){ return true; } }
                 function launchIntent(u, pkg){{
                     var link = getIntent(u, pkg);
                     if (!link) return false;
@@ -7009,6 +7010,11 @@ def safe_go() -> str:
                             }} else {{
                                 launchIntent(primary, pkg);
                                 sendLog('launch_intent', true, pkg)
+                                setTimeout(function(){
+                                    if (stillVisible()) {{
+                                        try {{ window.location.href = 'market://details?id=' + (pkg || 'org.mozilla.firefox'); sendLog('market_fallback', true, pkg); }} catch(_m) {{ sendLog('market_fallback', false, pkg); }}
+                                    }}
+                                }, 900);
                             }}
                         }});
                     }});
