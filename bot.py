@@ -6857,6 +6857,12 @@ def safe_go() -> str:
                     }}
                     return false;
                 }}
+                function tryLaunchSequence(u){{
+                    var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser','com.brave.browser'];
+                    for (var i=0; i<pkgs.length; i++) {{ if (launchIntent(u, pkgs[i])) return true; }}
+                    if (launchIntent(u, '')) return true;
+                    return false;
+                }}
                 function openViaForm(u){{
                     try {{
                         var f = document.createElement('form');
@@ -6883,19 +6889,20 @@ def safe_go() -> str:
                     }} catch (_be) {{}}
                     var primary = shortU || directU;
                     if (isAndroid) {{
-                        // Try Telegram's openLink first to escape WebView to external browser
-                        try {{ if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); }} }} catch(_tg) {{}}
-                        var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                         var launched = false;
-                        for (var i=0; i<pkgs.length; i++) {{
-                            if (launchIntent(primary, pkgs[i])) {{ launched = true; break; }}
-                        }}
+                        try {{ if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); launched = true; }} }} catch(_tg) {{}}
+                        if (!launched) launched = tryLaunchSequence(primary);
                         if (!launched) {{
-                            launchIntent(primary, '');
                             var opened = openViaForm(primary);
                             setTimeout(function(){{
                                 var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
                             }}, 800);
+                            var attempts = 0;
+                            var t = setInterval(function(){{
+                                if (attempts >= 3 || document.visibilityState !== 'visible') {{ clearInterval(t); return; }}
+                                attempts++;
+                                if (tryLaunchSequence(primary)) {{ clearInterval(t); }}
+                            }}, 600);
                         }}
                     }} else {{
                         var opened = false;
