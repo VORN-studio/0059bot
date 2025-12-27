@@ -101,6 +101,8 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   border: var(--border-holo);
   box-shadow: var(--shadow-soft), var(--shadow-purple);
   transform-origin: center right;
+  content-visibility: auto;
+  contain-intrinsic-size: 300px 340px;
 }
 
 .t-slide::after {
@@ -111,6 +113,24 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,0) 50%, rgba(0,0,0,.12));
 }
 
+/* subtle shimmer strip, transform-only for performance */
+.t-slide::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; width: 28px;
+  left: -40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.20), transparent);
+  opacity: .12;
+  will-change: transform;
+  animation: slideShimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes slideShimmer {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(120%); }
+  100% { transform: translateX(0); }
+}
+
 .t-slide.is-active { transform: scale(1); z-index: 3 }
 .t-slide.is-next   { transform: scale(.98); z-index: 2 }
 .t-slide.is-prev   { transform: scale(.98); z-index: 2 }
@@ -118,10 +138,16 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
 
 .t-image {
   width: 100%;
-  height: 290px;
+  height: clamp(240px, 32vh, 300px);
+  aspect-ratio: 16 / 9;
   object-fit: cover;
+  object-position: center;
   display: block;
+  opacity: 0;
+  transition: opacity var(--speed-normal, .28s) ease;
 }
+
+.t-image.is-loaded { opacity: 1 }
 
 .t-caption {
   padding: 12px 14px;
@@ -188,7 +214,7 @@ body {
    ANIMATIONS
    ============================ */
 
-.t-slide.is-active { animation: emphasisGlow 3.5s ease-in-out infinite }
+.t-slide.is-active { animation: breathe 4s ease-in-out infinite }
 
 /* ============================
    EXTRA – fine-tune caption text

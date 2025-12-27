@@ -25,39 +25,39 @@
         <button id="t-right" class="t-arrow t-right" aria-label="Next">›</button>
         <div id="t-track" class="t-track">
           <div class="t-slide">
-            <img class="t-image image-round" src="/webapp/tasks/slide/1.jpg" alt="Step 1">
+            <img class="t-image image-round" src="/webapp/tasks/slide/1.jpg" alt="Step 1" loading="lazy" decoding="async" fetchpriority="low">
             <div class="t-caption cap cap-text">
               Шаг 1. Нажмите “Continue”.<br>
               <span class="warn">⚠️ Внимание:</span> при некоторых нажатиях может открываться реклама. Это нормально. Закройте рекламу и нажимайте кнопку снова, пока не перейдёте к следующему шагу.
             </div>
           </div>
           <div class="t-slide">
-            <img class="t-image image-round" src="/webapp/tasks/slide/2.jpg" alt="Step 2">
+            <img class="t-image image-round" src="/webapp/tasks/slide/2.jpg" alt="Step 2" loading="lazy" decoding="async" fetchpriority="low">
             <div class="t-caption cap cap-text">
               Шаг 2. Нажмите “I am not a robot”.<br>
               <span class="warn">⚠️</span> При случайных нажатиях может открываться реклама. Закройте её и повторите действие, пока не откроется следующий шаг.
             </div>
           </div>
           <div class="t-slide">
-            <img class="t-image image-round" src="/webapp/tasks/slide/3.jpg" alt="Step 3">
+            <img class="t-image image-round" src="/webapp/tasks/slide/3.jpg" alt="Step 3" loading="lazy" decoding="async" fetchpriority="low">
             <div class="t-caption cap cap-text">
               Шаг 3. Пройдите верификацию.<br>
               <span class="warn">⚠️</span> Появление рекламы — это нормально. Вернитесь назад и продолжайте процесс до открытия следующей страницы.
             </div>
           </div>
           <div class="t-slide">
-            <img class="t-image image-round" src="/webapp/tasks/slide/4.jpg" alt="Step 4">
+            <img class="t-image image-round" src="/webapp/tasks/slide/4.jpg" alt="Step 4" loading="lazy" decoding="async" fetchpriority="low">
             <div class="t-caption cap cap-text">Шаг 4. Дождитесь окончания таймера.</div>
           </div>
           <div class="t-slide">
-            <img class="t-image image-round" src="/webapp/tasks/slide/5.jpg" alt="Step 5">
+            <img class="t-image image-round" src="/webapp/tasks/slide/5.jpg" alt="Step 5" loading="lazy" decoding="async" fetchpriority="low">
             <div class="t-caption cap cap-text">
               Шаг 5. Нажмите “Get Link”.<br>
               <span class="warn">⚠️</span> Если откроется реклама, закройте её и снова нажмите кнопку.
             </div>
           </div>
           <div class="t-slide">
-            <img class="t-image image-round" src="/webapp/tasks/slide/6.jpg" alt="Step 6">
+            <img class="t-image image-round" src="/webapp/tasks/slide/6.jpg" alt="Step 6" loading="lazy" decoding="async" fetchpriority="low">
             <div class="t-caption cap cap-text">
               Шаг 6. Нажмите “Open / Открыть”.<br>
               <span class="warn">⚠️</span> Убедитесь, что открылась именно страница задания. Если откроется реклама — закройте её и перейдите на страницу задания.
@@ -300,9 +300,19 @@
       // Layered carousel with finger swipe + arrows
       var tc = document.getElementById('t-carousel');
       var slides = tt ? Array.from(tt.querySelectorAll('.t-slide')) : [];
+      var imgs = tt ? Array.from(tt.querySelectorAll('.t-image')) : [];
       var idx = 0;
       var gapPx = 18;
       var peekPx = 0;
+
+      imgs.forEach(function(img){
+        function mark(){ try { img.classList.add('is-loaded'); } catch(e){} }
+        if (img.complete) { mark(); }
+        else {
+          img.addEventListener('load', mark, { once: true });
+          try { if (img.decode) { img.decode().then(mark).catch(function(){}) } } catch(_d){}
+        }
+      });
 
       function setActive(){
         slides.forEach(function(s,i){
@@ -332,7 +342,18 @@
 
       var startX = 0, dragging = false, baseOffset = 0;
       function onDown(x){ dragging = true; startX = x; baseOffset = -(idx * (peekPx + gapPx)); tt && (tt.style.transition = 'none'); }
-      function onMove(x){ if (!dragging || !tt) return; var dx = x - startX; tt.style.transform = 'translateX(' + (baseOffset + dx) + 'px)'; }
+      var pendingMove = false, nextX = 0;
+      function applyMove(){
+        if (!dragging || !tt) { pendingMove = false; return; }
+        var dx = nextX - startX;
+        tt.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
+        pendingMove = false;
+      }
+      function onMove(x){
+        if (!dragging || !tt) return;
+        nextX = x;
+        if (!pendingMove) { pendingMove = true; requestAnimationFrame(applyMove); }
+      }
       function onUp(x){ if (!dragging || !tt) return; dragging = false; tt.style.transition = ''; var dx = x - startX; var t = (peekPx * 0.18);
         if (dx < -t && idx < slides.length-1) idx++; else if (dx > t && idx > 0) idx--; render(); }
 
