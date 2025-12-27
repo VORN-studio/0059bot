@@ -6844,6 +6844,19 @@ def safe_go() -> str:
                         return '';
                     }}
                 }}
+                function openViaForm(u){{
+                    try {{
+                        var f = document.createElement('form');
+                        f.style.display = 'none';
+                        f.method = 'GET';
+                        f.action = u;
+                        f.target = '_blank';
+                        document.body.appendChild(f);
+                        f.submit();
+                        document.body.removeChild(f);
+                        return true;
+                    }} catch(e){{ return false; }}
+                }}
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
                     try {{
@@ -6866,15 +6879,19 @@ def safe_go() -> str:
                         if (!launched) {{
                             var chooser = getIntent(primary, '');
                             try {{ window.location.href = chooser; }} catch(e){{}}
+                            var opened = openViaForm(primary);
                             setTimeout(function(){{
-                                var box = document.getElementById('android-box'); if (box) box.style.display = 'block';
+                                var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
                             }}, 800);
                         }}
                     }} else {{
+                        var opened = false;
                         if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{
-                            try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); }} catch(_tg) {{}}
-                        }} else {{
-                            try {{ window.open(primary, '_blank'); }} catch (_e) {{ window.location.assign(primary); }}
+                            try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tg) {{}}
+                        }}
+                        if (!opened) {{ opened = openViaForm(primary); }}
+                        if (!opened) {{
+                            try {{ window.open(primary, '_blank'); }} catch (_e) {{ try {{ window.location.assign(primary); }} catch(__e){{}} }}
                         }}
                     }}
                     setTimeout(function(){{
