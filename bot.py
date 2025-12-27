@@ -6877,16 +6877,36 @@ def safe_go() -> str:
             scrollbar-width: thin;
         }}
         .tutorial-item {{
-            flex: 0 0 140px;
-            height: 90px;
+            flex: 0 0 160px;
             background: rgba(0,0,0,0.2);
-            border: 1px dashed rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }}
+        .tutorial-thumb {{
+            width: 100%;
+            height: 100px;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.12), rgba(12, 28, 64, 0.6));
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #777;
+            color: #8899ac;
             font-size: 12px;
+        }}
+        .tutorial-thumb img {{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }}
+        .tutorial-caption {{
+            padding: 8px 10px;
+            font-size: 12px;
+            color: #a9bfd3;
+            background: rgba(255,255,255,0.03);
+            border-top: 1px solid rgba(255,255,255,0.08);
         }}
         select {{
             background: rgba(0,0,0,0.3) !important;
@@ -6908,18 +6928,29 @@ def safe_go() -> str:
             <div class="task-card">
                 <h3>How to complete:</h3>
                 <div class="tutorial-scroll">
-                    <!-- Placeholders -->
                     <div class="tutorial-item">
-                        <span>Image 1</span>
+                        <div class="tutorial-thumb"><span>Image 1</span></div>
+                        <div class="tutorial-caption">Նկարագրություն 1</div>
                     </div>
                     <div class="tutorial-item">
-                        <span>Image 2</span>
+                        <div class="tutorial-thumb"><span>Image 2</span></div>
+                        <div class="tutorial-caption">Նկարագրություն 2</div>
                     </div>
                     <div class="tutorial-item">
-                        <span>Image 3</span>
+                        <div class="tutorial-thumb"><span>Image 3</span></div>
+                        <div class="tutorial-caption">Նկարագրություն 3</div>
                     </div>
                     <div class="tutorial-item">
-                        <span>Video Tutorial</span>
+                        <div class="tutorial-thumb"><span>Image 4</span></div>
+                        <div class="tutorial-caption">Նկարագրություն 4</div>
+                    </div>
+                    <div class="tutorial-item">
+                        <div class="tutorial-thumb"><span>Image 5</span></div>
+                        <div class="tutorial-caption">Նկարագրություն 5</div>
+                    </div>
+                    <div class="tutorial-item">
+                        <div class="tutorial-thumb"><span>Image 6</span></div>
+                        <div class="tutorial-caption">Նկարագրություն 6</div>
                     </div>
                 </div>
             </div>
