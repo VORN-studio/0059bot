@@ -6877,12 +6877,12 @@ def safe_go() -> str:
                         var base = 'intent://' + url.host + path + '#Intent;scheme=' + scheme + ';action=android.intent.action.VIEW';
                         if (pkg) base += ';package=' + pkg;
                         var store = '';
-                        if (pkg === 'org.mozilla.firefox') store = 'market://details?id=org.mozilla.firefox';
-                        else if (pkg === 'com.opera.browser') store = 'market://details?id=com.opera.browser';
-                        else if (pkg === 'com.opera.mini.native') store = 'market://details?id=com.opera.mini.native';
-                        else if (pkg === 'com.sec.android.app.sbrowser') store = 'market://details?id=com.sec.android.app.sbrowser';
-                        else if (pkg === 'com.brave.browser') store = 'market://details?id=com.brave.browser';
-                        else if (pkg === 'com.yandex.browser') store = 'market://details?id=com.yandex.browser';
+                        if (pkg === 'org.mozilla.firefox') store = 'https://play.google.com/store/apps/details?id=org.mozilla.firefox';
+                        else if (pkg === 'com.opera.browser') store = 'https://play.google.com/store/apps/details?id=com.opera.browser';
+                        else if (pkg === 'com.opera.mini.native') store = 'https://play.google.com/store/apps/details?id=com.opera.mini.native';
+                        else if (pkg === 'com.sec.android.app.sbrowser') store = 'https://play.google.com/store/apps/details?id=com.sec.android.app.sbrowser';
+                        else if (pkg === 'com.brave.browser') store = 'https://play.google.com/store/apps/details?id=com.brave.browser';
+                        else if (pkg === 'com.yandex.browser') store = 'https://play.google.com/store/apps/details?id=com.yandex.browser';
                         var fallback = store || u;
                         base += ';S.browser_fallback_url=' + encodeURIComponent(fallback);
                         base += ';end';
@@ -7011,17 +7011,14 @@ def safe_go() -> str:
                             setTimeout(function(){{
                                 if (stillVisible()) {{
                                     var storeHttp = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
-                                    var storeMarket = 'market://details?id=' + (pkg || 'org.mozilla.firefox');
                                     
-                                    if (inTelegram) {{
+                                    if (inTelegram && window.Telegram && window.Telegram.WebApp) {{
                                         try {{ window.Telegram.WebApp.openLink(storeHttp, {{ try_instant_view: false }}); sendLog('fallback_store_tg', true, pkg); }} catch(e){{}}
-                                    }} else {{
-                                        try {{ window.location.href = storeMarket; sendLog('fallback_market', true, pkg); }} catch(e){{
-                                            try {{ window.location.href = storeHttp; }} catch(e2){{}}
-                                        }}
                                     }}
+                                    // Always try standard nav as backup
+                                    try {{ window.location.href = storeHttp; sendLog('fallback_location', true, pkg); }} catch(e){{}}
                                 }}
-                            }}, 1000);
+                            }}, 500);
                         }});
                     }});
                 }}
