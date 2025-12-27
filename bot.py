@@ -6834,6 +6834,7 @@ def safe_go() -> str:
                 var uid = {safe_js_uid};
                 var tid = {safe_js_tid};
                 var isAndroid = /Android/i.test(navigator.userAgent);
+                var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
                 var frameWrap = document.getElementById('iframe-wrap');
                 var innerFrame = document.getElementById('inner-frame');
                 function getIntent(u, pkg){{
@@ -6938,13 +6939,15 @@ def safe_go() -> str:
                     }}, 3000);
                 }});
                 var buttons = document.querySelectorAll('#android-box .abtn');
-                buttons.forEach(function(b){{
-                    b.addEventListener('click', function(){{
-                        var pkg = b.getAttribute('data-pkg') || '';
-                        launchIntent(shortU || directU, pkg);
+                if (isAndroid && !inTelegram) {{
+                    buttons.forEach(function(b){{
+                        b.addEventListener('click', function(){{
+                            var pkg = b.getAttribute('data-pkg') || '';
+                            launchIntent(shortU || directU, pkg);
+                        }});
                     }});
-                }});
-                if (isAndroid) {{ var box = document.getElementById('android-box'); if (box) box.style.display = 'block'; }}
+                }}
+                if (isAndroid && !inTelegram) {{ var box = document.getElementById('android-box'); if (box) box.style.display = 'block'; }}
                 var ml = document.getElementById('manual-link');
                 if (ml) {{
                     ml.addEventListener('click', function(ev){{
