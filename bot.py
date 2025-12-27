@@ -6801,7 +6801,7 @@ def safe_go() -> str:
         <meta http-equiv=\"Expires\" content=\"0\" />
         <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">
     <style>
-        body {
+        body {{
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #e0e0e0;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -6811,8 +6811,8 @@ def safe_go() -> str:
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-        }
-        .task-card {
+        }}
+        .task-card {{
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.1);
             padding: 20px;
@@ -6822,22 +6822,22 @@ def safe_go() -> str:
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             position: relative;
             overflow: hidden;
-        }
-        .task-card::before {
+        }}
+        .task-card::before {{
             content: "";
             position: absolute;
             top: 0; left: 0; width: 4px; height: 100%;
             background: linear-gradient(to bottom, transparent, rgba(0, 255, 240, 0.8), transparent);
             opacity: 0.6;
-        }
-        h2 {
+        }}
+        h2 {{
             font-size: 24px;
             margin-bottom: 5px;
             background: linear-gradient(90deg, #fff, #a5f3fc);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-        h3 {
+        }}
+        h3 {{
             margin: 0 0 15px 0;
             font-size: 18px;
             font-weight: 700;
@@ -6846,8 +6846,8 @@ def safe_go() -> str:
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
             letter-spacing: 0.5px;
-        }
-        .ubtn {
+        }}
+        .ubtn {{
             background: radial-gradient(circle at 30% 0%, rgba(255,255,255,0.1), rgba(20,35,75,0.6));
             color: #fff;
             padding: 14px;
@@ -6859,24 +6859,24 @@ def safe_go() -> str:
             transition: all 0.2s ease;
             text-align: center;
             font-weight: 500;
-        }
-        .ubtn:hover {
+        }}
+        .ubtn:hover {{
             transform: translateY(-3px);
             border-color: rgba(180, 255, 255, 0.8);
             box-shadow: 0 8px 20px rgba(0, 255, 255, 0.25);
             background: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.2), rgba(12, 28, 64, 0.8));
-        }
-        .ubtn:active {
+        }}
+        .ubtn:active {{
             transform: scale(0.96);
-        }
-        .tutorial-scroll {
+        }}
+        .tutorial-scroll {{
             display: flex;
             gap: 15px;
             overflow-x: auto;
             padding-bottom: 10px;
             scrollbar-width: thin;
-        }
-        .tutorial-item {
+        }}
+        .tutorial-item {{
             flex: 0 0 140px;
             height: 90px;
             background: rgba(0,0,0,0.2);
@@ -6887,12 +6887,12 @@ def safe_go() -> str:
             justify-content: center;
             color: #777;
             font-size: 12px;
-        }
-        select {
+        }}
+        select {{
             background: rgba(0,0,0,0.3) !important;
             border: 1px solid rgba(255,255,255,0.2) !important;
             color: #fff !important;
-        }
+        }}
     </style>
     </head>
     <body>
