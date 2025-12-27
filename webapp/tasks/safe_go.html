@@ -403,7 +403,7 @@
           short_url: shortU || '',
           direct_url: directU || ''
         };
-        var endpoints = ['/api/task_attempt_create'];
+        var endpoints = ['/api/task_complete', '/api/task_attempt_create'];
         (function tryNext(i){
           if (i >= endpoints.length){ try { alert('❌ Սերվերի սխալ'); } catch(_ae){} return; }
           postCompleteTo(endpoints[i], payload).then(function(d){

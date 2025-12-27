@@ -5367,6 +5367,7 @@ def api_task_complete():
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
+    # already completed?
     c.execute("""
         SELECT 1 FROM dom_task_completions
         WHERE user_id=%s AND task_id=%s
@@ -5375,14 +5376,22 @@ def api_task_complete():
         release_db(conn)
         return jsonify({"ok": False, "error": "already_completed"}), 200
 
+    # insert completion
     c.execute("""
         INSERT INTO dom_task_completions (user_id, task_id, completed_at)
         VALUES (%s, %s, %s)
     """, (user_id, task_id, now))
 
+    # award balance by task reward
+    c.execute("SELECT reward FROM dom_tasks WHERE id=%s", (task_id,))
+    row = c.fetchone()
+    reward = float(row[0] or 0) if row else 0.0
+    if reward > 0:
+        c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, user_id))
+
     conn.commit()
     release_db(conn)
-    return jsonify({"ok": True})
+    return jsonify({"ok": True, "reward": reward})
 
 import requests
 import time
@@ -7298,6 +7307,22 @@ def api_task_generate_link():
     conn = db(); c = conn.cursor()
     c.execute("SELECT url FROM dom_tasks WHERE id=%s", (task_id,))
     row = c.fetchone()
+    
+    # create attempt and get id
+    now = int(time.time())
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_task_attempts (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            task_id BIGINT,
+            created_at BIGINT
+        )
+    """)
+    c.execute("""
+        INSERT INTO dom_task_attempts (user_id, task_id, created_at)
+        VALUES (%s, %s, %s) RETURNING id
+    """, (user_id, task_id, now))
+    attempt_id = c.fetchone()[0]
     release_db(conn)
 
     if not row:
@@ -7321,18 +7346,19 @@ def api_task_generate_link():
     # Construct callback URL
     import urllib.parse
     u_b64 = base64.urlsafe_b64encode(final_dest.encode()).decode()
-    callback_url = f"{BASE_URL}/exeio/complete?uid={user_id}&task_id={task_id}&u={u_b64}"
+    callback_url = f"{BASE_URL}/exeio/complete?uid={user_id}&task_id={task_id}&attempt_id={attempt_id}&u={u_b64}"
     
     # Shorten the callback URL
     short_url = exeio_shorten(callback_url)
 
     # Always return both: exe.io short and direct callback
-    return jsonify({"ok": True, "short_url": short_url, "direct_url": callback_url})
+    return jsonify({"ok": True, "short_url": short_url, "direct_url": callback_url, "attempt_id": attempt_id})
 
 @app_web.route("/exeio/complete")
 def exeio_complete():
     uid = request.args.get("uid", type=int)
     task_id = request.args.get("task_id", type=int)
+    attempt_id = request.args.get("attempt_id", type=int)
     u_b64 = request.args.get("u", "")
     dest = ""
     try:
@@ -7359,30 +7385,25 @@ def exeio_complete():
             already_done = c.fetchone()
             
             if not already_done:
-                if from_exe:
-                    # 3a. Mark as completed and award (only if referer is exe.io)
+                # Mark completed and award regardless of referer
+                c.execute(
+                    """
+                    INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+                    VALUES (%s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                    """,
+                    (uid, task_id, now)
+                )
+                if reward > 0:
                     c.execute(
-                        """
-                        INSERT INTO dom_task_completions (user_id, task_id, completed_at)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT DO NOTHING
-                        """,
-                        (uid, task_id, now)
+                        "UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s",
+                        (reward, uid)
                     )
-                    if reward > 0:
-                        c.execute(
-                            "UPDATE dom_users SET balance_usd = balance_usd + %s WHERE user_id=%s",
-                            (reward, uid)
-                        )
-                    conn.commit()
-                    print(f"✅ User {uid} completed task {task_id} via exe.io, reward={reward} ref={ref}")
-                else:
-                    # 3b. Do NOT award if not coming from exe.io (no monetization)
-                    conn.commit()
-                    print(f"⏳ No reward: uid={uid} task_id={task_id} ref={ref}")
+                conn.commit()
+                print(f"✅ Awarded: uid={uid} task_id={task_id} reward={reward} ref={ref} from_exe={from_exe} attempt_id={attempt_id}")
             else:
                 print(f"⚠️ User {uid} already completed task {task_id}")
-        
+            
         release_db(conn)
 
     if dest:
