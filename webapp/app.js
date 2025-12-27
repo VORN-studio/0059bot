@@ -140,7 +140,7 @@ function updateUserHeader() {
 
 function updateBalanceDisplay() {
   const el = $("user-balance");
-  if (el) el.textContent = balance.toFixed(2) + " $";
+  if (el) el.textContent = balance.toFixed(3) + " $";
 }
 
 async function loadMiningPlans() {
