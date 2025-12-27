@@ -181,7 +181,7 @@ async function performTask(taskId) {
                     alert("❌ Link generation failed. Try again.");
                     return;
                 }
-                const safeUrl = `${window.location.origin}/safe_go?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}`;
+                const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}`;
                 // ✅ Բացենք անմիջապես արտաքին բրաուզերով, ոչ թե WebView-ի preview/modal-ում
                 if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
                     window.Telegram.WebApp.openLink(safeUrl, {try_instant_view: false});
