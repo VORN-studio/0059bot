@@ -6857,6 +6857,18 @@ def safe_go() -> str:
                 var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
                 var frameWrap = document.getElementById('iframe-wrap');
                 var innerFrame = document.getElementById('inner-frame');
+                function sendLog(evt, ok, info){{
+                    try {{
+                        var payload = {{ url: (shortU||directU)||'', user_id: uid, task_id: tid, evt: evt||'', ok: !!ok, info: info||'', ts: Date.now(), platform: (isAndroid?'android':(isIOS?'ios':'desktop')), in_telegram: inTelegram }};
+                        var js = JSON.stringify(payload);
+                        if (navigator.sendBeacon) {{
+                            var blob = new Blob([js], {{ type: 'application/json' }});
+                            navigator.sendBeacon('/api/track_click', blob);
+                        }} else {{
+                            fetch('/api/track_click', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: js }});
+                        }}
+                    }} catch(_e){{}}
+                }}
                 function getIntent(u, pkg){{
                     try {{
                         var url = new URL(u);
@@ -6928,43 +6940,40 @@ def safe_go() -> str:
                 }}
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
-                    try {{
-                        var payload = JSON.stringify({{ url: shortU || directU, user_id: uid, task_id: tid, ts: Date.now() }});
-                        if (navigator.sendBeacon) {{
-                            var blob = new Blob([payload], {{ type: 'application/json' }});
-                            navigator.sendBeacon('/api/track_click', blob);
-                        }} else {{
-                            fetch('/api/track_click', {{ method: 'POST', headers: {{ 'Content-Type': 'application/json' }}, body: payload }});
-                        }}
-                    }} catch (_be) {{}}
+                    sendLog('click_start', true, '')
                     var primary = shortU || directU;
                     if (isAndroid) {{
                         var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
                         var opened = false;
                         if (inTelegram && typeof window.Telegram.WebApp.openLink === 'function') {{
                             try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tgA) {{}}
+                            sendLog('openLink_android', opened, '')
                         }}
                         if (!opened) {{
                             opened = openViaForm(primary);
+                            sendLog('open_via_form', opened, '')
                             setTimeout(function(){{
                                 var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
+                                if (box && !opened) sendLog('show_android_chooser', true, '')
                             }}, 800);
                             if (!opened && frameWrap && innerFrame) {{
-                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f) {{}}
+                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; sendLog('iframe_fallback', true, ''); }} catch(_f) {{}}
                             }}
                         }}
                     }} else {{
                         var opened = false;
                         if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{
                             try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tg) {{}}
+                            sendLog('openLink_other', opened, '')
                         }}
-                        if (!opened) {{ opened = openViaForm(primary); }}
+                        if (!opened) {{ opened = openViaForm(primary); sendLog('open_via_form', opened, '') }}
                         if (!opened) {{
                             var ok = openBlankThenNavigate(primary);
+                            sendLog('blank_navigate', ok, '')
                             if (!ok) {{ try {{ window.open(primary, '_blank'); }} catch (_e) {{ try {{ window.location.assign(primary); }} catch(__e){{}} }} }}
                         }}
                         if (!opened && frameWrap && innerFrame) {{
-                            try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f2) {{}}
+                            try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; sendLog('iframe_fallback', true, ''); }} catch(_f2) {{}}
                         }}
                     }}
                     setTimeout(function(){{
@@ -6978,22 +6987,25 @@ def safe_go() -> str:
                         b.addEventListener('click', function(){{
                             var pkg = b.getAttribute('data-pkg') || '';
                             var primary = shortU || directU;
+                            sendLog('chooser_click', true, pkg)
                             if (inTelegram) {{
                                 var storeUrl = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
-                                try {{ window.Telegram.WebApp.openLink(storeUrl, {{ try_instant_view: false }}); }} catch(_st) {{}}
+                                try {{ window.Telegram.WebApp.openLink(storeUrl, {{ try_instant_view: false }}); sendLog('open_store', true, pkg); }} catch(_st) {{}}
                             }} else {{
                                 launchIntent(primary, pkg);
+                                sendLog('launch_intent', true, pkg)
                             }}
                         }});
                     }});
                 }}
-                if (isAndroid) {{ var box = document.getElementById('android-box'); if (box) box.style.display = 'block'; }}
-                if (isIOS) {{ var ibox = document.getElementById('ios-box'); if (ibox) ibox.style.display = 'block'; var iosBtns = document.querySelectorAll('#ios-box .ibtn'); iosBtns.forEach(function(b){{ b.addEventListener('click', function(){{ var app = b.getAttribute('data-app')||''; openIOS(shortU||directU, app); }}); }}); }}
+                if (isAndroid) {{ var box = document.getElementById('android-box'); if (box) {{ box.style.display = 'block'; sendLog('show_android_box', true, '') }} }}
+                if (isIOS) {{ var ibox = document.getElementById('ios-box'); if (ibox) ibox.style.display = 'block'; var iosBtns = document.querySelectorAll('#ios-box .ibtn'); iosBtns.forEach(function(b){{ b.addEventListener('click', function(){{ var app = b.getAttribute('data-app')||''; var ok = openIOS(shortU||directU, app); sendLog('open_ios', ok, app); }}); }}); }}
                 if (isDesktop) {{ var dbox = document.getElementById('desktop-box'); if (dbox) dbox.style.display = 'block'; }}
                 var ml = document.getElementById('manual-link');
                 if (ml) {{
                     ml.addEventListener('click', function(ev){{
                         ev.preventDefault();
+                        sendLog('manual_link_click', true, '')
                         var primary = shortU || directU;
                         var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
                         var launched = false;
@@ -7001,12 +7013,14 @@ def safe_go() -> str:
                             var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                             for (var i=0; i<pkgs.length; i++) {{ if (launchIntent(primary, pkgs[i])) {{ launched = true; break; }} }}
                             if (!launched) {{ launchIntent(primary, ''); }}
+                            sendLog('manual_launch_intent', launched, '')
                         }}
                         if (!launched) {{
                             try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); launched = true; }} catch(_tgM) {{}}
+                            sendLog('manual_openLink', launched, '')
                         }}
                         if (!launched && frameWrap && innerFrame) {{
-                            try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_mf) {{}}
+                            try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; sendLog('manual_iframe_fallback', true, ''); }} catch(_mf) {{}}
                         }}
                     }});
                 }}
@@ -7131,9 +7145,47 @@ def exeio_complete():
 def api_track_click():
     data = request.get_json(silent=True) or {}
     url = data.get('url', '')
+    user_id = int(data.get('user_id') or 0)
+    task_id = int(data.get('task_id') or 0)
+    evt = str(data.get('evt') or '')
+    ok = bool(data.get('ok'))
+    info = str(data.get('info') or '')
+    platform = str(data.get('platform') or '')
+    in_tg = bool(data.get('in_telegram'))
+    ts = int(data.get('ts') or int(time.time()))
     ua = request.headers.get('User-Agent', '')
     ref = request.headers.get('Referer', '')
-    print(f"🟦 CLICK track: ua={ua} referer={ref} url={url}")
+    conn = db(); c = conn.cursor()
+    c.execute(
+        """
+        CREATE TABLE IF NOT EXISTS dom_click_events (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            task_id BIGINT,
+            url TEXT,
+            evt TEXT,
+            ok BOOLEAN,
+            info TEXT,
+            ua TEXT,
+            referer TEXT,
+            platform TEXT,
+            in_telegram BOOLEAN,
+            ts BIGINT,
+            created_at BIGINT
+        )
+        """
+    )
+    now = int(time.time())
+    c.execute(
+        """
+        INSERT INTO dom_click_events (user_id, task_id, url, evt, ok, info, ua, referer, platform, in_telegram, ts, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (user_id, task_id, url, evt, ok, info, ua, ref, platform, in_tg, ts, now)
+    )
+    conn.commit()
+    release_db(conn)
+    print(f"🟦 CLICK evt={evt} ok={ok} uid={user_id} tid={task_id} platform={platform} tg={in_tg} url={url} ref={ref}")
     return jsonify({"ok": True})
 
 def migrate_posts_to_files():
