@@ -132,6 +132,8 @@
             .t-slide, .t-caption, .ubtn { transition: transform 0.15s ease, opacity 0.15s ease !important; }
             /* Disable backdrop-filter (expensive on mobile) */
             * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+            /* Allow mild blur for caption overlay to keep readability */
+            .t-media .t-caption { backdrop-filter: blur(6px) saturate(1.02) !important; -webkit-backdrop-filter: blur(6px) saturate(1.02) !important; }
             /* Hardware accelerate */
             body, #t-carousel, #t-track { transform: translateZ(0); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
           `;
