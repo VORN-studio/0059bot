@@ -147,6 +147,7 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   object-fit: cover;
   object-position: center;
   display: block;
+  overflow: clip !important;
   opacity: 0;
   transition: opacity var(--speed-normal, .28s) ease;
 }

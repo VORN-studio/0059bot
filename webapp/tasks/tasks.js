@@ -56,12 +56,16 @@ async function loadBalance() {
         const res = await fetch(`/api/user/${uid}`);
         const data = await res.json();
 
+        const el = document.getElementById("tasks-balance");
+        if (!el) return;
         if (data.ok && data.user) {
-            document.getElementById("tasks-balance").textContent =
-                data.user.balance_usd.toFixed(3) + " $";
+            el.textContent = data.user.balance_usd.toFixed(3) + " $";
+        } else {
+            el.textContent = "—";
         }
     } catch {
-        document.getElementById("tasks-balance").textContent = "—";
+        const el = document.getElementById("tasks-balance");
+        if (el) el.textContent = "—";
     }
 }
 
@@ -97,6 +101,7 @@ function renderTasks(tasks) {
 
     // Clear old cards
     Object.values(categories).forEach(cat => {
+        if (!cat) return;
         cat.querySelectorAll(".task-card").forEach(e => e.remove());
     });
 
