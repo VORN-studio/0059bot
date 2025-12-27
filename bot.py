@@ -7004,18 +7004,24 @@ def safe_go() -> str:
                             var pkg = b.getAttribute('data-pkg') || '';
                             var primary = shortU || directU;
                             sendLog('chooser_click', true, pkg)
-                            if (inTelegram) {{
-                                var storeUrl = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
-                                try {{ window.Telegram.WebApp.openLink(storeUrl, {{ try_instant_view: false }}); sendLog('open_store', true, pkg); }} catch(_st) {{}}
-                            }} else {{
-                                launchIntent(primary, pkg);
-                                sendLog('launch_intent', true, pkg)
-                                setTimeout(function(){{
+                            // Unified logic: Try to launch app, then fallback to store
+                            launchIntent(primary, pkg);
+                            sendLog('launch_intent_try', true, pkg);
+
+                            setTimeout(function(){{
                                 if (stillVisible()) {{
-                                    try {{ window.location.href = 'market://details?id=' + (pkg || 'org.mozilla.firefox'); sendLog('market_fallback', true, pkg); }} catch(_m) {{ sendLog('market_fallback', false, pkg); }}
+                                    var storeHttp = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
+                                    var storeMarket = 'market://details?id=' + (pkg || 'org.mozilla.firefox');
+                                    
+                                    if (inTelegram) {{
+                                        try {{ window.Telegram.WebApp.openLink(storeHttp, {{ try_instant_view: false }}); sendLog('fallback_store_tg', true, pkg); }} catch(e){{}}
+                                    }} else {{
+                                        try {{ window.location.href = storeMarket; sendLog('fallback_market', true, pkg); }} catch(e){{
+                                            try {{ window.location.href = storeHttp; }} catch(e2){{}}
+                                        }}
+                                    }}
                                 }}
-                            }}, 900);
-                            }}
+                            }}, 1000);
                         }});
                     }});
                 }}
