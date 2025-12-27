@@ -6881,6 +6881,16 @@ def safe_go() -> str:
                         return true;
                     }} catch(e){{ return false; }}
                 }}
+                function openBlankThenNavigate(u){{
+                    try {{
+                        var w = window.open('about:blank', '_blank', 'noopener');
+                        if (w) {{
+                            try {{ w.opener = null; }} catch(_o){{}}
+                            try {{ w.location.href = u; return true; }} catch(_l){{}}
+                        }}
+                    }} catch(e){{}}
+                    return false;
+                }}
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
                     try {{
@@ -6917,7 +6927,8 @@ def safe_go() -> str:
                         }}
                         if (!opened) {{ opened = openViaForm(primary); }}
                         if (!opened) {{
-                            try {{ window.open(primary, '_blank'); }} catch (_e) {{ try {{ window.location.assign(primary); }} catch(__e){{}} }}
+                            var ok = openBlankThenNavigate(primary);
+                            if (!ok) {{ try {{ window.open(primary, '_blank'); }} catch (_e) {{ try {{ window.location.assign(primary); }} catch(__e){{}} }} }}
                         }}
                         if (!opened && frameWrap && innerFrame) {{
                             try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f2) {{}}
