@@ -80,6 +80,7 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   background: var(--glass-2);
   border: var(--border-glow);
   box-shadow: var(--shadow-main);
+  padding-bottom: 18px; /* room for dots, avoids overlap */
 }
 
 .t-track {
@@ -159,6 +160,11 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   border-top: var(--border-glow);
   position: relative;
   z-index: 1;
+  min-height: 64px;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .t-arrow { display: none }

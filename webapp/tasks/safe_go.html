@@ -103,6 +103,30 @@
   <script src="/webapp/tasks/tasks.js" defer></script>
   <script>
     (function(){
+      // Inline mobile performance injection (no CSS file edits)
+      try {
+        var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        var lowMem = navigator.deviceMemory ? navigator.deviceMemory < 4 : false;
+        var fewCores = navigator.hardwareConcurrency ? navigator.hardwareConcurrency < 4 : false;
+        if (isMobile || lowMem || fewCores) {
+          var s = document.createElement('style');
+          s.textContent = `
+            /* Disable page-wide heavy decorations */
+            body::before, body::after { display: none !important; }
+            /* Turn off all animations except tiny transforms */
+            * { animation: none !important; }
+            .t-slide.is-active { animation: none !important; }
+            /* Keep short transitions on key elements */
+            .t-slide, .t-caption, .ubtn { transition: transform 0.15s ease, opacity 0.15s ease !important; }
+            /* Disable backdrop-filter (expensive on mobile) */
+            * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+            /* Hardware accelerate */
+            body, #t-carousel, #t-track { transform: translateZ(0); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+          `;
+          (document.head || document.documentElement).appendChild(s);
+        }
+      } catch(_e){}
+
       var params = new URLSearchParams(window.location.search);
       var shortU = params.get('short') || '';
       var directU = params.get('direct') || '';
