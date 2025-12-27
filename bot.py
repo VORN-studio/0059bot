@@ -6842,7 +6842,7 @@ def safe_go() -> str:
                     </div>
                 </div>
         <div id="iframe-wrap" style="position:fixed; inset:0; background:#000; display:none; z-index:9999;">
-            <iframe id="inner-frame" src="about:blank" style="width:100%; height:100%; border:0;" allow="autoplay; fullscreen; clipboard-read; clipboard-write; popups"></iframe>
+            <iframe id="inner-frame" src="about:blank" style="width:100%; height:100%; border:0;" allow="autoplay; fullscreen; clipboard-read; clipboard-write"></iframe>
         </div>
         <script>
             (function(){{
