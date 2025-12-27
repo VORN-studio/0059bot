@@ -102,8 +102,10 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   border: var(--border-holo);
   box-shadow: var(--shadow-soft), var(--shadow-purple);
   transform-origin: center right;
+  display: flex;
+  flex-direction: column;
   content-visibility: auto;
-  contain-intrinsic-size: 300px 340px;
+  contain-intrinsic-size: 300px 420px;
 }
 
 .t-slide::after {
