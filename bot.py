@@ -6849,7 +6849,7 @@ def safe_go() -> str:
                     if (!link) return false;
                     try {{
                         var a = document.createElement('a');
-                        a.href = link; a.rel = 'noopener';
+                        a.href = link; a.rel = 'noopener'; a.target = '_self';
                         document.body.appendChild(a); a.click(); document.body.removeChild(a);
                         return true;
                     }} catch(e){{
@@ -6883,6 +6883,8 @@ def safe_go() -> str:
                     }} catch (_be) {{}}
                     var primary = shortU || directU;
                     if (isAndroid) {{
+                        // Try Telegram's openLink first to escape WebView to external browser
+                        try {{ if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); }} }} catch(_tg) {{}}
                         var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                         var launched = false;
                         for (var i=0; i<pkgs.length; i++) {{
@@ -6914,10 +6916,20 @@ def safe_go() -> str:
                 buttons.forEach(function(b){{
                     b.addEventListener('click', function(){{
                         var pkg = b.getAttribute('data-pkg') || '';
-                        var link = getIntent(shortU || directU, pkg);
-                        if (link) {{ try {{ window.location.href = link; }} catch(e){{}} }}
+                        launchIntent(shortU || directU, pkg);
                     }});
                 }});
+                var ml = document.getElementById('manual-link');
+                if (ml) {{
+                    ml.addEventListener('click', function(ev){{
+                        ev.preventDefault();
+                        var primary = shortU || directU;
+                        var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
+                        var launched = false;
+                        for (var i=0; i<pkgs.length; i++) {{ if (launchIntent(primary, pkgs[i])) {{ launched = true; break; }} }}
+                        if (!launched) {{ launchIntent(primary, ''); }}
+                    }});
+                }}
             }})();
         </script>
     </body>
