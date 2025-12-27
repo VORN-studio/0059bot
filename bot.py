@@ -6891,7 +6891,7 @@ def safe_go() -> str:
                         return '';
                     }}
                 }}
-                function stillVisible(){ try { return document.visibilityState !== 'hidden'; } catch(e){ return true; } }
+                function stillVisible(){{ try {{ return document.visibilityState !== 'hidden'; }} catch(e){{ return true; }} }}
                 function launchIntent(u, pkg){{
                     var link = getIntent(u, pkg);
                     if (!link) return false;
@@ -7010,11 +7010,11 @@ def safe_go() -> str:
                             }} else {{
                                 launchIntent(primary, pkg);
                                 sendLog('launch_intent', true, pkg)
-                                setTimeout(function(){
-                                    if (stillVisible()) {{
-                                        try {{ window.location.href = 'market://details?id=' + (pkg || 'org.mozilla.firefox'); sendLog('market_fallback', true, pkg); }} catch(_m) {{ sendLog('market_fallback', false, pkg); }}
-                                    }}
-                                }, 900);
+                                setTimeout(function(){{
+                                if (stillVisible()) {{
+                                    try {{ window.location.href = 'market://details?id=' + (pkg || 'org.mozilla.firefox'); sendLog('market_fallback', true, pkg); }} catch(_m) {{ sendLog('market_fallback', false, pkg); }}
+                                }}
+                            }}, 900);
                             }}
                         }});
                     }});
