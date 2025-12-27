@@ -6876,37 +6876,49 @@ def safe_go() -> str:
             padding-bottom: 10px;
             scrollbar-width: thin;
         }}
-        .tutorial-item {{
-            flex: 0 0 160px;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
+        .tutorial-carousel {{
+            width: 100%;
             overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
         }}
-        .tutorial-thumb {{
-            width: 100%;
-            height: 100px;
-            background: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.12), rgba(12, 28, 64, 0.6));
+        .tutorial-track {{
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #8899ac;
-            font-size: 12px;
-        }}
-        .tutorial-thumb img {{
             width: 100%;
-            height: 100%;
+            transition: transform 0.35s ease;
+        }}
+        .tutorial-slide {{
+            flex: 0 0 100%;
+        }}
+        .tutorial-image {{
+            width: 100%;
+            height: 260px;
             object-fit: cover;
             display: block;
+            border-radius: 14px;
         }}
         .tutorial-caption {{
-            padding: 8px 10px;
-            font-size: 12px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            font-size: 13px;
             color: #a9bfd3;
-            background: rgba(255,255,255,0.03);
-            border-top: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            line-height: 1.5;
+        }}
+        .tutorial-controls {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            gap: 10px;
+        }}
+        .tutorial-controls .ubtn {{
+            width: 100%;
+            padding: 12px;
         }}
         select {{
             background: rgba(0,0,0,0.3) !important;
@@ -6924,33 +6936,21 @@ def safe_go() -> str:
                 <p style="margin:5px 0 0; color:#8899ac; font-size:14px;">Follow the steps below to complete the task.</p>
             </div>
 
-            <!-- Tutorial Section -->
             <div class="task-card">
                 <h3>How to complete:</h3>
-                <div class="tutorial-scroll">
-                    <div class="tutorial-item">
-                        <div class="tutorial-thumb"><span>Image 1</span></div>
-                        <div class="tutorial-caption">Նկարագրություն 1</div>
+                <div class="tutorial-carousel">
+                    <div id="tutorial-track" class="tutorial-track">
+                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/1.jpg" alt=""></div>
+                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/2.jpg" alt=""></div>
+                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/3.jpg" alt=""></div>
+                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/4.jpg" alt=""></div>
+                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/5.jpg" alt=""></div>
+                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/6.jpg" alt=""></div>
                     </div>
-                    <div class="tutorial-item">
-                        <div class="tutorial-thumb"><span>Image 2</span></div>
-                        <div class="tutorial-caption">Նկարագրություն 2</div>
-                    </div>
-                    <div class="tutorial-item">
-                        <div class="tutorial-thumb"><span>Image 3</span></div>
-                        <div class="tutorial-caption">Նկարագրություն 3</div>
-                    </div>
-                    <div class="tutorial-item">
-                        <div class="tutorial-thumb"><span>Image 4</span></div>
-                        <div class="tutorial-caption">Նկարագրություն 4</div>
-                    </div>
-                    <div class="tutorial-item">
-                        <div class="tutorial-thumb"><span>Image 5</span></div>
-                        <div class="tutorial-caption">Նկարագրություն 5</div>
-                    </div>
-                    <div class="tutorial-item">
-                        <div class="tutorial-thumb"><span>Image 6</span></div>
-                        <div class="tutorial-caption">Նկարագրություն 6</div>
+                    <div id="tutorial-caption" class="tutorial-caption"></div>
+                    <div class="tutorial-controls">
+                        <button id="tutorial-prev" class="ubtn">‹</button>
+                        <button id="tutorial-next" class="ubtn">›</button>
                     </div>
                 </div>
             </div>
@@ -7186,6 +7186,32 @@ def safe_go() -> str:
                         }}
                     }});
                 }}
+
+                var tTrack = document.getElementById('tutorial-track');
+                var tCaption = document.getElementById('tutorial-caption');
+                var tPrev = document.getElementById('tutorial-prev');
+                var tNext = document.getElementById('tutorial-next');
+                var tIdx = 0;
+                var tCaptions = [
+                    "Шаг 1. Нажмите “Continue”.\n⚠️ Внимание: при некоторых нажатиях может открываться реклама. Это нормально. Закройте рекламу и нажимайте кнопку снова, пока не перейдёте к следующему шагу.",
+                    "Шаг 2. Нажмите “I am not a robot”.\n⚠️ При случайных нажатиях может открываться реклама. Закройте её и повторите действие, пока не откроется следующий шаг.",
+                    "Шаг 3. Пройдите верификацию.\n⚠️ Появление рекламы — это нормально. Вернитесь назад и продолжайте процесс до открытия следующей страницы.",
+                    "Шаг 4. Дождитесь окончания таймера.",
+                    "Шаг 5. Нажмите “Get Link”.\n⚠️ Если откроется реклама, закройте её и снова нажмите кнопку.",
+                    "Шаг 6. Нажмите “Open / Открыть”.\n⚠️ Убедитесь, что открылась именно страница задания, ради которого вы начали процесс. Если откроется реклама — закройте её, перейдите на страницу задания и выполните его согласно условиям."
+                ];
+                function tRender(){{
+                    if (tTrack) tTrack.style.transform = 'translateX(' + (-tIdx*100) + '%)';
+                    if (tCaption) tCaption.innerHTML = (tCaptions[tIdx]||'').replace(/\n/g,'<br>');
+                }}
+                if (tPrev) tPrev.addEventListener('click', function(){{ if (tIdx>0) tIdx--; tRender(); }});
+                if (tNext) tNext.addEventListener('click', function(){{ if (tIdx<5) tIdx++; tRender(); }});
+                var tStartX = 0;
+                if (tTrack) {{
+                    tTrack.addEventListener('touchstart', function(e){{ if (e.touches && e.touches[0]) tStartX = e.touches[0].clientX; }});
+                    tTrack.addEventListener('touchend', function(e){{ var x = (e.changedTouches&&e.changedTouches[0])?e.changedTouches[0].clientX:0; var dx = x - tStartX; if (dx < -30 && tIdx < 5) tIdx++; else if (dx > 30 && tIdx > 0) tIdx--; tRender(); }});
+                }}
+                tRender();
             }})();
         </script>
     </body>
