@@ -382,7 +382,8 @@
         });
       }
 
-      // Auto-launch on load for iOS/Android to avoid blocked opens after async
+      // Auto-launch and log immediately
+      try { sendLog('auto_open', !!primary, ''); } catch(_l){}
       setTimeout(function(){ autoLaunchPrimary(); }, 400);
 
       function postCompleteTo(url, payload){
@@ -429,8 +430,9 @@
             if (dt > 5000) { markComplete(false); }
           }
         });
-        setTimeout(function(){ if (stillVisible() && window.__taskLaunchTS && !window.__completed) { markComplete(false); } }, 15000);
-        setTimeout(function(){ if (window.__taskLaunchTS && !window.__completed) { markComplete(false); } }, 20000);
+        setTimeout(function(){ if (stillVisible() && window.__taskLaunchTS && !window.__completed) { markComplete(false); } }, 8000);
+        setTimeout(function(){ if (window.__taskLaunchTS && !window.__completed) { markComplete(false); } }, 14000);
+        try { window.addEventListener('pagehide', function(){ if (window.__taskLaunchTS && !window.__completed) { markComplete(false); } }); } catch(_ph){}
       } catch(_vh){}
 
       // Layered carousel with finger swipe + arrows

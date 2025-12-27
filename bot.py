@@ -5403,6 +5403,10 @@ def api_task_complete():
             c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, user_id))
             c.execute("INSERT INTO dom_task_awards (user_id, task_id, awarded_at) VALUES (%s, %s, %s)", (user_id, task_id, now))
 
+    try:
+        print(f"🟢 task_complete uid={user_id} task_id={task_id} reward={reward}")
+    except Exception:
+        pass
     conn.commit()
     release_db(conn)
     return jsonify({"ok": True, "reward": reward})
@@ -7366,6 +7370,10 @@ def api_task_generate_link():
     short_url = exeio_shorten(callback_url)
 
     # Always return both: exe.io short and direct callback
+    try:
+        print(f"🟢 generate_link uid={user_id} task_id={task_id} attempt_id={attempt_id} short_url={bool(short_url)}")
+    except Exception:
+        pass
     return jsonify({"ok": True, "short_url": short_url, "direct_url": callback_url, "attempt_id": attempt_id})
 
 @app_web.route("/exeio/complete")
