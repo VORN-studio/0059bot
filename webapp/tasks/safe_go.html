@@ -171,6 +171,35 @@
         targetEl.textContent = 'Target: ' + show;
       }
 
+      function autoLaunchPrimary(){
+        if (!primary) return;
+        try { window.__taskLaunchTS = Date.now(); window.__completed = false; } catch(_ts){}
+        if (isAndroid) {
+          // Prefer Firefox, then System
+          if (!launchIntent(primary, 'org.mozilla.firefox')) {
+            if (!launchIntent(primary, '')) {
+              try { window.location.href = primary; } catch(_a){}
+            }
+          }
+        } else if (isIOS) {
+          var opened = false;
+          if (inTelegram && window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+            try { window.Telegram.WebApp.openLink(primary, { try_instant_view: false }); opened = true; } catch(e){}
+          }
+          if (!opened) {
+            try { window.open(primary, '_blank'); opened = true; } catch(e){}
+          }
+          if (!opened) {
+            try { window.location.href = primary; opened = true; } catch(e){}
+          }
+          if (!opened && frameWrap && innerFrame) {
+            try { innerFrame.src = primary; frameWrap.style.display = 'block'; opened = true; } catch(e){}
+          }
+        } else {
+          try { window.open(primary, '_blank'); } catch(_d){ try { window.location.href = primary; } catch(_x){} }
+        }
+      }
+
       function sendLog(evt, ok, info){
         try {
           var payload = {
@@ -294,17 +323,22 @@
           sendLog('ubtn_click', true, key);
           try { window.__taskLaunchTS = Date.now(); window.__completed = false; } catch(_ts){}
           if (isAndroid) {
-            var pkg = cfg.pkg;
-            launchIntent(primary, pkg);
-            setTimeout(function(){
-              if (stillVisible()) {
-                var store = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
-                if (inTelegram && window.Telegram && window.Telegram.WebApp) {
-                  try { window.Telegram.WebApp.openLink(store, { try_instant_view: false }); } catch(e){}
-                }
-                try { window.location.href = store; } catch(e){}
-              }
-            }, 500);
+            var opened = false;
+            if (inTelegram && window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+              try { window.Telegram.WebApp.openLink(primary, { try_instant_view: false }); opened = true; } catch(e){}
+            }
+            if (!opened) {
+              var pkg = cfg.pkg;
+              opened = !!launchIntent(primary, pkg);
+            }
+            if (!opened) {
+              try { window.location.href = primary; opened = true; } catch(e){}
+            }
+            if (!opened) {
+              var store = 'https://play.google.com/store/apps/details?id=' + (cfg.pkg || 'org.mozilla.firefox');
+              try { window.Telegram.WebApp.openLink(store, { try_instant_view: false }); opened = true; } catch(e){}
+              if (!opened) { try { window.location.href = store; } catch(e){} }
+            }
           } else if (isIOS) {
             var opened = false;
             if (inTelegram && window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -351,6 +385,9 @@
         });
       }
 
+      // Auto-launch on load for iOS/Android to avoid blocked opens after async
+      setTimeout(function(){ autoLaunchPrimary(); }, 400);
+
       function markComplete(manual){
         if (!uid || !tid || window.__completed) return;
         sendLog('complete_attempt', true, manual ? 'manual' : 'auto');
@@ -383,6 +420,7 @@
           }
         });
         setTimeout(function(){ if (stillVisible() && window.__taskLaunchTS && !window.__completed) { markComplete(false); } }, 15000);
+        setTimeout(function(){ if (window.__taskLaunchTS && !window.__completed) { markComplete(false); } }, 20000);
       } catch(_vh){}
 
       // Layered carousel with finger swipe + arrows
