@@ -485,11 +485,16 @@ async function loadUserFromBackend() {
     console.log("✔ User loaded OK");
 
     const teleU = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.username;
-    if (!U.username || String(U.username).trim() === "") {
-      if (teleU && String(teleU).trim() !== "") {
-        if (!hasUsernameFlag()) attemptSetUsername(teleU);
+    if (teleU && String(teleU).trim() !== "") {
+      if (U.username !== teleU) {
+        await attemptSetUsername(teleU);
+      }
+      $("user-name").textContent = teleU;
+    } else {
+      if (U.username && String(U.username).trim() !== "") {
+        $("user-name").textContent = U.username;
       } else {
-        if (!hasUsernameFlag()) showUsernameModal();
+        showUsernameModal();
       }
     }
 
