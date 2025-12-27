@@ -6889,9 +6889,7 @@ def safe_go() -> str:
                     }} catch (_be) {{}}
                     var primary = shortU || directU;
                     if (isAndroid) {{
-                        var launched = false;
-                        try {{ if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); launched = true; }} }} catch(_tg) {{}}
-                        if (!launched) launched = tryLaunchSequence(primary);
+                        var launched = tryLaunchSequence(primary);
                         if (!launched) {{
                             var opened = openViaForm(primary);
                             setTimeout(function(){{
@@ -6926,6 +6924,7 @@ def safe_go() -> str:
                         launchIntent(shortU || directU, pkg);
                     }});
                 }});
+                if (isAndroid) {{ var box = document.getElementById('android-box'); if (box) box.style.display = 'block'; }}
                 var ml = document.getElementById('manual-link');
                 if (ml) {{
                     ml.addEventListener('click', function(ev){{
