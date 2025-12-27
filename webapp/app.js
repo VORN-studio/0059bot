@@ -77,6 +77,14 @@ async function checkUsernameAvailable(name){
   return true;
 }
 
+function hasUsernameFlag(){
+  try { return localStorage.getItem('username_set_' + String(CURRENT_USER_ID)) === '1'; } catch(_){ return false; }
+}
+
+function setUsernameFlag(){
+  try { localStorage.setItem('username_set_' + String(CURRENT_USER_ID), '1'); } catch(_){ }
+}
+
 function showUsernameModal(){
   const m = $("username-modal");
   const i = $("username-input");
@@ -94,6 +102,7 @@ function showUsernameModal(){
     const r = await fetch(`/api/set_username`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: CURRENT_USER_ID, username: name }) });
     try { await r.json(); } catch(_){ }
     $("user-name").textContent = name;
+    setUsernameFlag();
     m.style.display = "none";
   };
 }
@@ -105,6 +114,7 @@ async function attemptSetUsername(name){
     const r = await fetch(`/api/set_username`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: CURRENT_USER_ID, username: name }) });
     try { await r.json(); } catch(_){ }
     $("user-name").textContent = name;
+    setUsernameFlag();
   } catch(_){ showUsernameModal(); }
 }
 
@@ -477,9 +487,9 @@ async function loadUserFromBackend() {
     const teleU = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.username;
     if (!U.username || String(U.username).trim() === "") {
       if (teleU && String(teleU).trim() !== "") {
-        attemptSetUsername(teleU);
+        if (!hasUsernameFlag()) attemptSetUsername(teleU);
       } else {
-        showUsernameModal();
+        if (!hasUsernameFlag()) showUsernameModal();
       }
     }
 
