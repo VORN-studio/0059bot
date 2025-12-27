@@ -7456,6 +7456,29 @@ def api_task_status():
     if not uid or not task_id:
         return jsonify({"ok": False, "error": "bad_params"}), 400
     conn = db(); c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_task_attempts (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            task_id BIGINT,
+            created_at BIGINT
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_task_completions (
+            user_id BIGINT,
+            task_id BIGINT,
+            completed_at BIGINT
+        )
+    """)
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_task_awards (
+            user_id BIGINT,
+            task_id BIGINT,
+            awarded_at BIGINT,
+            PRIMARY KEY(user_id, task_id)
+        )
+    """)
     c.execute("SELECT COUNT(*) FROM dom_task_attempts WHERE user_id=%s AND task_id=%s", (uid, task_id))
     attempts = int(c.fetchone()[0] or 0)
     c.execute("SELECT 1 FROM dom_task_completions WHERE user_id=%s AND task_id=%s", (uid, task_id))
@@ -7468,6 +7491,10 @@ def api_task_status():
     c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (uid,))
     ub = c.fetchone()
     balance = float(ub[0] or 0) if ub else 0.0
+    try:
+        conn.commit()
+    except Exception:
+        pass
     release_db(conn)
     return jsonify({"ok": True, "user_id": uid, "task_id": task_id, "attempts": attempts, "completed": completed, "awarded": awarded, "reward": reward, "balance_usd": balance})
 
