@@ -142,7 +142,7 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
 
 .t-image {
   width: 100%;
-  height: clamp(240px, 32vh, 300px);
+  height: clamp(260px, 34vh, 320px);
   aspect-ratio: 16 / 9;
   object-fit: cover;
   object-position: center;
@@ -168,6 +168,10 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   word-break: break-word;
   hyphens: auto;
 }
+
+.t-media { position: relative; border-radius: var(--radius-md); overflow: hidden }
+.t-media .t-image { display: block }
+.t-media .t-caption { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 12px 14px; color: var(--text-main); background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.45) 60%, rgba(0,0,0,.65) 100%); border-top: none; min-height: 56px }
 
 .t-arrow { display: none }
 .t-left { left:10px }
