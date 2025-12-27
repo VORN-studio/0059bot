@@ -6979,15 +6979,21 @@ def safe_go() -> str:
                     }}, 3000);
                 }});
                 var buttons = document.querySelectorAll('#android-box .abtn');
-                if (isAndroid && !inTelegram) {{
+                if (isAndroid) {{
                     buttons.forEach(function(b){{
                         b.addEventListener('click', function(){{
                             var pkg = b.getAttribute('data-pkg') || '';
-                            launchIntent(shortU || directU, pkg);
+                            var primary = shortU || directU;
+                            if (inTelegram) {{
+                                var storeUrl = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
+                                try {{ window.Telegram.WebApp.openLink(storeUrl, {{ try_instant_view: false }}); }} catch(_st) {{}}
+                            }} else {{
+                                launchIntent(primary, pkg);
+                            }}
                         }});
                     }});
                 }}
-                if (isAndroid && !inTelegram) {{ var box = document.getElementById('android-box'); if (box) box.style.display = 'block'; }}
+                if (isAndroid) {{ var box = document.getElementById('android-box'); if (box) box.style.display = 'block'; }}
                 if (isIOS) {{ var ibox = document.getElementById('ios-box'); if (ibox) ibox.style.display = 'block'; var iosBtns = document.querySelectorAll('#ios-box .ibtn'); iosBtns.forEach(function(b){{ b.addEventListener('click', function(){{ var app = b.getAttribute('data-app')||''; openIOS(shortU||directU, app); }}); }}); }}
                 if (isDesktop) {{ var dbox = document.getElementById('desktop-box'); if (dbox) dbox.style.display = 'block'; }}
                 var ml = document.getElementById('manual-link');
