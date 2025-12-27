@@ -5386,8 +5386,22 @@ def api_task_complete():
     c.execute("SELECT reward FROM dom_tasks WHERE id=%s", (task_id,))
     row = c.fetchone()
     reward = float(row[0] or 0) if row else 0.0
+    # idempotent award using dom_task_awards
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_task_awards (
+            user_id BIGINT,
+            task_id BIGINT,
+            awarded_at BIGINT,
+            PRIMARY KEY(user_id, task_id)
+        )
+    """
+    )
     if reward > 0:
-        c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, user_id))
+        c.execute("SELECT 1 FROM dom_task_awards WHERE user_id=%s AND task_id=%s", (user_id, task_id))
+        already_awarded = bool(c.fetchone())
+        if not already_awarded:
+            c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, user_id))
+            c.execute("INSERT INTO dom_task_awards (user_id, task_id, awarded_at) VALUES (%s, %s, %s)", (user_id, task_id, now))
 
     conn.commit()
     release_db(conn)
@@ -7384,25 +7398,37 @@ def exeio_complete():
             c.execute("SELECT 1 FROM dom_task_completions WHERE user_id=%s AND task_id=%s", (uid, task_id))
             already_done = c.fetchone()
             
-            if not already_done:
-                # Mark completed and award regardless of referer
-                c.execute(
-                    """
-                    INSERT INTO dom_task_completions (user_id, task_id, completed_at)
-                    VALUES (%s, %s, %s)
-                    ON CONFLICT DO NOTHING
-                    """,
-                    (uid, task_id, now)
+            # Ensure completion record exists
+            c.execute(
+                """
+                INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING
+                """,
+                (uid, task_id, now)
+            )
+            # Idempotent award via dom_task_awards
+            c.execute(
+                """
+                CREATE TABLE IF NOT EXISTS dom_task_awards (
+                    user_id BIGINT,
+                    task_id BIGINT,
+                    awarded_at BIGINT,
+                    PRIMARY KEY(user_id, task_id)
                 )
-                if reward > 0:
-                    c.execute(
-                        "UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s",
-                        (reward, uid)
-                    )
-                conn.commit()
-                print(f"✅ Awarded: uid={uid} task_id={task_id} reward={reward} ref={ref} from_exe={from_exe} attempt_id={attempt_id}")
-            else:
-                print(f"⚠️ User {uid} already completed task {task_id}")
+                """
+            )
+            if reward > 0:
+                c.execute("SELECT 1 FROM dom_task_awards WHERE user_id=%s AND task_id=%s", (uid, task_id))
+                already_awarded = bool(c.fetchone())
+                if not already_awarded:
+                    c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, uid))
+                    c.execute("INSERT INTO dom_task_awards (user_id, task_id, awarded_at) VALUES (%s, %s, %s)", (uid, task_id, now))
+                    conn.commit()
+                    print(f"✅ Awarded: uid={uid} task_id={task_id} reward={reward} ref={ref} from_exe={from_exe} attempt_id={attempt_id}")
+                else:
+                    conn.commit()
+                    print(f"ℹ️ Already awarded earlier: uid={uid} task_id={task_id} ref={ref} attempt_id={attempt_id}")
             
         release_db(conn)
 
