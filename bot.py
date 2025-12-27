@@ -6909,6 +6909,12 @@ def safe_go() -> str:
                         var opened = false;
                         if (inTelegram && typeof window.Telegram.WebApp.openLink === 'function') {{
                             try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tgA) {{}}
+                            if (!opened) {{
+                                var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser','com.brave.browser'];
+                                for (var i=0; i<pkgs.length; i++) {{
+                                    try {{ window.Telegram.WebApp.openLink(getIntent(primary, pkgs[i]), {{ try_instant_view: false }}); opened = true; break; }} catch(_tgI) {{}}
+                                }}
+                            }}
                         }}
                         if (!opened) {{
                             opened = openViaForm(primary);
@@ -6962,6 +6968,12 @@ def safe_go() -> str:
                         }}
                         if (!launched) {{
                             try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); launched = true; }} catch(_tgM) {{}}
+                            if (!launched) {{
+                                var pkgs2 = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser','com.brave.browser'];
+                                for (var j=0; j<pkgs2.length; j++) {{
+                                    try {{ window.Telegram.WebApp.openLink(getIntent(primary, pkgs2[j]), {{ try_instant_view: false }}); launched = true; break; }} catch(_tgIM) {{}}
+                                }}
+                            }}
                         }}
                         if (!launched && frameWrap && innerFrame) {{
                             try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_mf) {{}}
