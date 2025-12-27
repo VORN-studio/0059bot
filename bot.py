@@ -6844,6 +6844,19 @@ def safe_go() -> str:
                         return '';
                     }}
                 }}
+                function launchIntent(u, pkg){{
+                    var link = getIntent(u, pkg);
+                    if (!link) return false;
+                    try {{
+                        var a = document.createElement('a');
+                        a.href = link; a.rel = 'noopener';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                        return true;
+                    }} catch(e){{
+                        try {{ window.location.href = link; return true; }} catch(_e){{}}
+                    }}
+                    return false;
+                }}
                 function openViaForm(u){{
                     try {{
                         var f = document.createElement('form');
@@ -6873,12 +6886,10 @@ def safe_go() -> str:
                         var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                         var launched = false;
                         for (var i=0; i<pkgs.length; i++) {{
-                            var link = getIntent(primary, pkgs[i]);
-                            try {{ window.location.href = link; launched = true; break; }} catch(e){{}}
+                            if (launchIntent(primary, pkgs[i])) {{ launched = true; break; }}
                         }}
                         if (!launched) {{
-                            var chooser = getIntent(primary, '');
-                            try {{ window.location.href = chooser; }} catch(e){{}}
+                            launchIntent(primary, '');
                             var opened = openViaForm(primary);
                             setTimeout(function(){{
                                 var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
