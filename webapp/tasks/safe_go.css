@@ -155,10 +155,10 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
 
 .t-caption {
   padding: 12px 14px;
-  color: var(--text-dim);
+  color: var(--text-main);
   font-size: 13px;
   line-height: 1.55;
-  background: var(--card-inner);
+  background: var(--card-bg);
   border-top: var(--border-glow);
   position: relative;
   z-index: 1;
