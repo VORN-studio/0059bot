@@ -5367,26 +5367,10 @@ def api_task_complete():
     now = int(time.time())
     conn = db(); c = conn.cursor()
 
-    # already completed?
-    c.execute("""
-        SELECT 1 FROM dom_task_completions
-        WHERE user_id=%s AND task_id=%s
-    """, (user_id, task_id))
-    if c.fetchone():
-        release_db(conn)
-        return jsonify({"ok": False, "error": "already_completed"}), 200
-
-    # insert completion
-    c.execute("""
-        INSERT INTO dom_task_completions (user_id, task_id, completed_at)
-        VALUES (%s, %s, %s)
-    """, (user_id, task_id, now))
-
-    # award balance by task reward
     c.execute("SELECT reward FROM dom_tasks WHERE id=%s", (task_id,))
     row = c.fetchone()
     reward = float(row[0] or 0) if row else 0.0
-    # idempotent award using dom_task_awards
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_task_awards (
             user_id BIGINT,
@@ -5396,12 +5380,26 @@ def api_task_complete():
         )
     """
     )
+
+    c.execute("""
+        SELECT 1 FROM dom_task_completions
+        WHERE user_id=%s AND task_id=%s
+    """, (user_id, task_id))
+    already_completed = bool(c.fetchone())
+    if not already_completed:
+        c.execute("""
+            INSERT INTO dom_task_completions (user_id, task_id, completed_at)
+            VALUES (%s, %s, %s)
+        """, (user_id, task_id, now))
+
+    awarded_now = False
     if reward > 0:
         c.execute("SELECT 1 FROM dom_task_awards WHERE user_id=%s AND task_id=%s", (user_id, task_id))
         already_awarded = bool(c.fetchone())
         if not already_awarded:
             c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, user_id))
             c.execute("INSERT INTO dom_task_awards (user_id, task_id, awarded_at) VALUES (%s, %s, %s)", (user_id, task_id, now))
+            awarded_now = True
 
     try:
         print(f"🟢 task_complete uid={user_id} task_id={task_id} reward={reward}")
@@ -5409,7 +5407,7 @@ def api_task_complete():
         pass
     conn.commit()
     release_db(conn)
-    return jsonify({"ok": True, "reward": reward})
+    return jsonify({"ok": True, "reward": reward, "already_completed": already_completed, "awarded": awarded_now})
 
 import requests
 import time

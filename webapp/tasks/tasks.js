@@ -186,7 +186,7 @@ async function performTask(taskId) {
                     alert("❌ Link generation failed. Try again.");
                     return;
                 }
-                const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}`;
+                const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}&reward=${encodeURIComponent(task.reward)}`;
                 // ✅ iOS/WebView-ում կանխատեսելի է, որ async հետո external open-ը բլոկվի
                 //   Նավիգացնենք ներքին safe_go էջին, իսկ այնտեղից կբացվի արտաքին հղումը
                 window.location.href = safeUrl;
