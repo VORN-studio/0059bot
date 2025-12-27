@@ -120,6 +120,39 @@ function renderTasks(tasks) {
     });
 }
 
+function openTaskBrowser(url) {
+    var m = document.getElementById("task-browser-modal");
+    var f = document.getElementById("task-browser-frame");
+    var u = document.getElementById("tb-url");
+    if (!m || !f) return false;
+    if (u) u.textContent = url;
+    m.style.display = "block";
+    try { f.src = url; } catch(e){}
+    var ext = document.getElementById("tb-external");
+    var rel = document.getElementById("tb-reload");
+    var cls = document.getElementById("tb-close");
+    if (ext) ext.onclick = function(){
+        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+            try { window.Telegram.WebApp.openLink(url, {try_instant_view: false}); } catch(_){ }
+        } else {
+            try { window.open(url, "_blank"); } catch(e){ window.location.href = url; }
+        }
+    };
+    if (rel) rel.onclick = function(){
+        try { f.contentWindow.location.reload(); } catch(e){ f.src = url; }
+    };
+    if (cls) cls.onclick = function(){
+        m.style.display = "none";
+        f.src = "about:blank";
+    };
+    setTimeout(function(){
+        var loaded = false;
+        try { loaded = !!(f.contentDocument && f.contentDocument.body && f.contentDocument.body.childElementCount > 0); } catch(_){}
+        if (!loaded && ext) ext.click();
+    }, 1200);
+    return true;
+}
+
 async function performTask(taskId) {
     const uid = new URLSearchParams(window.location.search).get("uid");
 
@@ -149,13 +182,13 @@ async function performTask(taskId) {
                 }
                 const safeUrl = `${window.location.origin}/safe_go?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}`;
                 
-                // 2. Open external - Force external browser to avoid CSRF/cookie issues in Telegram Webview
-                if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-                     // try_instant_view: false ensures it opens in system browser (Chrome/Safari) not internal Telegram browser
-                    window.Telegram.WebApp.openLink(safeUrl, {try_instant_view: false});
-                } else {
-                    // Fallback for non-Telegram environments
-                    window.open(safeUrl, "_blank");
+                var used = openTaskBrowser(safeUrl);
+                if (!used) {
+                    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                        window.Telegram.WebApp.openLink(safeUrl, {try_instant_view: false});
+                    } else {
+                        window.open(safeUrl, "_blank");
+                    }
                 }
             } else {
                 alert("❌ Link generation failed. Try again.");

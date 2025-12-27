@@ -101,6 +101,19 @@
     <div class="task-card">High reward tasks</div>
 </div>
 
+<div id="task-browser-modal" style="position:fixed; inset:0; background:#0b0b0f; display:none; z-index:9999;">
+  <div style="height:48px; display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#15151a; border-bottom:1px solid #222;">
+    <div id="tb-url" style="font-size:12px; color:#9aa; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;"></div>
+    <div style="display:flex; gap:8px;">
+      <button id="tb-external" class="task-btn">Արտաքին</button>
+      <button id="tb-reload" class="task-btn">Վերաբեռնել</button>
+      <button id="tb-close" class="task-btn">Փակել</button>
+    </div>
+  </div>
+  <iframe id="task-browser-frame" src="about:blank" style="width:100%; height:calc(100vh - 48px); border:0;" sandbox="allow-forms allow-popups allow-scripts allow-same-origin allow-top-navigation-by-user-activation"></iframe>
+  
+</div>
+
 <script src="tasks.js"></script>
 </body>
 </html>
