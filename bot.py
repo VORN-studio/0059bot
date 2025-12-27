@@ -6910,21 +6910,12 @@ def safe_go() -> str:
                             try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tgA) {{}}
                         }}
                         if (!opened) {{
-                            var launched = tryLaunchSequence(primary);
-                            if (!launched) {{
-                                opened = openViaForm(primary);
-                                setTimeout(function(){{
-                                    var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
-                                }}, 800);
-                                var attempts = 0;
-                                var t = setInterval(function(){{
-                                    if (attempts >= 3 || document.visibilityState !== 'visible') {{ clearInterval(t); return; }}
-                                    attempts++;
-                                    if (tryLaunchSequence(primary)) {{ clearInterval(t); }}
-                                }}, 600);
-                                if (!opened && frameWrap && innerFrame) {{
-                                    try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f) {{}}
-                                }}
+                            opened = openViaForm(primary);
+                            setTimeout(function(){{
+                                var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
+                            }}, 800);
+                            if (!opened && frameWrap && innerFrame) {{
+                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f) {{}}
                             }}
                         }}
                     }} else {{
