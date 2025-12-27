@@ -58,7 +58,7 @@ async function loadBalance() {
 
         if (data.ok && data.user) {
             document.getElementById("tasks-balance").textContent =
-                data.user.balance_usd.toFixed(2) + " $";
+                data.user.balance_usd.toFixed(3) + " $";
         }
     } catch {
         document.getElementById("tasks-balance").textContent = "—";
