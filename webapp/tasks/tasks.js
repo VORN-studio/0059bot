@@ -181,14 +181,11 @@ async function performTask(taskId) {
                     return;
                 }
                 const safeUrl = `${window.location.origin}/safe_go?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}`;
-                
-                var used = openTaskBrowser(safeUrl);
-                if (!used) {
-                    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-                        window.Telegram.WebApp.openLink(safeUrl, {try_instant_view: false});
-                    } else {
-                        window.open(safeUrl, "_blank");
-                    }
+                // ✅ Բացենք անմիջապես արտաքին բրաուզերով, ոչ թե WebView-ի preview/modal-ում
+                if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                    window.Telegram.WebApp.openLink(safeUrl, {try_instant_view: false});
+                } else {
+                    window.open(safeUrl, "_blank");
                 }
             } else {
                 alert("❌ Link generation failed. Try again.");
