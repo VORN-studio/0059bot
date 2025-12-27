@@ -6811,33 +6811,16 @@ def safe_go() -> str:
                     <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {display_target[:30]}...</p>
                     <p style=\"margin-top:6px; font-size:12px; color:#e88;\">⚠ Chrome և Safari բրաուզերներով վերիֆիկացումները չեն անցնում</p>
                     <a id=\"manual-link\" href=\"{display_target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
-                    <div id=\"android-box\" style=\"display:none; margin-top:22px;\">
-                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը Android-ում</p>
+                    <div id=\"universal-box\" style=\"margin-top:22px;\">
+                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը</p>
                         <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
-                            <button data-pkg=\"\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">System Chooser</button>
-                            <button data-pkg=\"org.mozilla.firefox\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
-                            <button data-pkg=\"com.opera.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera</button>
-                            <button data-pkg=\"com.opera.mini.native\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera Mini</button>
-                            <button data-pkg=\"com.sec.android.app.sbrowser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Samsung Internet</button>
-                            <button data-pkg=\"com.brave.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
-                            <button data-pkg=\"com.yandex.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
-                        </div>
-                    </div>
-                    <div id=\"ios-box\" style=\"display:none; margin-top:22px;\">
-                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը iOS-ում</p>
-                        <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
-                            <button data-app=\"firefox\" class=\"ibtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
-                            <button data-app=\"brave\" class=\"ibtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
-                            <button data-app=\"yandex\" class=\"ibtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
-                        </div>
-                    </div>
-                    <div id=\"desktop-box\" style=\"display:none; margin-top:22px;\">
-                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Խորհուրդ ենք տալիս հետևյալ բրաուզերները</p>
-                        <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
-                            <a href=\"https://www.mozilla.org/firefox/new/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Firefox</a>
-                            <a href=\"https://www.opera.com/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Opera</a>
-                            <a href=\"https://brave.com/download/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Brave</a>
-                            <a href=\"https://browser.yandex.com/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Yandex</a>
+                            <button data-b=\"system\" class=\"ubtn\" style=\"display:none; background:#444; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">System Chooser</button>
+                            <button data-b=\"firefox\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
+                            <button data-b=\"opera\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera</button>
+                            <button data-b=\"operamini\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera Mini</button>
+                            <button data-b=\"samsung\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Samsung Internet</button>
+                            <button data-b=\"brave\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
+                            <button data-b=\"yandex\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
                         </div>
                     </div>
                 </div>
@@ -6934,19 +6917,17 @@ def safe_go() -> str:
                     }} catch(e){{}}
                     return false;
                 }}
-                function openIOS(u, app){{
-                    var scheme = '';
-                    var store = '';
-                    if (app === 'firefox') {{ scheme = 'firefox://open-url?url='; store = 'https://apps.apple.com/app/mozilla-firefox/id989804926'; }}
-                    else if (app === 'brave') {{ scheme = 'brave://open-url?url='; store = 'https://apps.apple.com/app/brave-private-web-browser/id1052879175'; }}
-                    else if (app === 'yandex') {{ scheme = 'yandexbrowser://open-url?url='; store = 'https://apps.apple.com/app/yandex-browser/id596305201'; }}
+                function openIOS(u, scheme, store){{
                     try {{
                         var a = document.createElement('a');
                         a.href = scheme + u; a.rel = 'noopener'; a.target = '_self';
                         document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                        setTimeout(function(){{ try {{ window.location.href = store; }} catch(_s){{}} }}, 800);
+                        if (store) setTimeout(function(){{ try {{ window.location.href = store; }} catch(_s){{}} }}, 800);
                         return true;
-                    }} catch(e){{ try {{ window.location.href = store; }} catch(_e){{}} return false; }}
+                    }} catch(e){{
+                        if (store) try {{ window.location.href = store; }} catch(_e){{}}
+                        return false;
+                    }}
                 }}
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
@@ -6997,34 +6978,53 @@ def safe_go() -> str:
                         if (ml) ml.style.display = 'inline-block';
                     }}, 3000);
                 }});
-                var buttons = document.querySelectorAll('#android-box .abtn');
-                if (isAndroid) {{
-                    buttons.forEach(function(b){{
-                        b.addEventListener('click', function(){{
-                            var pkg = b.getAttribute('data-pkg') || '';
-                            var primary = shortU || directU;
-                            sendLog('chooser_click', true, pkg)
-                            // Unified logic: Try to launch app, then fallback to store
-                            launchIntent(primary, pkg);
-                            sendLog('launch_intent_try', true, pkg);
+                var browsers = {{
+                    firefox: {{ pkg: 'org.mozilla.firefox', ios: 'firefox', ios_scheme: 'firefox://open-url?url=', ios_store: 'https://apps.apple.com/app/mozilla-firefox/id989804926', url: 'https://www.mozilla.org/firefox/new/' }},
+                    opera: {{ pkg: 'com.opera.browser', ios: null, url: 'https://www.opera.com/' }},
+                    operamini: {{ pkg: 'com.opera.mini.native', ios: null, url: 'https://www.opera.com/mobile/mini' }},
+                    samsung: {{ pkg: 'com.sec.android.app.sbrowser', ios: null, url: 'https://www.samsung.com/app/samsung-internet/' }},
+                    brave: {{ pkg: 'com.brave.browser', ios: 'brave', ios_scheme: 'brave://open-url?url=', ios_store: 'https://apps.apple.com/app/brave-private-web-browser/id1052879175', url: 'https://brave.com/download/' }},
+                    yandex: {{ pkg: 'com.yandex.browser', ios: 'yandex', ios_scheme: 'yandexbrowser://open-url?url=', ios_store: 'https://apps.apple.com/app/yandex-browser/id596305201', url: 'https://browser.yandex.com/' }},
+                    system: {{ pkg: '', ios: null, url: null }}
+                }};
 
+                var ubtns = document.querySelectorAll('.ubtn');
+                ubtns.forEach(function(b){{
+                    var key = b.getAttribute('data-b');
+                    if (key === 'system') {{
+                        if (isAndroid) b.style.display = 'inline-block';
+                        // Keep hidden otherwise
+                    }}
+
+                    b.addEventListener('click', function(){{
+                        var cfg = browsers[key];
+                        if (!cfg) return;
+                        var primary = shortU || directU;
+                        sendLog('ubtn_click', true, key);
+
+                        if (isAndroid) {{
+                            var pkg = cfg.pkg;
+                            launchIntent(primary, pkg);
                             setTimeout(function(){{
                                 if (stillVisible()) {{
-                                    var storeHttp = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
-                                    
+                                    var store = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
                                     if (inTelegram && window.Telegram && window.Telegram.WebApp) {{
-                                        try {{ window.Telegram.WebApp.openLink(storeHttp, {{ try_instant_view: false }}); sendLog('fallback_store_tg', true, pkg); }} catch(e){{}}
+                                        try {{ window.Telegram.WebApp.openLink(store, {{ try_instant_view: false }}); }} catch(e){{}}
                                     }}
-                                    // Always try standard nav as backup
-                                    try {{ window.location.href = storeHttp; sendLog('fallback_location', true, pkg); }} catch(e){{}}
+                                    try {{ window.location.href = store; }} catch(e){{}}
                                 }}
                             }}, 500);
-                        }});
+                        }} else if (isIOS) {{
+                            if (cfg.ios) openIOS(primary, cfg.ios_scheme, cfg.ios_store);
+                            else if (cfg.url) window.location.href = cfg.url;
+                            else window.location.href = primary;
+                        }} else {{
+                            // Desktop
+                            if (cfg.url) window.open(cfg.url, '_blank');
+                            else window.open(primary, '_blank');
+                        }}
                     }});
-                }}
-                if (isAndroid) {{ var box = document.getElementById('android-box'); if (box) {{ box.style.display = 'block'; sendLog('show_android_box', true, '') }} }}
-                if (isIOS) {{ var ibox = document.getElementById('ios-box'); if (ibox) ibox.style.display = 'block'; var iosBtns = document.querySelectorAll('#ios-box .ibtn'); iosBtns.forEach(function(b){{ b.addEventListener('click', function(){{ var app = b.getAttribute('data-app')||''; var ok = openIOS(shortU||directU, app); sendLog('open_ios', ok, app); }}); }}); }}
-                if (isDesktop) {{ var dbox = document.getElementById('desktop-box'); if (dbox) dbox.style.display = 'block'; }}
+                }});
                 var ml = document.getElementById('manual-link');
                 if (ml) {{
                     ml.addEventListener('click', function(ev){{
