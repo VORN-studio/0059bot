@@ -306,9 +306,19 @@
               }
             }, 500);
           } else if (isIOS) {
-            if (cfg.ios) openIOS(primary, cfg.ios_scheme, cfg.ios_store);
-            else if (cfg.url) window.location.href = cfg.url;
-            else window.location.href = primary;
+            var opened = false;
+            if (inTelegram && window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+              try { window.Telegram.WebApp.openLink(primary, { try_instant_view: false }); opened = true; } catch(e){}
+            }
+            if (!opened) {
+              try { window.open(primary, '_blank'); opened = true; } catch(e){}
+            }
+            if (!opened) {
+              try { window.location.href = primary; opened = true; } catch(e){}
+            }
+            if (!opened && frameWrap && innerFrame) {
+              try { innerFrame.src = primary; frameWrap.style.display = 'block'; opened = true; } catch(e){}
+            }
           } else {
             if (cfg.url) window.open(cfg.url, '_blank');
             else window.open(primary, '_blank');
