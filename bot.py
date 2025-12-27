@@ -6823,6 +6823,9 @@ def safe_go() -> str:
                 </div>
             </div>
         </div>
+        <div id="iframe-wrap" style="position:fixed; inset:0; background:#000; display:none; z-index:9999;">
+            <iframe id="inner-frame" src="about:blank" style="width:100%; height:100%; border:0;" allow="autoplay; fullscreen; clipboard-read; clipboard-write; popups"></iframe>
+        </div>
         <script>
             (function(){{
                 var btn = document.getElementById('go-btn');
@@ -6831,6 +6834,8 @@ def safe_go() -> str:
                 var uid = {safe_js_uid};
                 var tid = {safe_js_tid};
                 var isAndroid = /Android/i.test(navigator.userAgent);
+                var frameWrap = document.getElementById('iframe-wrap');
+                var innerFrame = document.getElementById('inner-frame');
                 function getIntent(u, pkg){{
                     try {{
                         var url = new URL(u);
@@ -6901,6 +6906,9 @@ def safe_go() -> str:
                                 attempts++;
                                 if (tryLaunchSequence(primary)) {{ clearInterval(t); }}
                             }}, 600);
+                            if (!opened && frameWrap && innerFrame) {{
+                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f) {{}}
+                            }}
                         }}
                     }} else {{
                         var opened = false;
@@ -6910,6 +6918,9 @@ def safe_go() -> str:
                         if (!opened) {{ opened = openViaForm(primary); }}
                         if (!opened) {{
                             try {{ window.open(primary, '_blank'); }} catch (_e) {{ try {{ window.location.assign(primary); }} catch(__e){{}} }}
+                        }}
+                        if (!opened && frameWrap && innerFrame) {{
+                            try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f2) {{}}
                         }}
                     }}
                     setTimeout(function(){{
@@ -6933,7 +6944,12 @@ def safe_go() -> str:
                         var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
                         var launched = false;
                         for (var i=0; i<pkgs.length; i++) {{ if (launchIntent(primary, pkgs[i])) {{ launched = true; break; }} }}
-                        if (!launched) {{ launchIntent(primary, ''); }}
+                        if (!launched) {{
+                            launchIntent(primary, '');
+                            if (frameWrap && innerFrame) {{
+                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_mf) {{}}
+                            }}
+                        }}
                     }});
                 }}
             }})();
