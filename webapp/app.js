@@ -64,6 +64,50 @@ function closeSuccessModal() {
   document.getElementById("success-modal").style.display = "none";
 }
 
+async function checkUsernameAvailable(name){
+  try {
+    const q = encodeURIComponent(name);
+    const res = await fetch(`/api/search_users?q=${q}&viewer=${CURRENT_USER_ID}`);
+    const d = await res.json();
+    if (d.ok && Array.isArray(d.users)) {
+      const taken = d.users.some(u => String(u.username||"").toLowerCase() === name.toLowerCase() && Number(u.user_id) !== Number(CURRENT_USER_ID));
+      return !taken;
+    }
+  } catch(_){ }
+  return true;
+}
+
+function showUsernameModal(){
+  const m = $("username-modal");
+  const i = $("username-input");
+  const e = $("username-error");
+  const b = $("username-save-btn");
+  if (!m || !b) return;
+  m.style.display = "flex";
+  if (e) e.textContent = "";
+  if (i) i.value = "";
+  b.onclick = async function(){
+    const name = i && i.value ? i.value.trim() : "";
+    if (!name || name.length < 3){ if (e) e.textContent = "Username-ը պետք է ≥ 3 սիմվոլ լինի"; return; }
+    const ok = await checkUsernameAvailable(name);
+    if (!ok){ if (e) e.textContent = "Այդ անունը զբաղված է"; return; }
+    const r = await fetch(`/api/set_username`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: CURRENT_USER_ID, username: name }) });
+    try { await r.json(); } catch(_){ }
+    $("user-name").textContent = name;
+    m.style.display = "none";
+  };
+}
+
+async function attemptSetUsername(name){
+  const ok = await checkUsernameAvailable(name);
+  if (!ok){ showUsernameModal(); return; }
+  try {
+    const r = await fetch(`/api/set_username`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: CURRENT_USER_ID, username: name }) });
+    try { await r.json(); } catch(_){ }
+    $("user-name").textContent = name;
+  } catch(_){ showUsernameModal(); }
+}
+
 // Function to save wallet to backend
 async function saveWalletToBackend() {
   if (!TON_WALLET || !CURRENT_USER_ID) {
@@ -429,6 +473,15 @@ async function loadUserFromBackend() {
       `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
 
     console.log("✔ User loaded OK");
+
+    const teleU = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.username;
+    if (!U.username || String(U.username).trim() === "") {
+      if (teleU && String(teleU).trim() !== "") {
+        attemptSetUsername(teleU);
+      } else {
+        showUsernameModal();
+      }
+    }
 
   } catch (err) {
     console.log("❌ loadUser error:", err);
