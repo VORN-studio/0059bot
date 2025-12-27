@@ -163,49 +163,23 @@ async function performTask(taskId) {
 
     const task = window.ALL_TASKS?.find(t => t.id === taskId);
 
-    if (task) {
-        // 1. Generate unique link
-        try {
-            const btn = document.querySelector(`button[onclick="performTask(${taskId})"]`);
-            if(btn) btn.textContent = "⏳ Loading...";
+    if (!task) return;
 
-            const res = await fetch("/api/task/generate_link", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({user_id: uid, task_id: taskId})
-            });
-            const data = await res.json();
-            
-            if(btn) btn.textContent = "Կատարել → +" + task.reward;
+    const btn = document.querySelector(`button[onclick="performTask(${taskId})"]`);
+    if (btn) btn.textContent = "⏳ Loading...";
 
-            if (data.ok) {
-                const shortU = data.short_url || "";
-                const directU = data.direct_url || "";
-                const attemptId = data.attempt_id || "";
-                if (!shortU && !directU) {
-                    alert("❌ Link generation failed. Try again.");
-                    return;
-                }
-                const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}&reward=${encodeURIComponent(task.reward)}`;
-                // ✅ iOS/WebView-ում կանխատեսելի է, որ async հետո external open-ը բլոկվի
-                //   Նավիգացնենք ներքին safe_go էջին, իսկ այնտեղից կբացվի արտաքին հղումը
-                window.location.href = safeUrl;
-            } else {
-                alert("❌ Link generation failed. Try again.");
-            }
-        } catch (e) {
-            console.error(e);
-            alert("❌ Error: " + e.message);
-        }
-    }
+    const directU = task.url || "";
+    const shortU = "";
+    const attemptId = "";
 
-    // Attempt register (analytics)
     fetch(`/api/task_attempt_create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: uid, task_id: taskId })
     });
 
+    const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}&reward=${encodeURIComponent(task.reward)}`;
+    window.location.href = safeUrl;
 }
 
 
