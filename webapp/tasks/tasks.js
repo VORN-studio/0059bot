@@ -176,11 +176,12 @@ async function performTask(taskId) {
             if (data.ok) {
                 const shortU = data.short_url || "";
                 const directU = data.direct_url || "";
+                const attemptId = data.attempt_id || "";
                 if (!shortU && !directU) {
                     alert("❌ Link generation failed. Try again.");
                     return;
                 }
-                const safeUrl = `${window.location.origin}/safe_go?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}`;
+                const safeUrl = `${window.location.origin}/safe_go?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}`;
                 // ✅ Բացենք անմիջապես արտաքին բրաուզերով, ոչ թե WebView-ի preview/modal-ում
                 if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
                     window.Telegram.WebApp.openLink(safeUrl, {try_instant_view: false});

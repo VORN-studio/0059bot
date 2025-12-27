@@ -103,6 +103,9 @@
         <button data-b="brave" class="ubtn">Brave</button>
         <button data-b="yandex" class="ubtn">Yandex</button>
       </div>
+      <div style="margin-top:14px;">
+        <button id="complete-btn" class="ubtn" style="width:100%;">Ավարտեցի առաջադրանքը</button>
+      </div>
     </div>
 
     
@@ -147,6 +150,7 @@
       var legacyU = params.get('url') || '';
       var uid = params.get('uid') || '';
       var tid = params.get('task_id') || '';
+      var aid = params.get('attempt_id') || '';
       var primary = shortU || directU || legacyU || '';
 
       var isAndroid = /Android/i.test(navigator.userAgent);
@@ -173,6 +177,7 @@
             url: primary || '',
             user_id: parseInt(uid || '0') || 0,
             task_id: parseInt(tid || '0') || 0,
+            attempt_id: aid || '',
             evt: evt || '',
             ok: !!ok,
             info: info || '',
@@ -287,6 +292,7 @@
           var cfg = browsers[key];
           if (!cfg) return;
           sendLog('ubtn_click', true, key);
+          try { window.__taskLaunchTS = Date.now(); window.__completed = false; } catch(_ts){}
           if (isAndroid) {
             var pkg = cfg.pkg;
             launchIntent(primary, pkg);
@@ -317,6 +323,7 @@
         ml.addEventListener('click', function(ev){
           ev.preventDefault();
           sendLog('manual_link_click', true, '');
+          try { window.__taskLaunchTS = Date.now(); window.__completed = false; } catch(_tsm){}
           var launched = false;
           if (!inTelegram) {
             var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
@@ -333,6 +340,40 @@
           }
         });
       }
+
+      function markComplete(manual){
+        if (!uid || !tid || window.__completed) return;
+        sendLog('complete_attempt', true, manual ? 'manual' : 'auto');
+        try {
+          fetch('/api/task/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: parseInt(uid||'0')||0, task_id: parseInt(tid||'0')||0, attempt_id: aid || '' })
+          }).then(function(r){ return r.json(); }).then(function(d){
+            sendLog('complete_response', !!d.ok, d.error||'');
+            if (d && d.ok) {
+              window.__completed = true;
+              try { if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.showPopup({ message: '✅ Առաջադրանքը հաշվեց, գումարը ավելացվեց' }); } } catch(_p){}
+              try { window.location.href = '/webapp/tasks/index.html?uid=' + encodeURIComponent(uid); } catch(_r){}
+            } else {
+              try { alert('❌ Չհաջողվեց հաշվել: ' + (d.error || '')); } catch(_a){}
+            }
+          }).catch(function(e){ try { alert('❌ Սերվերի սխալ'); } catch(_ae){} });
+        } catch(_e){ }
+      }
+
+      var completeBtn = document.getElementById('complete-btn');
+      if (completeBtn) completeBtn.addEventListener('click', function(){ markComplete(true); });
+
+      try {
+        document.addEventListener('visibilitychange', function(){
+          if (document.visibilityState === 'visible' && window.__taskLaunchTS && !window.__completed) {
+            var dt = Date.now() - window.__taskLaunchTS;
+            if (dt > 5000) { markComplete(false); }
+          }
+        });
+        setTimeout(function(){ if (stillVisible() && window.__taskLaunchTS && !window.__completed) { markComplete(false); } }, 15000);
+      } catch(_vh){}
 
       // Layered carousel with finger swipe + arrows
       var tc = document.getElementById('t-carousel');
