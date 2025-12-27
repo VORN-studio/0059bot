@@ -85,6 +85,14 @@ function setUsernameFlag(){
   try { localStorage.setItem('username_set_' + String(CURRENT_USER_ID), '1'); } catch(_){ }
 }
 
+function getStoredUsername(){
+  try { return localStorage.getItem('uname_' + String(CURRENT_USER_ID)) || ""; } catch(_){ return ""; }
+}
+
+function setStoredUsername(name){
+  try { localStorage.setItem('uname_' + String(CURRENT_USER_ID), name); } catch(_){ }
+}
+
 function showUsernameModal(){
   const m = $("username-modal");
   const i = $("username-input");
@@ -103,6 +111,7 @@ function showUsernameModal(){
     try { await r.json(); } catch(_){ }
     $("user-name").textContent = name;
     setUsernameFlag();
+    setStoredUsername(name);
     m.style.display = "none";
   };
 }
@@ -115,6 +124,7 @@ async function attemptSetUsername(name){
     try { await r.json(); } catch(_){ }
     $("user-name").textContent = name;
     setUsernameFlag();
+    setStoredUsername(name);
   } catch(_){ showUsernameModal(); }
 }
 
@@ -494,7 +504,13 @@ async function loadUserFromBackend() {
       if (U.username && String(U.username).trim() !== "") {
         $("user-name").textContent = U.username;
       } else {
-        showUsernameModal();
+        const ls = getStoredUsername();
+        if (ls && ls.trim() !== "") {
+          $("user-name").textContent = ls;
+          await attemptSetUsername(ls);
+        } else {
+          showUsernameModal();
+        }
       }
     }
 
