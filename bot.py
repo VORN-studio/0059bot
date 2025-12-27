@@ -6801,43 +6801,70 @@ def safe_go() -> str:
         <meta http-equiv=\"Expires\" content=\"0\" />
         <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">
     </head>
-    <body style=\"background:#121212; color:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;\">
-                <div style=\"text-align:center; padding:20px;\">
-                    <h2 style=\"margin-bottom:20px;\">🚀 Ready to start?</h2>
-                    <p style=\"margin-bottom:30px; color:#aaa;\">Press the button to continue.</p>
-                    <button id=\"go-btn\" style=\"background:#0088cc; color:#fff; padding:15px 30px; border:none; border-radius:10px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow:0 4px 15px rgba(0,136,204,0.4);\">
-                       Start Task →
-                    </button>
-                    <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {display_target[:30]}...</p>
-                    <p style=\"margin-top:6px; font-size:12px; color:#e88;\">⚠ Chrome և Safari բրաուզերներով վերիֆիկացումները չեն անցնում</p>
-                    <a id=\"manual-link\" href=\"{display_target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
-                    <div id=\"universal-box\" style=\"margin-top:22px;\">
-                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը</p>
-                        <div style=\"margin-bottom:15px;\">
-                            <select id=\"browser-filter\" style=\"background:#333; color:#fff; border:1px solid #555; padding:8px; border-radius:8px; outline:none;\">
-                                <option value=\"auto\">Սարքը (Auto)</option>
-                                <option value=\"android\">Android</option>
-                                <option value=\"ios\">iOS</option>
-                                <option value=\"desktop\">Desktop</option>
-                            </select>
-                        </div>
-                        <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
-                            <button data-b=\"system\" class=\"ubtn\" style=\"display:none; background:#444; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">System Chooser</button>
-                            <button data-b=\"firefox\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
-                            <button data-b=\"opera\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera</button>
-                            <button data-b=\"operamini\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera Mini</button>
-                            <button data-b=\"samsung\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Samsung Internet</button>
-                            <button data-b=\"brave\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
-                            <button data-b=\"yandex\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
-                        </div>
+    <body style="background:#121212; color:#e0e0e0; font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin:0; padding:20px; display:flex; flex-direction:column; align-items:center; min-height:100vh;">
+        <div style="max-width:480px; width:100%;">
+            
+            <!-- Header -->
+            <div style="text-align:center; margin-bottom:20px;">
+                <h2 style="margin:0; font-size:22px; color:#fff;">Task Instructions</h2>
+                <p style="margin:5px 0 0; color:#aaa; font-size:14px;">Follow the steps below to complete the task.</p>
+            </div>
+
+            <!-- Tutorial Section -->
+            <div style="background:#1e1e1e; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+                <h3 style="margin:0 0 10px 0; font-size:16px; color:#fff;">How to complete:</h3>
+                <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
+                    <!-- Placeholders -->
+                    <div style="flex:0 0 120px; height:80px; background:#333; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; border:1px dashed #555;">
+                        <span>Image 1</span>
+                    </div>
+                    <div style="flex:0 0 120px; height:80px; background:#333; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; border:1px dashed #555;">
+                        <span>Image 2</span>
+                    </div>
+                    <div style="flex:0 0 120px; height:80px; background:#333; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; border:1px dashed #555;">
+                        <span>Video Tutorial</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Browser Selection Section -->
+            <div id="universal-box" style="background:#1e1e1e; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0; font-size:16px; color:#fff;">Choose Browser</h3>
+                    <select id="browser-filter" style="background:#333; color:#fff; border:1px solid #444; padding:5px 10px; border-radius:6px; outline:none; font-size:12px;">
+                        <option value="auto">Auto (Device)</option>
+                        <option value="android">Android</option>
+                        <option value="ios">iOS</option>
+                        <option value="desktop">Desktop</option>
+                    </select>
+                </div>
+                
+                <p style="margin:0 0 15px; font-size:13px; color:#e57373;">
+                    ⚠ Chrome & Safari are not supported.
+                </p>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px;">
+                    <button data-b="system" class="ubtn" style="display:none; background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">System</button>
+                    <button data-b="firefox" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Firefox</button>
+                    <button data-b="opera" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Opera</button>
+                    <button data-b="operamini" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Opera Mini</button>
+                    <button data-b="samsung" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Samsung</button>
+                    <button data-b="brave" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Brave</button>
+                    <button data-b="yandex" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Yandex</button>
+                </div>
+            </div>
+
+            <div style="text-align:center; margin-top:20px;">
+                 <p style="font-size:12px; color:#555;">Target: {display_target[:30]}...</p>
+                 <a id="manual-link" href="{display_target}" style="display:none; color:#4af; font-size:12px; text-decoration:underline;">Direct Link (Fallback)</a>
+            </div>
+
+        </div>
         <div id="iframe-wrap" style="position:fixed; inset:0; background:#000; display:none; z-index:9999;">
             <iframe id="inner-frame" src="about:blank" style="width:100%; height:100%; border:0;" allow="autoplay; fullscreen; clipboard-read; clipboard-write"></iframe>
         </div>
         <script>
             (function(){{
-                var btn = document.getElementById('go-btn');
                 var shortU = {safe_js_short};
                 var directU = {safe_js_direct};
                 var uid = {safe_js_uid};
@@ -7017,7 +7044,10 @@ def safe_go() -> str:
                     }});
                 }}
                 
-                if (filterSelect) filterSelect.addEventListener('change', updateVisibility);
+                if (filterSelect) filterSelect.addEventListener('change', function() {{
+                    try {{ localStorage.setItem('selectedFilter', filterSelect.value); }} catch(e){{}}
+                    updateVisibility();
+                }});
                 updateVisibility();
 
                 ubtns.forEach(function(b){{
