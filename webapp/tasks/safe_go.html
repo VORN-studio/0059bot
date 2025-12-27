@@ -175,11 +175,15 @@
         if (!primary) return;
         try { window.__taskLaunchTS = Date.now(); window.__completed = false; } catch(_ts){}
         if (isAndroid) {
-          // Prefer Firefox, then System
-          if (!launchIntent(primary, 'org.mozilla.firefox')) {
-            if (!launchIntent(primary, '')) {
-              try { window.location.href = primary; } catch(_a){}
-            }
+          var opened = false;
+          if (inTelegram && window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+            try { window.Telegram.WebApp.openLink(primary, { try_instant_view: false }); opened = true; } catch(e){}
+          }
+          if (!opened) {
+            try { window.open(primary, '_blank'); opened = true; } catch(e){}
+          }
+          if (!opened) {
+            try { window.location.href = primary; opened = true; } catch(e){}
           }
         } else if (isIOS) {
           var opened = false;
@@ -328,16 +332,10 @@
               try { window.Telegram.WebApp.openLink(primary, { try_instant_view: false }); opened = true; } catch(e){}
             }
             if (!opened) {
-              var pkg = cfg.pkg;
-              opened = !!launchIntent(primary, pkg);
+              try { window.open(primary, '_blank'); opened = true; } catch(e){}
             }
             if (!opened) {
               try { window.location.href = primary; opened = true; } catch(e){}
-            }
-            if (!opened) {
-              var store = 'https://play.google.com/store/apps/details?id=' + (cfg.pkg || 'org.mozilla.firefox');
-              try { window.Telegram.WebApp.openLink(store, { try_instant_view: false }); opened = true; } catch(e){}
-              if (!opened) { try { window.location.href = store; } catch(e){} }
             }
           } else if (isIOS) {
             var opened = false;
