@@ -6800,6 +6800,7 @@ def safe_go() -> str:
         <meta http-equiv=\"Pragma\" content=\"no-cache\" />
         <meta http-equiv=\"Expires\" content=\"0\" />
         <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">
+        <link rel="stylesheet" href="/webapp/tasks/safe_go.css">
     <style>
         body {{
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -6938,19 +6939,32 @@ def safe_go() -> str:
 
             <div class="task-card">
                 <h3>How to complete:</h3>
-                <div class="tutorial-carousel">
-                    <div id="tutorial-track" class="tutorial-track">
-                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/1.jpg" alt=""></div>
-                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/2.jpg" alt=""></div>
-                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/3.jpg" alt=""></div>
-                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/4.jpg" alt=""></div>
-                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/5.jpg" alt=""></div>
-                        <div class="tutorial-slide"><img class="tutorial-image" src="/webapp/tasks/slide/6.jpg" alt=""></div>
-                    </div>
-                    <div id="tutorial-caption" class="tutorial-caption"></div>
-                    <div class="tutorial-controls">
-                        <button id="tutorial-prev" class="ubtn">‹</button>
-                        <button id="tutorial-next" class="ubtn">›</button>
+                <div id="t-carousel" class="t-carousel">
+                    <div id="t-track" class="t-track">
+                        <div class="t-slide">
+                            <img class="t-image" src="/webapp/tasks/slide/1.jpg" alt="">
+                            <div class="t-caption">Шаг 1. Нажмите “Continue”.<br>⚠️ Внимание: при некоторых нажатиях может открываться реклама. Это нормально. Закройте рекламу и нажимайте кнопку снова, пока не перейдёте к следующему шагу.</div>
+                        </div>
+                        <div class="t-slide">
+                            <img class="t-image" src="/webapp/tasks/slide/2.jpg" alt="">
+                            <div class="t-caption">Шаг 2. Нажмите “I am not a robot”.<br>⚠️ При случайных нажатиях может открываться реклама. Закройте её и повторите действие, пока не откроется следующий шаг.</div>
+                        </div>
+                        <div class="t-slide">
+                            <img class="t-image" src="/webapp/tasks/slide/3.jpg" alt="">
+                            <div class="t-caption">Шаг 3. Пройдите верификацию.<br>⚠️ Появление рекламы — это нормально. Вернитесь назад и продолжайте процесс до открытия следующей страницы.</div>
+                        </div>
+                        <div class="t-slide">
+                            <img class="t-image" src="/webapp/tasks/slide/4.jpg" alt="">
+                            <div class="t-caption">Шаг 4. Дождитесь окончания таймера.</div>
+                        </div>
+                        <div class="t-slide">
+                            <img class="t-image" src="/webapp/tasks/slide/5.jpg" alt="">
+                            <div class="t-caption">Шаг 5. Нажмите “Get Link”.<br>⚠️ Если откроется реклама, закройте её и снова нажмите кнопку.</div>
+                        </div>
+                        <div class="t-slide">
+                            <img class="t-image" src="/webapp/tasks/slide/6.jpg" alt="">
+                            <div class="t-caption">Шаг 6. Нажмите “Open / Открыть”.<br>⚠️ Убедитесь, что открылась именно страница задания, ради которого вы начали процесс. Если откроется реклама — закройте её, перейдите на страницу задания и выполните его согласно условиям.</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -7212,6 +7226,52 @@ def safe_go() -> str:
                     tTrack.addEventListener('touchend', function(e){{ var x = (e.changedTouches&&e.changedTouches[0])?e.changedTouches[0].clientX:0; var dx = x - tStartX; if (dx < -30 && tIdx < 5) tIdx++; else if (dx > 30 && tIdx > 0) tIdx--; tRender(); }});
                 }}
                 tRender();
+
+                // --- Elite layered carousel with finger swipe ---
+                var tc = document.getElementById('t-carousel');
+                var tt = document.getElementById('t-track');
+                var slides = tt ? Array.from(tt.querySelectorAll('.t-slide')) : [];
+                var idx = 0;
+                var gapPx = 18;
+                var peekPx = 0;
+                function setActive(){{
+                    slides.forEach(function(s,i){{
+                        s.classList.remove('is-active','is-next','is-prev','is-far');
+                        if (i === idx) s.classList.add('is-active');
+                        else if (i === idx+1) s.classList.add('is-next');
+                        else if (i === idx-1) s.classList.add('is-prev');
+                        else s.classList.add('is-far');
+                    }});
+                }}
+                function layout(){{
+                    if (!tc || !tt) return;
+                    var W = tc.clientWidth;
+                    peekPx = Math.max(260, Math.floor(W*0.86));
+                    slides.forEach(function(s){{ s.style.flex = '0 0 ' + peekPx + 'px'; }});
+                    tt.style.gap = gapPx + 'px';
+                    render();
+                }}
+                function render(){{
+                    if (!tt) return;
+                    var offset = -(idx * (peekPx + gapPx));
+                    tt.style.transform = 'translateX(' + offset + 'px)';
+                    setActive();
+                }}
+                var startX = 0, dragging = false, baseOffset = 0;
+                function onDown(x){{ dragging = true; startX = x; baseOffset = -(idx * (peekPx + gapPx)); tt && (tt.style.transition = 'none'); }}
+                function onMove(x){{ if (!dragging || !tt) return; var dx = x - startX; tt.style.transform = 'translateX(' + (baseOffset + dx) + 'px)'; }}
+                function onUp(x){{ if (!dragging || !tt) return; dragging = false; tt.style.transition = ''; var dx = x - startX; var t = (peekPx * 0.18);
+                    if (dx < -t && idx < slides.length-1) idx++; else if (dx > t && idx > 0) idx--; render(); }}
+                if (tt){{
+                    tt.addEventListener('touchstart', function(e){{ if (e.touches && e.touches[0]) onDown(e.touches[0].clientX); }}, {{passive:true}});
+                    tt.addEventListener('touchmove', function(e){{ if (e.touches && e.touches[0]) onMove(e.touches[0].clientX); }}, {{passive:true}});
+                    tt.addEventListener('touchend', function(e){{ var x = (e.changedTouches&&e.changedTouches[0])?e.changedTouches[0].clientX:startX; onUp(x); }});
+                    tt.addEventListener('mousedown', function(e){{ onDown(e.clientX); }});
+                    window.addEventListener('mousemove', function(e){{ onMove(e.clientX); }});
+                    window.addEventListener('mouseup', function(e){{ onUp(e.clientX); }});
+                    window.addEventListener('resize', layout);
+                    layout();
+                }}
             }})();
         </script>
     </body>
