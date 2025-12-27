@@ -6800,38 +6800,135 @@ def safe_go() -> str:
         <meta http-equiv=\"Pragma\" content=\"no-cache\" />
         <meta http-equiv=\"Expires\" content=\"0\" />
         <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .task-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 22px;
+            backdrop-filter: blur(12px);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .task-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: linear-gradient(to bottom, transparent, rgba(0, 255, 240, 0.8), transparent);
+            opacity: 0.6;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #fff, #a5f3fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #dff2ff, #8fd8ff, #78b0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+            letter-spacing: 0.5px;
+        }
+        .ubtn {
+            background: radial-gradient(circle at 30% 0%, rgba(255,255,255,0.1), rgba(20,35,75,0.6));
+            color: #fff;
+            padding: 14px;
+            border: 1px solid rgba(170, 200, 255, 0.3);
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            text-align: center;
+            font-weight: 500;
+        }
+        .ubtn:hover {
+            transform: translateY(-3px);
+            border-color: rgba(180, 255, 255, 0.8);
+            box-shadow: 0 8px 20px rgba(0, 255, 255, 0.25);
+            background: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.2), rgba(12, 28, 64, 0.8));
+        }
+        .ubtn:active {
+            transform: scale(0.96);
+        }
+        .tutorial-scroll {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+        }
+        .tutorial-item {
+            flex: 0 0 140px;
+            height: 90px;
+            background: rgba(0,0,0,0.2);
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+            font-size: 12px;
+        }
+        select {
+            background: rgba(0,0,0,0.3) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            color: #fff !important;
+        }
+    </style>
     </head>
-    <body style="background:#121212; color:#e0e0e0; font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin:0; padding:20px; display:flex; flex-direction:column; align-items:center; min-height:100vh;">
+    <body>
         <div style="max-width:480px; width:100%;">
             
             <!-- Header -->
-            <div style="text-align:center; margin-bottom:20px;">
-                <h2 style="margin:0; font-size:22px; color:#fff;">Task Instructions</h2>
-                <p style="margin:5px 0 0; color:#aaa; font-size:14px;">Follow the steps below to complete the task.</p>
+            <div style="text-align:center; margin-bottom:25px;">
+                <h2 style="margin:0;">Task Instructions</h2>
+                <p style="margin:5px 0 0; color:#8899ac; font-size:14px;">Follow the steps below to complete the task.</p>
             </div>
 
             <!-- Tutorial Section -->
-            <div style="background:#1e1e1e; border-radius:12px; padding:15px; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.3);">
-                <h3 style="margin:0 0 10px 0; font-size:16px; color:#fff;">How to complete:</h3>
-                <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
+            <div class="task-card">
+                <h3>How to complete:</h3>
+                <div class="tutorial-scroll">
                     <!-- Placeholders -->
-                    <div style="flex:0 0 120px; height:80px; background:#333; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; border:1px dashed #555;">
+                    <div class="tutorial-item">
                         <span>Image 1</span>
                     </div>
-                    <div style="flex:0 0 120px; height:80px; background:#333; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; border:1px dashed #555;">
+                    <div class="tutorial-item">
                         <span>Image 2</span>
                     </div>
-                    <div style="flex:0 0 120px; height:80px; background:#333; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#666; font-size:12px; border:1px dashed #555;">
+                    <div class="tutorial-item">
+                        <span>Image 3</span>
+                    </div>
+                    <div class="tutorial-item">
                         <span>Video Tutorial</span>
                     </div>
                 </div>
             </div>
 
             <!-- Browser Selection Section -->
-            <div id="universal-box" style="background:#1e1e1e; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.3);">
+            <div id="universal-box" class="task-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h3 style="margin:0; font-size:16px; color:#fff;">Choose Browser</h3>
-                    <select id="browser-filter" style="background:#333; color:#fff; border:1px solid #444; padding:5px 10px; border-radius:6px; outline:none; font-size:12px;">
+                    <h3 style="margin:0;">Choose Browser</h3>
+                    <select id="browser-filter" style="padding:6px 12px; border-radius:8px; outline:none; font-size:12px;">
                         <option value="auto">Auto (Device)</option>
                         <option value="android">Android</option>
                         <option value="ios">iOS</option>
@@ -6839,23 +6936,23 @@ def safe_go() -> str:
                     </select>
                 </div>
                 
-                <p style="margin:0 0 15px; font-size:13px; color:#e57373;">
+                <p style="margin:0 0 15px; font-size:13px; color:#ff8a80; background:rgba(255,0,0,0.1); padding:8px; border-radius:8px; text-align:center;">
                     ⚠ Chrome & Safari are not supported.
                 </p>
 
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px;">
-                    <button data-b="system" class="ubtn" style="display:none; background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">System</button>
-                    <button data-b="firefox" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Firefox</button>
-                    <button data-b="opera" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Opera</button>
-                    <button data-b="operamini" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Opera Mini</button>
-                    <button data-b="samsung" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Samsung</button>
-                    <button data-b="brave" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Brave</button>
-                    <button data-b="yandex" class="ubtn" style="background:#333; color:#fff; padding:12px; border:1px solid #444; border-radius:8px; cursor:pointer; font-size:13px;">Yandex</button>
+                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:12px;">
+                    <button data-b="system" class="ubtn" style="display:none;">System</button>
+                    <button data-b="firefox" class="ubtn">Firefox</button>
+                    <button data-b="opera" class="ubtn">Opera</button>
+                    <button data-b="operamini" class="ubtn">Opera Mini</button>
+                    <button data-b="samsung" class="ubtn">Samsung</button>
+                    <button data-b="brave" class="ubtn">Brave</button>
+                    <button data-b="yandex" class="ubtn">Yandex</button>
                 </div>
             </div>
 
             <div style="text-align:center; margin-top:20px;">
-                 <p style="font-size:12px; color:#555;">Target: {display_target[:30]}...</p>
+                 <p style="font-size:12px; color:#556677;">Target: {display_target[:30]}...</p>
                  <a id="manual-link" href="{display_target}" style="display:none; color:#4af; font-size:12px; text-decoration:underline;">Direct Link (Fallback)</a>
             </div>
 
@@ -6964,55 +7061,9 @@ def safe_go() -> str:
                         return false;
                     }}
                 }}
-                btn.addEventListener('click', function(e){{
-                    e.preventDefault();
-                    sendLog('click_start', true, '')
-                    var primary = shortU || directU;
-                    if (isAndroid) {{
-                        var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
-                        var opened = false;
-                        if (inTelegram && typeof window.Telegram.WebApp.openLink === 'function') {{
-                            try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tgA) {{}}
-                            sendLog('openLink_android', opened, '')
-                        }}
-                        if (!opened) {{
-                            var intentOk = tryLaunchSequence(primary);
-                            sendLog('try_intent_sequence', intentOk, '')
-                            if (!intentOk) {{
-                                opened = openViaForm(primary);
-                                sendLog('open_via_form', opened, '')
-                            }}
-                            if (!intentOk && !opened) {{
-                                try {{ window.location.href = primary; sendLog('top_navigation', true, '') }} catch(_nav) {{ sendLog('top_navigation', false, '') }}
-                            }}
-                            if (!intentOk && !opened && frameWrap && innerFrame) {{
-                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; sendLog('iframe_fallback', true, ''); }} catch(_f) {{}}
-                            }}
-                            setTimeout(function(){{
-                                var box = document.getElementById('android-box'); if (box && !intentOk && !opened) {{ box.style.display = 'block'; sendLog('show_android_chooser', true, '') }}
-                            }}, 800);
-                        }}
-                    }} else {{
-                        var opened = false;
-                        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {{
-                            try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tg) {{}}
-                            sendLog('openLink_other', opened, '')
-                        }}
-                        if (!opened) {{ opened = openViaForm(primary); sendLog('open_via_form', opened, '') }}
-                        if (!opened) {{
-                            var ok = openBlankThenNavigate(primary);
-                            sendLog('blank_navigate', ok, '')
-                            if (!ok) {{ try {{ window.open(primary, '_blank'); }} catch (_e) {{ try {{ window.location.assign(primary); }} catch(__e){{}} }} }}
-                        }}
-                        if (!opened && frameWrap && innerFrame) {{
-                            try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; sendLog('iframe_fallback', true, ''); }} catch(_f2) {{}}
-                        }}
-                    }}
-                    setTimeout(function(){{
-                        var ml = document.getElementById('manual-link');
-                        if (ml) ml.style.display = 'inline-block';
-                    }}, 3000);
-                }});
+                
+                // Removed legacy btn.addEventListener logic
+                
                 var browsers = {{
                     firefox: {{ modes: ['android', 'ios', 'desktop'], pkg: 'org.mozilla.firefox', ios: 'firefox', ios_scheme: 'firefox://open-url?url=', ios_store: 'https://apps.apple.com/app/mozilla-firefox/id989804926', url: 'https://www.mozilla.org/firefox/new/' }},
                     opera: {{ modes: ['android', 'desktop'], pkg: 'com.opera.browser', ios: null, url: 'https://www.opera.com/' }},
