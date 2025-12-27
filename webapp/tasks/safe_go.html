@@ -21,11 +21,10 @@
     <div class="task-card">
       <h3>How to complete:</h3>
       <div id="t-carousel" class="t-carousel">
-        <button id="t-left" class="t-arrow t-left" aria-label="Previous">‹</button>
-        <button id="t-right" class="t-arrow t-right" aria-label="Next">›</button>
+        
         <div id="t-track" class="t-track">
           <div class="t-slide">
-            <img class="t-image image-round" src="/webapp/tasks/slide/1.jpg" alt="Step 1" loading="lazy" decoding="async" fetchpriority="low">
+            <img class="t-image image-round" src="/webapp/tasks/slide/1.jpg" alt="Step 1" loading="eager" decoding="async" fetchpriority="high">
             <div class="t-caption cap cap-text">
               Шаг 1. Нажмите “Continue”.<br>
               <span class="warn">⚠️ Внимание:</span> при некоторых нажатиях может открываться реклама. Это нормально. Закройте рекламу и нажимайте кнопку снова, пока не перейдёте к следующему шагу.
@@ -343,7 +342,7 @@
       function render(){
         if (!tt) return;
         var offset = -(idx * (peekPx + gapPx));
-        tt.style.transform = 'translateX(' + offset + 'px)';
+        tt.style.transform = 'translate3d(' + offset + 'px,0,0)';
         setActive();
         if (dotsWrap) {
           var ds = Array.from(dotsWrap.children);
@@ -369,7 +368,7 @@
       function applyMove(){
         if (!dragging || !tt) { pendingMove = false; return; }
         var dx = nextX - startX;
-        tt.style.transform = 'translateX(' + (baseOffset + dx) + 'px)';
+        tt.style.transform = 'translate3d(' + (baseOffset + dx) + 'px,0,0)';
         pendingMove = false;
       }
       function onMove(x){
