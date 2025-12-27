@@ -64,6 +64,7 @@
             </div>
           </div>
         </div>
+        <div id="t-dots" class="t-dots"></div>
       </div>
     </div>
 
@@ -123,6 +124,7 @@
       var tt = document.getElementById('t-track');
       var left = document.getElementById('t-left');
       var right = document.getElementById('t-right');
+      var dotsWrap = document.getElementById('t-dots');
 
       var targetEl = document.getElementById('target-text');
       if (targetEl) {
@@ -305,6 +307,20 @@
       var gapPx = 18;
       var peekPx = 0;
 
+      function buildDots(){
+        if (!dotsWrap) return;
+        dotsWrap.innerHTML = '';
+        slides.forEach(function(_,i){
+          var d = document.createElement('button');
+          d.className = 't-dot';
+          d.type = 'button';
+          d.setAttribute('aria-label','Go to slide '+(i+1));
+          d.addEventListener('click', function(){ idx = i; lastUserTS = Date.now(); render(); });
+          dotsWrap.appendChild(d);
+        });
+      }
+      buildDots();
+
       imgs.forEach(function(img){
         function mark(){ try { img.classList.add('is-loaded'); } catch(e){} }
         if (img.complete) { mark(); }
@@ -329,6 +345,13 @@
         var offset = -(idx * (peekPx + gapPx));
         tt.style.transform = 'translateX(' + offset + 'px)';
         setActive();
+        if (dotsWrap) {
+          var ds = Array.from(dotsWrap.children);
+          ds.forEach(function(d, i){
+            if (i === idx) d.classList.add('is-active');
+            else d.classList.remove('is-active');
+          });
+        }
       }
 
       function layout(){
@@ -368,8 +391,26 @@
         layout();
       }
 
-      if (left) left.addEventListener('click', function(){ if (idx>0) { idx--; render(); } });
-      if (right) right.addEventListener('click', function(){ if (idx<slides.length-1) { idx++; render(); } });
+      function prev(){ if (idx>0) { idx--; render(); } }
+      function next(){ if (idx<slides.length-1) { idx++; render(); } else { idx = 0; render(); } }
+      if (left) left.addEventListener('click', function(){ lastUserTS = Date.now(); prev(); });
+      if (right) right.addEventListener('click', function(){ lastUserTS = Date.now(); next(); });
+
+      // Autoplay — professional slider behavior (visibility + reduced-motion)
+      var autoDelay = 5000;
+      var lastUserTS = Date.now();
+      var reduceMotion = false;
+      try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(_m){}
+      var inView = true;
+      try {
+        var io = new IntersectionObserver(function(entries){ inView = entries.some(function(e){ return e.isIntersecting; }); }, { threshold: 0.3 });
+        if (tc) io.observe(tc);
+      } catch(_io){}
+      function tick(){
+        var now = Date.now();
+        if (!dragging && inView && !reduceMotion && (now - lastUserTS) > autoDelay) { next(); lastUserTS = now; }
+      }
+      setInterval(tick, 1000);
     })();
   </script>
 </body>

@@ -168,8 +168,30 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
 .t-carousel, .t-track { scrollbar-width: none }
 .t-carousel::-webkit-scrollbar, .t-track::-webkit-scrollbar { display: none }
 
-/* Dots (optional, hidden for now) */
-.t-dots { display: none }
+/* Dots — modern minimal indicators */
+.t-dots {
+  position: absolute;
+  left: 0; right: 0; bottom: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.t-dot {
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.22);
+  border: 1px solid rgba(150,200,255,.28);
+  transition: transform var(--speed-fast), background var(--speed-fast);
+}
+
+.t-dot.is-active {
+  background: var(--accent);
+  transform: scale(1.25);
+  box-shadow: 0 0 12px rgba(0,220,255,.55);
+}
 
 /* Responsive */
 @media (max-width: 480px) {
