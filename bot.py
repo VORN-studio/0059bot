@@ -6771,6 +6771,7 @@ def api_exeio_test():
 
 @app_web.route("/safe_go", methods=["GET"])
 def safe_go() -> str:
+    return send_from_directory(TASKS_DIR, "safe_go.html")
     target_short = request.args.get("short", "")
     target_direct = request.args.get("direct", "")
     target_legacy = request.args.get("url", "")
@@ -7272,6 +7273,10 @@ def safe_go() -> str:
                     window.addEventListener('resize', layout);
                     layout();
                 }}
+                var left = document.getElementById('t-left');
+                var right = document.getElementById('t-right');
+                if (left) left.addEventListener('click', function(){{ if (idx>0) {{ idx--; render(); }} }});
+                if (right) right.addEventListener('click', function(){{ if (idx<slides.length-1) {{ idx++; render(); }} }});
             }})();
         </script>
     </body>

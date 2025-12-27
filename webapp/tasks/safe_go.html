@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Start Task</title>
+  <link rel="stylesheet" href="/webapp/tasks/safe_go.css">
+</head>
+<body>
+  <div style="max-width:480px; width:100%;">
+    <div class="header">
+      <h2>Task Instructions</h2>
+      <p>Follow the steps below to complete the task.</p>
+    </div>
+
+    <div class="task-card">
+      <h3>How to complete:</h3>
+      <div id="t-carousel" class="t-carousel">
+        <button id="t-left" class="t-arrow t-left" aria-label="Previous">‹</button>
+        <button id="t-right" class="t-arrow t-right" aria-label="Next">›</button>
+        <div id="t-track" class="t-track">
+          <div class="t-slide">
+            <img class="t-image image-round" src="/webapp/tasks/slide/1.jpg" alt="Step 1">
+            <div class="t-caption cap cap-text">
+              Шаг 1. Нажмите “Continue”.<br>
+              <span class="warn">⚠️ Внимание:</span> при некоторых нажатиях может открываться реклама. Это нормально. Закройте рекламу и нажимайте кнопку снова, пока не перейдёте к следующему шагу.
+            </div>
+          </div>
+          <div class="t-slide">
+            <img class="t-image image-round" src="/webapp/tasks/slide/2.jpg" alt="Step 2">
+            <div class="t-caption cap cap-text">
+              Шаг 2. Нажмите “I am not a robot”.<br>
+              <span class="warn">⚠️</span> При случайных нажатиях может открываться реклама. Закройте её и повторите действие, пока не откроется следующий шаг.
+            </div>
+          </div>
+          <div class="t-slide">
+            <img class="t-image image-round" src="/webapp/tasks/slide/3.jpg" alt="Step 3">
+            <div class="t-caption cap cap-text">
+              Шаг 3. Пройдите верификацию.<br>
+              <span class="warn">⚠️</span> Появление рекламы — это нормально. Вернитесь назад и продолжайте процесс до открытия следующей страницы.
+            </div>
+          </div>
+          <div class="t-slide">
+            <img class="t-image image-round" src="/webapp/tasks/slide/4.jpg" alt="Step 4">
+            <div class="t-caption cap cap-text">Шаг 4. Дождитесь окончания таймера.</div>
+          </div>
+          <div class="t-slide">
+            <img class="t-image image-round" src="/webapp/tasks/slide/5.jpg" alt="Step 5">
+            <div class="t-caption cap cap-text">
+              Шаг 5. Нажмите “Get Link”.<br>
+              <span class="warn">⚠️</span> Если откроется реклама, закройте её и снова нажмите кнопку.
+            </div>
+          </div>
+          <div class="t-slide">
+            <img class="t-image image-round" src="/webapp/tasks/slide/6.jpg" alt="Step 6">
+            <div class="t-caption cap cap-text">
+              Шаг 6. Нажмите “Open / Открыть”.<br>
+              <span class="warn">⚠️</span> Убедитесь, что открылась именно страница задания. Если откроется реклама — закройте её и перейдите на страницу задания.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="universal-box" class="task-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h3 style="margin:0;">Choose Browser</h3>
+        <select id="browser-filter" class="text-base" style="padding:6px 12px; border-radius:8px; outline:none;">
+          <option value="auto">Auto (Device)</option>
+          <option value="android">Android</option>
+          <option value="ios">iOS</option>
+          <option value="desktop">Desktop</option>
+        </select>
+      </div>
+
+      <p class="alert">
+        ⚠ Chrome & Safari are not supported.
+      </p>
+
+      <div class="grid">
+        <button data-b="system" class="ubtn" style="display:none;">System</button>
+        <button data-b="firefox" class="ubtn">Firefox</button>
+        <button data-b="opera" class="ubtn">Opera</button>
+        <button data-b="operamini" class="ubtn">Opera Mini</button>
+        <button data-b="samsung" class="ubtn">Samsung</button>
+        <button data-b="brave" class="ubtn">Brave</button>
+        <button data-b="yandex" class="ubtn">Yandex</button>
+      </div>
+    </div>
+
+    <div class="center mt-20">
+      <p id="target-text" class="text-small text-soft">Target: —</p>
+      <a id="manual-link" href="#" style="display:none; color:#4af; font-size:12px; text-decoration:underline;">Direct Link (Fallback)</a>
+    </div>
+  </div>
+
+  <div id="iframe-wrap" style="position:fixed; inset:0; background:#000; display:none; z-index:9999;">
+    <iframe id="inner-frame" src="about:blank" style="width:100%; height:100%; border:0;" allow="autoplay; fullscreen; clipboard-read; clipboard-write"></iframe>
+  </div>
+
+  <script>
+    (function(){
+      var params = new URLSearchParams(window.location.search);
+      var shortU = params.get('short') || '';
+      var directU = params.get('direct') || '';
+      var legacyU = params.get('url') || '';
+      var uid = params.get('uid') || '';
+      var tid = params.get('task_id') || '';
+      var primary = shortU || directU || legacyU || '';
+
+      var isAndroid = /Android/i.test(navigator.userAgent);
+      var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
+
+      var frameWrap = document.getElementById('iframe-wrap');
+      var innerFrame = document.getElementById('inner-frame');
+
+      var tt = document.getElementById('t-track');
+      var left = document.getElementById('t-left');
+      var right = document.getElementById('t-right');
+
+      var targetEl = document.getElementById('target-text');
+      if (targetEl) {
+        var show = primary ? (primary.length > 30 ? (primary.slice(0,30) + '…') : primary) : '—';
+        targetEl.textContent = 'Target: ' + show;
+      }
+
+      function sendLog(evt, ok, info){
+        try {
+          var payload = {
+            url: primary || '',
+            user_id: parseInt(uid || '0') || 0,
+            task_id: parseInt(tid || '0') || 0,
+            evt: evt || '',
+            ok: !!ok,
+            info: info || '',
+            ts: Date.now(),
+            platform: (isAndroid ? 'android' : (isIOS ? 'ios' : 'desktop')),
+            in_telegram: inTelegram
+          };
+          var js = JSON.stringify(payload);
+          if (navigator.sendBeacon) {
+            var blob = new Blob([js], { type: 'application/json' });
+            navigator.sendBeacon('/api/track_click', blob);
+          } else {
+            fetch('/api/track_click', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: js });
+          }
+        } catch(_e){}
+      }
+
+      function stillVisible(){ try { return document.visibilityState !== 'hidden'; } catch(e){ return true; } }
+
+      function getIntent(u, pkg){
+        try {
+          var url = new URL(u);
+          var scheme = url.protocol.replace(':','') || 'https';
+          var path = url.pathname + (url.search || '');
+          var base = 'intent://' + url.host + path + '#Intent;scheme=' + scheme + ';action=android.intent.action.VIEW';
+          if (pkg) base += ';package=' + pkg;
+          var store = '';
+          if (pkg === 'org.mozilla.firefox') store = 'https://play.google.com/store/apps/details?id=org.mozilla.firefox';
+          else if (pkg === 'com.opera.browser') store = 'https://play.google.com/store/apps/details?id=com.opera.browser';
+          else if (pkg === 'com.opera.mini.native') store = 'https://play.google.com/store/apps/details?id=com.opera.mini.native';
+          else if (pkg === 'com.sec.android.app.sbrowser') store = 'https://play.google.com/store/apps/details?id=com.sec.android.app.sbrowser';
+          else if (pkg === 'com.brave.browser') store = 'https://play.google.com/store/apps/details?id=com.brave.browser';
+          else if (pkg === 'com.yandex.browser') store = 'https://play.google.com/store/apps/details?id=com.yandex.browser';
+          var fallback = store || u;
+          base += ';S.browser_fallback_url=' + encodeURIComponent(fallback);
+          base += ';end';
+          return base;
+        } catch(e){ return ''; }
+      }
+
+      function launchIntent(u, pkg){
+        var link = getIntent(u, pkg);
+        if (!link) return false;
+        try {
+          var a = document.createElement('a');
+          a.href = link; a.rel = 'noopener'; a.target = '_self';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          return true;
+        } catch(e){
+          try { window.location.href = link; return true; } catch(_e){}
+        }
+        return false;
+      }
+
+      function openIOS(u, scheme, store){
+        try {
+          var a = document.createElement('a');
+          a.href = scheme + u; a.rel = 'noopener'; a.target = '_self';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          if (store) setTimeout(function(){ try { window.location.href = store; } catch(_s){} }, 800);
+          return true;
+        } catch(e){
+          if (store) try { window.location.href = store; } catch(_e){}
+          return false;
+        }
+      }
+
+      var browsers = {
+        firefox: { modes: ['android', 'ios', 'desktop'], pkg: 'org.mozilla.firefox', ios: 'firefox', ios_scheme: 'firefox://open-url?url=', ios_store: 'https://apps.apple.com/app/mozilla-firefox/id989804926', url: 'https://www.mozilla.org/firefox/new/' },
+        opera: { modes: ['android', 'desktop'], pkg: 'com.opera.browser', ios: null, url: 'https://www.opera.com/' },
+        operamini: { modes: ['android'], pkg: 'com.opera.mini.native', ios: null, url: 'https://www.opera.com/mobile/mini' },
+        samsung: { modes: ['android'], pkg: 'com.sec.android.app.sbrowser', ios: null, url: 'https://www.samsung.com/app/samsung-internet/' },
+        brave: { modes: ['android', 'ios', 'desktop'], pkg: 'com.brave.browser', ios: 'brave', ios_scheme: 'brave://open-url?url=', ios_store: 'https://apps.apple.com/app/brave-private-web-browser/id1052879175', url: 'https://brave.com/download/' },
+        yandex: { modes: ['android', 'ios', 'desktop'], pkg: 'com.yandex.browser', ios: 'yandex', ios_scheme: 'yandexbrowser://open-url?url=', ios_store: 'https://apps.apple.com/app/yandex-browser/id596305201', url: 'https://browser.yandex.com/' },
+        system: { modes: ['android'], pkg: '', ios: null, url: null }
+      };
+
+      var filterSelect = document.getElementById('browser-filter');
+      var ubtns = document.querySelectorAll('.ubtn');
+
+      function updateVisibility() {
+        var mode = filterSelect ? filterSelect.value : 'auto';
+        if (mode === 'auto') {
+          if (isAndroid) mode = 'android';
+          else if (isIOS) mode = 'ios';
+          else mode = 'desktop';
+        }
+        ubtns.forEach(function(b){
+          var key = b.getAttribute('data-b');
+          var cfg = browsers[key];
+          if (!cfg) return;
+          var show = false;
+          if (cfg.modes && cfg.modes.indexOf(mode) !== -1) show = true;
+          if (key === 'system' && mode !== 'android') show = false;
+          b.style.display = show ? 'inline-block' : 'none';
+        });
+      }
+
+      if (filterSelect) {
+        var saved = null; try { saved = localStorage.getItem('selectedFilter'); } catch(e){}
+        if (saved) { filterSelect.value = saved; }
+        filterSelect.addEventListener('change', function() {
+          try { localStorage.setItem('selectedFilter', filterSelect.value); } catch(e){}
+          updateVisibility();
+        });
+      }
+      updateVisibility();
+
+      ubtns.forEach(function(b){
+        var key = b.getAttribute('data-b');
+        b.addEventListener('click', function(){
+          var cfg = browsers[key];
+          if (!cfg) return;
+          sendLog('ubtn_click', true, key);
+          if (isAndroid) {
+            var pkg = cfg.pkg;
+            launchIntent(primary, pkg);
+            setTimeout(function(){
+              if (stillVisible()) {
+                var store = 'https://play.google.com/store/apps/details?id=' + (pkg || 'org.mozilla.firefox');
+                if (inTelegram && window.Telegram && window.Telegram.WebApp) {
+                  try { window.Telegram.WebApp.openLink(store, { try_instant_view: false }); } catch(e){}
+                }
+                try { window.location.href = store; } catch(e){}
+              }
+            }, 500);
+          } else if (isIOS) {
+            if (cfg.ios) openIOS(primary, cfg.ios_scheme, cfg.ios_store);
+            else if (cfg.url) window.location.href = cfg.url;
+            else window.location.href = primary;
+          } else {
+            if (cfg.url) window.open(cfg.url, '_blank');
+            else window.open(primary, '_blank');
+          }
+        });
+      });
+
+      var ml = document.getElementById('manual-link');
+      if (ml && primary) {
+        ml.style.display = 'inline-block';
+        ml.href = primary;
+        ml.addEventListener('click', function(ev){
+          ev.preventDefault();
+          sendLog('manual_link_click', true, '');
+          var launched = false;
+          if (!inTelegram) {
+            var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
+            for (var i=0; i<pkgs.length; i++) { if (launchIntent(primary, pkgs[i])) { launched = true; break; } }
+            if (!launched) { launchIntent(primary, ''); }
+            sendLog('manual_launch_intent', launched, '');
+          }
+          if (!launched) {
+            try { window.Telegram.WebApp.openLink(primary, { try_instant_view: false }); launched = true; } catch(_tgM) {}
+            sendLog('manual_openLink', launched, '');
+          }
+          if (!launched && frameWrap && innerFrame) {
+            try { innerFrame.src = primary; frameWrap.style.display = 'block'; sendLog('manual_iframe_fallback', true, ''); } catch(_mf) {}
+          }
+        });
+      }
+
+      // Layered carousel with finger swipe + arrows
+      var tc = document.getElementById('t-carousel');
+      var slides = tt ? Array.from(tt.querySelectorAll('.t-slide')) : [];
+      var idx = 0;
+      var gapPx = 18;
+      var peekPx = 0;
+
+      function setActive(){
+        slides.forEach(function(s,i){
+          s.classList.remove('is-active','is-next','is-prev','is-far');
+          if (i === idx) s.classList.add('is-active');
+          else if (i === idx+1) s.classList.add('is-next');
+          else if (i === idx-1) s.classList.add('is-prev');
+          else s.classList.add('is-far');
+        });
+      }
+
+      function render(){
+        if (!tt) return;
+        var offset = -(idx * (peekPx + gapPx));
+        tt.style.transform = 'translateX(' + offset + 'px)';
+        setActive();
+      }
+
+      function layout(){
+        if (!tc || !tt) return;
+        var W = tc.clientWidth;
+        peekPx = Math.max(260, Math.floor(W*0.86));
+        slides.forEach(function(s){ s.style.flex = '0 0 ' + peekPx + 'px'; });
+        tt.style.gap = gapPx + 'px';
+        render();
+      }
+
+      var startX = 0, dragging = false, baseOffset = 0;
+      function onDown(x){ dragging = true; startX = x; baseOffset = -(idx * (peekPx + gapPx)); tt && (tt.style.transition = 'none'); }
+      function onMove(x){ if (!dragging || !tt) return; var dx = x - startX; tt.style.transform = 'translateX(' + (baseOffset + dx) + 'px)'; }
+      function onUp(x){ if (!dragging || !tt) return; dragging = false; tt.style.transition = ''; var dx = x - startX; var t = (peekPx * 0.18);
+        if (dx < -t && idx < slides.length-1) idx++; else if (dx > t && idx > 0) idx--; render(); }
+
+      if (tt){
+        tt.addEventListener('touchstart', function(e){ if (e.touches && e.touches[0]) onDown(e.touches[0].clientX); }, {passive:true});
+        tt.addEventListener('touchmove', function(e){ if (e.touches && e.touches[0]) onMove(e.touches[0].clientX); }, {passive:true});
+        tt.addEventListener('touchend', function(e){ var x = (e.changedTouches&&e.changedTouches[0])?e.changedTouches[0].clientX:startX; onUp(x); });
+        tt.addEventListener('mousedown', function(e){ onDown(e.clientX); });
+        window.addEventListener('mousemove', function(e){ onMove(e.clientX); });
+        window.addEventListener('mouseup', function(e){ onUp(e.clientX); });
+        window.addEventListener('resize', layout);
+        layout();
+      }
+
+      if (left) left.addEventListener('click', function(){ if (idx>0) { idx--; render(); } });
+      if (right) right.addEventListener('click', function(){ if (idx<slides.length-1) { idx++; render(); } });
+    })();
+  </script>
+</body>
+</html>
+

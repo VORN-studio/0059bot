@@ -152,6 +152,12 @@ select { background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.22); c
   border-top: 1px solid rgba(255,255,255,.08);
 }
 
+.t-arrow { position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; background: radial-gradient(120% 120% at 0% 0%, rgba(61,214,255,.16), rgba(19,33,70,.85)); border:1px solid rgba(170,200,255,.32); box-shadow: 0 10px 20px rgba(61,214,255,.18); color:#fff; cursor:pointer }
+.t-left { left:10px }
+.t-right { right:10px }
+.t-arrow:hover { transform:translateY(-50%) scale(1.04) }
+.t-arrow:active { transform:translateY(-50%) scale(.98) }
+
 /* Hide scrollbars everywhere */
 .t-carousel, .t-track { scrollbar-width: none }
 .t-carousel::-webkit-scrollbar, .t-track::-webkit-scrollbar { display: none }
@@ -408,4 +414,3 @@ body {
 .img-round{border-radius:16px}
 
 .gradient-soft{background:radial-gradient(circle at 20% -20%, rgba(60,110,255,.25), transparent 60%),radial-gradient(circle at 80% 20%, rgba(0,220,255,.22), transparent 55%),radial-gradient(circle at 50% 110%, rgba(120,60,255,.16), transparent 70%), #02030a}
-
