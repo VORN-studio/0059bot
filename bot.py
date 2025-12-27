@@ -6876,6 +6876,15 @@ def safe_go() -> str:
                         var path = url.pathname + (url.search || '');
                         var base = 'intent://' + url.host + path + '#Intent;scheme=' + scheme + ';action=android.intent.action.VIEW';
                         if (pkg) base += ';package=' + pkg;
+                        var store = '';
+                        if (pkg === 'org.mozilla.firefox') store = 'https://play.google.com/store/apps/details?id=org.mozilla.firefox';
+                        else if (pkg === 'com.opera.browser') store = 'https://play.google.com/store/apps/details?id=com.opera.browser';
+                        else if (pkg === 'com.opera.mini.native') store = 'https://play.google.com/store/apps/details?id=com.opera.mini.native';
+                        else if (pkg === 'com.sec.android.app.sbrowser') store = 'https://play.google.com/store/apps/details?id=com.sec.android.app.sbrowser';
+                        else if (pkg === 'com.brave.browser') store = 'https://play.google.com/store/apps/details?id=com.brave.browser';
+                        else if (pkg === 'com.yandex.browser') store = 'https://play.google.com/store/apps/details?id=com.yandex.browser';
+                        var fallback = store || u;
+                        base += ';S.browser_fallback_url=' + encodeURIComponent(fallback);
                         base += ';end';
                         return base;
                     }} catch(e){{
@@ -6950,15 +6959,21 @@ def safe_go() -> str:
                             sendLog('openLink_android', opened, '')
                         }}
                         if (!opened) {{
-                            opened = openViaForm(primary);
-                            sendLog('open_via_form', opened, '')
-                            setTimeout(function(){{
-                                var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
-                                if (box && !opened) sendLog('show_android_chooser', true, '')
-                            }}, 800);
-                            if (!opened && frameWrap && innerFrame) {{
+                            var intentOk = tryLaunchSequence(primary);
+                            sendLog('try_intent_sequence', intentOk, '')
+                            if (!intentOk) {{
+                                opened = openViaForm(primary);
+                                sendLog('open_via_form', opened, '')
+                            }}
+                            if (!intentOk && !opened) {{
+                                try {{ window.location.href = primary; sendLog('top_navigation', true, '') }} catch(_nav) {{ sendLog('top_navigation', false, '') }}
+                            }}
+                            if (!intentOk && !opened && frameWrap && innerFrame) {{
                                 try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; sendLog('iframe_fallback', true, ''); }} catch(_f) {{}}
                             }}
+                            setTimeout(function(){{
+                                var box = document.getElementById('android-box'); if (box && !intentOk && !opened) {{ box.style.display = 'block'; sendLog('show_android_chooser', true, '') }}
+                            }}, 800);
                         }}
                     }} else {{
                         var opened = false;
