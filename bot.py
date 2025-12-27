@@ -7449,6 +7449,28 @@ def exeio_complete():
     
     return "✅ Task Completed! You can close this window."
 
+@app_web.route("/api/task/status")
+def api_task_status():
+    uid = request.args.get("uid", type=int)
+    task_id = request.args.get("task_id", type=int)
+    if not uid or not task_id:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+    conn = db(); c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM dom_task_attempts WHERE user_id=%s AND task_id=%s", (uid, task_id))
+    attempts = int(c.fetchone()[0] or 0)
+    c.execute("SELECT 1 FROM dom_task_completions WHERE user_id=%s AND task_id=%s", (uid, task_id))
+    completed = bool(c.fetchone())
+    c.execute("SELECT 1 FROM dom_task_awards WHERE user_id=%s AND task_id=%s", (uid, task_id))
+    awarded = bool(c.fetchone())
+    c.execute("SELECT reward FROM dom_tasks WHERE id=%s", (task_id,))
+    r = c.fetchone()
+    reward = float(r[0] or 0) if r else 0.0
+    c.execute("SELECT balance_usd FROM dom_users WHERE user_id=%s", (uid,))
+    ub = c.fetchone()
+    balance = float(ub[0] or 0) if ub else 0.0
+    release_db(conn)
+    return jsonify({"ok": True, "user_id": uid, "task_id": task_id, "attempts": attempts, "completed": completed, "awarded": awarded, "reward": reward, "balance_usd": balance})
+
 @app_web.route('/api/track_click', methods=['POST'])
 def api_track_click():
     data = request.get_json(silent=True) or {}
