@@ -6904,20 +6904,27 @@ def safe_go() -> str:
                     }} catch (_be) {{}}
                     var primary = shortU || directU;
                     if (isAndroid) {{
-                        var launched = tryLaunchSequence(primary);
-                        if (!launched) {{
-                            var opened = openViaForm(primary);
-                            setTimeout(function(){{
-                                var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
-                            }}, 800);
-                            var attempts = 0;
-                            var t = setInterval(function(){{
-                                if (attempts >= 3 || document.visibilityState !== 'visible') {{ clearInterval(t); return; }}
-                                attempts++;
-                                if (tryLaunchSequence(primary)) {{ clearInterval(t); }}
-                            }}, 600);
-                            if (!opened && frameWrap && innerFrame) {{
-                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f) {{}}
+                        var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
+                        var opened = false;
+                        if (inTelegram && typeof window.Telegram.WebApp.openLink === 'function') {{
+                            try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); opened = true; }} catch(_tgA) {{}}
+                        }}
+                        if (!opened) {{
+                            var launched = tryLaunchSequence(primary);
+                            if (!launched) {{
+                                opened = openViaForm(primary);
+                                setTimeout(function(){{
+                                    var box = document.getElementById('android-box'); if (box && !opened) box.style.display = 'block';
+                                }}, 800);
+                                var attempts = 0;
+                                var t = setInterval(function(){{
+                                    if (attempts >= 3 || document.visibilityState !== 'visible') {{ clearInterval(t); return; }}
+                                    attempts++;
+                                    if (tryLaunchSequence(primary)) {{ clearInterval(t); }}
+                                }}, 600);
+                                if (!opened && frameWrap && innerFrame) {{
+                                    try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_f) {{}}
+                                }}
                             }}
                         }}
                     }} else {{
@@ -6952,14 +6959,18 @@ def safe_go() -> str:
                     ml.addEventListener('click', function(ev){{
                         ev.preventDefault();
                         var primary = shortU || directU;
-                        var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
+                        var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
                         var launched = false;
-                        for (var i=0; i<pkgs.length; i++) {{ if (launchIntent(primary, pkgs[i])) {{ launched = true; break; }} }}
+                        if (!inTelegram) {{
+                            var pkgs = ['com.sec.android.app.sbrowser','org.mozilla.firefox','com.opera.browser','com.opera.mini.native','com.yandex.browser'];
+                            for (var i=0; i<pkgs.length; i++) {{ if (launchIntent(primary, pkgs[i])) {{ launched = true; break; }} }}
+                            if (!launched) {{ launchIntent(primary, ''); }}
+                        }}
                         if (!launched) {{
-                            launchIntent(primary, '');
-                            if (frameWrap && innerFrame) {{
-                                try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_mf) {{}}
-                            }}
+                            try {{ window.Telegram.WebApp.openLink(primary, {{ try_instant_view: false }}); launched = true; }} catch(_tgM) {{}}
+                        }}
+                        if (!launched && frameWrap && innerFrame) {{
+                            try {{ innerFrame.src = primary; frameWrap.style.display = 'block'; }} catch(_mf) {{}}
                         }}
                     }});
                 }}
