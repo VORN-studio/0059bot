@@ -111,6 +111,7 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   inset: 0;
   pointer-events: none;
   background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,0) 50%, rgba(0,0,0,.12));
+  z-index: 0;
 }
 
 /* subtle shimmer strip, transform-only for performance */
@@ -156,6 +157,8 @@ select { background: rgba(0,0,0,.35); border: var(--border-glow); color: var(--t
   line-height: 1.55;
   background: var(--card-inner);
   border-top: var(--border-glow);
+  position: relative;
+  z-index: 1;
 }
 
 .t-arrow { display: none }
