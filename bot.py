@@ -6802,27 +6802,45 @@ def safe_go() -> str:
         <meta name=\"referrer\" content=\"strict-origin-when-cross-origin\">
     </head>
     <body style=\"background:#121212; color:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; font-family:sans-serif; margin:0;\">
-        <div style=\"text-align:center; padding:20px;\">
-            <h2 style=\"margin-bottom:20px;\">🚀 Ready to start?</h2>
-            <p style=\"margin-bottom:30px; color:#aaa;\">Press the button to continue.</p>
-            <button id=\"go-btn\" style=\"background:#0088cc; color:#fff; padding:15px 30px; border:none; border-radius:10px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow:0 4px 15px rgba(0,136,204,0.4);\">
-               Start Task →
-            </button>
-            <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {display_target[:30]}...</p>
-            <a id=\"manual-link\" href=\"{display_target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
-            <div id=\"android-box\" style=\"display:none; margin-top:22px;\">
-                <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը Android-ում</p>
-                <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
-                    <button data-pkg=\"\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">System Chooser</button>
-                    <button data-pkg=\"org.mozilla.firefox\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
-                    <button data-pkg=\"com.opera.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera</button>
-                    <button data-pkg=\"com.opera.mini.native\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera Mini</button>
-                    <button data-pkg=\"com.sec.android.app.sbrowser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Samsung Internet</button>
-                    <button data-pkg=\"com.brave.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
-                    <button data-pkg=\"com.yandex.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
+                <div style=\"text-align:center; padding:20px;\">
+                    <h2 style=\"margin-bottom:20px;\">🚀 Ready to start?</h2>
+                    <p style=\"margin-bottom:30px; color:#aaa;\">Press the button to continue.</p>
+                    <button id=\"go-btn\" style=\"background:#0088cc; color:#fff; padding:15px 30px; border:none; border-radius:10px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow:0 4px 15px rgba(0,136,204,0.4);\">
+                       Start Task →
+                    </button>
+                    <p style=\"margin-top:20px; font-size:12px; color:#555;\">External link: {display_target[:30]}...</p>
+                    <p style=\"margin-top:6px; font-size:12px; color:#e88;\">⚠ Chrome և Safari բրաուզերներով վերիֆիկացումները չեն անցնում</p>
+                    <a id=\"manual-link\" href=\"{display_target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
+                    <div id=\"android-box\" style=\"display:none; margin-top:22px;\">
+                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը Android-ում</p>
+                        <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
+                            <button data-pkg=\"\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">System Chooser</button>
+                            <button data-pkg=\"org.mozilla.firefox\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
+                            <button data-pkg=\"com.opera.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera</button>
+                            <button data-pkg=\"com.opera.mini.native\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Opera Mini</button>
+                            <button data-pkg=\"com.sec.android.app.sbrowser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Samsung Internet</button>
+                            <button data-pkg=\"com.brave.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
+                            <button data-pkg=\"com.yandex.browser\" class=\"abtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
+                        </div>
+                    </div>
+                    <div id=\"ios-box\" style=\"display:none; margin-top:22px;\">
+                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը iOS-ում</p>
+                        <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
+                            <button data-app=\"firefox\" class=\"ibtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
+                            <button data-app=\"brave\" class=\"ibtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Brave</button>
+                            <button data-app=\"yandex\" class=\"ibtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Yandex</button>
+                        </div>
+                    </div>
+                    <div id=\"desktop-box\" style=\"display:none; margin-top:22px;\">
+                        <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Խորհուրդ ենք տալիս հետևյալ բրաուզերները</p>
+                        <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
+                            <a href=\"https://www.mozilla.org/firefox/new/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Firefox</a>
+                            <a href=\"https://www.opera.com/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Opera</a>
+                            <a href=\"https://brave.com/download/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Brave</a>
+                            <a href=\"https://browser.yandex.com/\" target=\"_blank\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border-radius:8px; text-decoration:none;\">Yandex</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
         <div id="iframe-wrap" style="position:fixed; inset:0; background:#000; display:none; z-index:9999;">
             <iframe id="inner-frame" src="about:blank" style="width:100%; height:100%; border:0;" allow="autoplay; fullscreen; clipboard-read; clipboard-write; popups"></iframe>
         </div>
@@ -6834,6 +6852,8 @@ def safe_go() -> str:
                 var uid = {safe_js_uid};
                 var tid = {safe_js_tid};
                 var isAndroid = /Android/i.test(navigator.userAgent);
+                var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+                var isDesktop = !isAndroid && !isIOS;
                 var inTelegram = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe);
                 var frameWrap = document.getElementById('iframe-wrap');
                 var innerFrame = document.getElementById('inner-frame');
@@ -6891,6 +6911,20 @@ def safe_go() -> str:
                         }}
                     }} catch(e){{}}
                     return false;
+                }}
+                function openIOS(u, app){{
+                    var scheme = '';
+                    var store = '';
+                    if (app === 'firefox') {{ scheme = 'firefox://open-url?url='; store = 'https://apps.apple.com/app/mozilla-firefox/id989804926'; }}
+                    else if (app === 'brave') {{ scheme = 'brave://open-url?url='; store = 'https://apps.apple.com/app/brave-private-web-browser/id1052879175'; }}
+                    else if (app === 'yandex') {{ scheme = 'yandexbrowser://open-url?url='; store = 'https://apps.apple.com/app/yandex-browser/id596305201'; }}
+                    try {{
+                        var a = document.createElement('a');
+                        a.href = scheme + u; a.rel = 'noopener'; a.target = '_self';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                        setTimeout(function(){{ try {{ window.location.href = store; }} catch(_s){{}} }}, 800);
+                        return true;
+                    }} catch(e){{ try {{ window.location.href = store; }} catch(_e){{}} return false; }}
                 }}
                 btn.addEventListener('click', function(e){{
                     e.preventDefault();
@@ -6954,6 +6988,8 @@ def safe_go() -> str:
                     }});
                 }}
                 if (isAndroid && !inTelegram) {{ var box = document.getElementById('android-box'); if (box) box.style.display = 'block'; }}
+                if (isIOS) {{ var ibox = document.getElementById('ios-box'); if (ibox) ibox.style.display = 'block'; var iosBtns = document.querySelectorAll('#ios-box .ibtn'); iosBtns.forEach(function(b){{ b.addEventListener('click', function(){{ var app = b.getAttribute('data-app')||''; openIOS(shortU||directU, app); }}); }}); }}
+                if (isDesktop) {{ var dbox = document.getElementById('desktop-box'); if (dbox) dbox.style.display = 'block'; }}
                 var ml = document.getElementById('manual-link');
                 if (ml) {{
                     ml.addEventListener('click', function(ev){{
