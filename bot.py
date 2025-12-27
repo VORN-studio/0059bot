@@ -6813,6 +6813,14 @@ def safe_go() -> str:
                     <a id=\"manual-link\" href=\"{display_target}\" style=\"display:none; margin-top:18px; color:#4af; font-size:14px; text-decoration:underline;\">Եթե չբացվեց, սեղմեք այստեղ</a>
                     <div id=\"universal-box\" style=\"margin-top:22px;\">
                         <p style=\"margin:10px 0; font-size:14px; color:#aaa;\">Ընտրեք բրաուզերը</p>
+                        <div style=\"margin-bottom:15px;\">
+                            <select id=\"browser-filter\" style=\"background:#333; color:#fff; border:1px solid #555; padding:8px; border-radius:8px; outline:none;\">
+                                <option value=\"auto\">Սարքը (Auto)</option>
+                                <option value=\"android\">Android</option>
+                                <option value=\"ios\">iOS</option>
+                                <option value=\"desktop\">Desktop</option>
+                            </select>
+                        </div>
                         <div style=\"display:flex; gap:10px; flex-wrap:wrap; justify-content:center;\">
                             <button data-b=\"system\" class=\"ubtn\" style=\"display:none; background:#444; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">System Chooser</button>
                             <button data-b=\"firefox\" class=\"ubtn\" style=\"background:#2a2a2a; color:#fff; padding:10px 16px; border:none; border-radius:8px;\">Firefox</button>
@@ -6979,23 +6987,41 @@ def safe_go() -> str:
                     }}, 3000);
                 }});
                 var browsers = {{
-                    firefox: {{ pkg: 'org.mozilla.firefox', ios: 'firefox', ios_scheme: 'firefox://open-url?url=', ios_store: 'https://apps.apple.com/app/mozilla-firefox/id989804926', url: 'https://www.mozilla.org/firefox/new/' }},
-                    opera: {{ pkg: 'com.opera.browser', ios: null, url: 'https://www.opera.com/' }},
-                    operamini: {{ pkg: 'com.opera.mini.native', ios: null, url: 'https://www.opera.com/mobile/mini' }},
-                    samsung: {{ pkg: 'com.sec.android.app.sbrowser', ios: null, url: 'https://www.samsung.com/app/samsung-internet/' }},
-                    brave: {{ pkg: 'com.brave.browser', ios: 'brave', ios_scheme: 'brave://open-url?url=', ios_store: 'https://apps.apple.com/app/brave-private-web-browser/id1052879175', url: 'https://brave.com/download/' }},
-                    yandex: {{ pkg: 'com.yandex.browser', ios: 'yandex', ios_scheme: 'yandexbrowser://open-url?url=', ios_store: 'https://apps.apple.com/app/yandex-browser/id596305201', url: 'https://browser.yandex.com/' }},
-                    system: {{ pkg: '', ios: null, url: null }}
+                    firefox: {{ modes: ['android', 'ios', 'desktop'], pkg: 'org.mozilla.firefox', ios: 'firefox', ios_scheme: 'firefox://open-url?url=', ios_store: 'https://apps.apple.com/app/mozilla-firefox/id989804926', url: 'https://www.mozilla.org/firefox/new/' }},
+                    opera: {{ modes: ['android', 'desktop'], pkg: 'com.opera.browser', ios: null, url: 'https://www.opera.com/' }},
+                    operamini: {{ modes: ['android'], pkg: 'com.opera.mini.native', ios: null, url: 'https://www.opera.com/mobile/mini' }},
+                    samsung: {{ modes: ['android'], pkg: 'com.sec.android.app.sbrowser', ios: null, url: 'https://www.samsung.com/app/samsung-internet/' }},
+                    brave: {{ modes: ['android', 'ios', 'desktop'], pkg: 'com.brave.browser', ios: 'brave', ios_scheme: 'brave://open-url?url=', ios_store: 'https://apps.apple.com/app/brave-private-web-browser/id1052879175', url: 'https://brave.com/download/' }},
+                    yandex: {{ modes: ['android', 'ios', 'desktop'], pkg: 'com.yandex.browser', ios: 'yandex', ios_scheme: 'yandexbrowser://open-url?url=', ios_store: 'https://apps.apple.com/app/yandex-browser/id596305201', url: 'https://browser.yandex.com/' }},
+                    system: {{ modes: ['android'], pkg: '', ios: null, url: null }}
                 }};
 
+                var filterSelect = document.getElementById('browser-filter');
                 var ubtns = document.querySelectorAll('.ubtn');
+                
+                function updateVisibility() {{
+                    var mode = filterSelect ? filterSelect.value : 'auto';
+                    if (mode === 'auto') {{
+                        if (isAndroid) mode = 'android';
+                        else if (isIOS) mode = 'ios';
+                        else mode = 'desktop';
+                    }}
+                    ubtns.forEach(function(b){{
+                        var key = b.getAttribute('data-b');
+                        var cfg = browsers[key];
+                        if (!cfg) return;
+                        var show = false;
+                        if (cfg.modes && cfg.modes.indexOf(mode) !== -1) show = true;
+                        if (key === 'system' && mode !== 'android') show = false;
+                        b.style.display = show ? 'inline-block' : 'none';
+                    }});
+                }}
+                
+                if (filterSelect) filterSelect.addEventListener('change', updateVisibility);
+                updateVisibility();
+
                 ubtns.forEach(function(b){{
                     var key = b.getAttribute('data-b');
-                    if (key === 'system') {{
-                        if (isAndroid) b.style.display = 'inline-block';
-                        // Keep hidden otherwise
-                    }}
-
                     b.addEventListener('click', function(){{
                         var cfg = browsers[key];
                         if (!cfg) return;
