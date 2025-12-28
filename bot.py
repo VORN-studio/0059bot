@@ -7693,12 +7693,11 @@ def api_postback_cpx():
             
         if status == '1': # Credit
             now = int(time.time())
-            
-            # Add deposit record
+            credited = amt * 0.5
             c.execute("""
                 INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
                 VALUES (%s, %s, %s, %s)
-            """, (uid, amt, f"cpx_{trans_id}", now))
+            """, (uid, credited, f"cpx_{trans_id}", now))
             
             # Update user balance
             c.execute("""
@@ -7706,15 +7705,14 @@ def api_postback_cpx():
                 SET balance_usd = COALESCE(balance_usd, 0) + %s,
                     total_deposit_usd = COALESCE(total_deposit_usd, 0) + %s
                 WHERE user_id = %s
-            """, (amt, amt, uid))
+            """, (credited, credited, uid))
             
             conn.commit()
             
-            # Notify user
             try:
                 realtime_emit("balance_update", {
                     "user_id": uid,
-                    "amount": amt,
+                    "amount": credited,
                     "source": "cpx"
                 }, room=f"user_{uid}")
             except Exception as e:
@@ -7722,16 +7720,18 @@ def api_postback_cpx():
                 
         elif status == '2': # Chargeback
             now = int(time.time())
+            credited = amt * 0.5
             c.execute("""
                 INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
                 VALUES (%s, %s, %s, %s)
-            """, (uid, -amt, f"cpx_cb_{trans_id}", now))
+            """, (uid, -credited, f"cpx_cb_{trans_id}", now))
             
             c.execute("""
                 UPDATE dom_users 
-                SET balance_usd = GREATEST(COALESCE(balance_usd, 0) - %s, 0) 
+                SET balance_usd = GREATEST(COALESCE(balance_usd, 0) - %s, 0),
+                    total_deposit_usd = GREATEST(COALESCE(total_deposit_usd, 0) - %s, 0)
                 WHERE user_id = %s
-            """, (amt, uid))
+            """, (credited, credited, uid))
             conn.commit()
             
         release_db(conn)
