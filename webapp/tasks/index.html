@@ -110,6 +110,45 @@
     <div class="task-card">High reward tasks</div>
 </div>
 
+<div id="screen-surveys" class="screen">
+    <h3>📋 Surveys (CPX Research)</h3>
+    <div class="task-card">
+        <div style="margin-bottom:10px;">
+            <strong>Earn by completing surveys!</strong><br>
+            Get paid for your opinion.
+        </div>
+        <button onclick="openCpxResearch()" class="task-btn" style="background:#00C9FF; color:#000;">
+            Start Earning ➜
+        </button>
+    </div>
+</div>
+
+<script>
+function openCpxResearch() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (!uid) {
+        alert("User ID missing!");
+        return;
+    }
+    // TODO: Enter your CPX App ID here
+    const appId = "30681"; 
+    
+    if (appId === "YOUR_APP_ID") {
+        alert("CPX App ID not configured yet. Please contact admin.");
+        return;
+    }
+
+    const url = `https://offers.cpx-research.com/index.php?app_id=${appId}&ext_user_id=${uid}`;
+    
+    // Open in external browser or Telegram WebApp
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+        window.Telegram.WebApp.openLink(url);
+    } else {
+        window.open(url, "_blank");
+    }
+}
+</script>
+
 <div id="task-browser-modal" style="position:fixed; inset:0; background:#0b0b0f; display:none; z-index:9999;">
   <div style="height:48px; display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#15151a; border-bottom:1px solid #222;">
     <div id="tb-url" style="font-size:12px; color:#9aa; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;"></div>
