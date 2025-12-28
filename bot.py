@@ -165,101 +165,7 @@ def serve_webapp(filename):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
-@app_web.route("/api/postback/cpx", methods=["GET", "POST"])
-def api_postback_cpx():
-    """
-    CPX Research Postback Endpoint
-    URL format: /api/postback/cpx?status={status}&trans_id={trans_id}&user_id={user_id}&amount_usd={amount_usd}&hash={secure_hash}
-    """
-    try:
-        # 1. Get parameters
-        status = request.args.get("status")
-        trans_id = request.args.get("trans_id")
-        user_id_str = request.args.get("user_id")
-        amount_usd = request.args.get("amount_usd")
-        req_hash = request.args.get("hash")
-        
-        # 2. Basic validation
-        if not all([status, trans_id, user_id_str, amount_usd, req_hash]):
-            logger.error(f"CPX Postback missing params: {request.args}")
-            return "Missing parameters", 400
-            
-        # 3. Verify Hash
-        # Formula: md5(trans_id + "-" + CPX_SECURE_HASH)
-        if CPX_SECURE_HASH == "YOUR_SECURE_HASH":
-            logger.warning("CPX Postback received but Secure Hash not configured!")
-            return "Secure Hash not configured", 500
-            
-        to_hash = f"{trans_id}-{CPX_SECURE_HASH}"
-        calc_hash = hashlib.md5(to_hash.encode()).hexdigest()
-        
-        if calc_hash != req_hash:
-            logger.error(f"CPX Postback invalid hash. Req: {req_hash}, Calc: {calc_hash}, String: {to_hash}")
-            return "Invalid Hash", 403
-            
-        # 4. Process Transaction
-        user_id = int(user_id_str)
-        amount = float(amount_usd)
-        
-        conn = db()
-        c = conn.cursor()
-        
-        # Check if transaction already processed
-        c.execute("SELECT 1 FROM dom_deposits WHERE status = 'cpx_' || %s", (trans_id,))
-        if c.fetchone():
-            release_db(conn)
-            return "OK", 200 # Already processed
-            
-        if status == '1': # Completed
-            # Use apply_deposit logic manually to include custom status/logging
-            now = int(time.time())
-            
-            # Add deposit record
-            c.execute("""
-                INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
-                VALUES (%s, %s, %s, %s)
-            """, (user_id, amount, f"cpx_{trans_id}", now))
-            
-            # Update user balance
-            c.execute("""
-                UPDATE dom_users
-                   SET balance_usd = COALESCE(balance_usd,0) + %s,
-                       total_deposit_usd = COALESCE(total_deposit_usd,0) + %s
-                 WHERE user_id=%s
-            """, (amount, amount, user_id))
-            
-            conn.commit()
-            logger.info(f"CPX Reward: User {user_id} earned ${amount} (Trans: {trans_id})")
-            
-            # Notify user via socket
-            realtime_emit("balance_update", {
-                "user_id": user_id,
-                "amount": amount,
-                "source": "cpx"
-            }, room=f"user_{user_id}")
-            
-        elif status == '2': # Chargeback / Canceled
-            # Deduct if possible
-            now = int(time.time())
-            c.execute("""
-                INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
-                VALUES (%s, %s, %s, %s)
-            """, (user_id, -amount, f"cpx_cb_{trans_id}", now))
-            
-            c.execute("""
-                UPDATE dom_users
-                   SET balance_usd = balance_usd - %s
-                 WHERE user_id=%s
-            """, (amount, user_id))
-            conn.commit()
-            logger.info(f"CPX Chargeback: User {user_id} lost ${amount} (Trans: {trans_id})")
-            
-        release_db(conn)
-        return "OK", 200
-        
-    except Exception as e:
-        logger.error(f"CPX Postback error: {e}")
-        return "Error", 500
+
 
 @app_web.route("/api/message/partners")
 def api_message_partners():
@@ -7743,14 +7649,26 @@ def api_postback_cpx():
         status = data.get("status")
         trans_id = data.get("trans_id")
         user_id = data.get("user_id") or data.get("ext_user_id")
-        amount = data.get("amount_local")
+        
+        # We prefer amount_usd if available, otherwise amount_local
+        amount_usd = data.get("amount_usd")
+        amount_local = data.get("amount_local")
+        
         req_hash = data.get("hash")
         
         # 1. Validation
-        if not all([status, trans_id, user_id, amount, req_hash]):
+        if not all([status, trans_id, user_id, req_hash]):
             return "Missing parameters", 400
             
-        # 2. Verify Hash: MD5(trans_id + "-" + secure_hash)
+        # Determine amount
+        if amount_usd:
+            amount = float(amount_usd)
+        elif amount_local:
+            amount = float(amount_local)
+        else:
+            return "Missing amount", 400
+            
+        # 2. Verify Hash: MD5(trans_id + "-" + CPX_SECURE_HASH)
         if CPX_SECURE_HASH == "YOUR_SECURE_HASH":
             logger.warning("CPX Postback: Secure Hash not set. Skipping verification.")
         else:
@@ -7767,38 +7685,55 @@ def api_postback_cpx():
         conn = db()
         c = conn.cursor()
         
-        # Check if transaction already processed (simple check via comments or similar if needed)
-        # Here we just trust the unique trans_id from CPX and assume we haven't processed it if we want strictness.
-        # But for now, let's just process it. Ideally, we should have a 'dom_cpx_transactions' table.
-        
-        if status == '1': # Credit
-            c.execute("""
-                UPDATE dom_users 
-                SET balance_usd = COALESCE(balance_usd, 0) + %s 
-                WHERE user_id = %s
-            """, (amt, uid))
+        # Check if transaction already processed
+        c.execute("SELECT 1 FROM dom_deposits WHERE status = 'cpx_' || %s", (trans_id,))
+        if c.fetchone():
+            release_db(conn)
+            return "OK", 200 # Already processed
             
-            # Log deposit
+        if status == '1': # Credit
             now = int(time.time())
+            
+            # Add deposit record
             c.execute("""
                 INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
-                VALUES (%s, %s, 'cpx_reward', %s)
-            """, (uid, amt, now))
+                VALUES (%s, %s, %s, %s)
+            """, (uid, amt, f"cpx_{trans_id}", now))
+            
+            # Update user balance
+            c.execute("""
+                UPDATE dom_users 
+                SET balance_usd = COALESCE(balance_usd, 0) + %s,
+                    total_deposit_usd = COALESCE(total_deposit_usd, 0) + %s
+                WHERE user_id = %s
+            """, (amt, amt, uid))
+            
+            conn.commit()
             
             # Notify user
             try:
-                socketio.emit("balance_update", {"amount": amt, "source": "cpx"}, room=f"user_{uid}")
-            except:
-                pass
+                realtime_emit("balance_update", {
+                    "user_id": uid,
+                    "amount": amt,
+                    "source": "cpx"
+                }, room=f"user_{uid}")
+            except Exception as e:
+                logger.error(f"Socket emit error: {e}")
                 
         elif status == '2': # Chargeback
+            now = int(time.time())
+            c.execute("""
+                INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
+                VALUES (%s, %s, %s, %s)
+            """, (uid, -amt, f"cpx_cb_{trans_id}", now))
+            
             c.execute("""
                 UPDATE dom_users 
                 SET balance_usd = GREATEST(COALESCE(balance_usd, 0) - %s, 0) 
                 WHERE user_id = %s
             """, (amt, uid))
+            conn.commit()
             
-        conn.commit()
         release_db(conn)
         
         return "OK", 200
