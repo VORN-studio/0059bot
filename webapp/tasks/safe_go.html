@@ -396,6 +396,7 @@
 
       function markComplete(manual){
         if (!uid || !tid || window.__completed) return;
+        if (shortU) { return; }
         sendLog('complete_attempt', true, manual ? 'manual' : 'auto');
         var payload = {
           user_id: parseInt(uid||'0')||0,

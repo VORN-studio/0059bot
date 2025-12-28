@@ -168,18 +168,28 @@ async function performTask(taskId) {
     const btn = document.querySelector(`button[onclick="performTask(${taskId})"]`);
     if (btn) btn.textContent = "⏳ Loading...";
 
-    const directU = task.url || "";
-    const shortU = "";
-    const attemptId = "";
-
-    fetch(`/api/task_attempt_create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, task_id: taskId })
-    });
-
-    const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}&reward=${encodeURIComponent(task.reward)}`;
-    window.location.href = safeUrl;
+    try {
+        const res = await fetch(`/api/task/generate_link`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: uid, task_id: taskId })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            if (btn) btn.textContent = `Կատարել → +${task.reward}`;
+            alert("❌ Սխալ հղում գեներացնելիս");
+            return;
+        }
+        const shortU = data.short_url || "";
+        const directU = data.direct_url || (task.url || "");
+        const attemptId = data.attempt_id || "";
+        const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}&reward=${encodeURIComponent(task.reward)}`;
+        window.location.href = safeUrl;
+    } catch (e) {
+        if (btn) btn.textContent = `Կատարել → +${task.reward}`;
+        alert("❌ Սերվերի սխալ");
+        return;
+    }
 }
 
 
