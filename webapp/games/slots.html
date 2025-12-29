@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <title>Domino Slots</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://libtl.com/sdk.js" data-zone="10289760" data-sdk="show_10289760"></script>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="slots.css" />
@@ -53,5 +54,14 @@
 </div>
 
 <script src="slots.js"></script>
+<script>
+try {
+  if (typeof show_10289760 === 'function') {
+    show_10289760().then(function(){
+      alert('You have seen an ad!');
+    });
+  }
+} catch (e) {}
+</script>
 </body>
 </html>
