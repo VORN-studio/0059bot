@@ -5321,102 +5321,45 @@ def api_ad_monetag_reward():
     ip = _client_ip()
     country = _ip_country(ip) or "UNKNOWN"
     
-    # Tier System (Approx 50% of CPM)
-    # Tier 1: US, UK, CA, AU, DE... (~$0.005)
-    # Tier 2: FR, IT, ES, RU... (~$0.002)
-    # Tier 3: Others (AM, IN...) (~$0.0005)
+    # Tier System
+    # Tier 1: US, UK, CA, AU, DE... (~$0.0005)
+    # Tier 2: FR, IT, ES, RU... (~$0.0002)
+    # Tier 3: Others (AM, IN...) (~$0.0001)
     
     tier1 = ["US", "GB", "CA", "AU", "DE", "CH", "NO", "SE", "DK", "NZ"]
     tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
     
     if country in tier1:
-        reward = 0.005
+        reward = 0.0005
     elif country in tier2:
-        reward = 0.002
+        reward = 0.0002
     else:
         # CPM for Armenia/others is very low (~$0.20), so per click is ~$0.0002
         # We give 50% = $0.0001
         reward = 0.0001
 
     conn = db(); c = conn.cursor()
-    if reward < 0.001:
-        c.execute("CREATE TABLE IF NOT EXISTS dom_users_micro (user_id BIGINT PRIMARY KEY, pending_micro_usd NUMERIC(12,6) NOT NULL DEFAULT 0)")
-        c.execute(
-            """
-            INSERT INTO dom_users_micro (user_id, pending_micro_usd)
-            VALUES (%s, %s)
-            ON CONFLICT (user_id)
-            DO UPDATE SET pending_micro_usd = dom_users_micro.pending_micro_usd + EXCLUDED.pending_micro_usd
-            RETURNING pending_micro_usd
-            """,
-            (uid, reward)
-        )
-        pending = float((c.fetchone() or [0])[0] or 0.0)
-        units = int(pending / 0.001)
-        if units > 0:
-            credit = float(units) * 0.001
-            c.execute("UPDATE dom_users_micro SET pending_micro_usd = pending_micro_usd - %s WHERE user_id = %s RETURNING pending_micro_usd", (credit, uid))
-            pending = float((c.fetchone() or [0])[0] or 0.0)
-            c.execute(
-                """
-                UPDATE dom_users
-                SET balance_usd = COALESCE(balance_usd, 0) + %s
-                WHERE user_id = %s
-                RETURNING COALESCE(balance_usd, 0)
-                """,
-                (credit, uid)
-            )
-            row = c.fetchone()
-            conn.commit(); release_db(conn)
-            new_balance = float(row[0]) if row else 0.0
-            print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward} credited={credit} pending={pending}")
-            return jsonify({
-                "ok": True,
-                "reward": reward,
-                "credited_usd": credit,
-                "pending_micro": pending,
-                "balance": new_balance,
-                "country": country,
-                "is_tier1": (country in tier1)
-            }), 200
-        else:
-            c.execute("SELECT COALESCE(balance_usd, 0) FROM dom_users WHERE user_id = %s", (uid,))
-            row = c.fetchone()
-            conn.commit(); release_db(conn)
-            new_balance = float((row or [0])[0] or 0.0)
-            print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward} credited=0 pending={pending}")
-            return jsonify({
-                "ok": True,
-                "reward": reward,
-                "credited_usd": 0.0,
-                "pending_micro": pending,
-                "balance": new_balance,
-                "country": country,
-                "is_tier1": (country in tier1)
-            }), 200
-    else:
-        c.execute(
-            """
-            UPDATE dom_users
-            SET balance_usd = COALESCE(balance_usd, 0) + %s
-            WHERE user_id = %s
-            RETURNING COALESCE(balance_usd, 0)
-            """,
-            (reward, uid)
-        )
-        row = c.fetchone()
-        conn.commit(); release_db(conn)
-        new_balance = float(row[0]) if row else 0.0
-        print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward}")
-        return jsonify({
-            "ok": True,
-            "reward": reward,
-            "credited_usd": reward,
-            "pending_micro": 0.0,
-            "balance": new_balance,
-            "country": country,
-            "is_tier1": (country in tier1)
-        }), 200
+    c.execute(
+        """
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd, 0) + %s
+        WHERE user_id = %s
+        RETURNING COALESCE(balance_usd, 0)
+        """,
+        (reward, uid)
+    )
+    row = c.fetchone()
+    conn.commit(); release_db(conn)
+    new_balance = float(row[0]) if row else 0.0
+    print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward}")
+    return jsonify({
+        "ok": True,
+        "reward": reward,
+        "credited_usd": reward,
+        "balance": new_balance,
+        "country": country,
+        "is_tier1": (country in tier1)
+    }), 200
 
 @app_web.route("/api/mining/plans", methods=["GET"])
 def api_mining_plans():
