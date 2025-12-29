@@ -4695,9 +4695,9 @@ def api_deposit():
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
-    amount = float(data.get("amount", 0))
+    amount_ton = float(data.get("amount", 0))
 
-    if not user_id or amount <= 0:
+    if not user_id or amount_ton <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
     # Deposit is allowed regardless of pending withdraws
@@ -4706,17 +4706,27 @@ def api_deposit():
     if not stats:
         return jsonify({"ok": False, "error": "user_not_found"}), 404
 
-    apply_deposit(user_id, amount)
+    try:
+        ton_rate = fetch_ton_rate() or 0.0
+    except Exception:
+        ton_rate = 0.0
+    if ton_rate <= 0:
+        return jsonify({"ok": False, "error": "ton_rate_unavailable"}), 200
+
+    amount_usd = round(amount_ton * ton_rate, 6)
+    apply_deposit(user_id, amount_usd)
     new_stats = get_user_stats(user_id)
     try:
-        add_intellect_event(user_id, "deposit_made", meta={"amount": amount})
+        add_intellect_event(user_id, "deposit_made", meta={"amount_ton": amount_ton, "amount_usd": amount_usd})
     except Exception:
         logger.exception("intellect_event deposit_made failed")
 
     return jsonify({
         "ok": True,
-        "message": "Запрос на пополнение счета зарегистрирован ✅ Сумма зачислена на ваш баланс.",
-        "user": new_stats
+        "message": "Դեպոզիտը գրանցվեց ✅ DOMIT-ը ավելացված է քո հաշվին",
+        "user": new_stats,
+        "ton_rate": ton_rate,
+        "credited_domit": amount_usd
     })
 
 @app_web.route("/api/crash/deposit", methods=["POST"])
