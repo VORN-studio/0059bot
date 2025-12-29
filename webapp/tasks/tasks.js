@@ -59,7 +59,7 @@ async function loadBalance() {
         const el = document.getElementById("tasks-balance");
         if (!el) return;
         if (data.ok && data.user) {
-            el.textContent = data.user.balance_usd.toFixed(3) + " $";
+            el.textContent = Number(data.user.balance_usd || 0).toFixed(6) + " $";
         } else {
             el.textContent = "—";
         }

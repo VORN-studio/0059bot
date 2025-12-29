@@ -170,11 +170,15 @@ async function openMonetag() {
             try { await show_10289760(); } catch(_e){}
         }
         try {
-            await fetch('/api/ad/monetag_reward', {
+            const rr = await fetch('/api/ad/monetag_reward', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ uid: Number(uid) })
             });
+            try {
+                const js = await rr.json();
+                if (js && js.ok) { try { loadBalance(); } catch(_l){} }
+            } catch(_j){}
         } catch(_r) {}
         const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
         const d = await r.json();
