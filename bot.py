@@ -11,6 +11,7 @@ import base64
 import hashlib
 import hmac
 from dotenv import load_dotenv
+import requests
 load_dotenv()
 import time
 import sys
@@ -113,6 +114,35 @@ REMATCH_REQUESTS = {}
 MONETAG_SMARTLINK = os.getenv("MONETAG_SMARTLINK", "").strip()
 if not MONETAG_SMARTLINK:
     MONETAG_SMARTLINK = "https://otieu.com/4/10388580"
+MONETAG_SMARTLINKS = {
+    "US": os.getenv("MONETAG_SMARTLINK_US", "").strip(),
+    "GB": os.getenv("MONETAG_SMARTLINK_GB", "").strip(),
+    "DE": os.getenv("MONETAG_SMARTLINK_DE", "").strip(),
+    "FR": os.getenv("MONETAG_SMARTLINK_FR", "").strip(),
+    "CA": os.getenv("MONETAG_SMARTLINK_CA", "").strip(),
+    "AU": os.getenv("MONETAG_SMARTLINK_AU", "").strip(),
+}
+FORCED_GEO = (os.getenv("FORCED_GEO", "US") or "US").strip().upper()
+
+def _client_ip():
+    xff = request.headers.get("X-Forwarded-For", "")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.remote_addr or ""
+
+def _ip_country(ip: str) -> Optional[str]:
+    try:
+        if not ip:
+            return None
+        r = requests.get(f"https://ipinfo.io/{ip}/json", timeout=2)
+        if r.status_code == 200:
+            js = r.json()
+            c = js.get("country")
+            if c:
+                return str(c).upper()
+    except Exception:
+        pass
+    return None
 
 app_web = Flask(__name__, static_folder="webapp/static", static_url_path="/static")
 CORS(app_web)
@@ -5224,7 +5254,12 @@ def api_tasks(user_id):
 def api_monetag_link():
     uid = request.args.get("uid", type=int)
     task_id = request.args.get("task_id", type=int) or 0
-    url = MONETAG_SMARTLINK or ""
+    ip = _client_ip()
+    cc = FORCED_GEO or (_ip_country(ip) or "")
+    geo_url = None
+    if cc and MONETAG_SMARTLINKS.get(cc):
+        geo_url = MONETAG_SMARTLINKS.get(cc)
+    url = (geo_url or MONETAG_SMARTLINK) or ""
     if not url:
         return jsonify({"ok": False, "error": "not_configured"}), 200
     try:
