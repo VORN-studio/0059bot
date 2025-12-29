@@ -657,7 +657,16 @@ if (depositBtn) {
     try {
       result = await sendTonTx();
     } catch (e1) {
-      try { result = await sendTonTx(); } catch (e2) { throw e2; }
+      try { result = await sendTonTx(); } catch (e2) {
+        const nano = Math.round(amount * 1e9);
+        const fallback = `ton://transfer/${RECEIVER_TON_ADDRESS}?amount=${nano}`;
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+          window.Telegram.WebApp.openLink(fallback);
+        } else {
+          window.open(fallback, "_blank");
+        }
+        throw e2;
+      }
     }
 
     console.log("TON Transaction:", result);
