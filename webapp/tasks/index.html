@@ -120,15 +120,6 @@
     </div>
 </div>
 
-<script>
-try {
-  if (typeof show_10289760 === 'function') {
-    show_10289760().then(function(){
-      alert('You have seen an ad!');
-    });
-  }
-} catch (e) {}
-</script>
 
 <div id="screen-surveys" class="screen">
     <h3>📋 Surveys (CPX Research)</h3>
@@ -172,6 +163,9 @@ async function openMonetag() {
     const uid = new URLSearchParams(window.location.search).get("uid");
     if (!uid) { alert("User ID missing!"); return; }
     try {
+        if (typeof show_10289760 === 'function') {
+            try { await show_10289760(); } catch(_e){}
+        }
         const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
         const d = await r.json();
         if (!d.ok || !d.url) { alert("Monetag not configured"); return; }
