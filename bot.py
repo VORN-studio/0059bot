@@ -175,8 +175,6 @@ def ensure_balance_precision():
     finally:
         release_db(conn)
 
-# run a lightweight precision check/migration at startup
-ensure_balance_precision()
 
 @socketio.on('join_chart')
 def handle_join_chart():
@@ -3546,6 +3544,8 @@ def release_db(conn):
             conn.close()
     except Exception:
         logger.exception("release_db error")
+
+ensure_balance_precision()
 
 
 
