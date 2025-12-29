@@ -199,5 +199,6 @@ async function performTask(taskId) {
 // --------------------------------------
 
 hideAll();
+openCategory('special');
 loadTasks();
 loadBalance();
