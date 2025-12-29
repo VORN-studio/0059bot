@@ -646,7 +646,7 @@ if (depositBtn) {
   try {
     async function sendTonTx() {
       return tonConnectUI.sendTransaction({
-        validUntil: Math.floor(Date.now() / 1000) + 1200,
+        validUntil: Math.floor(Date.now() / 1000) + 3600,
         messages: [
           { address: RECEIVER_TON_ADDRESS, amount: (amount * 1e9).toString() }
         ]
@@ -665,7 +665,12 @@ if (depositBtn) {
         } else {
           window.open(fallback, "_blank");
         }
-        result = { boc: "" };
+        if (window.confirm("Վճարումն ուղարկեցի՞ր Wallet-ում՝ նշված հասցեին.")) {
+          result = { boc: "" };
+        } else {
+          depositStatus.textContent = "Չհաստատվեց Wallet-ում. Փորձիր կրկին.";
+          return;
+        }
       }
     }
 
