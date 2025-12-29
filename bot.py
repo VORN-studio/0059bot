@@ -156,6 +156,28 @@ socketio = SocketIO(
     transports=['polling', 'websocket'] 
 )
 
+def ensure_balance_precision():
+    conn = db(); c = conn.cursor()
+    try:
+        c.execute("""
+            SELECT data_type, numeric_scale
+            FROM information_schema.columns
+            WHERE table_name='dom_users' AND column_name='balance_usd'
+        """)
+        row = c.fetchone()
+        scale = int(row[1] or 0) if row else 0
+        if scale < 4:
+            c.execute("ALTER TABLE dom_users ALTER COLUMN balance_usd TYPE NUMERIC(12,6)")
+            conn.commit()
+    except Exception:
+        try: conn.rollback()
+        except Exception: pass
+    finally:
+        release_db(conn)
+
+# run a lightweight precision check/migration at startup
+ensure_balance_precision()
+
 @socketio.on('join_chart')
 def handle_join_chart():
     """Пользователь присоединяется к комнате с диаграммами."""
