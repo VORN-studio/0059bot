@@ -665,7 +665,7 @@ if (depositBtn) {
         } else {
           window.open(fallback, "_blank");
         }
-        throw e2;
+        result = { boc: "" };
       }
     }
 
