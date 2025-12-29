@@ -5309,28 +5309,84 @@ def api_ad_monetag_reward():
         reward = 0.0001
 
     conn = db(); c = conn.cursor()
-    c.execute(
-        """
-        UPDATE dom_users
-        SET balance_usd = COALESCE(balance_usd, 0) + %s
-        WHERE user_id = %s
-        RETURNING COALESCE(balance_usd, 0)
-        """,
-        (reward, uid)
-    )
-    row = c.fetchone()
-    conn.commit(); release_db(conn)
-    new_balance = float(row[0]) if row else 0.0
-    
-    print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward}")
-    
-    return jsonify({
-        "ok": True, 
-        "reward": reward, 
-        "balance": new_balance,
-        "country": country,
-        "is_tier1": (country in tier1)
-    }), 200
+    if reward < 0.001:
+        c.execute("CREATE TABLE IF NOT EXISTS dom_users_micro (user_id BIGINT PRIMARY KEY, pending_micro_usd NUMERIC(12,6) NOT NULL DEFAULT 0)")
+        c.execute(
+            """
+            INSERT INTO dom_users_micro (user_id, pending_micro_usd)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id)
+            DO UPDATE SET pending_micro_usd = dom_users_micro.pending_micro_usd + EXCLUDED.pending_micro_usd
+            RETURNING pending_micro_usd
+            """,
+            (uid, reward)
+        )
+        pending = float((c.fetchone() or [0])[0] or 0.0)
+        units = int(pending / 0.001)
+        if units > 0:
+            credit = float(units) * 0.001
+            c.execute("UPDATE dom_users_micro SET pending_micro_usd = pending_micro_usd - %s WHERE user_id = %s RETURNING pending_micro_usd", (credit, uid))
+            pending = float((c.fetchone() or [0])[0] or 0.0)
+            c.execute(
+                """
+                UPDATE dom_users
+                SET balance_usd = COALESCE(balance_usd, 0) + %s
+                WHERE user_id = %s
+                RETURNING COALESCE(balance_usd, 0)
+                """,
+                (credit, uid)
+            )
+            row = c.fetchone()
+            conn.commit(); release_db(conn)
+            new_balance = float(row[0]) if row else 0.0
+            print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward} credited={credit} pending={pending}")
+            return jsonify({
+                "ok": True,
+                "reward": reward,
+                "credited_usd": credit,
+                "pending_micro": pending,
+                "balance": new_balance,
+                "country": country,
+                "is_tier1": (country in tier1)
+            }), 200
+        else:
+            c.execute("SELECT COALESCE(balance_usd, 0) FROM dom_users WHERE user_id = %s", (uid,))
+            row = c.fetchone()
+            conn.commit(); release_db(conn)
+            new_balance = float((row or [0])[0] or 0.0)
+            print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward} credited=0 pending={pending}")
+            return jsonify({
+                "ok": True,
+                "reward": reward,
+                "credited_usd": 0.0,
+                "pending_micro": pending,
+                "balance": new_balance,
+                "country": country,
+                "is_tier1": (country in tier1)
+            }), 200
+    else:
+        c.execute(
+            """
+            UPDATE dom_users
+            SET balance_usd = COALESCE(balance_usd, 0) + %s
+            WHERE user_id = %s
+            RETURNING COALESCE(balance_usd, 0)
+            """,
+            (reward, uid)
+        )
+        row = c.fetchone()
+        conn.commit(); release_db(conn)
+        new_balance = float(row[0]) if row else 0.0
+        print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward}")
+        return jsonify({
+            "ok": True,
+            "reward": reward,
+            "credited_usd": reward,
+            "pending_micro": 0.0,
+            "balance": new_balance,
+            "country": country,
+            "is_tier1": (country in tier1)
+        }), 200
 
 @app_web.route("/api/mining/plans", methods=["GET"])
 def api_mining_plans():

@@ -185,7 +185,14 @@ async function openMonetag() {
                 const js = await rr.json();
                 if (js && js.ok) {
                     try { loadBalance(); } catch(_l){}
-                    showRewardToast(Number(js.reward||0), js.country || "-");
+                    var credited = Number(js.credited_usd||0);
+                    var pending = Number(js.pending_micro||0);
+                    var cc = js.country || "-";
+                    if (credited > 0) {
+                        showRewardToast(credited, cc);
+                    } else {
+                        showRewardAccum(pending, cc);
+                    }
                 }
             } catch(_j){}
         } catch(_r) {}
@@ -207,6 +214,19 @@ function showRewardToast(amount, country) {
   var c = document.getElementById('rt-country');
   var v = Number(amount||0) < 0.001 ? Number(amount||0).toFixed(6) : Number(amount||0).toFixed(3);
   if (a) a.textContent = '+'+v+' $';
+  if (c) c.textContent = '('+(country||'-')+')';
+  clearTimeout(t.__to);
+  t.style.display = 'block';
+  t.classList.add('show');
+  t.__to = setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.style.display='none'; }, 220); }, 2400);
+}
+function showRewardAccum(pending, country) {
+  var t = document.getElementById('reward-toast');
+  if (!t) return;
+  var a = document.getElementById('rt-amount');
+  var c = document.getElementById('rt-country');
+  var v = Number(pending||0).toFixed(6);
+  if (a) a.textContent = v+' / 0.001 $';
   if (c) c.textContent = '('+(country||'-')+')';
   clearTimeout(t.__to);
   t.style.display = 'block';
