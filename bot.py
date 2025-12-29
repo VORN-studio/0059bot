@@ -4700,22 +4700,7 @@ def api_deposit():
     if not user_id or amount <= 0:
         return jsonify({"ok": False, "error": "bad_params"}), 400
 
-    # Check if user already has a pending withdraw
-    conn = db()
-    c = conn.cursor()
-    c.execute("""
-        SELECT COUNT(*) FROM dom_withdrawals 
-        WHERE user_id = %s AND status = 'pending'
-    """, (user_id,))
-    pending_count = c.fetchone()[0]
-    release_db(conn)
-    
-    if pending_count > 0:
-        return jsonify({
-            "ok": False,
-            "error": "pending_withdraw_exists",
-            "message": "У вас уже есть ожидающий подтверждения запрос на вывод средств. Пожалуйста, дождитесь одобрения предыдущего запроса."
-        }), 200
+    # Deposit is allowed regardless of pending withdraws
 
     stats = get_user_stats(user_id)
     if not stats:

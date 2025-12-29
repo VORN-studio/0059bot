@@ -643,26 +643,48 @@ if (depositBtn) {
 
     const RECEIVER_TON_ADDRESS = "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW"; 
 
-    try {
-      const result = await tonConnectUI.sendTransaction({
-        validUntil: Math.floor(Date.now() / 1000) + 300, 
-        messages: [
-          {
-            address: RECEIVER_TON_ADDRESS,
-            amount: (amount * 1e9).toString(), 
-          },
-        ],
-      });
+  try {
+    const result = await tonConnectUI.sendTransaction({
+      validUntil: Math.floor(Date.now() / 1000) + 300, 
+      messages: [
+        {
+          address: RECEIVER_TON_ADDRESS,
+          amount: (amount * 1e9).toString(), 
+        },
+      ],
+    });
 
-      console.log("TON Transaction:", result);
+    console.log("TON Transaction:", result);
 
-      depositStatus.textContent =
-        "Դեպոզիտը ուղարկված է։ Tx hash: " + result.boc.slice(0, 10) + "...";
+    depositStatus.textContent =
+      "Դեպոզիտը ուղարկված է։ Tx hash: " + result.boc.slice(0, 10) + "...";
 
-    } catch (err) {
-      console.log("❌ TON popup error:", err);
-      depositStatus.textContent = "Օգտատերը չեղարկեց կամ սխալ առաջացավ։";
+    const r = await fetch(`${API_BASE}/api/deposit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: CURRENT_USER_ID, amount })
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      depositStatus.textContent = "❌ " + (d.message || d.error || "Սխալ առաջացավ");
+    } else {
+      depositStatus.textContent = "✅ " + (d.message || "Դեպոզիտը գրանցվեց");
+      if (d.user) {
+        balance = d.user.balance_usd;
+        updateBalanceDisplay();
+        const rt = document.getElementById("ref-total");
+        const ra = document.getElementById("ref-active");
+        const rd = document.getElementById("ref-deposits");
+        if (rt) rt.textContent = d.user.ref_count;
+        if (ra) ra.textContent = d.user.active_refs;
+        if (rd) rd.textContent = d.user.team_deposit_usd.toFixed(2) + " $";
+      }
     }
+
+  } catch (err) {
+    console.log("❌ TON popup error:", err);
+    depositStatus.textContent = "Օգտատերը չեղարկեց կամ սխալ առաջացավ։";
+  }
   });
 }
 

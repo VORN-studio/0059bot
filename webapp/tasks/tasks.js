@@ -62,7 +62,7 @@ async function loadBalance() {
             const bal = Number(data.user.balance_usd || 0).toFixed(3) + " $";
             const pend = Number(data.user.pending_micro_usd || 0);
             if (pend && pend > 0) {
-                el.textContent = bal + "  (" + pend.toFixed(6) + " pending)";
+                el.textContent = bal + "  (" + (0.0001).toFixed(6) + " pending)";
             } else {
                 el.textContent = bal;
             }
