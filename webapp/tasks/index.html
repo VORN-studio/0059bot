@@ -177,7 +177,15 @@ async function openMonetag() {
             });
             try {
                 const js = await rr.json();
-                if (js && js.ok) { try { loadBalance(); } catch(_l){} }
+                if (js && js.ok) {
+                    try { loadBalance(); } catch(_l){}
+                    var msg = `+${Number(js.reward||0).toFixed(6)} $  (${js.country||"-"})`;
+                    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.showPopup === 'function') {
+                        try { window.Telegram.WebApp.showPopup({ message: `✅ Վճարում: ${msg}` }); } catch(_p){}
+                    } else {
+                        try { alert(`Վճարում: ${msg}`); } catch(_a){}
+                    }
+                }
             } catch(_j){}
         } catch(_r) {}
         const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
