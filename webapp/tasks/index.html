@@ -165,11 +165,10 @@ async function openMonetag() {
         const d = await r.json();
         if (!d.ok || !d.url) { alert("Monetag not configured"); return; }
         const direct = d.url;
-        const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=&direct=${encodeURIComponent(direct)}&uid=${encodeURIComponent(uid)}&task_id=0&attempt_id=&reward=0`;
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
-            window.Telegram.WebApp.openLink(safeUrl);
+            window.Telegram.WebApp.openLink(direct);
         } else {
-            window.location.href = safeUrl;
+            window.open(direct, "_blank");
         }
     } catch(e) { alert("Network error"); }
 }
