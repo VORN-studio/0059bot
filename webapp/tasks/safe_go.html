@@ -395,12 +395,13 @@
       }
 
       function markComplete(manual){
-        if (!uid || !tid || window.__completed) return;
+        var tidNum = parseInt(tid || '0');
+        if (!uid || !tidNum || window.__completed) return;
         if (shortU) { return; }
         sendLog('complete_attempt', true, manual ? 'manual' : 'auto');
         var payload = {
           user_id: parseInt(uid||'0')||0,
-          task_id: parseInt(tid||'0')||0,
+          task_id: tidNum,
           attempt_id: aid || '',
           short_url: shortU || '',
           direct_url: directU || ''
