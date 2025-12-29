@@ -5254,15 +5254,17 @@ def api_tasks(user_id):
 def api_monetag_link():
     uid = request.args.get("uid", type=int)
     task_id = request.args.get("task_id", type=int) or 0
+    ip = _client_ip()
+    cc = FORCED_GEO or (_ip_country(ip) or "")
     
-    # 🔥 FORCE US GEO: Always use US SmartLink regardless of user IP
-    # This assumes MONETAG_SMARTLINK_US is set in env vars or defaults
-    url = MONETAG_SMARTLINKS.get("US")
+    # Select SmartLink based on Country
+    geo_url = None
+    if cc and MONETAG_SMARTLINKS.get(cc):
+        geo_url = MONETAG_SMARTLINKS.get(cc)
     
-    # If no specific US link, fallback to generic
-    if not url:
-        url = MONETAG_SMARTLINK
-
+    # Fallback to generic or US if available, but better to match user geo
+    url = (geo_url or MONETAG_SMARTLINK) or ""
+    
     if not url:
         return jsonify({"ok": False, "error": "not_configured"}), 200
         
@@ -5285,10 +5287,26 @@ def api_ad_monetag_reward():
     if uid <= 0:
         return jsonify({"ok": False, "error": "bad_uid"}), 200
     
-    # 🔥 FORCE US REWARD
-    # Since we are forcing US SmartLink, we pay US rates
-    # Approx US CPM $10 -> 50% = $5 CPM -> $0.005 per click
-    reward = 0.005 
+    # 🌍 DYNAMIC REWARD SYSTEM BASED ON IP
+    ip = _client_ip()
+    country = _ip_country(ip) or "UNKNOWN"
+    
+    # Tier System (Approx 50% of CPM)
+    # Tier 1: US, UK, CA, AU, DE... (~$0.005)
+    # Tier 2: FR, IT, ES, RU... (~$0.002)
+    # Tier 3: Others (AM, IN...) (~$0.0005)
+    
+    tier1 = ["US", "GB", "CA", "AU", "DE", "CH", "NO", "SE", "DK", "NZ"]
+    tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
+    
+    if country in tier1:
+        reward = 0.005
+    elif country in tier2:
+        reward = 0.002
+    else:
+        # CPM for Armenia/others is very low (~$0.20), so per click is ~$0.0002
+        # We give 50% = $0.0001
+        reward = 0.0001
 
     conn = db(); c = conn.cursor()
     c.execute(
@@ -5304,9 +5322,15 @@ def api_ad_monetag_reward():
     conn.commit(); release_db(conn)
     new_balance = float(row[0]) if row else 0.0
     
-    print(f"💰 Monetag Reward (Forced US): uid={uid} reward={reward}")
+    print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward}")
     
-    return jsonify({"ok": True, "reward": reward, "balance": new_balance}), 200
+    return jsonify({
+        "ok": True, 
+        "reward": reward, 
+        "balance": new_balance,
+        "country": country,
+        "is_tier1": (country in tier1)
+    }), 200
 
 @app_web.route("/api/mining/plans", methods=["GET"])
 def api_mining_plans():
