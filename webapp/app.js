@@ -47,7 +47,7 @@ if (isMobileOrLowEnd()) {
 }
 
 const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-  manifestUrl: "https://vorn-studio.github.io/0059bot/webapp/tonconnect-manifest.json",
+  manifestUrl: `${window.location.origin}/webapp/tonconnect-manifest.json`,
   buttonRootId: "ton-connect",
 });
 
@@ -644,15 +644,21 @@ if (depositBtn) {
     const RECEIVER_TON_ADDRESS = "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW"; 
 
   try {
-    const result = await tonConnectUI.sendTransaction({
-      validUntil: Math.floor(Date.now() / 1000) + 300, 
-      messages: [
-        {
-          address: RECEIVER_TON_ADDRESS,
-          amount: (amount * 1e9).toString(), 
-        },
-      ],
-    });
+    async function sendTonTx() {
+      return tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 1200,
+        messages: [
+          { address: RECEIVER_TON_ADDRESS, amount: (amount * 1e9).toString() }
+        ]
+      });
+    }
+
+    let result;
+    try {
+      result = await sendTonTx();
+    } catch (e1) {
+      try { result = await sendTonTx(); } catch (e2) { throw e2; }
+    }
 
     console.log("TON Transaction:", result);
 
