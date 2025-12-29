@@ -166,6 +166,13 @@ async function openMonetag() {
         if (typeof show_10289760 === 'function') {
             try { await show_10289760(); } catch(_e){}
         }
+        try {
+            await fetch('/api/ad/monetag_reward', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: Number(uid) })
+            });
+        } catch(_r) {}
         const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
         const d = await r.json();
         if (!d.ok || !d.url) { alert("Monetag not configured"); return; }

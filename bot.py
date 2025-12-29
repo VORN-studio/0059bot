@@ -5254,14 +5254,18 @@ def api_tasks(user_id):
 def api_monetag_link():
     uid = request.args.get("uid", type=int)
     task_id = request.args.get("task_id", type=int) or 0
-    ip = _client_ip()
-    cc = FORCED_GEO or (_ip_country(ip) or "")
-    geo_url = None
-    if cc and MONETAG_SMARTLINKS.get(cc):
-        geo_url = MONETAG_SMARTLINKS.get(cc)
-    url = (geo_url or MONETAG_SMARTLINK) or ""
+    
+    # 🔥 FORCE US GEO: Always use US SmartLink regardless of user IP
+    # This assumes MONETAG_SMARTLINK_US is set in env vars or defaults
+    url = MONETAG_SMARTLINKS.get("US")
+    
+    # If no specific US link, fallback to generic
+    if not url:
+        url = MONETAG_SMARTLINK
+
     if not url:
         return jsonify({"ok": False, "error": "not_configured"}), 200
+        
     try:
         import urllib.parse
         parsed = urllib.parse.urlparse(url)
@@ -5273,6 +5277,36 @@ def api_monetag_link():
         return jsonify({"ok": True, "url": final})
     except Exception:
         return jsonify({"ok": False, "error": "bad_url"}), 200
+
+@app_web.route("/api/ad/monetag_reward", methods=["POST"])
+def api_ad_monetag_reward():
+    data = request.get_json(force=True, silent=True) or {}
+    uid = int(data.get("uid") or 0)
+    if uid <= 0:
+        return jsonify({"ok": False, "error": "bad_uid"}), 200
+    
+    # 🔥 FORCE US REWARD
+    # Since we are forcing US SmartLink, we pay US rates
+    # Approx US CPM $10 -> 50% = $5 CPM -> $0.005 per click
+    reward = 0.005 
+
+    conn = db(); c = conn.cursor()
+    c.execute(
+        """
+        UPDATE dom_users
+        SET balance_usd = COALESCE(balance_usd, 0) + %s
+        WHERE user_id = %s
+        RETURNING COALESCE(balance_usd, 0)
+        """,
+        (reward, uid)
+    )
+    row = c.fetchone()
+    conn.commit(); release_db(conn)
+    new_balance = float(row[0]) if row else 0.0
+    
+    print(f"💰 Monetag Reward (Forced US): uid={uid} reward={reward}")
+    
+    return jsonify({"ok": True, "reward": reward, "balance": new_balance}), 200
 
 @app_web.route("/api/mining/plans", methods=["GET"])
 def api_mining_plans():
