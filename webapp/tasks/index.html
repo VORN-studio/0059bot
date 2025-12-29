@@ -110,6 +110,13 @@
 <div id="screen-special" class="screen">
     <h3>⭐ Special Tasks</h3>
     <div class="task-card">High reward tasks</div>
+    <div class="task-card">
+        <div style="margin-bottom:10px;">
+            <strong>Monetag SmartLink Offers</strong><br>
+            Monetize safe offers; no adult/gambling.
+        </div>
+        <button onclick="openMonetag()" class="task-btn">Open ➜</button>
+    </div>
 </div>
 
 <div id="screen-surveys" class="screen">
@@ -148,6 +155,23 @@ function openCpxResearch() {
     } else {
         window.open(url, "_blank");
     }
+}
+
+async function openMonetag() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (!uid) { alert("User ID missing!"); return; }
+    try {
+        const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
+        const d = await r.json();
+        if (!d.ok || !d.url) { alert("Monetag not configured"); return; }
+        const direct = d.url;
+        const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=&direct=${encodeURIComponent(direct)}&uid=${encodeURIComponent(uid)}&task_id=0&attempt_id=&reward=0`;
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+            window.Telegram.WebApp.openLink(safeUrl);
+        } else {
+            window.location.href = safeUrl;
+        }
+    } catch(e) { alert("Network error"); }
 }
 </script>
 

@@ -110,6 +110,7 @@ GAMES_DIR = os.path.join(WEBAPP_DIR, "games")
 BOT_READY = False
 ONLINE_USERS = {}
 REMATCH_REQUESTS = {}
+MONETAG_SMARTLINK = os.getenv("MONETAG_SMARTLINK", "").strip()
 
 app_web = Flask(__name__, static_folder="webapp/static", static_url_path="/static")
 CORS(app_web)
@@ -5216,6 +5217,25 @@ def api_tasks(user_id):
         })
 
     return jsonify({"ok": True, "tasks": tasks})
+
+@app_web.route("/api/monetag/link")
+def api_monetag_link():
+    uid = request.args.get("uid", type=int)
+    task_id = request.args.get("task_id", type=int) or 0
+    url = MONETAG_SMARTLINK or ""
+    if not url:
+        return jsonify({"ok": False, "error": "not_configured"}), 200
+    try:
+        import urllib.parse
+        parsed = urllib.parse.urlparse(url)
+        q = urllib.parse.parse_qs(parsed.query)
+        q.setdefault("s1", [str(uid or 0)])
+        q.setdefault("s2", [str(task_id or 0)])
+        new_query = urllib.parse.urlencode({k: v[0] for k, v in q.items()})
+        final = urllib.parse.urlunparse((parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment))
+        return jsonify({"ok": True, "url": final})
+    except Exception:
+        return jsonify({"ok": False, "error": "bad_url"}), 200
 
 @app_web.route("/api/mining/plans", methods=["GET"])
 def api_mining_plans():
