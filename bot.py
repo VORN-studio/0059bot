@@ -111,6 +111,8 @@ BOT_READY = False
 ONLINE_USERS = {}
 REMATCH_REQUESTS = {}
 MONETAG_SMARTLINK = os.getenv("MONETAG_SMARTLINK", "").strip()
+if not MONETAG_SMARTLINK:
+    MONETAG_SMARTLINK = "https://otieu.com/4/10388580"
 
 app_web = Flask(__name__, static_folder="webapp/static", static_url_path="/static")
 CORS(app_web)
