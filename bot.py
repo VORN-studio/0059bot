@@ -4317,6 +4317,13 @@ def get_user_stats(user_id: int):
     target_total = 100000.0
     intellect_score = round(min(10.0, net_for_progress / (target_total / 10.0)), 1)
 
+    # Pending micro-rewards (for sub-cent accruals)
+    try:
+        c.execute("SELECT COALESCE(pending_micro_usd,0) FROM dom_users_micro WHERE user_id=%s", (user_id,))
+        pending_micro = float((c.fetchone() or [0])[0] or 0.0)
+    except Exception:
+        pending_micro = 0.0
+
     release_db(conn)
 
     return {
@@ -4325,6 +4332,7 @@ def get_user_stats(user_id: int):
         "avatar": avatar,
         "avatar_data": avatar_data,
         "balance_usd": float(balance_usd),
+        "pending_micro_usd": float(pending_micro),
         "ton_balance": float(ton_balance),
         "total_deposit_usd": float(total_dep),
         "total_withdraw_usd": float(total_wd),

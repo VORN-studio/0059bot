@@ -59,7 +59,13 @@ async function loadBalance() {
         const el = document.getElementById("tasks-balance");
         if (!el) return;
         if (data.ok && data.user) {
-            el.textContent = Number(data.user.balance_usd || 0).toFixed(3) + " $";
+            const bal = Number(data.user.balance_usd || 0).toFixed(3) + " $";
+            const pend = Number(data.user.pending_micro_usd || 0);
+            if (pend && pend > 0) {
+                el.textContent = bal + "  (" + pend.toFixed(6) + " pending)";
+            } else {
+                el.textContent = bal;
+            }
         } else {
             el.textContent = "—";
         }
