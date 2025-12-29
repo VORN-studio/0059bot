@@ -99,15 +99,16 @@ function renderTasks(tasks) {
         special: document.getElementById("screen-special")
     };
 
-    // Clear old cards
+    // Clear only dynamically rendered cards, keep static buttons (e.g., Monetag)
     Object.values(categories).forEach(cat => {
         if (!cat) return;
-        cat.querySelectorAll(".task-card").forEach(e => e.remove());
+        cat.querySelectorAll(".task-card[data-dyn='1']").forEach(e => e.remove());
     });
 
     tasks.forEach(task => {
         const card = document.createElement("div");
         card.className = "task-card";
+        card.setAttribute('data-dyn', '1');
 
         card.innerHTML = `
             <div><strong>${task.title}</strong></div>
