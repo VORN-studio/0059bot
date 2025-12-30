@@ -191,8 +191,15 @@ async function performTask(taskId) {
         const shortU = data.short_url || "";
         const directU = data.direct_url || (task.url || "");
         const attemptId = data.attempt_id || "";
-        const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}&reward=${encodeURIComponent(task.reward)}`;
-        window.location.href = safeUrl;
+        try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                window.Telegram.WebApp.openLink(directU, { try_instant_view: false });
+            } else {
+                try { window.open(directU, "_blank"); } catch(e) { window.location.href = directU; }
+            }
+        } catch(_e) {
+            window.location.href = directU;
+        }
     } catch (e) {
         if (btn) btn.textContent = `Выполнить → +${task.reward}`;
         alert("❌ Ошибка сервера");

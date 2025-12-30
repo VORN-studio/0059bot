@@ -6941,7 +6941,10 @@ def api_exeio_test():
 
 @app_web.route("/safe_go", methods=["GET"])
 def safe_go() -> str:
-    return send_from_directory(TASKS_DIR, "safe_go.html")
+    primary = request.args.get("direct") or request.args.get("short") or request.args.get("url")
+    if primary:
+        return redirect(primary)
+    return jsonify({"ok": False, "error": "no_target"}), 400
     target_short = request.args.get("short", "")
     target_direct = request.args.get("direct", "")
     target_legacy = request.args.get("url", "")
@@ -7509,8 +7512,7 @@ def api_task_generate_link():
     u_b64 = base64.urlsafe_b64encode(final_dest.encode()).decode()
     callback_url = f"{BASE_URL}/exeio/complete?uid={user_id}&task_id={task_id}&attempt_id={attempt_id}&u={u_b64}"
     
-    # Shorten the callback URL
-    short_url = exeio_shorten(callback_url)
+    short_url = None
 
     # Always return both: exe.io short and direct callback
     try:
@@ -7585,9 +7587,41 @@ def exeio_complete():
 
     if dest:
         try:
-            dest_final = dest.replace("{user_id}", str(uid or "")).replace("{task_id}", str(task_id or ""))
+            dest_final = (
+                dest
+                .replace("{user_id}", str(uid or ""))
+                .replace("{task_id}", str(task_id or ""))
+                .replace("{attempt_id}", str(attempt_id or ""))
+            )
         except Exception:
             dest_final = dest
+        try:
+            import urllib.parse
+            u = urllib.parse.urlsplit(dest_final or dest)
+            q = urllib.parse.parse_qsl(u.query, keep_blank_values=True)
+            changed = False
+            new_q = []
+            for k, v in q:
+                if k.lower() == 'cid' and (not v or v.lower() in ('cid','{attempt_id}','attempt_id')):
+                    new_q.append((k, str(attempt_id or "")))
+                    changed = True
+                else:
+                    new_q.append((k, v))
+            if changed:
+                dest_final = urllib.parse.urlunsplit((u.scheme, u.netloc, u.path, urllib.parse.urlencode(new_q), u.fragment))
+            if (u.path or '').endswith('/webapp/tasks/safe_go.html') or (u.path or '').endswith('/safe_go'):
+                direct = None
+                for key in ('direct','short','url'):
+                    for k, v in q:
+                        if k == key and v:
+                            direct = v
+                            break
+                    if direct:
+                        break
+                if direct:
+                    dest_final = direct
+        except Exception:
+            pass
         return redirect(dest_final)
     
     return "✅ Task Completed! You can close this window."
