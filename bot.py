@@ -6166,8 +6166,14 @@ async def reset_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         conn = db(); c = conn.cursor()
 
-        # Zero user balances
-        c.execute("UPDATE dom_users SET balance_usd=0, pending_micro_usd=COALESCE(pending_micro_usd,0)*0, total_deposit_usd=0, total_withdraw_usd=0")
+        # Zero user balances (columns may vary between deployments)
+        c.execute("UPDATE dom_users SET balance_usd=0, total_deposit_usd=0, total_withdraw_usd=0")
+        try:
+            c.execute("SELECT 1 FROM information_schema.columns WHERE table_name='dom_users' AND column_name='pending_micro_usd'")
+            if c.fetchone():
+                c.execute("UPDATE dom_users SET pending_micro_usd=0")
+        except Exception:
+            pass
 
         # Burn account reset
         c.execute("UPDATE dom_burn_account SET total_burned=0, last_updated=%s WHERE id=1", (int(time.time()),))
