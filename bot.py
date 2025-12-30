@@ -5027,6 +5027,73 @@ def api_task_reward():
         "new_balance": new_balance
     })
 
+@app_web.route("/postback/lospollos", methods=["GET", "POST"])
+def lospollos_postback():
+    """
+    Endpoint for Los Pollos Global Postback.
+    URL to set in Los Pollos: https://domino-play.online/postback/lospollos?user_id={u}&amount={sum}&tx={clickid}
+    """
+    try:
+        # Los Pollos sends data via query parameters
+        user_id_raw = request.args.get("user_id") or request.args.get("u")
+        amount_raw = request.args.get("amount") or request.args.get("sum") or "0"
+        tx_id = request.args.get("tx") or request.args.get("clickid") or f"lp_{int(time.time())}_{random.randint(100,999)}"
+        
+        print(f"🔔 Los Pollos Postback: user={user_id_raw} amount={amount_raw} tx={tx_id}")
+
+        if not user_id_raw:
+            return "MISSING_USER_ID", 400
+            
+        try:
+            user_id = int(user_id_raw)
+        except:
+            return "BAD_USER_ID", 400
+            
+        amount = float(amount_raw)
+        
+        # User gets 50%
+        user_reward = amount * 0.5
+        
+        if amount <= 0:
+            return "OK_NO_REWARD", 200
+
+        conn = db()
+        c = conn.cursor()
+
+        # Check for duplicate transaction
+        c.execute("SELECT 1 FROM conversions WHERE conversion_id=%s", (tx_id,))
+        if c.fetchone():
+            release_db(conn)
+            return "DUPLICATE", 200
+
+        # Credit the user (50%)
+        c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id = %s", (user_reward, user_id))
+        
+        # Log conversion (logging FULL amount as payout reference)
+        now = int(time.time())
+        c.execute("""
+            INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
+            VALUES (%s, %s, 'LOSPOLLOS', %s, 'credited', %s)
+        """, (tx_id, user_id, amount, now))
+        
+        conn.commit()
+        release_db(conn)
+        
+        print(f"✅ Los Pollos Credited: uid={user_id} full=${amount} user_get=${user_reward}")
+        
+        # Notify user via socket if online (optional)
+        try:
+            socketio.emit('balance_update', {'user_id': user_id, 'new_balance': user_reward}, room=f"user_{user_id}")
+        except:
+            pass
+
+        return "OK", 200
+
+    except Exception as e:
+        print(f"❌ Los Pollos Error: {e}")
+        return "ERROR", 500
+
+
 @app_web.route("/timewall/postback", methods=["GET", "POST"])
 def timewall_postback():
     print("🔔 TimeWall POSTBACK:", dict(request.args))
@@ -7494,6 +7561,11 @@ def api_task_generate_link():
     
     # We use the stored URL as the final destination
     final_dest = row[0]
+
+    # Auto-append user_id for tracking (Los Pollos etc)
+    if final_dest and "http" in final_dest:
+         sep = "&" if "?" in final_dest else "?"
+         final_dest += f"{sep}s1={user_id}&user_id={user_id}"
 
     # Prevent double-shortening: tasks must store FINAL URL, not exe.io short links
     try:
