@@ -64,7 +64,7 @@ async function loadBalance() {
             if (pend && pend > 0) {
                 el.innerHTML = bal +
                   " <span style=\"margin-left:8px;color:#9bd6ff;font-size:12px;\">(" +
-                  (0.0001).toFixed(6) + " սպասում)</span>";
+                  (0.0001).toFixed(6) + " В ожидании)</span>";
             } else {
                 el.textContent = bal;
             }
