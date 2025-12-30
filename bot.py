@@ -6224,6 +6224,45 @@ async def reset_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             pass
         await update.message.reply_text(f"❌ Ошибка при RESET: {e}")
 
+async def audience_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+
+    now = int(time.time())
+    day_ago = now - 86400
+    week_ago = now - 7*86400
+
+    conn = db(); c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM dom_users")
+    total_users = int(c.fetchone()[0] or 0)
+
+    c.execute("SELECT COUNT(*) FROM dom_global_chat_online WHERE last_ping >= %s", (now - 15,))
+    online_now = int(c.fetchone()[0] or 0)
+
+    try:
+        c.execute("SELECT COUNT(DISTINCT user_id) FROM dom_click_events WHERE created_at >= %s", (day_ago,))
+        active_24h = int(c.fetchone()[0] or 0)
+    except Exception:
+        active_24h = 0
+
+    try:
+        c.execute("SELECT COUNT(DISTINCT user_id) FROM dom_click_events WHERE created_at >= %s", (week_ago,))
+        active_7d = int(c.fetchone()[0] or 0)
+    except Exception:
+        active_7d = 0
+
+    release_db(conn)
+
+    msg = (
+        "📈 Audience\n\n"
+        f"Всего пользователей: {total_users}\n"
+        f"Онлайн сейчас: {online_now}\n"
+        f"Активны за 24ч: {active_24h}\n"
+        f"Активны за 7д: {active_7d}"
+    )
+    await update.message.reply_text(msg)
+
 async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin command: Generate initial 24h DOMIT price data"""
     user_id = update.effective_user.id
@@ -6651,6 +6690,7 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("task_shorten", task_shorten))
             application.add_handler(CommandHandler("burn_stats", burn_stats))
             application.add_handler(CommandHandler("burn_reward", burn_reward))
+            application.add_handler(CommandHandler("audience", audience_cmd))
             application.add_handler(CommandHandler("reset", reset_cmd))
             application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
             application.add_handler(CommandHandler("init_domit_data", init_domit_data))
