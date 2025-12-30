@@ -191,6 +191,14 @@ async function performTask(taskId) {
         const shortU = data.short_url || "";
         const directU = data.direct_url || (task.url || "");
         const attemptId = data.attempt_id || "";
+        var msg = "Ուշադիր.\n\n1) Բացված էջում սպասեք թայմերի ավարտին։\n2) Սեղմեք ‘Get Link’.\n3) Սեղմեք ‘Open/Открыть’.\n4) Եթե էջը չի բեռնվում, փորձեք Firefox/Brave/Opera կամ բացեք արտաքինով։";
+        try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.showPopup === 'function') {
+                window.Telegram.WebApp.showPopup({ message: msg });
+            } else {
+                console.log("INFO:", msg);
+            }
+        } catch(_pm) {}
         try {
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
                 window.Telegram.WebApp.openLink(directU, { try_instant_view: false });
@@ -200,6 +208,7 @@ async function performTask(taskId) {
         } catch(_e) {
             window.location.href = directU;
         }
+        try { openTaskBrowser(directU); } catch(_m) {}
     } catch (e) {
         if (btn) btn.textContent = `Выполнить → +${task.reward}`;
         alert("❌ Ошибка сервера");
