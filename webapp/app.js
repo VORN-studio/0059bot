@@ -472,7 +472,7 @@ async function loadUserFromBackend() {
 
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";
-    $("user-balance").textContent = U.balance_usd.toFixed(3) + " $";
+    $("user-balance").textContent = U.balance_usd.toFixed(3) + " DOMIT";
     balance = U.balance_usd;
     if (document.getElementById("ton-current")) {
       document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
@@ -483,7 +483,7 @@ async function loadUserFromBackend() {
       console.log("✅ ref-total обновлено:", U.ref_count);
     }
     if ($("ref-active")) $("ref-active").textContent = U.active_refs;
-    if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " $";
+    if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " DOMIT";
 
     const botUsername = "doominobot";
     $("ref-link").value =
@@ -694,7 +694,7 @@ if (depositBtn) {
         const rd = document.getElementById("ref-deposits");
         if (rt) rt.textContent = d.user.ref_count;
         if (ra) ra.textContent = d.user.active_refs;
-        if (rd) rd.textContent = d.user.team_deposit_usd.toFixed(2) + " $";
+        if (rd) rd.textContent = d.user.team_deposit_usd.toFixed(2) + " DOMIT";
       }
     }
 
@@ -765,7 +765,7 @@ if (withdrawBtn) {
           updateBalanceDisplay();
           $("ref-total").textContent = data.user.ref_count;
           $("ref-active").textContent = data.user.active_refs;
-          $("ref-deposits").textContent = data.user.team_deposit_usd.toFixed(2) + " $";
+          $("ref-deposits").textContent = data.user.team_deposit_usd.toFixed(2) + " DOMIT";
         }
       }
     })

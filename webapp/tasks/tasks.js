@@ -62,7 +62,9 @@ async function loadBalance() {
             const bal = Number(data.user.balance_usd || 0).toFixed(3) + " DOMIT";
             const pend = Number(data.user.pending_micro_usd || 0);
             if (pend && pend > 0) {
-                el.textContent = bal + "  (" + (0.0001).toFixed(6) + " pending)";
+                el.innerHTML = bal +
+                  " <span style=\"margin-left:8px;color:#9bd6ff;font-size:12px;\">(" +
+                  (0.0001).toFixed(6) + " սպասում)</span>";
             } else {
                 el.textContent = bal;
             }
