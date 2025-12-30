@@ -1559,13 +1559,13 @@ def api_duels_join_table():
 
         if not table_row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղանը չի գտնվել"}), 400
+            return jsonify({"success": False, "message": "Таблица не найдена"}), 400
 
         creator_id, bet, status, creator_username, game_type, game_state = table_row
 
         if status != 'waiting':
             release_db(conn)
-            return jsonify({"success": False, "message": "Սեղանն արդեն զբաղված է"}), 400
+            return jsonify({"success": False, "message": "Столик уже занят."}), 400
 
         if int(creator_id) == int(user_id):
             release_db(conn)
@@ -1724,7 +1724,7 @@ def api_duels_make_move():
             turn = state.get('turn', 'w')
             if turn != my_color:
                 release_db(conn)
-                return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+                return jsonify({"success": False, "message": "Ваша очередь переезжать ещё не настала."}), 400
 
             last_move = move
             result = data.get('result')
@@ -1834,16 +1834,16 @@ def api_duels_make_move():
 
         if turn != player_symbol:
             release_db(conn)
-            return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+            return jsonify({"success": False, "message": "Ваша очередь переезжать ещё не настала."}), 400
 
         index = move.get('index')
         if index is None or index < 0 or index > 8:
             release_db(conn)
-            return jsonify({"success": False, "message": "Սխալ քայլ"}), 400
+            return jsonify({"success": False, "message": "Неправильный ход"}), 400
 
         if board[index] != '':
             release_db(conn)
-            return jsonify({"success": False, "message": "Այս վանդակը զբաղված է"}), 400
+            return jsonify({"success": False, "message": "Этот блок занят."}), 400
 
         board[index] = player_symbol
 
@@ -2184,13 +2184,13 @@ def api_duels_forfeit():
 
         if not row:
             release_db(conn)
-            return jsonify({"success": False, "message": "Տախտակ չի գտնվել"}), 400
+            return jsonify({"success": False, "message": "Плата не найдена."}), 400
 
         game_state, creator_id, opponent_id, status, bet, game_type = row
 
         if status != 'playing':
             release_db(conn)
-            return jsonify({"success": False, "message": "Խաղը չի գտնվում ակտիվ փուլում"}), 400
+            return jsonify({"success": False, "message": "Игра не находится в активной фазе."}), 400
 
         import json
         state = json.loads(game_state) if isinstance(game_state, str) else (game_state or {})
@@ -2200,14 +2200,14 @@ def api_duels_forfeit():
             turn = state.get('turn', 'w')
             if turn != my_color:
                 release_db(conn)
-                return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+                return jsonify({"success": False, "message": "Ваша очередь переезжать ещё не настала."}), 400
             winner_id = opponent_id if int(user_id) == int(creator_id) else creator_id
         else:
             turn = state.get('turn', 'X')
             player_symbol = 'X' if int(user_id) == int(creator_id) else 'O'
             if turn != player_symbol:
                 release_db(conn)
-                return jsonify({"success": False, "message": "Դեռ քո քայլի հերթը չէ"}), 400
+                return jsonify({"success": False, "message": "Ваша очередь переезжать ещё не настала."}), 400
             winner_id = opponent_id if int(user_id) == int(creator_id) else creator_id
         now = int(time.time())
 
@@ -4723,7 +4723,7 @@ def api_deposit():
 
     return jsonify({
         "ok": True,
-        "message": "Դեպոզիտը գրանցվեց ✅ DOMIT-ը ավելացված է քո հաշվին",
+        "message": "Депозит зарегистрирован ✅ DOMIT добавлен на ваш счет",
         "user": new_stats,
         "ton_rate": ton_rate,
         "credited_domit": amount_usd
@@ -6680,8 +6680,8 @@ async def add_task_with_category(update: Update, context: ContextTypes.DEFAULT_T
 
     if parsed.netloc and 'exe.io' in parsed.netloc:
         await update.message.reply_text(
-            "❌ Տեղադրեք վերջնական կայքի URL-ը, ոչ թե exe.io կարճ հղումը.\n"
-            "✅ Մեր համակարգը ինքն է կարճ հղումը գեներացնում յուրաքանչյուր օգտատիրոջ համար, որպեսզի ճիշտ գրանցվի կատարումը։"
+            "❌ Вставьте конечный URL-адрес веб-сайта, а не короткую ссылку exe.io..\n"
+            "✅ Наша система автоматически генерирует короткую ссылку для каждого пользователя, чтобы обеспечить надлежащее отслеживание производительности.։"
         )
         return
     else:
@@ -6724,15 +6724,15 @@ async def task_shorten(update: Update, context: ContextTypes.DEFAULT_TYPE):
     import urllib.parse
     parsed = urllib.parse.urlparse(old_url or "")
     if parsed.netloc and 'exe.io' in parsed.netloc:
-        await update.message.reply_text("⚠️ Այս task-ը պահում է exe.io հղում։ Խորհուրդ է տրվում պահել վերջնական կայքի հղումը, որպեսզի չստացվի կրկնակի կարճացում։")
+        await update.message.reply_text("⚠️ Эта задача сохраняет ссылку на файл exe.io. Рекомендуется сохранять конечную ссылку на веб-сайт, чтобы избежать двойного сокращения.։")
         return
     u_b64 = base64.urlsafe_b64encode((old_url or "").encode()).decode()
     success_url = f"{BASE_URL}/exeio/complete?uid={{user_id}}&task_id={{task_id}}&u={u_b64}"
     short = exeio_shorten(success_url)
     if not short:
-        await update.message.reply_text("❌ exe.io չվերադարձեց կարճ հղում։")
+        await update.message.reply_text("❌ exe.io не вернул короткую ссылку։")
         return
-    await update.message.reply_text(f"🔗 Preview կարճ հղում՝ {short}\nℹ️ DB-ում չենք պահում կարճ հղումը, щоб избежать կրկնակի շղթա։")
+    await update.message.reply_text(f"🔗 Preview короткая ссылка՝ {short}\nℹ️ Мы не сохраняем короткую ссылку в базе данных, чтобы избежать двойных ссылок.։")
 
 
 @app_web.route("/webhook", methods=["POST"])

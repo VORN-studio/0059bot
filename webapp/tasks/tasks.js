@@ -86,7 +86,6 @@ async function loadTasks() {
 
         if (!data.ok || !data.tasks) return;
 
-        // ✔ այստեղ ենք պահում
         window.ALL_TASKS = data.tasks;
 
         renderTasks(data.tasks);
@@ -120,7 +119,7 @@ function renderTasks(tasks) {
             <div><strong>${task.title}</strong></div>
             <div>${task.description}</div>
             <button onclick="performTask(${task.id})">
-                Կատարել → +${task.reward}
+                Выполнить → +${task.reward}
             </button>
         `;
 
@@ -183,8 +182,8 @@ async function performTask(taskId) {
         });
         const data = await res.json();
         if (!data.ok) {
-            if (btn) btn.textContent = `Կատարել → +${task.reward}`;
-            alert("❌ Սխալ հղում գեներացնելիս");
+            if (btn) btn.textContent = `Выполнитьլ → +${task.reward}`;
+            alert("❌ Ошибка при генерации ссылки");
             return;
         }
         const shortU = data.short_url || "";
@@ -193,8 +192,8 @@ async function performTask(taskId) {
         const safeUrl = `${window.location.origin}/webapp/tasks/safe_go.html?short=${encodeURIComponent(shortU)}&direct=${encodeURIComponent(directU)}&uid=${encodeURIComponent(uid)}&task_id=${encodeURIComponent(taskId)}&attempt_id=${encodeURIComponent(attemptId)}&reward=${encodeURIComponent(task.reward)}`;
         window.location.href = safeUrl;
     } catch (e) {
-        if (btn) btn.textContent = `Կատարել → +${task.reward}`;
-        alert("❌ Սերվերի սխալ");
+        if (btn) btn.textContent = `Выполнить → +${task.reward}`;
+        alert("❌ Ошибка сервера");
         return;
     }
 }

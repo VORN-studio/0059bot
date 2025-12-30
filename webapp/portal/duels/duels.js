@@ -67,7 +67,7 @@ function connectWebSocket() {
   });
 
   socket.on("table_joined", (data) => {
-    showStatus(`✅ Սեղանին միացան.`);
+    showStatus(`✅ Присоединился к столу.`);
   });
 
   socket.on("opponent_move", (data) => {
@@ -113,15 +113,15 @@ function renderTables(tables) {
   }
 
   const iconMap = { tictactoe: '❌⭕', chess: '♟️', sudoku: '🔢' };
-  const nameMap = { tictactoe: 'Tic-Tac-Toe', chess: 'Շախմատ', sudoku: 'Սուդոկու' };
+  const nameMap = { tictactoe: 'Tic-Tac-Toe', chess: 'Chess', sudoku: 'Sudoku' };
   const now = Math.floor(Date.now() / 1000);
   const active = tables.filter(t => (now - t.created_at) < 300);
   if (!active || active.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <span class="empty-icon">🎮</span>
-        <p>Ակտիվ սեղաններ չկան</p>
-        <p class="empty-hint">Ստեղծիր առաջին սեղանը։</p>
+        <p>В данный момент нет активных столов.</p>
+        <p class="empty-hint">Создайте первый стол!</p>
       </div>
     `;
     return;
@@ -264,7 +264,7 @@ async function confirmCreateTable() {
 function openJoinModal(tableId, creator, bet) {
   selectedTableId = tableId;
 
-  const nameMap = { tictactoe: '❌⭕ Tic-Tac-Toe', chess: '♟️ Շախմատ', sudoku: '🔢 Սուդոկու' };
+  const nameMap = { tictactoe: '❌⭕ Tic-Tac-Toe', chess: '♟️ Chess', sudoku: '🔢 Sudoku' };
   document.getElementById("join-game-type").textContent = nameMap[selectedGameType];
   document.getElementById("join-bet").textContent = bet;
   document.getElementById("join-creator").textContent = creator;

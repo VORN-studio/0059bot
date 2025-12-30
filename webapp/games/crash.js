@@ -3,8 +3,8 @@ const API = window.location.origin;
 
 let USER_ID = null;
 
-let mainBalance = 0;     // բազայից եկող ընդհանուր բալանս
-let crashBalance = 0;    // միայն Crash խաղի ներսում
+let mainBalance = 0;     
+let crashBalance = 0;    
 
 let multiplier = 1.0;
 let running = false;
@@ -17,9 +17,7 @@ let totalDominos = 0;
 
 // ================= CONFIG =================
 
-// Այս թվերով ես կառավարում խաղի բարդությունը
 const CRASH_CONFIG = {
-    // multiplier-ի աճի արագություն (որքան արագ է բարձրանում x-ը)
     GROWTH_MIN: 0.040,   // ամեն քայլի +1.5% նվազագույն
     GROWTH_MAX: 0.050,   // ամեն քայլի +3.0% առավելագույն
 
@@ -138,11 +136,11 @@ async function loadUser() {
             mainBalance = js.user.balance_usd;
             updateBalances();
         } else {
-            show("❌ Չհաջողվեց բեռնել բալանսը");
+            show("❌ Не удалось загрузить баланс");
         }
     } catch (e) {
         console.log("loadUser error", e);
-        show("❌ Սերվերի սխալ");
+        show("❌ Ошибка сервера");
     }
 }
 
@@ -167,12 +165,12 @@ async function confirmDeposit() {
     const amount = Number(document.getElementById("deposit-input").value);
 
     if (!amount || amount <= 0) {
-        document.getElementById("deposit-error").textContent = "Գրիր ճիշտ գումար";
+        document.getElementById("deposit-error").textContent = "Введите корректную сумму";
         return;
     }
 
     if (amount > mainBalance) {
-        document.getElementById("deposit-error").textContent = "Դուք չունեք այդքան գումար։";
+        document.getElementById("deposit-error").textContent = "Недостаточно средств.";
         return;
     }
 
@@ -194,7 +192,7 @@ async function confirmDeposit() {
     crashBalance += amount;
 
     updateBalances();
-    show("➕ " + amount.toFixed(2) + " $ տեղափոխվեց Crash balance");
+    show("➕ " + amount.toFixed(2) + " DOMIT переведен на баланс Crash.");
 }
 
 
@@ -225,10 +223,10 @@ async function withdrawFromCrash() {
         crashBalance = 0;
         updateBalances();
 
-        show("⬅ Crash balance-ը վերադարձվեց հիմնական բալանսին");
+        show("⬅ Баланс Crash возвращен на основной баланс.");
     } catch (e) {
         console.log("withdraw error", e);
-        show("❌ Սերվերի սխալ");
+        show("❌ Ошибка сервера");
     }
 }
 
@@ -242,8 +240,8 @@ function startCrash() {
 
     const bet = Number(document.getElementById("bet").value);
 
-    if (!bet || bet <= 0) return show("❌ Գումարը գրիր ճիշտ");
-    if (bet > crashBalance) return show("❌ Crash balance-ը չի հերիքում");
+    if (!bet || bet <= 0) return show("❌ Введите верную сумму");
+    if (bet > crashBalance) return show("❌ Недостаточный баланс Crash.");
     if (running) return;
 
     currentBet = bet;
@@ -271,7 +269,7 @@ function startCrash() {
     document.getElementById("start-btn").style.display = "none";
     document.getElementById("cashout-btn").style.display = "block";
 
-    show("🎮 Խաղը սկսվեց");
+    show("🎮 Игра началась");
 
     // Multiplier-ի աճը
     timer = setInterval(() => {
@@ -327,7 +325,7 @@ function crashNow() {
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";
 
-    show("💥 Crash! Չհասցրեցիր Claim անել");
+    show("💥 Crash! Не успел забрать.");
 }
 
 
@@ -349,7 +347,7 @@ async function cashOut() {
     crashBalance += win;
     updateBalances();
 
-    show("🟢 +" + win.toFixed(2) + " $");
+    show("🟢 +" + win.toFixed(2) + " DOMIT");
 
     document.getElementById("cashout-btn").style.display = "none";
     document.getElementById("start-btn").style.display = "block";

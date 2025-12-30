@@ -59,7 +59,7 @@ function closeModal() {
 // ---------------------------------------
 function initUser() {
     if (!tg || !tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-        alert("⚠️ Բացիր բոտից, ոչ թե browser-ից");
+        alert("⚠️ Открой в боте, а не в браузере");
         return;
     }
 
@@ -114,9 +114,9 @@ async function loadPlans() {
 
         div.innerHTML = `
             <h3>${plan.name}</h3>
-            <p>Գին: ${plan.price_usd} DOMIT</p>
-            <p>Արտադրանք/ժամ: ${plan.domit_per_hour.toFixed(3)}</p>
-            <button onclick="buyPlan(${plan.id})" class="btn">Գնել</button>
+            <p>Цена: ${plan.price_usd} DOMIT</p>
+            <p>Выработка/час: ${plan.domit_per_hour.toFixed(3)}</p>
+            <button onclick="buyPlan(${plan.id})" class="btn">Купить</button>
         `;
 
         fragment.appendChild(div);
@@ -214,11 +214,11 @@ async function buyPlan(id) {
     const data = await res.json();
 
     if (!data.ok) {
-        showModal("❌", "Սխալ", data.error, "error");
+        showModal("❌", "Ошибка", data.error, "error");
         return;
     }
 
-    showModal("✅", "Հաջողություն", "Փաթեթը ձեռք բերվեց");
+    showModal("✅", "Успешно", "Пакет приобретен!");
 
     
     userBalance = data.user.balance_usd;
@@ -247,7 +247,7 @@ document.getElementById("claim-btn").addEventListener("click", async () => {
         return;
     }
 
-    showModal("💰", "Հաջողություն", "DOMIT հատվածը տեղափոխվեց բալանս");
+    showModal("💰", "Успешно", "DOMIT переведен на баланс");
 
     userBalance = data.new_balance_usd;
     document.getElementById("user-balance").textContent = userBalance.toFixed(2);

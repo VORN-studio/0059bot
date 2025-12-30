@@ -239,17 +239,17 @@ function botMove() {
 function updateTurnInfo() {
   const el = document.getElementById('turnInfo');
   if (!onlineMode) {
-    if (currentTurn === 'w') { el.textContent = 'Քո հերթն է'; el.style.color = '#8b5cf6'; }
-    else { el.textContent = 'Բոտի հերթն է'; el.style.color = '#94a3b8'; }
+    if (currentTurn === 'w') { el.textContent = 'Ваш ход'; el.style.color = '#8b5cf6'; }
+    else { el.textContent = 'Ход бота'; el.style.color = '#94a3b8'; }
   } else {
-    if (!bothJoined) { el.textContent = 'Սպասում ենք հակառակորդին…'; el.style.color = '#94a3b8'; return; }
+    if (!bothJoined) { el.textContent = 'Ожидание соперника...'; el.style.color = '#94a3b8'; return; }
     const mine = PLAYER_COLOR===currentTurn;
-    el.textContent = mine ? `Քո հերթն է (${PLAYER_COLOR==='w'?'սպիտակ':'սև'})` : `Մրցակցի հերթն է`;
+    el.textContent = mine ? `Ваш ход (${PLAYER_COLOR==='w'?'Белые':'Черные'})` : `Ход противника`;
     el.style.color = mine ? '#8b5cf6' : '#94a3b8';
   }
   const wCheck=isKingInCheck('w'); const bCheck=isKingInCheck('b');
-  if(currentTurn==='w'&&wCheck) el.textContent+=' — Շախ';
-  if(currentTurn==='b'&&bCheck) el.textContent+=' — Շախ';
+  if(currentTurn==='w'&&wCheck) el.textContent+=' — Шах';
+  if(currentTurn==='b'&&bCheck) el.textContent+=' — Шах';
 }
 
 function clearTurnTimers() {
@@ -269,7 +269,7 @@ function scheduleTurnTimer() {
   countdownIntervalId = setInterval(() => {
     const left = Math.max(0, deadline - Date.now());
     const s = Math.ceil(left/1000);
-    el.textContent = `Քո հերթն է — ${s}վրկ`;
+    el.textContent = `Ваш ход — ${s}с`;
   }, 250);
   turnTimeoutId = setTimeout(onTurnTimeout, 30000);
 }
@@ -278,10 +278,10 @@ function endGame(result) {
   gameOver = true;
   clearTurnTimers();
   const st = document.getElementById('status');
-  if (result==='win') st.textContent = '🎉 Հաղթեցիր';
-  else if (result==='draw') st.textContent = '🤝 Ոչ-ոքի';
-  else if (result==='lose_timeout') st.textContent = '😔 Պարտվեցիր (ժամանակ)';
-  else st.textContent = '😔 Պարտվեցիր';
+  if (result==='win') st.textContent = '🎉 Вы выиграли!';
+  else if (result==='draw') st.textContent = '🤝 Ничья';
+  else if (result==='lose_timeout') st.textContent = '😔 Вы проиграли';
+  else st.textContent = '😔 Вы проиграли';
   document.getElementById('newGame').style.display = 'inline-block';
 }
 
@@ -342,7 +342,7 @@ async function init() {
     socket.on('chess_move', applyIncoming);
     socket.on('opponent_move', applyIncoming);
     socket.on('table_joined', (data)=>{
-      if (data && data.table_id===TABLE_ID) { bothJoined = true; const oppEl = document.getElementById('chess-opp-name'); if (oppEl) oppEl.textContent = data.opponent_username || 'Հակառակորդ'; }
+      if (data && data.table_id===TABLE_ID) { bothJoined = true; const oppEl = document.getElementById('chess-opp-name'); if (oppEl) oppEl.textContent = data.opponent_username || 'Противник'; }
     });
     socket.on('game_over', (data)=>{
       if (data && data.table_id===TABLE_ID) {
@@ -369,8 +369,8 @@ async function loadTableState(){
       const oppName = isCreator ? ouser : cuser;
       const meEl = document.getElementById('chess-my-name');
       const oppEl = document.getElementById('chess-opp-name');
-      if (meEl) meEl.textContent = 'Դու';
-      if (oppEl) oppEl.textContent = oppName || 'Սպասում...';
+      if (meEl) meEl.textContent = 'Ты';
+      if (oppEl) oppEl.textContent = oppName || 'Ожидание...';
       const urlColor = params.get('color');
       if (!urlColor) {
         const creatorColor = (js.table && js.table.color) || js.creator_color || js.color || 'w';

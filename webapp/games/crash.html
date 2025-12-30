@@ -12,21 +12,19 @@
 <body>
   <div class="page">
 
-    <!-- Վերադարձ + Բալանսներ -->
     <div class="top-bar">
-      <button class="btn back" onclick="goBack()">← Վերադառնալ</button>
+      <button class="btn back" onclick="goBack()">← Назад</button>
 
       <div class="balances">
         <div class="badge">
-          💼 Հիմնական՝ <span id="main-balance">0.00</span> $
+          💼 Основной՝ <span id="main-balance">0.00</span> DOMIT
         </div>
         <div class="badge crash">
-          🎮 Crash՝ <span id="crash-balance">0.00</span> $
+          🎮 Crash՝ <span id="crash-balance">0.00</span> DOMIT
         </div>
       </div>
     </div>
 
-    <!-- Crash քարտ -->
     <div class="card">
       <h2 class="game-title">🀄 Domino Crash</h2>
 
@@ -40,13 +38,13 @@
 
       <!-- Bet -->
       <div class="bet-row">
-        <input id="bet" type="number" placeholder="Գումարը ($)" />
+        <input id="bet" type="number" placeholder="Сумма ($)" />
       </div>
 
       <!-- Deposit / Withdraw -->
       <div class="transfer-row">
-        <button class="btn mini" onclick="depositToCrash()">➕ Դեպոզիտ Crash</button>
-        <button class="btn mini ghost" onclick="withdrawFromCrash()">⬅ Կանխիկացնել</button>
+        <button class="btn mini" onclick="depositToCrash()">➕ Депозит Crash</button>
+        <button class="btn mini ghost" onclick="withdrawFromCrash()">⬅ Обналичить</button>
       </div>
 
       <!-- Start / Claim -->
@@ -67,15 +65,15 @@
   <div id="deposit-modal" class="modal hidden">
     <div class="modal-box">
 
-      <h3 class="modal-title">Դեպոզիտ Crash-ում</h3>
+      <h3 class="modal-title">Депозит в Crash</h3>
 
       <input id="deposit-input" 
            type="number" 
-           placeholder="Գումարը ($)" 
+           placeholder="Сумма ($)" 
            class="modal-input"/>
 
       <div class="modal-actions">
-        <button class="btn modal-cancel" onclick="closeDepositModal()">Չեղարկել</button>
+        <button class="btn modal-cancel" onclick="closeDepositModal()">Отмена</button>
         <button class="btn modal-ok" onclick="confirmDeposit()">OK</button>
       </div>
 

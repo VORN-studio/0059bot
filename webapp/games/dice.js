@@ -80,7 +80,7 @@ function showDiceDrop(index) {
   // 0.7վրկ հետո բացում ենք shuffle-ը
   setTimeout(() => {
     glow.classList.remove("drop", "visible");
-    showStatus("♻️ Խառնում ենք բաժակները…");
+    showStatus("♻️ Перемешиваем стаканы...");
     startShuffleAnimation();
   }, 700);
 }
@@ -99,7 +99,7 @@ function startShuffleAnimation() {
     cups2.forEach((c) => c.classList.remove("shuffle"));
     allowPick = true;
     setCupsSelectable(true);
-    showStatus("Ընտրի՛ր որ բաժակի տակ է զառը 👀");
+    showStatus("Выбери стакан, под которым кубик 👀");
   }, 1900);
 }
 
@@ -137,11 +137,11 @@ async function loadUser() {
       mainBalance = js.user.balance_usd;
       updateBalances();
     } else {
-      showStatus("❌ Չհաջողվեց բեռնել բալանսը");
+      showStatus("❌ Не удалось загрузить баланс");
     }
   } catch (e) {
     console.log("loadUser error", e);
-    showStatus("❌ Սերվերի սխալ");
+    showStatus("❌ Ошибка сервера");
   }
 }
 
@@ -161,13 +161,13 @@ async function confirmDeposit() {
   const amount = Number(document.getElementById("deposit-input").value);
 
   if (!amount || amount <= 0) {
-    document.getElementById("deposit-error").textContent = "Գրիր ճիշտ գումար";
+    document.getElementById("deposit-error").textContent = "Введите корректную сумму";
     return;
   }
 
   if (amount > mainBalance) {
     document.getElementById("deposit-error").textContent =
-      "Դուք չունեք այդքան գումար։";
+      "Недостаточно средств։";
     return;
   }
 
@@ -189,10 +189,10 @@ async function confirmDeposit() {
     diceBalance += amount;
 
     updateBalances();
-    showStatus(`➕ ${amount.toFixed(2)} $ տեղափոխվեց Dice balance-ը`);
+    showStatus(`➕ ${amount.toFixed(2)} DOMIT переведен на баланс Dice`);
   } catch (e) {
     console.log("deposit error", e);
-    showStatus("❌ Սերվերի սխալ");
+    showStatus("❌ Ошибка сервера");
   }
 }
 
@@ -222,10 +222,10 @@ async function withdrawFromDice() {
     diceBalance = 0;
     updateBalances();
 
-    showStatus("⬅ Dice balance-ը վերադարձվեց հիմնական բալանսին");
+    showStatus("⬅ Баланс Dice возвращен на основной баланс");
   } catch (e) {
     console.log("withdraw error", e);
-    showStatus("❌ Սերվերի սխալ");
+    showStatus("❌ Ошибка сервера");
   }
 }
 
@@ -242,10 +242,10 @@ function startRound() {
 
   const bet = Number(document.getElementById("bet").value);
   if (!bet || bet <= 0) {
-    return showStatus("❌ Գումարը գրի՛ր ճիշտ։");
+    return showStatus("❌ Введите корректную сумму");
   }
   if (bet > diceBalance) {
-    return showStatus("❌ Dice balance-ը չի հերիքում։");
+    return showStatus("❌ Недостаточно средств на балансе Dice");
   }
 
   // հանում ենք բեթը Dice balance-ից հենց սկզբում
@@ -262,7 +262,7 @@ function startRound() {
   hiddenCupIndex = Math.floor(Math.random() * 3);
 
   setCupsSelectable(false);
-  showStatus("🎲 Զառը մտնում է բաժակի տակ…");
+  showStatus("🎲 Кубик заходит под стакан...");
 
   // նախ ցույց ենք տալիս զառի “ընկնելը”, հետո՝ shuffle
   showDiceDrop(hiddenCupIndex);
@@ -276,7 +276,7 @@ function cancelRound() {
   roundRunning = false;
   setCupsSelectable(false);
   updateBalances();
-  showStatus("Ռաունդը չեղարկվեց։");
+  showStatus("Раунд отменен");
 }
 
 function onCupClick(index) {
@@ -291,13 +291,13 @@ function onCupClick(index) {
     const winAmount = currentBet * DICE_CONFIG.PAYOUT_MULTIPLIER;
     diceBalance += winAmount;
     showStatus(
-      `🟢 Հաղթեցիր! Բեթը ${currentBet.toFixed(
+      `🟢 Вы выиграли! ${currentBet.toFixed(
         2
-      )}$ → ${winAmount.toFixed(2)}$`,
+      )}DOMIT → ${winAmount.toFixed(2)}$`,
       "win"
     );
   } else {
-    showStatus("💔 Կորցրիր բեթը… հաջորդը քոնը կլինի։", "lose");
+    showStatus("💔 Ставка проиграна... в следующий раз повезет!", "lose");
   }
 
   updateBalances();

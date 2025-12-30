@@ -142,7 +142,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const OPEN_POST_ID = urlParams.get("open_post");
 function applySinglePostUI() {
     const title = document.querySelector("#feed h3");
-    if (title) title.innerText = "Գրառում";
+    if (title) title.innerText = "Пост";
 
     const creator = document.getElementById("post-creator");
     if (creator) creator.style.display = "none";
@@ -158,7 +158,6 @@ function applySinglePostUI() {
     });
 }
 
-// 🔒 ՄԻԱՑՆՈՒՄ ԵՆՔ ՄԻԱՆԳԱՄԻՑ
 let SINGLE_POST_MODE = !!OPEN_POST_ID;
 document.addEventListener("DOMContentLoaded", () => {
     const backBtn = document.getElementById("back-to-feed");
@@ -276,7 +275,6 @@ function openInfo(title, text) {
     titleEl.innerText = title;
     textEl.innerText = text;
 
-    // INFO ռեժիմ → Cancel-ը թաքցնում ենք
     if (cancelBtn) cancelBtn.style.display = "none";
 
     if (okBtn) {
@@ -328,7 +326,6 @@ function closeConfirm() {
         if (SINGLE_POST_MODE) {
             applySinglePostUI();
 
-            // Feed tab-ը ուղղակի դարձնենք active (click չանենք)
             document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
             document.querySelectorAll(".tab-page").forEach(p => p.classList.remove("active"));
 
@@ -502,7 +499,6 @@ function initChatEvents() {
     });
 }
 
-// ✅ ՆՈՐ ՖՈՒՆԿՑԻԱ - Sub-tab switching
 function initSubTabs() {
     document.querySelectorAll(".sub-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -515,7 +511,6 @@ function initSubTabs() {
             const subPage = document.getElementById(subId);
             if (subPage) subPage.classList.add("active");
 
-            // ✅ Hot User tracking միայն Global Chat-ի համար
             if (subId === "chat") {
                 loadGlobalChat();
                 startHotUserRefresh();
@@ -585,7 +580,6 @@ async function loadProfile() {
             }
 
             profileAvatar.src = avatarUrl;
-            // Թարմացնել վերևի avatar-ը նույնպես
             const topAvatar = document.getElementById("user-avatar");
             if (topAvatar) {
                 topAvatar.src = avatarUrl;
@@ -596,7 +590,6 @@ async function loadProfile() {
 
         decorateUsername(user.status_level || 0, user.status_name || "None");
         CURRENT_USER_STATUS = user.status_level || 0;
-                // Intellect score ցուցադրում
         const intellectScore = user.intellect_score || 0.0;
         const bar = document.getElementById("intellect-bar");
         const scoreEl = document.getElementById("intellect-score");
@@ -621,10 +614,10 @@ async function loadProfile() {
         const profileStatus = document.getElementById("profile-status");
         if (profileStatus) {
             if (user.is_online) {
-                profileStatus.textContent = "🟢 Օնլայն";
+                profileStatus.textContent = "🟢 В сети";
                 profileStatus.style.color = "#22c55e";
             } else {
-                profileStatus.textContent = "⚫ Օֆլայն";
+                profileStatus.textContent = "⚫ Не в сети";
                 profileStatus.style.color = "#6b7280";
             }
         }
@@ -668,8 +661,8 @@ async function loadGlobalChat() {
                 const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('hy-AM');
 
                 let label = dateKey;
-                if (dateKey === today) label = "Այսօր";
-                else if (dateKey === yesterday) label = "Երեկ";
+                if (dateKey === today) label = "Сегодня";
+                else if (dateKey === yesterday) label = "Вчера";
 
                 box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
             }
@@ -748,7 +741,6 @@ async function openDM(targetId) {
     // 🔴 JOIN DM ROOM (realtime)
     socket.emit("join_dm", { u1: CURRENT_UID, u2: targetId });
 
-    // Social tab ակտիվ
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.querySelector('[data-tab="social"]').classList.add("active");
 
@@ -764,7 +756,6 @@ async function openDM(targetId) {
 
     if (!targetId) return;
     CURRENT_DM_TARGET = targetId;
-    // 🔹 Բեռնում ենք DM header user info (avatar + username + status)
     try {
         const res = await fetch(`/api/user/${targetId}`);
         const data = await res.json();
@@ -825,7 +816,7 @@ async function openDM(targetId) {
         const textToSend = window.DM_SHARE_TEXT;
 
         window.DM_SHARE_TEXT = null;
-        SHARE_POST_ID = null; // ✅ ԱՅՍՏԵՂ Է ՃԻՇՏ ՊԱՀԸ
+        SHARE_POST_ID = null; 
 
         setTimeout(async () => {
             await fetch(`/api/message/send`, {
@@ -874,8 +865,8 @@ async function loadDM() {
                 const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('hy-AM');
 
                 let label = dateKey;
-                if (dateKey === today) label = "Այսօր";
-                else if (dateKey === yesterday) label = "Երեկ";
+                if (dateKey === today) label = "Сегодня";
+                else if (dateKey === yesterday) label = "Вчера";
 
                 box.innerHTML += `<div class="chat-date-separator">${label}</div>`;
             }
@@ -909,14 +900,13 @@ async function loadDM() {
 }
 
 async function sendDM() {
-    // ❌ Չի կարելի գրել եթե ֆոլով չկա
     const res = await fetch(`/api/is_following/${CURRENT_UID}/${CURRENT_DM_TARGET}`);
     const data = await res.json();
 
     if (!data.ok || !data.is_following) {
         openInfo(
-            "Չի կարելի գրել",
-            "Դու պետք է ֆոլով լինես, որպեսզի կարողանաս գրել այս օգտատիրոջը"
+            "Написание сообщений недоступно",
+            "Подпишитесь, чтобы отправить сообщение."
         );
         return;
     }
@@ -1031,7 +1021,7 @@ function showUsernamePopup() {
     btn.onclick = async () => {
         let name = input.value.trim();
         if (name.length < 3) {
-            alert("Username-ը պետք է >= 3 սիմվոլ լինի");
+            alert("Имя пользователя должно содержать минимум 3 символа.");
             return;
         }
 
@@ -1059,7 +1049,7 @@ function initAvatarUpload() {
     if (avatarInput) {
         avatarInput.addEventListener("change", async function () {
             if (!isOwner) {
-                alert("Դու չես կարող փոխել այս պրոֆիլի avatar-ը");
+                alert("Вы не можете изменить аватар этого профиля.");
                 return;
             }
 
@@ -1188,17 +1178,17 @@ async function loadUsers(search = "") {
                 ? `
                     <button class="dm-button" data-id="${u.user_id}"
                         style="padding:6px 12px;border-radius:8px;background:#34c759;color:white;margin-right:8px;">
-                        💬 Գրել
+                        💬 Написать
                     </button>
                     <button class="profile-button" data-id="${u.user_id}"
                         style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
-                        Բացել
+                        Открыть
                     </button>
                 `
                 : `
                     <button class="profile-button" data-id="${u.user_id}"
                         style="padding:6px 12px;border-radius:8px;background:#3478f6;color:white;">
-                        Բացել
+                        Открыть
                     </button>
                 `;
 
@@ -1316,7 +1306,6 @@ async function loadFollowStats() {
         const followBtn = document.getElementById("follow-btn");
         if (followBtn) {
             if (!viewerId || isOwner) {
-                // ✅ Թաքցնել follow կոճակը եթե դու ինքդ քեզ ես նայում
                 followBtn.style.display = "none";
             } else {
                 followBtn.style.display = "block";
@@ -1358,12 +1347,12 @@ function initFollowButton() {
                 followBtn.innerText = "Following";
                 await loadFollowStats();
             } else if (data.error === "low_balance") {
-                alert("Բալանսը բավարար չէ follow անելու համար");
+                alert("Недостаточно средств для подписки.");
             } else if (data.already) {
                 followBtn.innerText = "Following";
                 await loadFollowStats();
             } else {
-                alert("Չստացվեց follow անել");
+                alert("Не удалось подписаться.");
             }
         } catch (e) {
             console.error(e);
@@ -1373,7 +1362,6 @@ function initFollowButton() {
     });
 }
 
-// 🔧 MEDIA BUTTON INIT - ԱՄԵՆՈՒՐ ՊԵՏՔ Է ԱՇԽԱՏԻ
 function initMediaButton() {
     const mediaBtn = document.getElementById("media-btn");
     const mediaInput = document.getElementById("post-media");
@@ -1384,7 +1372,7 @@ function initMediaButton() {
         mediaInput.onchange = () => {
             if (mediaInput.files && mediaInput.files.length > 0) {
                 mediaBtn.classList.add("selected");
-                mediaBtn.innerText = "📎 Ընտրված է";
+                mediaBtn.innerText = "📎 Выбрано";
             } else {
                 mediaBtn.classList.remove("selected");
                 mediaBtn.innerText = "📎 Media";
@@ -1395,7 +1383,7 @@ function initMediaButton() {
 
 function initFeed() {
     if (SINGLE_POST_MODE) {
-        return; // ⛔ ոչ մի feed logic single post-ի ժամանակ
+        return; 
     }
 
     const feedPage = document.getElementById("feed");
@@ -1422,14 +1410,14 @@ async function loadSinglePost(postId) {
     const feedList = document.getElementById("feed-list");
     if (!feedList) return;
 
-    feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Բեռնվում է...</div>";
+    feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Загрузка...</div>";
 
     try {
         const res = await fetch(`/api/post/${postId}`);
         const data = await res.json();
 
         if (!data.ok || !data.post) {
-            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Գրառումը չի գտնվել</div>";
+            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Пост не найден</div>";
             return;
         }
 
@@ -1440,7 +1428,7 @@ async function loadSinglePost(postId) {
 
     } catch (e) {
         console.error("loadSinglePost error:", e);
-        feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Սխալ</div>";
+        feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Ошибка</div>";
     }
 }
 
@@ -1454,7 +1442,7 @@ async function createPost() {
 
     const text = (textArea.value || "").trim();
     if (text === "" && (!fileInput.files || fileInput.files.length === 0)) {
-        openInfo("Չի ստացվում", "Գրառումը չի կարող լինել լիովին դատարկ 🙂");
+        openInfo("Произошла ошибка.", "Пост не может быть пустым. 🙂");
         if (mediaBtn) {
             mediaBtn.classList.remove("selected");
             mediaBtn.innerText = "📎 Media";
@@ -1517,9 +1505,9 @@ async function createPost() {
             }
             
             if (error.name === 'AbortError') {
-                openInfo("Ֆայլը չափազանց մեծ է", "⏱️ Փորձիր ավելի փոքր ֆայլ կամ սպասիր ավելի լավ ինտերնետին 🙂");
+                openInfo("Файл слишком большой.", "⏱️ Попробуйте файл поменьше или подождите, пока интернет станет лучше. 🙂");
             } else {
-                openInfo("Չհաջողվեց բեռնել", "❌ Խնդրում ենք փորձել կրկին 🙂");
+                openInfo("Не удалось загрузить.", "❌ Пожалуйста, попробуйте еще раз 🙂");
             }
             return;
         }
@@ -1561,7 +1549,7 @@ async function createPost() {
         
     } catch (error) {
         console.error("❌ Post creation error:", error);
-        openInfo("Չհաջողվեց հրապարակել", "Խնդրում ենք փորձել կրկին 🙂");
+        openInfo("Не удалось опубликовать", "Пожалуйста, попробуйте еще раз 🙂");
         
         if (mediaBtn) {
             mediaBtn.disabled = false;
@@ -1573,7 +1561,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".feed-switch-btn").forEach(btn => {
         btn.addEventListener("click", () => {
 
-            // 🔁 Եթե single post-ից ենք → reload feed mode
             if (SINGLE_POST_MODE) {
                 const uid = viewerId || "";
                 window.location.href = `/portal/portal.html?uid=${uid}&viewer=${uid}`;
@@ -1594,12 +1581,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function loadMyPosts() {
     const feedList = document.getElementById("feed-list");
-    feedList.innerHTML = "Բեռնվում է...";
+    feedList.innerHTML = "Загрузка...";
 
     const res = await fetch(`/api/posts/user/${viewerId}`);
     const data = await res.json();
     if (!data.ok) {
-        feedList.innerHTML = "Չստացվեց բեռնել";
+        feedList.innerHTML = "Не удалось загрузить";
         return;
     }
 
@@ -1608,7 +1595,6 @@ async function loadMyPosts() {
 }
 
 async function loadFeed() {
-    // 🔒 Եթե բացվել է կոնկրետ post, feed-ը չբեռնենք
     if (SINGLE_POST_MODE) {
         return;
     }
@@ -1616,7 +1602,7 @@ async function loadFeed() {
     const feedList = document.getElementById("feed-list");
     if (!feedList) return;
 
-    feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Բեռնվում է...</div>";
+    feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Загрузка...</div>";
 
     let url = "/api/posts/feed";
     if (viewerId) url += "?uid=" + encodeURIComponent(viewerId);
@@ -1625,13 +1611,13 @@ async function loadFeed() {
         const res = await fetch(url);
         const data = await res.json();
         if (!data.ok) {
-            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Սխալ feed բեռնելիս</div>";
+            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Не удалось обновить ленту.</div>";
             return;
         }
 
         const posts = data.posts || [];
         if (posts.length === 0) {
-            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Դեռ գրառումներ չկան։ Գրի՛ր առաջինը 🙂</div>";
+            feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Постов пока нет. Напишите первый!</div>";
             return;
         }
 
@@ -1642,7 +1628,7 @@ async function loadFeed() {
         });
     } catch (e) {
         console.error("loadFeed error:", e);
-        feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Սխալ feed բեռնելիս</div>";
+        feedList.innerHTML = "<div style='opacity:0.7;padding:8px;'>Не удалось обновить ленту.</div>";
     }
 }
 
@@ -1651,12 +1637,10 @@ function renderPostCard(post) {
     if (post.media_url && post.media_url !== "") {
         mediaUrl = post.media_url;
         
-        // 🔧 Եթե relative path է, ավելացնենք origin
         if (!mediaUrl.startsWith('http')) {
             mediaUrl = window.location.origin + mediaUrl;
         }
         
-        // 🔍 DEBUG - տեսնենք ինչ URL ենք ստանում
         console.log("🖼️ MEDIA URL:", mediaUrl);
     }
 
@@ -1700,7 +1684,7 @@ function renderPostCard(post) {
             <div style="flex-grow:1;">
                 <div style="font-size:14px;font-weight:bold;">
                     ${renderUsernameLabel(post.user_id, post.username, post.status_level)}
-                    ${isMine ? '<span style="font-size:11px;opacity:0.7;"> (դու)</span>' : ""}
+                    ${isMine ? '<span style="font-size:11px;opacity:0.7;"> (Ты)</span>' : ""}
                 </div>
                 <div style="font-size:11px;opacity:0.6;">${timeStr}</div>
             </div>
@@ -1780,7 +1764,7 @@ function renderUsernameLabel(userId, username, statusLevel) {
 
 async function likePost(postId, btn) {
     if (!viewerId) {
-        alert("Չի իմացվում քո ID-ն, like անել չի ստացվի");
+        alert("Ваш ID не определен, невозможно поставить лайк.");
         return;
     }
     if (!btn) return;
@@ -2039,11 +2023,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function deletePost(postId) {
   openConfirm(
-    "Ջնջել գրառումը",
-    "Վստա՞հ ես, որ ուզում ես ջնջել այս գրառումը։ Այս գործողությունը չի կարող հետ վերադարձվել։",
+    "Удалить пост",
+    "Вы уверены, что хотите удалить этот пост? Это действие нельзя будет отменить.",
     async () => {
 
-      // 1) UI-ից ՀԵՆՑ ՀԻՄԱ remove (optimistic)
       removePostFromUI(postId);
 
       // 2) server delete
@@ -2055,15 +2038,12 @@ async function deletePost(postId) {
 
       const data = await res.json();
 
-      // 3) Եթե server-ը ասեց ok չէ → վերադարձնենք (fallback reload)
       if (!data.ok) {
         loadFeed();
-        openInfo("Չստացվեց", "Server-ը չջնջեց, նորից փորձիր");
+        openInfo("Не удалось.", "Ошибка сервера. Попробуйте удалить еще раз.");
         return;
       }
 
-      // 4) (optional) server-ը թող socket-ով broadcast անի՝ մյուսներին էլ ջնջվի
-      // դու սրա համար client-ում արդեն socket.on() կավելացնես ՔԱՅԼ 3-ում
     }
   );
 }
@@ -2082,7 +2062,7 @@ function renderMessageText(text) {
             <span class="portal-post-link"
                 data-post="${postId}"
                 style="color:#4da3ff;cursor:pointer;text-decoration:underline;">
-                🔗 Բացել գրառումը
+                🔗 Открыть пост
             </span>
         `;
     }
@@ -2098,7 +2078,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
     const avatar = msg.avatar || "/portal/default.png";
     const messageId = msg.id || msg.sender + '_' + Date.now();
     const chatType = isDM ? "dm" : "global";
-    const userStatus = msg.status_level || 0;  // ← ԱՅՍ ԱՎԵԼԱՑՐՈՒ
+    const userStatus = msg.status_level || 0;  
     const senderId = msg.sender || msg.user_id || 0;
 
     let replyHtml = "";
@@ -2137,7 +2117,7 @@ function renderChatMessage(msg, isMe = false, isDM = false) {
                     ${tierReactions}
                 </div>
                 <div class="inline-actions">
-                    ${!isMe ? `<div class="inline-action domino-star-btn domino-star-button" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${senderId});closeAllInlineMenus();"><span class="domino-star-icon domino-star-animated"> 👾 </span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 USD)</span></div>` : ''}
+                    ${!isMe ? `<div class="inline-action domino-star-btn domino-star-button" onclick="event.stopPropagation();sendDominoStar('${messageId}', '${chatType}', ${senderId});closeAllInlineMenus();"><span class="domino-star-icon domino-star-animated"> 👾 </span> Domino Star <span style="font-size:11px;opacity:0.7;">(0.20 DOMIT)</span></div>` : ''}
                     ${isDM ? `<div class="inline-action" onclick="event.stopPropagation();setReply('${messageId}', \`${escapedText}\`, '${username.replace(/'/g, "\\'")}');closeAllInlineMenus();"><span style="font-size:18px;">↩️</span> Reply</div>` : ''}
                     <div class="inline-action" onclick="event.stopPropagation();copyMessage(\`${escapedText}\`);closeAllInlineMenus();"><span style="font-size:18px;">📋</span> Copy</div>
                                         <div class="inline-action" onclick="event.stopPropagation();openForwardModal('${messageId}', '${chatType}');closeAllInlineMenus();"><span style="font-size:18px;">📩</span> Forward</div>
@@ -2197,7 +2177,6 @@ async function likeComment(commentId) {
         const data = await res.json();
         if (!data.ok) return;
 
-        // 🔥 գտնում ենք հենց սեղմված 👍 span-ը
         const btn = document.querySelector(
             `.comment-like-btn[data-id="${commentId}"]`
         );
@@ -2248,14 +2227,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getShareLink() {
-        // Deep link դեպի քո bot-ը, որը կբացի հենց տվյալ post-ը
         return `https://t.me/doominobot?startapp=post_${SHARE_POST_ID}`;
     }
 
     if (copyBtn) {
         copyBtn.onclick = async () => {
             await navigator.clipboard.writeText(getShareLink());
-            openInfo("Պատրաստ է", "Հղումը պատճենվեց 🙂");
+            openInfo("Готово", "Ссылка скопирован 🙂");
             closeShareModal();
         };
     }
@@ -2264,10 +2242,10 @@ document.addEventListener("DOMContentLoaded", () => {
         globalBtn.onclick = () => {
             socket.emit("global_send", {
                 user_id: viewerId,
-                message: `📢 Նոր գրառում\n${getSharePayload()}`
+                message: `📢 Новый пост\n${getSharePayload()}`
             });
 
-            openInfo("Տարածվեց", "Գրառումը ուղարկվեց Global Chat");
+            openInfo("Опубликовано!", "Пост отправлен в Global Chat.");
             closeShareModal();
         };
     }
@@ -2280,21 +2258,18 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".sub-btn").forEach(btn => {
         btn.addEventListener("click", () => {
 
-            // ակտիվ sub կոճակ
             document.querySelectorAll(".sub-btn")
                 .forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
 
             const sub = btn.dataset.sub;
 
-            // sub էջեր
             document.querySelectorAll(".sub-page")
                 .forEach(p => p.classList.remove("active"));
 
             const page = document.getElementById(sub);
             if (page) page.classList.add("active");
 
-            // 🔹 կապում ենք հին լոգիկան
             if (sub === "users") {
                 loadUsers("");
             }
@@ -2342,14 +2317,13 @@ async function openDMShare() {
 
     if (!popup || !list) return;
 
-    list.innerHTML = "Բեռնվում է...";
+    list.innerHTML = "Обработка...";
 
-    // Բերում ենք DM ունեցած օգտատերերին
     const res = await fetch(`/api/message/partners?uid=${viewerId}`);
     const data = await res.json();
 
     if (!data.ok || !data.users || data.users.length === 0) {
-        list.innerHTML = "Դեռ DM չունես";
+        list.innerHTML = "У вас пока нет сообщений.";
         popup.classList.remove("hidden");
         return;
     }
@@ -2397,7 +2371,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         if (checked.length === 0) {
-            openInfo("Սխալ", "Ընտրիր գոնե մեկ օգտատիրոջ");
+            openInfo("Ошибка", "Выберите хотя бы одного пользователя.");
             return;
         }
 
@@ -2418,7 +2392,7 @@ document.addEventListener("DOMContentLoaded", () => {
         closeDMShare();
         closeShareModal();
 
-        openInfo("Պատրաստ է", "Գրառումը ուղարկվեց DM-ով");
+        openInfo("Готово", "Пост отправлен в ЛС");
     };
 });
 
@@ -2484,7 +2458,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         const deltaX = e.touches[0].clientX - startX;
         
-        // Swipe RIGHT → ցույց տալ ժամը
         if (deltaX > 50) {
             currentWrapper.classList.add("swiped");
         } else {
@@ -2600,7 +2573,6 @@ function updateCharCounter() {
     
     const length = input.value.length;
     
-    // Get user status (պետք է global variable լինի)
     const maxLength = CURRENT_USER_STATUS >= 5 ? 500 : 200;
     
     counter.innerText = `${length}/${maxLength}`;
@@ -2795,7 +2767,7 @@ function showTypingIndicator(username, chatType) {
             color: #9ca3af;
             font-style: italic;
         ">
-            ${username} գրում է<span class="typing-dots">...</span>
+            ${username} Печатает<span class="typing-dots">...</span>
         </div>
     `;
     
@@ -2932,7 +2904,6 @@ let CURRENT_MENU_MESSAGE = null;
 function toggleInlineMenu(messageId, chatType, username, text, isMe, isDM) {
     const menu = document.getElementById(`inline-menu-${messageId}`);
     
-    // ✅ Եթե այս menu-ն արդեն բաց է, փակել
     if (menu && window.getComputedStyle(menu).display !== 'none') {
         menu.style.display = 'none';
         return;
@@ -3199,25 +3170,21 @@ function formatMessageTime(timestamp) {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     
-    // Մինչև 1 րոպե
-    if (diffMins < 1) return 'հենց նոր';
+    if (diffMins < 1) return 'Только что';
     
-    // Մինչև 60 րոպե
-    if (diffMins < 60) return `${diffMins} րոպե առաջ`;
+    if (diffMins < 60) return `${diffMins} мин. назад`;
     
-    // Մինչև 24 ժամ
-    if (diffHours < 24) return `${diffHours} ժամ առաջ`;
+    if (diffHours < 24) return `${diffHours} ч. назад`;
     
-    // Ավելի քան 24 ժամ - ցույց տալ ժամը
     const hours = date.getHours().toString().padStart(2, '0');
     const mins = date.getMinutes().toString().padStart(2, '0');
     
     if (diffDays === 0) {
         return `${hours}:${mins}`;
     } else if (diffDays === 1) {
-        return `Երեկ ${hours}:${mins}`;
+        return `Вчера ${hours}:${mins}`;
     } else if (diffDays < 7) {
-        const days = ['Կիր', 'Երկ', 'Երք', 'Չոր', 'Հինգ', 'Ուրբ', 'Շաբ'];
+        const days = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
         return `${days[date.getDay()]} ${hours}:${mins}`;
     } else {
         const day = date.getDate().toString().padStart(2, '0');
@@ -3296,7 +3263,7 @@ async function confirmDominoStar() {
             return;
         }
         updateFireCounter(messageId, data.fire_count);
-        showToast(`✨ Domino Star sent! New balance: ${data.new_balance.toFixed(2)} USD`);
+        showToast(`✨ Domino Star sent! New balance: ${data.new_balance.toFixed(2)} DOMIT`);
         triggerDominoStarAnimation(messageId);
     } catch (e) {
         console.error("sendDominoStar error:", e);
@@ -3522,10 +3489,10 @@ function updateUserOnlineStatus(userId, isOnline) {
         const profileStatus = document.getElementById("profile-status");
         if (profileStatus) {
             if (isOnline) {
-                profileStatus.textContent = "🟢 Օնլայն";
+                profileStatus.textContent = "🟢 В сети";
                 profileStatus.style.color = "#22c55e";
             } else {
-                profileStatus.textContent = "⚫ Օֆլայն";
+                profileStatus.textContent = "⚫ Не в сети";
                 profileStatus.style.color = "#6b7280";
             }
         }

@@ -18,13 +18,11 @@
     <!-- ✅ Mobile Performance Optimization -->
     <style>
       @media (max-width: 768px), (hover: none) {
-        /* ❌ Անջատել body backgrounds */
         body::before,
         body::after {
           display: none !important;
         }
         
-        /* ❌ Անջատել decorative elements */
         .inner-ring,
         .glass-reflect,
         .noise-overlay,
@@ -36,19 +34,16 @@
           display: none !important;
         }
         
-        /* ❌ Անջատել ԲՈԼՈՐ animations-ները */
         * {
           animation: none !important;
         }
         
-        /* ✅ Թողնել ՄԻԱՅՆ կարճ transitions */
         button,
         .task-btn,
         .task-card {
           transition: transform 0.15s ease, opacity 0.15s ease !important;
         }
         
-        /* ❌ Մնացածը - NO transition */
         *:not(button):not(.task-btn):not(.task-card) {
           transition: none !important;
         }
@@ -123,7 +118,7 @@
                 Monetize safe offers; no adult/gambling.
             </div>
             <div style="margin:6px 0 12px; font-size:13px; color:#ffd54f;">
-                Ավելի բարձր վճարվելու համար օգտագործեք ՎՊՆ՝ US ռեգյոնով
+                Используйте VPN с регионом US для более высоких выплат.
             </div>
             <button onclick="openMonetag()" class="task-btn">Open ➜</button>
         </div>
@@ -239,16 +234,16 @@ function showRewardAccum(pending, country) {
   <div style="height:48px; display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#15151a; border-bottom:1px solid #222;">
     <div id="tb-url" style="font-size:12px; color:#9aa; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:70%;"></div>
     <div style="display:flex; gap:8px;">
-      <button id="tb-external" class="task-btn">Արտաքին</button>
-      <button id="tb-reload" class="task-btn">Վերաբեռնել</button>
-      <button id="tb-close" class="task-btn">Փակել</button>
+      <button id="tb-external" class="task-btn">Внешний</button>
+      <button id="tb-reload" class="task-btn">Обновить</button>
+      <button id="tb-close" class="task-btn">Закрыть</button>
     </div>
   </div>
   <iframe id="task-browser-frame" src="about:blank" style="width:100%; height:calc(100vh - 48px); border:0;" sandbox="allow-forms allow-popups allow-scripts allow-same-origin allow-top-navigation-by-user-activation"></iframe>
   
 </div>
 
-<div id="reward-toast"><div class="title">Վճարում</div><div class="sub"><span id="rt-amount"></span> <span id="rt-country"></span></div></div>
+<div id="reward-toast"><div class="title">Выплата</div><div class="sub"><span id="rt-amount"></span> <span id="rt-country"></span></div></div>
 
 <script src="tasks.js"></script>
 </body>

@@ -36,7 +36,6 @@ function disableHeavyAnimations() {
   document.head.appendChild(style);
 }
 
-// ✅ Auto-disable animations ԱՆՄԻՋԱՊԵՍ mobile-ում
 if (isMobileOrLowEnd()) {
   console.log('📱 Mobile detected. Performance mode enabled.');
   if (document.readyState === 'loading') {
@@ -104,9 +103,9 @@ function showUsernameModal(){
   if (i) i.value = "";
   b.onclick = async function(){
     const name = i && i.value ? i.value.trim() : "";
-    if (!name || name.length < 3){ if (e) e.textContent = "Username-ը պետք է ≥ 3 սիմվոլ լինի"; return; }
+    if (!name || name.length < 3){ if (e) e.textContent = "Имя пользователя должно содержать не менее 3 символов."; return; }
     const ok = await checkUsernameAvailable(name);
-    if (!ok){ if (e) e.textContent = "Այդ անունը զբաղված է"; return; }
+    if (!ok){ if (e) e.textContent = "Это имя уже занято."; return; }
     const r = await fetch(`/api/set_username`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: CURRENT_USER_ID, username: name }) });
     try { await r.json(); } catch(_){ }
     $("user-name").textContent = name;
@@ -219,8 +218,8 @@ async function loadMiningPlans() {
         box.innerHTML = "";
 
         data.plans.forEach(plan => {
-            const priceDomit = Number(plan.price_usd);          // հիմա DOMIT = USD
-            const speedDomitHr = Number(plan.domit_per_hour);   // backend-ից գալիս է
+            const priceDomit = Number(plan.price_usd);          
+            const speedDomitHr = Number(plan.domit_per_hour);   
 
             const el = document.createElement("div");
             el.className = "plan-card";
@@ -229,7 +228,7 @@ async function loadMiningPlans() {
                 <div class="plan-price">${priceDomit.toFixed(2)} DOMIT</div>
                 <div class="plan-speed">${speedDomitHr.toFixed(2)} DOMIT/hr</div>
                 <button class="btn buy-btn" data-plan-id="${plan.id}">
-                  Գնել
+                  Купить
                 </button>
             `;
             box.appendChild(el);
@@ -279,7 +278,6 @@ const tgParam = new URLSearchParams(window.location.search)
 
 if (tgParam && tgParam.startsWith("post_")) {
     const postId = tgParam.replace("post_", "");
-    // բացիր comments drawer կամ scroll արա
 }
 
 
@@ -292,7 +290,7 @@ async function buyMiningPlan(planId) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 user_id: CURRENT_USER_ID,
-                plan_id: Number(planId)   // ⬅️ ԱՂԲՅՈւՐԸ plan_id է, ոչ թե tier
+                plan_id: Number(planId)   
             })
         });
 
@@ -300,16 +298,16 @@ async function buyMiningPlan(planId) {
 
         if (!data.ok) {
             if (tg) {
-                let msg = "❌ " + (data.error || "Սխալ առաջացավ");
+                let msg = "❌ " + (data.error || "Произошла ошибка.");
                 if (data.error === "low_balance") {
-                    msg = "❌ Բավարար DOMIT չունես այս փաթեթի համար";
+                    msg = "❌ У вас недостаточно DOMIT для этого пакета.";
                 }
                 tg.showPopup({ message: msg });
             }
             return;
         }
 
-        if (tg) tg.showPopup({ message: "✅ Փաթեթը ակտիվացված է" });
+        if (tg) tg.showPopup({ message: "✅ Пакет активирован" });
 
         if (data.user) {
             balance = data.user.balance_usd;
@@ -319,7 +317,7 @@ async function buyMiningPlan(planId) {
         loadMiningState();
     } catch (err) {
         console.log("❌ buyMiningPlan error", err);
-        if (tg) tg.showPopup({ message: "❌ Սերվերի սխալ" });
+        if (tg) tg.showPopup({ message: "❌ Ошибка сервера" });
     }
 }
 
@@ -352,14 +350,14 @@ document.getElementById("mining-claim-btn")
         const claimedDomit = data.claimed_usd || 0;
         if (tg) {
             tg.showPopup({
-                message: `✅ ${claimedDomit.toFixed(2)} DOMIT փոխանցվեց ձեր բալանսին`
+                message: `✅ ${claimedDomit.toFixed(2)} DOMIT переведено на ваш баланс`
             });
         }
 
         loadMiningState();
     } catch (err) {
         console.log("❌ loadMiningState error", err);
-        if (tg) tg.showPopup({ message: "❌ Սերվերի սխալ" });
+        if (tg) tg.showPopup({ message: "❌ Ошибка сервера" });
     }
 });
 
@@ -407,7 +405,7 @@ function openTasks() {
 
 function initFromTelegram() {
   if (!tg) {
-    console.log("⚠️ Telegram WebApp object չկա (բացված է բրաուզերում)");
+    console.log("⚠️ Telegram WebApp object нет (открыто в браузере)");
     updateUserHeader();
     updateBalanceDisplay();
     return;
@@ -427,7 +425,7 @@ function initFromTelegram() {
     // Try to save wallet if already connected
     saveWalletToBackend();
   } else {
-    console.log("⚠️ user object չկա initDataUnsafe-ից");
+    console.log("⚠️ user object нет от initDataUnsafe");
   }
 
   // 🧠 save deep-linked post for portal
@@ -450,12 +448,12 @@ document.querySelector(".top h1").addEventListener("click", () => {
 
 async function loadUserFromBackend() {
   if (!CURRENT_USER_ID) {
-    console.log("⛔ CURRENT_USER_ID չկա");
+    console.log("⛔ CURRENT_USER_ID нет");
     return;
   }
 
   const url = `${API_BASE}/api/user/${CURRENT_USER_ID}`;
-  console.log("🌐 Բեռնում ենք user տվյալները:", url);
+  console.log("🌐 Загрузка пользовательских данных:", url);
 
   try {
     const res = await fetch(url);
@@ -466,10 +464,9 @@ async function loadUserFromBackend() {
       return;
     }
 
-    // ← ՆԱԽ սահմանիր U-ն
+  
     const U = data.user;
 
-    // ← ՀԵՏՈ debug log-եր
     console.log("🔍 DEBUG: U.ref_count =", U.ref_count);
     console.log("🔍 DEBUG: element exists?", $("ref-total"));
 
@@ -483,7 +480,7 @@ async function loadUserFromBackend() {
 
     if ($("ref-total")) {
       $("ref-total").textContent = U.ref_count;
-      console.log("✅ ref-total թարմացվեց:", U.ref_count);
+      console.log("✅ ref-total обновлено:", U.ref_count);
     }
     if ($("ref-active")) $("ref-active").textContent = U.active_refs;
     if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " $";
@@ -576,15 +573,15 @@ if (walletSaveBtn) {
   walletSaveBtn.addEventListener("click", async () => {
     const value = walletInput.value.trim();
     if (!value) {
-      walletStatus.textContent = "Խնդրում ենք գրել wallet հասցեն։";
+      walletStatus.textContent = "Пожалуйста, введите адрес вашего кошелька.։";
       return;
     }
     if (!CURRENT_USER_ID) {
-      walletStatus.textContent = "Telegram user ID չգտանք։ Բացիր բոտից, ոչ թե browser-ից։";
+      walletStatus.textContent = "Идентификатор пользователя Telegram не найден. Открытие из бота, а не из браузера.։";
       return;
     }
 
-    walletStatus.textContent = "Պահպանում ենք wallet-ը…";
+    walletStatus.textContent = "Сохраняем wallet…";
 
     const url = `${API_BASE}/api/wallet_connect`;
     try {
@@ -598,26 +595,26 @@ if (walletSaveBtn) {
       });
 
       if (!res.ok) {
-        walletStatus.textContent = "Սխալ backend-ից (կվերանայենք հետո)։";
+        walletStatus.textContent = "Ошибка на стороне бэкэнда (проверю позже)։";
         return;
       }
 
       const data = await res.json();
       if (data.ok) {
         walletStatus.textContent =
-          "Wallet-ը հաջողությամբ պահպանված է։ Բոնուսը կավելացվի backend-ում 💰";
+          "Счет в кошельке успешно сохранен. Бонус будет зачислен в админку. 💰";
         if (data.user && typeof data.user.balance === "number") {
           balance = data.user.balance;
           updateBalanceDisplay();
         }
       } else {
         walletStatus.textContent =
-          data.error || "Չստացվեց պահպանել wallet-ը (backend պատասխան)։";
+          data.error || "Не удалось сохранить кошелек (ответ бэкэнда)։";
       }
     } catch (err) {
       console.log("❌ Wallet save error:", err);
       walletStatus.textContent =
-        "Չստացվեց կապվել սերվերին։ Խնդրում ենք փորձել ավելի ուշ։";
+        "Не удалось подключиться к серверу. Пожалуйста, попробуйте позже.։";
     }
   });
 }
@@ -630,16 +627,16 @@ if (depositBtn) {
 
     const amount = Number(depositInput.value);
     if (!amount || amount <= 0) {
-      depositStatus.textContent = "Գրիր ճիշտ TON գումար։";
+      depositStatus.textContent = "Укажите правильное количество тонн։";
       return;
     }
 
     if (!TON_WALLET) {
-      depositStatus.textContent = "Կցրու քո TON Wallet-ը։";
+      depositStatus.textContent = "Подключите свой кошелек TON.։";
       return;
     }
 
-    depositStatus.textContent = "Բացում ենք TON վճարման popup-ը…";
+    depositStatus.textContent = "Открытие всплывающего окна оплаты TON…";
 
     const RECEIVER_TON_ADDRESS = "UQC0hJAYzKWuRKVnUtu_jeHgbyxznehBllc63azIdeoPUBfW"; 
 
@@ -665,10 +662,10 @@ if (depositBtn) {
         } else {
           window.open(fallback, "_blank");
         }
-        if (window.confirm("Վճարումն ուղարկեցի՞ր Wallet-ում՝ նշված հասցեին.")) {
+        if (window.confirm("Вы отправили платеж на адрес, указанный в Кошельке?")) {
           result = { boc: "" };
         } else {
-          depositStatus.textContent = "Չհաստատվեց Wallet-ում. Փորձիր կրկին.";
+          depositStatus.textContent = "Проверка кошелька не удалась. Пожалуйста, попробуйте еще раз.";
           return;
         }
       }
@@ -677,7 +674,7 @@ if (depositBtn) {
     console.log("TON Transaction:", result);
 
     depositStatus.textContent =
-      "Դեպոզիտը ուղարկված է։ Tx hash: " + result.boc.slice(0, 10) + "...";
+      "Депозит отправлен.։ Tx hash: " + result.boc.slice(0, 10) + "...";
 
     const r = await fetch(`${API_BASE}/api/deposit`, {
       method: "POST",
@@ -686,9 +683,9 @@ if (depositBtn) {
     });
     const d = await r.json();
     if (!d.ok) {
-      depositStatus.textContent = "❌ " + (d.message || d.error || "Սխալ առաջացավ");
+      depositStatus.textContent = "❌ " + (d.message || d.error || "Произошла ошибка.");
     } else {
-      depositStatus.textContent = "✅ " + (d.message || "Դեպոզիտը գրանցվեց");
+      depositStatus.textContent = "✅ " + (d.message || "Зарегистрированный депозит");
       if (d.user) {
         balance = d.user.balance_usd;
         updateBalanceDisplay();
@@ -703,7 +700,7 @@ if (depositBtn) {
 
   } catch (err) {
     console.log("❌ TON popup error:", err);
-    depositStatus.textContent = "Օգտատերը չեղարկեց կամ սխալ առաջացավ։";
+    depositStatus.textContent = "Пользователь отменил заказ или произошла ошибка։";
   }
   });
 }
@@ -718,17 +715,17 @@ if (withdrawBtn) {
     const amount = Number(withdrawInput.value);
 
     if (!amount || amount <= 0) {
-      withdrawStatus.textContent = "❌ Գումարը գրեք ճիշտ։";
+      withdrawStatus.textContent = "❌ Укажите сумму правильно։";
       return;
     }
 
     if (!CURRENT_USER_ID) {
-      withdrawStatus.textContent = "❌ Բացեք WebApp-ը բոտի միջից, ոչ թե browser-ից։";
+      withdrawStatus.textContent = "❌ Откройте веб-приложение из самого бота, а не из браузера.";
       return;
     }
 
     if (amount > balance) {
-      withdrawStatus.textContent = "❌ Ձեր գրած գումարը գերազանցում է ձեր բալանսը։";
+      withdrawStatus.textContent = "❌ Введенная вами сумма превышает ваш баланс.";
       return;
     }
 
@@ -739,14 +736,14 @@ if (withdrawBtn) {
 
     if (refActive < 10 || refDeposits < 200) {
       withdrawStatus.innerHTML =
-        "❌ Չի ստացվի կանխիկացնել.<br><br>" +
-        "• Պետք է ≥ 10 ակտիվ հրավիրված օգտատեր<br>" +
-        "• Պետք է ակտիվ հրավիրված օգտատերի ≥ 200$ ընդհանուր ռեֆերալների դեպոզիտ<br>" +
-        "• Գումարը չի կարող գերազանցել բալանսը";
+        "❌ Не удалось снять наличные..<br><br>" +
+        "• Требуется не менее 10 активных приглашенных пользователей.<br>" +
+        "• Необходимо наличие активного приглашенного пользователя с общим реферальным депозитом ≥ 200 DOMIN.<br>" +
+        "• Сумма не может превышать остаток на счете.";
       return;
     }
 
-    withdrawStatus.textContent = "⏳ Ստուգում ենք…";
+    withdrawStatus.textContent = "⏳ Проверка…";
 
     fetch(`${API_BASE}/api/withdraw_request`, {
       method: "POST",
@@ -759,7 +756,7 @@ if (withdrawBtn) {
     .then(r => r.json())
     .then(data => {
       if (!data.ok) {
-        withdrawStatus.textContent = "❌ " + (data.message || "Սխալ առաջացավ");
+        withdrawStatus.textContent = "❌ " + (data.message || "Произошла ошибка.");
       } else {
         withdrawStatus.textContent = "✅ " + data.message;
 
@@ -773,7 +770,7 @@ if (withdrawBtn) {
       }
     })
     .catch(err => {
-      withdrawStatus.textContent = "❌ Սերվերի սխալ";
+      withdrawStatus.textContent = "❌ Ошибка сервера";
       console.error(err);
     });
 
@@ -793,7 +790,7 @@ function initReferralLink() {
     refLinkInput.value = link;
   } else {
     refLinkInput.value =
-      "user id չկա (Telegram WebApp-ից դուրս ես փորձարկում)";
+      "Нет идентификатора пользователя (тестирование вне веб-приложения Telegram)";
   }
 }
 
@@ -802,7 +799,7 @@ if (refCopyBtn) {
     if (!refLinkInput) return;
     refLinkInput.select();
     document.execCommand("copy");
-    showSuccessModal("✅ Կատարված է", "Հղումը պատճենված է հիշողության մեջ");
+    showSuccessModal("✅ Сделанный", "Ссылка скопирована в память");
   });
 }
 
@@ -976,7 +973,7 @@ if (portalOrb) {
 
 // 🔌 Socket.IO Real-time Connection
 const socket = io();
-let lastCandleTime = 0;  // ✅ Track վերջին candle-ի ժամանակը
+let lastCandleTime = 0;  
 
 socket.on('connect', () => {
   console.log('🟢 Realtime connected');

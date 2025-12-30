@@ -18,16 +18,16 @@
   <body>
     <div class="container">
       <div class="header">
-        <button class="btn back" onclick="goBack()">← Հետ</button>
-        <h1>🔢 Սուդոկու</h1>
+        <button class="btn back" onclick="goBack()">← Назад</button>
+        <h1>🔢 Sudoku</h1>
         <div class="balance">💎 <span id="domit-balance">0</span></div>
       </div>
 
       <div class="game-info">
         <div class="player-info" id="players-bar">
-          <div class="badge" id="my-name">Դու</div>
+          <div class="badge" id="my-name">Ты</div>
           <div class="vs">VS</div>
-          <div class="badge" id="opponent-name">Բոտ</div>
+          <div class="badge" id="opponent-name">Бот</div>
         </div>
         <div class="info-bar">
           <div id="timer" class="badge">00:00</div>
@@ -38,7 +38,7 @@
         </div>
       </div>
       <div class="info-bar" id="opponent-bar">
-        <div class="badge" id="opp-mistakes">Հակառակորդի սխալներ՝ 0/3</div>
+        <div class="badge" id="opp-mistakes">Ошибки соперника՝ 0/3</div>
         <div id="opp-progress" class="progress">
           <div id="opp-progress-bar" class="progress-bar" style="width:0%"></div>
           <span id="opp-progress-text" class="progress-text">0%</span>
@@ -48,12 +48,12 @@
       <div id="grid" class="grid"></div>
       <div class="panel">
         <div class="tools">
-          <button id="notesToggle" class="btn toggle" onclick="toggleNotes()">✎ Նշումներ</button>
-          <button id="hintBtn" class="btn toggle" onclick="useHint()">💡 Հուշում</button>
+          <button id="notesToggle" class="btn toggle" onclick="toggleNotes()">✎ Заметки</button>
+          <button id="hintBtn" class="btn toggle" onclick="useHint()">💡 Подсказка</button>
           <select id="difficulty" class="btn" onchange="changeDifficulty(this.value)" style="margin-left:6px;">
-            <option value="easy">Դյուրին</option>
-            <option value="medium" selected>Միջին</option>
-            <option value="hard">Դժվար</option>
+            <option value="easy">Легко</option>
+            <option value="medium" selected>Средне</option>
+            <option value="hard">Сложно</option>
           </select>
         </div>
         <div id="numbers"></div>
@@ -61,7 +61,7 @@
       </div>
       <div id="status" class="status"></div>
       <div style="text-align:center; margin-top:10px;">
-        <button id="newGame" class="btn" style="display:none;" onclick="restartGame()">🔄 Նոր խաղ</button>
+        <button id="newGame" class="btn" style="display:none;" onclick="restartGame()">🔄 Новая игра</button>
       </div>
     </div>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>

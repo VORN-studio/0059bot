@@ -62,7 +62,7 @@ function initSocket() {
     if (data.table_id == TABLE_ID) {
       opponentUsername = data.opponent_username || opponentUsername;
       if (mySymbol === 'X') {
-        document.getElementById("player2-name").textContent = opponentUsername || "Սպասում...";
+        document.getElementById("player2-name").textContent = opponentUsername || "Ожидание...";
       }
       updateTurnDisplay();
     }
@@ -113,7 +113,6 @@ async function loadTableState() {
 
     const js = await r.json();
     if (js.success) {
-      // Սահմանում ենք մեր նշանը՝ X (ստեղծող) կամ O (մտնող)
       mySymbol = Number(js.creator_id) === Number(USER_ID) ? 'X' : 'O';
       creatorUsername = js.creator_username || "";
       opponentUsername = js.opponent_username || "";
@@ -128,26 +127,23 @@ async function loadTableState() {
           document.getElementById("status").textContent = `Раунд ${rinfo.current}/3 | Счет՝ X:${rinfo.x} - O:${rinfo.o}`;
         }
       } else {
-        // Սպասում ենք հակառակորդին՝ պահում ենք դատարկ տախտակ
         board = Array(9).fill("");
         currentTurn = 'X';
-        document.getElementById("status").textContent = `Սպասում ենք հակառակորդին…`;
+        document.getElementById("status").textContent = `Ожидание соперника...`;
       }
 
-      // Անուններ և ինդիկատորներ
       if (mySymbol === 'X') {
-        document.getElementById("player1-name").textContent = "Դու";
-        document.getElementById("player2-name").textContent = opponentUsername || "Սպասում...";
+        document.getElementById("player1-name").textContent = "Ты";
+        document.getElementById("player2-name").textContent = opponentUsername || "Ожидание...";
       } else {
-        document.getElementById("player1-name").textContent = creatorUsername || "Սպասում...";
-        document.getElementById("player2-name").textContent = "Դու";
+        document.getElementById("player1-name").textContent = creatorUsername || "Ожидание...";
+        document.getElementById("player2-name").textContent = "Ты";
       }
 
       renderBoard();
       updateTurnDisplay();
       scheduleTurnTimer();
 
-      // Եթե խաղն ավարտված է՝ ցուցադրում ենք արդյունքը
       if (js.status === 'finished') {
         if (js.winner_id == USER_ID) {
           handleGameOver("win", js.bet * 1.75);
@@ -264,17 +260,17 @@ function updateTurnDisplay() {
   playerO.classList.toggle("active", currentTurn === 'O');
 
   if (currentTurn === mySymbol) {
-    turnInfo.textContent = "Քո հերթն է";
+    turnInfo.textContent = "Ваш ход";
     turnInfo.style.color = "#667eea";
   } else {
-    turnInfo.textContent = "Հակառակորդի հերթն է";
+    turnInfo.textContent = "Ход соперника";
     turnInfo.style.color = "#999";
   }
 
   const ti = document.getElementById("turn-indicator");
   const me = mySymbol === 'X' ? 'X' : 'O';
   const opp = mySymbol === 'X' ? (opponentUsername || '...') : (creatorUsername || '...');
-  ti.textContent = `Դու — ${me}, հակառակորդ՝ ${opp}`;
+  ti.textContent = `Ты — ${me}, Соперник՝ ${opp}`;
 }
 
 function clearTurnTimers() {
@@ -296,7 +292,7 @@ function scheduleTurnTimer() {
   const turnInfo = document.getElementById("turn-info");
   clearTurnTimers();
   if (currentTurn !== mySymbol) {
-    if (turnInfo) turnInfo.textContent = "Հակառակորդի հերթն է";
+    if (turnInfo) turnInfo.textContent = "Ход соперника";
     return;
   }
   const deadline = Date.now() + 20000;
@@ -304,7 +300,7 @@ function scheduleTurnTimer() {
     const left = Math.max(0, deadline - Date.now());
     const s = Math.ceil(left / 1000);
     if (turnInfo) {
-      turnInfo.textContent = `Քո հերթն է — ${s}վրկ`;
+      turnInfo.textContent = `Ваш ход — ${s}с`;
     }
   }, 250);
   turnTimeoutId = setTimeout(onTurnTimeout, 20000);
@@ -326,7 +322,7 @@ async function onTurnTimeout() {
       showMessage(`❌ ${js.message}`, 'lose');
     }
   } catch (e) {
-    showMessage("❌ Սերվերի սխալ", "lose");
+    showMessage("❌ Ошибка сервера", "lose");
   }
 }
 

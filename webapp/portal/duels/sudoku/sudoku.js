@@ -105,12 +105,12 @@ function renderGrid() {
 function renderMistakes(){
   const el = document.getElementById('mistakesInfo');
   if (!el) return;
-  el.textContent = `Սխալների սահման՝ ${mistakes}/${MAX_MISTAKES}`;
+  el.textContent = `Лимит ошибок՝ ${mistakes}/${MAX_MISTAKES}`;
 }
 
 function selectCell(r,c) {
   if (gameOver) return;
-  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
+  if (onlineMode && !bothJoined) { showStatus('Ожидание соперника...'); return; }
   selected = {r,c};
   renderGrid();
 }
@@ -139,7 +139,7 @@ function validNumberFinal(r,c,n){
 
 function placeNumber(n) {
   if (!selected || gameOver) return;
-  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
+  if (onlineMode && !bothJoined) { showStatus('Ожидание соперника...'); return; }
   const {r,c} = selected;
   if (fixed[r][c]) return;
   if (notesMode) {
@@ -161,7 +161,7 @@ function addMistake(){
   if (gameOver) return;
   mistakes = Math.min(mistakes + 1, MAX_MISTAKES);
   renderMistakes();
-  showStatus('Սխալ թիվ');
+  showStatus('Неверное число');
   if (onlineMode && socket) socket.emit('sudoku_mistake', { table_id: TABLE_ID, mistakes });
   if (mistakes >= MAX_MISTAKES) {
     endGame('lose');
@@ -171,7 +171,7 @@ function addMistake(){
 
 function clearCell(){
   if (!selected || gameOver) return;
-  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
+  if (onlineMode && !bothJoined) { showStatus('Ожидание соперника...'); return; }
   const {r,c} = selected;
   if (fixed[r][c]) return;
   grid[r][c] = 0;
@@ -188,7 +188,7 @@ function showStatus(msg){
 function endGame(result) {
   gameOver = true;
   const st = document.getElementById('status');
-  st.textContent = result==='win' ? '🎉 Հաղթեցիր' : '😔 Պարտվեցիր';
+  st.textContent = result==='win' ? '🎉 Вы выиграли!' : '😔 Вы проиграли';
   document.getElementById('newGame').style.display='inline-block';
   stopTimer();
 }
@@ -208,11 +208,11 @@ function restartGame() {
 }
 
 function toggleNotes(){
-  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
+  if (onlineMode && !bothJoined) { showStatus('Ожидание соперника...'); return; }
   notesMode = !notesMode;
   const btn = document.getElementById('notesToggle');
   if (btn) {
-    btn.textContent = notesMode ? '✎ Նշումներ — ON' : '✎ Նշումներ';
+    btn.textContent = notesMode ? '✎ Заметка — ON' : '✎ Заметка';
     btn.classList.toggle('on', notesMode);
   }
   if (notesMode) recomputeAllCandidates();
@@ -232,7 +232,7 @@ function recomputeAllCandidates(){
 
 function useHint(){
   if (gameOver || !solution) return;
-  if (onlineMode && !bothJoined) { showStatus('Սպասում ենք հակառակորդին…'); return; }
+  if (onlineMode && !bothJoined) { showStatus('Ожидание соперника...'); return; }
   for(let r=0;r<9;r++)for(let c=0;c<9;c++){
     if (grid[r][c]===0){
       grid[r][c]=solution[r][c];
@@ -245,7 +245,7 @@ function useHint(){
 }
 
 function changeDifficulty(val){
-  if (onlineMode) { showStatus('Օնլայն խաղում բարդությունը չի փոխվում'); return; }
+  if (onlineMode) { showStatus('Сложность в онлайн-игре не меняется'); return; }
   currentDifficulty = String(val||'medium');
   const cont = document.querySelector('.container');
   if (cont){
@@ -403,8 +403,8 @@ async function loadTableState(){
       opponentUsername = meIsCreator ? ouser : cuser;
       const myNameEl = document.getElementById('my-name');
       const oppNameEl = document.getElementById('opponent-name');
-      if (myNameEl) myNameEl.textContent = 'Դու';
-      if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Սպասում...';
+      if (myNameEl) myNameEl.textContent = 'Ты';
+      if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Ожидание...';
       bothJoined = !!ouser;
       if(st.type==='sudoku'){
         currentDifficulty = String(st.difficulty||'medium');
@@ -433,7 +433,7 @@ async function init() {
     socket.emit('join_table', { table_id: TABLE_ID });
     await loadTableState();
     renderMistakes();
-    if (bothJoined) { startTimer(true); } else { const st = document.getElementById('status'); if (st) st.textContent = 'Սպասում ենք հակառակորդին…'; }
+    if (bothJoined) { startTimer(true); } else { const st = document.getElementById('status'); if (st) st.textContent = 'Ожидание соперника...'; }
     resizeGrid();
     const ob = document.getElementById('opponent-bar'); if (ob) ob.style.display = 'flex';
     socket.on('table_joined', (data)=>{
@@ -441,7 +441,7 @@ async function init() {
         bothJoined = true;
         opponentUsername = data.opponent_username || opponentUsername;
         const oppNameEl = document.getElementById('opponent-name');
-        if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Հակառակորդ';
+        if (oppNameEl) oppNameEl.textContent = opponentUsername || 'Соперник';
         const st = document.getElementById('status'); if (st) st.textContent = '';
         const ob2 = document.getElementById('opponent-bar'); if (ob2) ob2.style.display = 'flex';
         startTimer(true);
@@ -457,7 +457,7 @@ async function init() {
         const uid = Number(data.user_id||0);
         if (uid && uid!==USER_ID) {
           const el = document.getElementById('opp-mistakes');
-          if (el) el.textContent = `Հակառակորդի սխալներ՝ ${data.mistakes}/${MAX_MISTAKES}`;
+          if (el) el.textContent = `Ошибки соперника՝ ${data.mistakes}/${MAX_MISTAKES}`;
         }
       }
     });

@@ -25,7 +25,7 @@
     <!-- TOP BAR -->
 <div class="portal-topbar">
     <button id="back-btn" class="back-btn">←</button>
-    <div class="portal-title">Domino Portal</div>
+    <div class="portal-title">Domino Portal Beta</div>
 
     <div class="portal-user">
         <img id="user-avatar" src="default.png">
@@ -95,16 +95,16 @@
                     cursor:pointer;
                     font-size:14px;
                 ">
-                ← Վերադառնալ Feed
+                ← Назад в ленту
             </button>
 
 
-            <h3>Հոսիաֆիդ</h3>
+            <h3>Лента</h3>
 
             <!-- POST CREATOR -->
             <div id="post-creator">
                 <textarea id="post-text"
-                    placeholder="Գրի՛ր մի բան…"
+                    placeholder="Напиши что-нибудь…"
                     rows="3"></textarea>
 
                 <div style="display:flex;gap:8px;margin-top:8px;">
@@ -123,11 +123,11 @@
             <!-- FEED SWITCH -->
             <div id="feed-switch">
                 <button class="feed-switch-btn active" data-feed="recommended">
-                    Ռեկոմենդ
+                    Рекомендации
                 </button>
 
                 <button class="feed-switch-btn" data-feed="mine">
-                    Իմ գրառումները
+                    Мои публикации
                 </button>
             </div>
 
@@ -137,7 +137,6 @@
         </div>
 
 
-        <!-- PLAY (նոր container, դեռ դատարկ) -->
         <div id="play" class="tab-page">
             <h3>⚔️ Play</h3>
 
@@ -162,7 +161,7 @@
             <div id="users" class="sub-page active">
 
                 <input id="user-search"
-                    placeholder="Փնտրել username…"
+                    placeholder="Поиск username..."
                     style="width:100%;padding:10px;border-radius:10px;margin-bottom:10px;">
 
                 <div id="users-list"></div>
@@ -281,12 +280,12 @@
 <!-- Username Setup Popup -->
 <div id="username-popup" class="popup hidden">
     <div class="popup-box">
-        <h3>Ընտրիր օգտագործողի անուն</h3>
-        <p>Այս անունը կօգտագործվի Domino Portal–ում</p>
+        <h3>Выберите имя пользователя</h3>
+        <p>Это имя будет использоваться в Domino Portal</p>
 
-        <input id="username-input" type="text" placeholder="օրինակ՝ user1234">
+        <input id="username-input" type="text" placeholder="Например: user1234">
 
-        <button id="username-save">Պահպանել</button>
+        <button id="username-save">Сохранить</button>
     </div>
 </div>
     <div id="settings-panel" class="settings-panel hidden">
@@ -294,22 +293,22 @@
         <h2>Settings</h2>
 
         <button class="settings-item" id="change-avatar-open">
-            Փոխել Avatar
+            Сменить аватар
         </button>
 
         <button class="settings-item" id="change-username-open">
-            Փոխել Username
+            Сменить имя пользователя
         </button>
 
         <div class="settings-item" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>Թույլատրել հաղորդագրությունների տարածումը</span>
+            <span>Разрешить пересылку сообщений</span>
             <label class="toggle-switch">
                 <input type="checkbox" id="allow-forward-toggle" checked>
                 <span class="toggle-slider"></span>
             </label>
         </div>
 
-        <button class="settings-close" id="settings-close">Փակել</button>
+        <button class="settings-close" id="settings-close">Закрыть</button>
     </div>
 </div>
 
@@ -336,15 +335,15 @@
 <div id="share-modal" class="popup hidden">
     <div class="popup-box">
 
-        <h3>Տարածել փոստը</h3>
+        <h3>Поделиться постом</h3>
         <p style="opacity:0.7;font-size:13px;">
-            Ընտրիր որտեղ տարածել
+            Поделиться в...
         </p>
 
         <div style="display:flex;flex-direction:column;gap:10px;margin:16px 0;">
 
             <button class="share-option-btn" id="share-dm">
-                👤 Տարածել DM-ով
+                👤 Поделиться в DM
             </button>
 
             <button class="share-option-btn" id="share-global">
@@ -352,13 +351,13 @@
             </button>
 
             <button class="share-option-btn" id="share-copy">
-                📋 Պատճենել հղումը
+                📋 Копировать ссылку
             </button>
 
         </div>
 
         <button class="settings-close" onclick="closeShareModal()">
-            Փակել
+            Закрыть
         </button>
 
     </div>
@@ -368,9 +367,9 @@
 <div id="dm-share-popup" class="popup hidden">
   <div class="popup-box">
 
-    <h3>Ուղարկել DM-ով</h3>
+    <h3>Отправить в DM</h3>
     <p style="opacity:0.7;font-size:13px;">
-      Ընտրիր օգտատերերին
+      Выберите пользователей
     </p>
 
     <div id="dm-share-list"
@@ -381,12 +380,12 @@
         style="width:100%;padding:12px;
         background:#3a8bff;border:none;
         border-radius:12px;color:white;">
-      Ուղարկել
+      Отправить
     </button>
 
     <button class="settings-close"
         onclick="closeDMShare()">
-      Փակել
+      Закрыть
     </button>
 
   </div>
@@ -446,12 +445,12 @@
                 <div class="domino-star-info">
                     <div class="domino-star-row">
                         <span>💰 Total Cost:</span>
-                        <span class="domino-star-price">0.20 USD</span>
+                        <span class="domino-star-price">0.20 DOMIT</span>
                     </div>
                 </div>
                 
                 <div class="domino-star-balance">
-                    Your Balance: <span id="domino-star-user-balance">0.00</span> USD
+                    Your Balance: <span id="domino-star-user-balance">0.00</span> DOMIT
                 </div>
                 
                 <div style="display:flex;gap:10px;margin-top:16px;">

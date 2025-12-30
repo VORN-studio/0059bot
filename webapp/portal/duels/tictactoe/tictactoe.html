@@ -18,7 +18,7 @@
 <body>
   <div class="game-container">
     <div class="header">
-      <button class="btn back" onclick="goBack()">← Հետ</button>
+      <button class="btn back" onclick="goBack()">← Назад</button>
       <h1>🎯 Tic-Tac-Toe</h1>
       <div class="balance">💎 <span id="domit-balance">0</span></div>
     </div>
@@ -27,15 +27,15 @@
       <div class="player-info">
         <div class="player active" id="player-x">
           <span class="symbol x-symbol">X</span>
-          <span id="player1-name">Դու</span>
+          <span id="player1-name">Вы</span>
         </div>
         <div class="vs">VS</div>
         <div class="player" id="player-o">
           <span class="symbol o-symbol">O</span>
-          <span id="player2-name">Սպասում...</span>
+          <span id="player2-name">Ожидание...</span>
         </div>
       </div>
-      <div class="turn-info" id="turn-info">Քո հերթն է</div>
+      <div class="turn-info" id="turn-info">Ваш ход</div>
     </div>
 
     <div class="game-board" id="game-board">
@@ -52,7 +52,7 @@
 
     <div class="status" id="status"></div>
     <div id="turn-indicator" style="text-align:center; margin-top:10px; color:#888; font-size:14px;"></div>
-        <button class="btn new-game" id="new-game-btn" style="display:none;" onclick="restartGame()">🔄 Նոր խաղ</button>
+        <button class="btn new-game" id="new-game-btn" style="display:none;" onclick="restartGame()">🔄 Новая игра</button>
   </div>
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>

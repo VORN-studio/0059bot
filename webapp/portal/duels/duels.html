@@ -21,7 +21,7 @@
 
     <!-- TOP BAR -->
     <div class="top-bar">
-      <button class="btn back" onclick="goBack()">← Վերադառնալ պորտալ</button>
+      <button class="btn back" onclick="goBack()">← Вернуться на портал</button>
       <div class="balances">
         <div class="badge">
           💎 DOMIT՝ <span id="domit-balance">0</span>
@@ -33,14 +33,14 @@
     <div class="card">
       <h2 class="game-title">⚔️ DUELS</h2>
       <p class="game-subtitle">
-        Խաղացիր բոտի կամ իրական խաղացողների հետ։ Հաղթիր և վաստակիր DOMIT։
+        Играй против бота или реальных игроков. Побеждай и зарабатывай DOMIT!
       </p>
 
       <!-- BOT GAMES SECTION -->
       <div class="section">
-        <h3 class="section-title">🤖 Բոտի հետ խաղ</h3>
+        <h3 class="section-title">🤖 Игра с ботом</h3>
         <p class="section-desc">
-          Վճարիր <strong>2 DOMIT</strong> → Խաղացիր անվերջ մինչև logout
+          Оплатить <strong>2 DOMIT</strong> → Играй бесконечно до выхода из системы.
         </p>
         <div class="bot-games">
           <button class="game-card" onclick="playBotGame('tictactoe')">
@@ -50,12 +50,12 @@
           </button>
           <button class="game-card" onclick="playBotGame('chess')">
             <span class="game-icon">♟️</span>
-            <span class="game-name">Շախմատ</span>
+            <span class="game-name">Chess</span>
             <span class="game-price">2 DOMIT</span>
           </button>
           <button class="game-card" onclick="playBotGame('sudoku')">
             <span class="game-icon">🔢</span>
-            <span class="game-name">Սուդոկու</span>
+            <span class="game-name">Sudoku</span>
             <span class="game-price">2 DOMIT</span>
           </button>
         </div>
@@ -63,29 +63,29 @@
 
       <!-- ONLINE TABLES SECTION -->
       <div class="section">
-        <h3 class="section-title">👥 Օնլայն սեղաններ</h3>
+        <h3 class="section-title">👥 Онлайн столы</h3>
         <div class="online-controls">
           <button class="btn primary" onclick="openCreateTableModal()">
-            ➕ Ստեղծել սեղան
+            ➕ Создать стол
           </button>
           <div class="online-count">
-            🟢 Օնլայն՝ <span id="online-count">0</span>
+            🟢 Онлайн՝ <span id="online-count">0</span>
           </div>
         </div>
 
         <!-- FILTERS INSIDE LIST HEADER -->
         <div class="filters-bar">
           <button id="flt-ttt" class="filter-btn active" title="Tic-Tac-Toe" onclick="setSelectedGame('tictactoe')">❌⭕</button>
-          <button id="flt-chess" class="filter-btn" title="Շախմատ" onclick="setSelectedGame('chess')">♟️</button>
-          <button id="flt-sudoku" class="filter-btn" title="Սուդոկու" onclick="setSelectedGame('sudoku')">🔢</button>
+          <button id="flt-chess" class="filter-btn" title="Chess" onclick="setSelectedGame('chess')">♟️</button>
+          <button id="flt-sudoku" class="filter-btn" title="Sudoku" onclick="setSelectedGame('sudoku')">🔢</button>
         </div>
 
         <!-- TABLES LIST -->
         <div id="tables-list" class="tables-list">
           <div class="empty-state">
             <span class="empty-icon">🎮</span>
-            <p>Ակտիվ սեղաններ չկան</p>
-            <p class="empty-hint">Ստեղծիր առաջին սեղանը։</p>
+            <p>Нет активных столов.</p>
+            <p class="empty-hint">Создайте первый стол!</p>
           </div>
         </div>
       </div>
@@ -99,47 +99,47 @@
   <!-- CREATE TABLE MODAL -->
   <div id="create-modal" class="modal hidden">
     <div class="modal-box">
-      <h3 class="modal-title">Ստեղծել նոր սեղան</h3>
+      <h3 class="modal-title">Создайте первый стол!</h3>
       <div class="modal-underline"></div>
 
-      <label class="modal-label">Խաղ</label>
+      <label class="modal-label">Игра</label>
       <select id="game-type" class="modal-select">
         <option value="tictactoe">❌⭕ Tic-Tac-Toe</option>
-        <option value="chess">♟️ Շախմատ</option>
-        <option value="sudoku">🔢 Սուդոկու</option>
+        <option value="chess">♟️ Chess</option>
+        <option value="sudoku">🔢 Sudoku</option>
       </select>
 
       <div id="color-row" style="display:none; margin-top:8px;">
-        <label class="modal-label">Շախմատի գույն</label>
+        <label class="modal-label">Выберите цвет</label>
         <select id="color-select" class="modal-select">
-          <option value="w">Սպիտակ</option>
-          <option value="b">Սև</option>
+          <option value="w">Белые</option>
+          <option value="b">Черные</option>
         </select>
       </div>
 
       <div id="sudoku-difficulty-row" style="display:none; margin-top:8px;">
-        <label class="modal-label">Սուդոկու բարդություն</label>
+        <label class="modal-label">Выберите сложность</label>
         <select id="sudoku-difficulty" class="modal-select">
-          <option value="easy">Դյուրին</option>
-          <option value="medium" selected>Միջին</option>
-          <option value="hard">Դժվար</option>
+          <option value="easy">Легко</option>
+          <option value="medium" selected>Средне</option>
+          <option value="hard">Сложно</option>
         </select>
       </div>
 
-      <label class="modal-label">Bet գումարը (DOMIT)</label>
+      <label class="modal-label">Сумма ставки</label>
       <input
         id="bet-amount"
         type="number"
         class="modal-input"
-        placeholder="Օրինակ՝ 10"
+        placeholder="Например: 10"
         min="1"
       />
 
       <div id="create-error" class="modal-error"></div>
 
       <div class="modal-actions">
-        <button class="btn modal-btn modal-cancel" onclick="closeCreateTableModal()">Չեղարկել</button>
-        <button class="btn modal-btn modal-ok" onclick="confirmCreateTable()">Ստեղծել</button>
+        <button class="btn modal-btn modal-cancel" onclick="closeCreateTableModal()">Отмена</button>
+        <button class="btn modal-btn modal-ok" onclick="confirmCreateTable()">Создать</button>
       </div>
     </div>
   </div>
@@ -147,20 +147,20 @@
   <!-- JOIN TABLE MODAL -->
   <div id="join-modal" class="modal hidden">
     <div class="modal-box">
-      <h3 class="modal-title">Միանալ սեղանին</h3>
+      <h3 class="modal-title">Присоединиться</h3>
       <div class="modal-underline"></div>
 
       <div class="join-info">
-        <p><strong>Խաղ՝</strong> <span id="join-game-type"></span></p>
+        <p><strong>Игра</strong> <span id="join-game-type"></span></p>
         <p><strong>Bet՝</strong> <span id="join-bet"></span> DOMIT</p>
-        <p><strong>Ստեղծող՝</strong> <span id="join-creator"></span></p>
+        <p><strong>Создатель</strong> <span id="join-creator"></span></p>
       </div>
 
       <div id="join-error" class="modal-error"></div>
 
       <div class="modal-actions">
-        <button class="btn modal-btn modal-cancel" onclick="closeJoinModal()">Չեղարկել</button>
-        <button class="btn modal-btn modal-ok" onclick="confirmJoinTable()">Միանալ</button>
+        <button class="btn modal-btn modal-cancel" onclick="closeJoinModal()">Отмена</button>
+        <button class="btn modal-btn modal-ok" onclick="confirmJoinTable()">Создать</button>
       </div>
     </div>
   </div>

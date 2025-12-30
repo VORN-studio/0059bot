@@ -104,7 +104,7 @@
         <button data-b="yandex" class="ubtn">Yandex</button>
       </div>
       <div style="margin-top:14px;">
-        <button id="complete-btn" class="ubtn" style="width:100%;">Ավարտեցի առաջադրանքը</button>
+        <button id="complete-btn" class="ubtn" style="width:100%;">Задание выполнено</button>
       </div>
     </div>
 
@@ -408,12 +408,12 @@
         };
         var endpoints = ['/api/task_complete', '/api/task_attempt_create'];
         (function tryNext(i){
-          if (i >= endpoints.length){ try { alert('❌ Սերվերի սխալ'); } catch(_ae){} return; }
+          if (i >= endpoints.length){ try { alert('❌ Ошибка сервера'); } catch(_ae){} return; }
           postCompleteTo(endpoints[i], payload).then(function(d){
             sendLog('complete_response', !!(d && d.ok), d && d.error ? d.error : '');
             if (d && d.ok) {
               window.__completed = true;
-              try { if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.showPopup({ message: '✅ Առաջադրանքը հաշվեց, գումարը ավելացվեց' }); } } catch(_p){}
+              try { if (window.Telegram && window.Telegram.WebApp) { window.Telegram.WebApp.showPopup({ message: '✅ Задание подтверждено. Средства зачислены на ваш баланс.' }); } } catch(_p){}
               try { window.location.href = '/webapp/tasks/index.html?uid=' + encodeURIComponent(uid); } catch(_r){}
             } else {
               tryNext(i+1);

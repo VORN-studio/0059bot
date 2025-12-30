@@ -18,22 +18,22 @@
 <body>
   <div class="container">
     <div class="header">
-      <button class="btn" onclick="goBack()">← Հետ</button>
-      <h1>♟️ Շախմատ</h1>
+      <button class="btn" onclick="goBack()">← Назад</button>
+      <h1>♟️ Chess</h1>
       <div class="balance">💎 <span id="domit-balance">0</span></div>
     </div>
     <div class="game-info">
       <div class="player-info turn" id="players-bar">
-        <span id="chess-my-name">Դու</span>
+        <span id="chess-my-name">Ты</span>
         <span class="vs">VS</span>
-        <span id="chess-opp-name">Բոտ</span>
+        <span id="chess-opp-name">Бот</span>
       </div>
-      <div id="turnInfo" class="turn">Քո հերթն է</div>
+      <div id="turnInfo" class="turn">Ваш ход</div>
     </div>
     <div id="board" class="board"></div>
     <div id="status" class="status"></div>
     <div style="text-align:center; margin-top:10px;">
-      <button id="newGame" class="btn" style="display:none;" onclick="restartGame()">🔄 Նոր խաղ</button>
+      <button id="newGame" class="btn" style="display:none;" onclick="restartGame()">🔄 Новая игра</button>
     </div>
   </div>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
