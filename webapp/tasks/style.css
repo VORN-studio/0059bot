@@ -151,6 +151,7 @@ body {
 
     /* հարթ սքրոլ, ավելի Web3-feel */
     scroll-behavior: smooth;
+    overflow-y: visible;
 
     /* iPhone / notch safe-area, Telegram WebApp-ի համար օգտակար */
     padding-bottom: env(safe-area-inset-bottom);
@@ -913,6 +914,7 @@ h2::after {
     gap: 18px;
 
     position: relative;
+    overflow: visible;
 
     /* glowing air aura on hover inside */
     animation: menuSoftGlow 12s ease-in-out infinite;
@@ -1125,6 +1127,7 @@ h2::after {
 
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+    overflow: visible;
 
     /* Holographic float animation */
     animation:
