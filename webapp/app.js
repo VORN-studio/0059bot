@@ -203,7 +203,7 @@ function updateUserHeader() {
 
 function updateBalanceDisplay() {
   const el = $("user-balance");
-  if (el) el.textContent = balance.toFixed(3) + " $";
+  if (el) el.textContent = balance.toFixed(3) + " DOMIT";
 }
 
 async function loadMiningPlans() {
