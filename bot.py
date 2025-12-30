@@ -6155,6 +6155,69 @@ async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🎁 {amount} DOMIT передано пользователю {target}-из фонда Burn"
     )
 
+async def reset_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+
+    await update.message.reply_text("🔄 Начинаю полный RESET…")
+
+    conn = None
+    try:
+        conn = db(); c = conn.cursor()
+
+        # Zero user balances
+        c.execute("UPDATE dom_users SET balance_usd=0, pending_micro_usd=COALESCE(pending_micro_usd,0)*0, total_deposit_usd=0, total_withdraw_usd=0")
+
+        # Burn account reset
+        c.execute("UPDATE dom_burn_account SET total_burned=0, last_updated=%s WHERE id=1", (int(time.time()),))
+        c.execute("TRUNCATE TABLE dom_burn_ledger RESTART IDENTITY")
+
+        # Portal data
+        c.execute("TRUNCATE TABLE dom_posts RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_comments RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_post_likes RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_comment_likes RESTART IDENTITY")
+
+        # Social/chat
+        c.execute("TRUNCATE TABLE dom_global_chat RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_messages RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_message_reactions RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_fire_reactions RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_dm_last_seen RESTART IDENTITY")
+
+        # Tasks/conversions
+        c.execute("TRUNCATE TABLE dom_task_attempts RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_task_completions RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_task_awards RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE conversions RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_click_events RESTART IDENTITY")
+
+        # Duels
+        c.execute("TRUNCATE TABLE dom_duels_tables RESTART IDENTITY")
+
+        # Mining user activations
+        c.execute("TRUNCATE TABLE dom_user_miners RESTART IDENTITY")
+
+        # Financial history
+        c.execute("TRUNCATE TABLE dom_deposits RESTART IDENTITY")
+        c.execute("TRUNCATE TABLE dom_withdrawals RESTART IDENTITY")
+
+        # Social follows
+        c.execute("TRUNCATE TABLE dom_follows RESTART IDENTITY")
+
+        conn.commit()
+        release_db(conn)
+        await update.message.reply_text("✅ RESET завершён. Всё начато с нуля.")
+    except Exception as e:
+        try:
+            if conn:
+                conn.rollback()
+                release_db(conn)
+        except Exception:
+            pass
+        await update.message.reply_text(f"❌ Ошибка при RESET: {e}")
+
 async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin command: Generate initial 24h DOMIT price data"""
     user_id = update.effective_user.id
@@ -6582,6 +6645,7 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("task_shorten", task_shorten))
             application.add_handler(CommandHandler("burn_stats", burn_stats))
             application.add_handler(CommandHandler("burn_reward", burn_reward))
+            application.add_handler(CommandHandler("reset", reset_cmd))
             application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
             application.add_handler(CommandHandler("init_domit_data", init_domit_data))
             application.add_handler(CommandHandler("set_domit_range", set_domit_range))
