@@ -5379,47 +5379,48 @@ def api_ad_monetag_reward():
     uid = int(data.get("uid") or 0)
     if uid <= 0:
         return jsonify({"ok": False, "error": "bad_uid"}), 200
-    
-    # 🌍 DYNAMIC REWARD SYSTEM BASED ON IP
+
     ip = _client_ip()
     country = _ip_country(ip) or "UNKNOWN"
-    
-    # Tier System
-    # Tier 1: US, UK, CA, AU, DE... (~$0.0005)
-    # Tier 2: FR, IT, ES, RU... (~$0.0002)
-    # Tier 3: Others (AM, IN...) (~$0.0001)
-    
+
     tier1 = ["US", "GB", "CA", "AU", "DE", "CH", "NO", "SE", "DK", "NZ"]
     tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
-    
+
     if country in tier1:
         reward = 0.0005
     elif country in tier2:
         reward = 0.0002
     else:
-        # CPM for Armenia/others is very low (~$0.20), so per click is ~$0.0002
-        # We give 50% = $0.0001
         reward = 0.0001
 
     conn = db(); c = conn.cursor()
-    c.execute(
-        """
-        UPDATE dom_users
-        SET balance_usd = COALESCE(balance_usd, 0) + %s
-        WHERE user_id = %s
-        RETURNING COALESCE(balance_usd, 0)
-        """,
-        (reward, uid)
-    )
-    row = c.fetchone()
-    conn.commit(); release_db(conn)
-    new_balance = float(row[0]) if row else 0.0
-    print(f"💰 Monetag Reward: uid={uid} ip={ip} country={country} reward={reward}")
+    try:
+        c.execute(
+            """
+            INSERT INTO dom_users_micro (user_id, pending_micro_usd)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id)
+            DO UPDATE SET pending_micro_usd = COALESCE(dom_users_micro.pending_micro_usd, 0) + EXCLUDED.pending_micro_usd
+            RETURNING pending_micro_usd
+            """,
+            (uid, reward)
+        )
+        row = c.fetchone()
+        conn.commit()
+        pending = float(row[0]) if row else 0.0
+    except Exception:
+        try: conn.rollback()
+        except Exception: pass
+        pending = 0.0
+    finally:
+        release_db(conn)
+
+    print(f"💰 Monetag Reward (pending): uid={uid} ip={ip} country={country} reward={reward}")
     return jsonify({
         "ok": True,
         "reward": reward,
-        "credited_usd": reward,
-        "balance": new_balance,
+        "credited_usd": 0.0,
+        "pending_micro": pending,
         "country": country,
         "is_tier1": (country in tier1)
     }), 200
