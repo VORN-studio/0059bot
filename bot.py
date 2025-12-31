@@ -4706,12 +4706,13 @@ def api_deposit():
     if not stats:
         return jsonify({"ok": False, "error": "user_not_found"}), 404
 
+    # Try live TON→USD rate; fall back to fixed DOMIT price if unavailable
     try:
         ton_rate = fetch_ton_rate() or 0.0
     except Exception:
         ton_rate = 0.0
     if ton_rate <= 0:
-        return jsonify({"ok": False, "error": "ton_rate_unavailable"}), 200
+        ton_rate = float(DOMIT_PRICE_USD)  # fallback 1 TON ≈ 1 DOMIT (USD)
 
     amount_usd = round(amount_ton * ton_rate, 6)
     apply_deposit(user_id, amount_usd)
