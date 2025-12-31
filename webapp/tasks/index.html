@@ -197,6 +197,15 @@ async function openMonetag() {
         const direct = d.url;
 
         try {
+          var plat = isIOS() ? 'ios' : (/Android/i.test(navigator.userAgent) ? 'android' : 'desktop');
+          var inTg = !!(window.Telegram && window.Telegram.WebApp);
+          await fetch('/api/track_click', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: direct, user_id: Number(uid), task_id: 0, evt: 'monetag_open', ok: true, platform: plat, in_telegram: inTg, ts: Date.now() })
+          });
+        } catch(_tc){}
+
+        try {
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
                 window.Telegram.WebApp.openLink(direct, { try_instant_view: false });
             } else if (isIOS()) {
@@ -232,6 +241,15 @@ async function openRichAds() {
         const d = await r.json();
         if (!d.ok || !d.url) { alert("RichAds not configured"); return; }
         const direct = d.url;
+
+        try {
+          var plat = isIOS() ? 'ios' : (/Android/i.test(navigator.userAgent) ? 'android' : 'desktop');
+          var inTg = !!(window.Telegram && window.Telegram.WebApp);
+          await fetch('/api/track_click', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: direct, user_id: Number(uid), task_id: 0, evt: 'richads_open', ok: true, platform: plat, in_telegram: inTg, ts: Date.now() })
+          });
+        } catch(_tc){}
 
         try {
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {

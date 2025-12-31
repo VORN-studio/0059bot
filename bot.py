@@ -5518,7 +5518,7 @@ def api_postback_richads():
 
         # Revenue amount from RichAds/tracker
         amount_str = (
-            data.get("revenue") or data.get("amount") or data.get("sum") or data.get("payout") or ""
+            data.get("revenue") or data.get("amount") or data.get("sum") or data.get("payout") or data.get("amount_usd") or data.get("profit") or ""
         )
 
         # User identification via subIDs
