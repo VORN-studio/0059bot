@@ -123,6 +123,16 @@
             </div>
             <button onclick="openMonetag()" class="task-btn">Open ➜</button>
         </div>
+        <div class="task-card">
+            <div style="margin-bottom:10px;">
+                <strong>RichAds Mainstream Direct Link</strong><br>
+                Safe mainstream CPM offers.
+            </div>
+            <div style="margin:6px 0 12px; font-size:13px; color:#ffd54f;">
+                Лучшие выплаты в Tier‑1 (US/GB/CA/AU/DE).
+            </div>
+            <button onclick="openRichAds()" class="task-btn">Open ➜</button>
+        </div>
 </div>
 
 
@@ -184,6 +194,43 @@ async function openMonetag() {
         const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
         const d = await r.json();
         if (!d.ok || !d.url) { alert("Monetag not configured"); return; }
+        const direct = d.url;
+
+        try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                window.Telegram.WebApp.openLink(direct, { try_instant_view: false });
+            } else if (isIOS()) {
+                window.location.href = direct;
+            } else {
+                window.open(direct, "_blank");
+            }
+        } catch(_o){ window.location.href = direct; }
+    } catch(e) { alert("Network error"); }
+}
+async function openRichAds() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (!uid) { alert("User ID missing!"); return; }
+    try {
+        try { if (typeof show_10289760 === 'function') { show_10289760(); } } catch(_e){}
+        try {
+            const rr = await fetch('/api/ad/richads_reward', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: Number(uid) })
+            });
+            const js = await rr.json();
+            if (js && js.ok) {
+                try { loadBalance(); } catch(_l){}
+                var credited = Number(js.credited_usd||0);
+                var pending = Number(js.pending_micro||0);
+                var cc = js.country || "-";
+                if (credited > 0) { showRewardToast(credited, cc); }
+                else { showRewardAccum(pending, cc); }
+            }
+        } catch(_r){}
+
+        const r = await fetch(`/api/richads/link?uid=${encodeURIComponent(uid)}&task_id=0`);
+        const d = await r.json();
+        if (!d.ok || !d.url) { alert("RichAds not configured"); return; }
         const direct = d.url;
 
         try {

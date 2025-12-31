@@ -122,6 +122,10 @@ MONETAG_SMARTLINKS = {
     "CA": os.getenv("MONETAG_SMARTLINK_CA", "").strip(),
     "AU": os.getenv("MONETAG_SMARTLINK_AU", "").strip(),
 }
+RICHADS_MAINSTREAM_URL = os.getenv("RICHADS_MAINSTREAM_URL", "").strip()
+if not RICHADS_MAINSTREAM_URL:
+    RICHADS_MAINSTREAM_URL = "https://11745.xml.4armn.com/direct-link?pubid=995911&siteid=[SITE_ID]"
+RICHADS_SITE_ID = os.getenv("RICHADS_SITE_ID", "5159").strip()
 FORCED_GEO = (os.getenv("FORCED_GEO", "US") or "US").strip().upper()
 
 def _client_ip():
@@ -3602,6 +3606,13 @@ def init_db():
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_users_micro (
+            user_id BIGINT PRIMARY KEY,
+            pending_micro_usd NUMERIC(18,6) DEFAULT 0
+        )
+    """)
+
     # Global chat cooldowns table
     c.execute("""
         CREATE TABLE IF NOT EXISTS dom_global_chat_cooldowns (
@@ -5373,6 +5384,30 @@ def api_monetag_link():
     except Exception:
         return jsonify({"ok": False, "error": "bad_url"}), 200
 
+@app_web.route("/api/richads/link")
+def api_richads_link():
+    uid = request.args.get("uid", type=int)
+    task_id = request.args.get("task_id", type=int) or 0
+    url = (RICHADS_MAINSTREAM_URL or "").replace("[SITE_ID]", RICHADS_SITE_ID)
+    if not url:
+        return jsonify({"ok": False, "error": "not_configured"}), 200
+    try:
+        import urllib.parse
+        p = urllib.parse.urlparse(url)
+        q = urllib.parse.parse_qs(p.query)
+        v_uid = str(uid or 0)
+        v_tid = str(task_id or 0)
+        q.setdefault("sub1", [v_uid])
+        q.setdefault("sub2", [v_tid])
+        q.setdefault("subid", [v_uid])
+        q.setdefault("aff_sub", [v_uid])
+        q.setdefault("aff_sub2", [v_tid])
+        new_q = urllib.parse.urlencode({k: v[0] for k, v in q.items()})
+        final = urllib.parse.urlunparse((p.scheme, p.netloc, p.path, p.params, new_q, p.fragment))
+        return jsonify({"ok": True, "url": final})
+    except Exception:
+        return jsonify({"ok": False, "error": "bad_url"}), 200
+
 @app_web.route("/api/ad/monetag_reward", methods=["POST"])
 def api_ad_monetag_reward():
     data = request.get_json(force=True, silent=True) or {}
@@ -5424,6 +5459,153 @@ def api_ad_monetag_reward():
         "country": country,
         "is_tier1": (country in tier1)
     }), 200
+
+@app_web.route("/api/ad/richads_reward", methods=["POST"])
+def api_ad_richads_reward():
+    data = request.get_json(force=True, silent=True) or {}
+    uid = int(data.get("uid") or 0)
+    if uid <= 0:
+        return jsonify({"ok": False, "error": "bad_uid"}), 200
+    ip = _client_ip()
+    country = _ip_country(ip) or "UNKNOWN"
+    tier1 = ["US", "GB", "CA", "AU", "DE", "CH", "NO", "SE", "DK", "NZ"]
+    tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
+    if country in tier1:
+        reward = 0.0005
+    elif country in tier2:
+        reward = 0.0002
+    else:
+        reward = 0.0001
+    conn = db(); c = conn.cursor()
+    try:
+        c.execute(
+            """
+            INSERT INTO dom_users_micro (user_id, pending_micro_usd)
+            VALUES (%s, %s)
+            ON CONFLICT (user_id)
+            DO UPDATE SET pending_micro_usd = COALESCE(dom_users_micro.pending_micro_usd, 0) + EXCLUDED.pending_micro_usd
+            RETURNING pending_micro_usd
+            """,
+            (uid, reward)
+        )
+        row = c.fetchone(); conn.commit()
+        pending = float(row[0]) if row else 0.0
+    except Exception:
+        try: conn.rollback()
+        except Exception: pass
+        pending = 0.0
+    finally:
+        release_db(conn)
+    print(f"💰 RichAds Reward (pending): uid={uid} ip={ip} country={country} reward={reward}")
+    return jsonify({
+        "ok": True,
+        "reward": reward,
+        "credited_usd": 0.0,
+        "pending_micro": pending,
+        "country": country,
+        "is_tier1": (country in tier1)
+    }), 200
+
+# ================= RICHADS POSTBACK (CONFIRMED CONVERSIONS) =================
+@app_web.route("/api/postback/richads", methods=["GET", "POST"])
+def api_postback_richads():
+    try:
+        data = request.args if request.method == "GET" else request.form
+
+        # Flexible field mapping
+        status = str(data.get("status") or "1").strip()  # '1' credit, '2' chargeback
+        txid = data.get("tx") or data.get("tid") or data.get("clickid") or data.get("transaction_id") or ""
+
+        # Revenue amount from RichAds/tracker
+        amount_str = (
+            data.get("revenue") or data.get("amount") or data.get("sum") or data.get("payout") or ""
+        )
+
+        # User identification via subIDs
+        uid_str = (
+            data.get("sub1") or data.get("subid") or data.get("aff_sub") or data.get("u1") or data.get("uid") or ""
+        )
+
+        if not amount_str or not uid_str:
+            return jsonify({"ok": False, "error": "missing_params"}), 400
+
+        uid = int(float(uid_str))  # tolerate string/float values
+        amount = float(amount_str)
+        credited = amount * 0.5
+
+        conn = db(); c = conn.cursor()
+
+        # De-duplication by status marker
+        status_key = f"richads_{txid or int(time.time())}"
+        c.execute("SELECT 1 FROM dom_deposits WHERE status = %s AND user_id = %s", (status_key, uid))
+        if c.fetchone():
+            release_db(conn)
+            return "OK", 200
+
+        now = int(time.time())
+        if status == "2":  # chargeback
+            c.execute(
+                """
+                INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (uid, -credited, f"richads_cb_{txid or now}", now)
+            )
+            c.execute(
+                """
+                UPDATE dom_users
+                   SET balance_usd = GREATEST(COALESCE(balance_usd, 0) - %s, 0),
+                       total_deposit_usd = GREATEST(COALESCE(total_deposit_usd, 0) - %s, 0)
+                 WHERE user_id = %s
+                """,
+                (credited, credited, uid)
+            )
+        else:  # credit
+            c.execute(
+                """
+                INSERT INTO dom_deposits (user_id, amount_usd, status, created_at)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (uid, credited, status_key, now)
+            )
+            c.execute(
+                """
+                UPDATE dom_users
+                   SET balance_usd = COALESCE(balance_usd, 0) + %s,
+                       total_deposit_usd = COALESCE(total_deposit_usd, 0) + %s
+                 WHERE user_id = %s
+                """,
+                (credited, credited, uid)
+            )
+
+            # Optional: decrease pending micro by credited amount (cap at 0)
+            try:
+                c.execute(
+                    """
+                    UPDATE dom_users_micro
+                       SET pending_micro_usd = GREATEST(COALESCE(pending_micro_usd, 0) - %s, 0)
+                     WHERE user_id = %s
+                    """,
+                    (credited, uid)
+                )
+            except Exception:
+                pass
+
+        conn.commit(); release_db(conn)
+
+        try:
+            realtime_emit("balance_update", {
+                "user_id": uid,
+                "amount": credited if status != "2" else -credited,
+                "source": "richads"
+            }, room=f"user_{uid}")
+        except Exception as e:
+            logger.error(f"Socket emit error: {e}")
+
+        return "OK", 200
+    except Exception as e:
+        logger.exception("RichAds Postback Error")
+        return "Error", 500
 
 @app_web.route("/api/mining/plans", methods=["GET"])
 def api_mining_plans():
