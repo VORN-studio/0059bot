@@ -162,21 +162,7 @@ async function openMonetag() {
     const uid = new URLSearchParams(window.location.search).get("uid");
     if (!uid) { alert("User ID missing!"); return; }
     try {
-        const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
-        const d = await r.json();
-        if (!d.ok || !d.url) { alert("Monetag not configured"); return; }
-        const direct = d.url;
-
-        try {
-            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-                window.Telegram.WebApp.openLink(direct, { try_instant_view: false });
-            } else if (isIOS()) {
-                window.location.href = direct;
-            } else {
-                window.open(direct, "_blank");
-            }
-        } catch(_o){ window.location.href = direct; }
-
+        // Reward BEFORE opening link to avoid page unload cancelling request
         try { if (typeof show_10289760 === 'function') { show_10289760(); } } catch(_e){}
         try {
             const rr = await fetch('/api/ad/monetag_reward', {
@@ -193,6 +179,21 @@ async function openMonetag() {
                 else { showRewardAccum(pending, cc); }
             }
         } catch(_r){}
+
+        const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
+        const d = await r.json();
+        if (!d.ok || !d.url) { alert("Monetag not configured"); return; }
+        const direct = d.url;
+
+        try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                window.Telegram.WebApp.openLink(direct, { try_instant_view: false });
+            } else if (isIOS()) {
+                window.location.href = direct;
+            } else {
+                window.open(direct, "_blank");
+            }
+        } catch(_o){ window.location.href = direct; }
     } catch(e) { alert("Network error"); }
 }
 function showRewardToast(amount, country) {
