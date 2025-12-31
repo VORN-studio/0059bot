@@ -184,7 +184,7 @@ async function performTask(taskId) {
         });
         const data = await res.json();
         if (!data.ok) {
-            if (btn) btn.textContent = `Выполнитьլ → +${task.reward}`;
+            if (btn) btn.textContent = `Выполнить → +${task.reward}`;
             alert("❌ Ошибка при генерации ссылки");
             return;
         }
@@ -200,14 +200,15 @@ async function performTask(taskId) {
             }
         } catch(_pm) {}
         try {
+            var isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
                 window.Telegram.WebApp.openLink(directU, { try_instant_view: false });
+            } else if (isiOS) {
+                window.location.href = directU;
             } else {
                 try { window.open(directU, "_blank"); } catch(e) { window.location.href = directU; }
             }
-        } catch(_e) {
-            window.location.href = directU;
-        }
+        } catch(_e) { window.location.href = directU; }
         try { openTaskBrowser(directU); } catch(_m) {}
     } catch (e) {
         if (btn) btn.textContent = `Выполнить → +${task.reward}`;

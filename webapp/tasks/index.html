@@ -139,67 +139,60 @@
 </div>
 
 <script>
+function isIOS(){ return /iPhone|iPad|iPod/i.test(navigator.userAgent); }
+
 function openCpxResearch() {
     const uid = new URLSearchParams(window.location.search).get("uid");
-    if (!uid) {
-        alert("User ID missing!");
-        return;
-    }
-    // TODO: Enter your CPX App ID here
-    const appId = "30681"; 
-    
-    if (appId === "YOUR_APP_ID") {
-        alert("CPX App ID not configured yet. Please contact admin.");
-        return;
-    }
-
+    if (!uid) { alert("User ID missing!"); return; }
+    const appId = "30681";
     const url = `https://offers.cpx-research.com/index.php?app_id=${appId}&ext_user_id=${uid}`;
-    
-    // Open in external browser or Telegram WebApp
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
-        window.Telegram.WebApp.openLink(url);
-    } else {
-        window.open(url, "_blank");
-    }
+
+    try {
+        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+            window.Telegram.WebApp.openLink(url, { try_instant_view: false });
+        } else if (isIOS()) {
+            window.location.href = url;
+        } else {
+            window.open(url, "_blank");
+        }
+    } catch(_){ window.location.href = url; }
 }
 
 async function openMonetag() {
     const uid = new URLSearchParams(window.location.search).get("uid");
     if (!uid) { alert("User ID missing!"); return; }
     try {
-        if (typeof show_10289760 === 'function') {
-            try { await show_10289760(); } catch(_e){}
-        }
-        try {
-            const rr = await fetch('/api/ad/monetag_reward', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: Number(uid) })
-            });
-            try {
-                const js = await rr.json();
-                if (js && js.ok) {
-                    try { loadBalance(); } catch(_l){}
-                    var credited = Number(js.credited_usd||0);
-                    var pending = Number(js.pending_micro||0);
-                    var cc = js.country || "-";
-                    if (credited > 0) {
-                        showRewardToast(credited, cc);
-                    } else {
-                        showRewardAccum(pending, cc);
-                    }
-                }
-            } catch(_j){}
-        } catch(_r) {}
         const r = await fetch(`/api/monetag/link?uid=${encodeURIComponent(uid)}&task_id=0`);
         const d = await r.json();
         if (!d.ok || !d.url) { alert("Monetag not configured"); return; }
         const direct = d.url;
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
-            window.Telegram.WebApp.openLink(direct);
-        } else {
-            window.open(direct, "_blank");
-        }
+
+        try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+                window.Telegram.WebApp.openLink(direct, { try_instant_view: false });
+            } else if (isIOS()) {
+                window.location.href = direct;
+            } else {
+                window.open(direct, "_blank");
+            }
+        } catch(_o){ window.location.href = direct; }
+
+        try { if (typeof show_10289760 === 'function') { show_10289760(); } } catch(_e){}
+        try {
+            const rr = await fetch('/api/ad/monetag_reward', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid: Number(uid) })
+            });
+            const js = await rr.json();
+            if (js && js.ok) {
+                try { loadBalance(); } catch(_l){}
+                var credited = Number(js.credited_usd||0);
+                var pending = Number(js.pending_micro||0);
+                var cc = js.country || "-";
+                if (credited > 0) { showRewardToast(credited, cc); }
+                else { showRewardAccum(pending, cc); }
+            }
+        } catch(_r){}
     } catch(e) { alert("Network error"); }
 }
 function showRewardToast(amount, country) {
