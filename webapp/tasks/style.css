@@ -362,15 +362,6 @@ body::after {
     mix-blend-mode: screen;
     filter: blur(8px);
 
-    animation: scanBarMove 3.8s linear infinite;
-}
-
-@keyframes scanBarMove {
-    0% { top: -140px; opacity: 0; }
-    20% { opacity: 0.18; }
-    50% { top: 50%; opacity: 0.28; }
-    80% { opacity: 0.15; }
-    100% { top: 110%; opacity: 0; }
 }
 
 
@@ -932,14 +923,9 @@ h2::after {
     overflow: visible;
 
     /* glowing air aura on hover inside */
-    animation: menuSoftGlow 12s ease-in-out infinite;
+    /* animation removed for performance */
 }
 
-@keyframes menuSoftGlow {
-    0%   { filter: drop-shadow(0 0 2px rgba(0,255,255,0.15)); }
-    50%  { filter: drop-shadow(0 0 10px rgba(0,255,255,0.25)); }
-    100% { filter: drop-shadow(0 0 2px rgba(0,255,255,0.15)); }
-}
 
 
 /* ============================================================
@@ -966,14 +952,9 @@ h2::after {
     filter: blur(1.2px);
     opacity: 0.75;
 
-    animation: spinePulseUltra 2.8s ease-in-out infinite;
+    /* animation removed for performance */
 }
 
-@keyframes spinePulseUltra {
-    0%   { opacity: 0.55; transform: translateY(0); }
-    50%  { opacity: 0.9;  transform: translateY(-4px); }
-    100% { opacity: 0.55; transform: translateY(0); }
-}
 
 
 /* ============================================================
