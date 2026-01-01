@@ -1895,6 +1895,10 @@ h2::after {
   .screen { box-shadow: 0 -3px 12px rgba(0,0,0,0.7), 0 0 14px rgba(0,255,255,0.2), inset 0 0 12px rgba(255,255,255,0.05), inset 0 -8px 22px rgba(0,0,0,0.55); animation: screenFade 0.2s ease-out; }
   .task-card { backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
   .task-card button { backdrop-filter: blur(5px); box-shadow: 0 0 10px #00eaff2b, inset 0 0 6px #ffffff20; }
+  .balance-box strong { text-shadow: none; }
+  #tasks-balance { text-shadow: none; }
+  .task-menu::before { display: none; }
+  .task-menu { filter: none; }
 }
 
 @media (max-width: 768px), (hover: none) {

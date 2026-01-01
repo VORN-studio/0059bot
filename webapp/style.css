@@ -186,6 +186,10 @@ body::after {
   #app .noise-overlay { opacity: 0.05 !important; }
   #app .corner-node { box-shadow: 0 0 8px rgba(56,189,248,0.7), 0 0 12px rgba(56,189,248,0.4) !important; }
   #app { backdrop-filter: blur(10px) saturate(125%) !important; -webkit-backdrop-filter: blur(10px) saturate(125%) !important; }
+  .task-card { backdrop-filter: blur(5px) !important; -webkit-backdrop-filter: blur(5px) !important; box-shadow: none !important; }
+  .tasks-btn { box-shadow: 0 12px 24px rgba(0, 199, 255, 0.55), 0 0 0 1px rgba(0, 132, 255, 0.6), inset 0 0 10px rgba(0, 199, 255, 0.35) !important; }
+  .buttons .btn[data-section="tasks"] { box-shadow: 0 12px 24px rgba(6,182,212,0.55), 0 0 0 1px rgba(8,47,73,0.8), inset 0 0 10px rgba(6,182,212,0.35) !important; }
+}
 
   /* Stop animations on overlays to avoid compositing thrash */
   #app::before, #app::after,
