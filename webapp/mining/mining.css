@@ -1751,3 +1751,37 @@ body::after {
     overscroll-behavior-x: none;
   }
 }
+
+body::before { filter: blur(12px) brightness(1.05) !important; opacity: 0.35 !important; animation-duration: 120s !important; }
+body::after { opacity: 0.08 !important; animation-duration: 160s !important; }
+
+#top-bar { backdrop-filter: blur(6px) saturate(1.15) !important; -webkit-backdrop-filter: blur(6px) saturate(1.15) !important; }
+#top-bar::before { filter: blur(10px) !important; opacity: 0.35 !important; animation-duration: 48s !important; }
+#top-bar::after { opacity: 0.18 !important; }
+
+.title { animation-duration: 12s !important; filter: none !important; }
+.title::after { animation-duration: 6s !important; box-shadow: 0 0 10px rgba(56,189,248,0.6), 0 0 16px rgba(168,85,247,0.5), 0 0 20px rgba(34,197,94,0.5) !important; }
+
+#top-info { backdrop-filter: blur(6px) saturate(1.1) !important; -webkit-backdrop-filter: blur(6px) saturate(1.1) !important; box-shadow: inset 0 0 12px rgba(255,255,255,0.04), 0 6px 12px rgba(0,0,0,0.4) !important; }
+
+.card, .plan-card { box-shadow: 0 16px 38px rgba(15,23,42,0.85), 0 0 0 1px rgba(56,189,248,0.12) !important; }
+.card::before { opacity: 0.35 !important; animation-duration: 9s !important; }
+.card::after { filter: blur(20px) !important; opacity: 0.25 !important; }
+
+#active-miner-box h2 { text-shadow: 0 0 8px rgba(56,189,248,0.35), 0 0 14px rgba(168,85,247,0.25) !important; }
+#active-miner-box p { animation-duration: 10s !important; opacity: 0.9 !important; }
+#active-miner-box p::before { animation-duration: 3s !important; }
+
+#active-tier { box-shadow: 0 0 8px rgba(34,197,94,0.35), 0 0 14px rgba(16,185,129,0.25), inset 0 0 6px rgba(255,255,255,0.2) !important; }
+#active-tier::before { opacity: 0.28 !important; animation-duration: 6s !important; }
+#active-tier { animation-duration: 8s !important; }
+
+.btn { box-shadow: 0 10px 26px rgba(16,185,129,0.75), inset 0 0 10px rgba(255,255,255,0.12), 0 0 0 1px rgba(34,197,94,0.8) !important; }
+.btn::before { opacity: 0.55 !important; animation-duration: 6s !important; }
+#claim-btn { box-shadow: 0 10px 24px rgba(56,189,248,0.75), 0 0 0 1px rgba(56,189,248,0.65) !important; }
+
+::-webkit-scrollbar-thumb { box-shadow: 0 0 6px rgba(56,189,248,0.7), 0 0 12px rgba(168,85,247,0.7) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
