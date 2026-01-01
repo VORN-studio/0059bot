@@ -150,8 +150,9 @@ body {
     text-rendering: optimizeLegibility;
 
     /* հարթ սքրոլ, ավելի Web3-feel */
-    scroll-behavior: smooth;
-    overflow-y: visible;
+    scroll-behavior: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 
     /* iPhone / notch safe-area, Telegram WebApp-ի համար օգտակար */
     padding-bottom: env(safe-area-inset-bottom);
@@ -1122,7 +1123,6 @@ h2::after {
 
     border-radius: 22px 22px 0 0;
 
-    /* Multi-layer holographic background */
     background:
         radial-gradient(circle at 15% -10%, rgba(0, 240, 255, 0.18), transparent 65%),
         radial-gradient(circle at 100% 120%, rgba(130, 80, 255, 0.20), transparent 60%),
@@ -1136,14 +1136,11 @@ h2::after {
         inset 0 0 20px rgba(255, 255, 255, 0.06),
         inset 0 -14px 40px rgba(0, 0, 0, 0.75);
 
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 
-    /* Holographic float animation */
-    animation:
-        screenFade 0.32s ease-out,
-        screenFloat 11s ease-in-out infinite;
+    animation: screenFade 0.32s ease-out;
 }
 
 /* Smooth rising effect */

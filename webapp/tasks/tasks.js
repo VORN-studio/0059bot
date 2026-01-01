@@ -39,7 +39,11 @@ function hideAll() {
 
 function openCategory(cat) {
     hideAll();
-    document.getElementById("screen-" + cat).style.display = "block";
+    var s = document.getElementById("screen-" + cat);
+    if (s) {
+        s.style.display = "block";
+        try { s.scrollIntoView({ behavior: "smooth", block: "start" }); } catch(_){ window.scrollTo({ top: 0, behavior: "smooth" }); }
+    }
 }
 
 
