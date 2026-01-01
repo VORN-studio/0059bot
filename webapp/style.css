@@ -12,7 +12,7 @@
 
 html, body {
     height: 100%;
-    scroll-behavior: smooth;
+    scroll-behavior: auto;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
 }
@@ -205,6 +205,23 @@ body::after {
 body::before,
 body::after {
   pointer-events: none;
+}
+
+/* ✅ Mobile performance: disable heavy overlays & animations */
+@media (max-width: 768px), (hover: none) {
+  body::before,
+  body::after,
+  .starfield,
+  .vignette,
+  .glow-rim,
+  .particles {
+    display: none !important;
+  }
+
+  /* Avoid extra compositing on mobile */
+  html, body {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .glow-rim {

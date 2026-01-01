@@ -72,12 +72,9 @@
           transition: none !important;
         }
 
-        /* ✅ Hardware acceleration */
         body,
         #mining-app {
-          transform: translateZ(0);
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
+          -webkit-overflow-scrolling: touch;
         }
       }
     </style>

@@ -52,11 +52,8 @@
         transition: none !important;
       }
       
-      /* ✅ Hardware acceleration */
       body, .container, .tab-content {
-        transform: translateZ(0);
-        backface-visibility: hidden;
-        will-change: auto;
+        -webkit-overflow-scrolling: touch;
       }
       
       /* ✅ Optimize rendering */
