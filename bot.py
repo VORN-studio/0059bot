@@ -42,6 +42,7 @@ from telegram.ext import (
 
 import logging
 from logging.handlers import RotatingFileHandler
+import re
 
 LOG_DIR = os.path.join(os.path.dirname(__file__), "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -3794,6 +3795,29 @@ def init_db():
     """)
 
     c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_promocodes (
+            code TEXT PRIMARY KEY,
+            amount_usd NUMERIC(18,6) NOT NULL,
+            max_uses INTEGER DEFAULT NULL,
+            used_count INTEGER DEFAULT 0,
+            expires_at TIMESTAMP NULL,
+            created_at BIGINT NOT NULL,
+            created_by BIGINT
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_promocode_claims (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            code TEXT NOT NULL,
+            amount_usd NUMERIC(18,6) NOT NULL,
+            claimed_at BIGINT NOT NULL,
+            UNIQUE(user_id, code)
+        )
+    """)
+
+    c.execute("""
         CREATE TABLE IF NOT EXISTS conversions (
             id SERIAL PRIMARY KEY,
             conversion_id TEXT UNIQUE,
@@ -4471,6 +4495,58 @@ def apply_deposit(user_id: int, amount: float):
     finally:
         release_db(conn)
 
+def redeem_promocode(user_id: int, code: str):
+    now = int(time.time())
+    code = (code or "").strip()
+    if not code:
+        return {"ok": False, "error": "empty_code", "message": "Промокод пуст."}
+
+    conn = db(); c = conn.cursor()
+    try:
+        c.execute("SELECT amount_usd, max_uses, used_count, expires_at FROM dom_promocodes WHERE code=%s FOR UPDATE", (code,))
+        row = c.fetchone()
+        if not row:
+            release_db(conn)
+            return {"ok": False, "error": "invalid_code", "message": "Промокод не найден."}
+
+        amount_usd, max_uses, used_count, expires_at = row
+
+        c.execute("SELECT 1 FROM dom_promocode_claims WHERE user_id=%s AND code=%s", (user_id, code))
+        if c.fetchone():
+            release_db(conn)
+            return {"ok": False, "error": "already_redeemed", "message": "Промокод уже активирован."}
+
+        if max_uses is not None and used_count is not None and int(used_count) >= int(max_uses):
+            release_db(conn)
+            return {"ok": False, "error": "limit_reached", "message": "Лимит использования промокода исчерпан."}
+
+        c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s RETURNING balance_usd", (amount_usd, user_id))
+        new_balance = float(c.fetchone()[0] or 0.0)
+
+        c.execute("""
+            INSERT INTO dom_promocode_claims (user_id, code, amount_usd, claimed_at)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, code, float(amount_usd), now))
+
+        c.execute("UPDATE dom_promocodes SET used_count = COALESCE(used_count,0) + 1 WHERE code=%s RETURNING used_count, max_uses", (code,))
+        upd = c.fetchone()
+        new_used = int(upd[0]) if upd and upd[0] is not None else 0
+        mu = int(upd[1]) if upd and upd[1] is not None else None
+
+        if mu is not None and new_used >= mu:
+            c.execute("DELETE FROM dom_promocodes WHERE code=%s", (code,))
+
+        conn.commit(); release_db(conn)
+        return {"ok": True, "amount": float(amount_usd), "new_balance_usd": new_balance}
+    except Exception:
+        logger.exception("redeem_promocode failed")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        release_db(conn)
+        return {"ok": False, "error": "server_error", "message": "Ошибка сервера."}
+
 def get_mining_plans():
     """
     Возвращает все планы майнинга, рассчитанные в долларах США/час.
@@ -4887,6 +4963,21 @@ def api_withdraw_request():
         "message": "Ваш запрос на вывод средств получен ✅ Деньги будут переведены в течение 24 часов.",
         "user": new_stats
     })
+
+@app_web.route("/api/promocode/redeem", methods=["POST"])
+def api_promocode_redeem():
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    code = (data.get("code") or "").strip()
+    if not user_id or not code:
+        return jsonify({"ok": False, "error": "bad_request", "message": "Неверные данные."}), 400
+
+    res = redeem_promocode(user_id, code)
+    if not res.get("ok"):
+        return jsonify(res)
+
+    user = get_user_stats(user_id)
+    return jsonify({"ok": True, "amount": res.get("amount", 0.0), "user": user})
 
 @app_web.route("/api/dice/deposit", methods=["POST"])
 def api_dice_deposit():
@@ -6561,6 +6652,52 @@ async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(f"✔ {amount}DOMIT пользователь добавил {target} в счет։")
 
+async def add_promo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    txt = (update.message.text or "").strip()
+    m = re.findall(r'"([^"]+)"', txt)
+    if len(m) < 3:
+        await update.message.reply_text("Использование: /add_promo \"КОД\" \"СУММА_DOMIT\" \"MAX_USES\"")
+        return
+    code = m[0].strip()
+    try:
+        amount = float(m[1].strip())
+    except Exception:
+        await update.message.reply_text("Сумма должна быть числом")
+        return
+    try:
+        max_uses = int(float(m[2].strip()))
+    except Exception:
+        await update.message.reply_text("MAX_USES должно быть числом")
+        return
+
+    now = int(time.time())
+    conn = db(); c = conn.cursor()
+    try:
+        c.execute("SELECT 1 FROM dom_promocodes WHERE code=%s", (code,))
+        exists = c.fetchone()
+        if exists:
+            c.execute("UPDATE dom_promocodes SET amount_usd=%s, max_uses=%s, created_by=%s WHERE code=%s", (amount, max_uses, admin_id, code))
+        else:
+            c.execute("""
+                INSERT INTO dom_promocodes (code, amount_usd, max_uses, created_at, created_by)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (code, amount, max_uses, now, admin_id))
+        conn.commit()
+        await update.message.reply_text(f"✅ Промокод добавлен: {code} → {amount} DOMIT, MAX={max_uses}")
+    except Exception as e:
+        logger.exception("add_promo_cmd failed")
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        await update.message.reply_text("❌ Ошибка сервера")
+    finally:
+        release_db(conn)
+
 async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать все ожидающие запросы на вывод средств"""
     user_id = update.effective_user.id
@@ -6948,6 +7085,7 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("fake_add_withdraw", fake_add_withdraw))
             application.add_handler(CommandHandler("fake_add_deposit", fake_add_deposit))
             application.add_handler(CommandHandler("fake_reset", fake_reset))
+            application.add_handler(CommandHandler("add_promo", add_promo_cmd))
 
             await application.initialize()
             await application.start()

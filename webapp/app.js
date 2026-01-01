@@ -747,6 +747,8 @@ if (depositBtn) {
 const withdrawInput = $("withdraw-amount");
 const withdrawStatus = $("withdraw-status");
 const withdrawBtn = $("withdraw-btn");
+const promoInput = $("promo-code");
+const promoBtn = $("promo-btn");
 
 if (withdrawBtn) {
   withdrawBtn.addEventListener("click", () => {
@@ -814,6 +816,48 @@ if (withdrawBtn) {
     });
 
 
+  });
+}
+
+if (promoBtn) {
+  promoBtn.addEventListener("click", async () => {
+    const code = (promoInput && promoInput.value || "").trim();
+    if (!code) {
+      withdrawStatus.textContent = "❌ Введите промокод правильно.";
+      return;
+    }
+    if (!CURRENT_USER_ID) {
+      withdrawStatus.textContent = "❌ Откройте веб-приложение из самого бота, а не из браузера.";
+      return;
+    }
+    withdrawStatus.textContent = "⏳ Проверка промокода…";
+    try {
+      const r = await fetch(`${API_BASE}/api/promocode/redeem`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: CURRENT_USER_ID, code })
+      });
+      const d = await r.json();
+      if (!d.ok) {
+        withdrawStatus.textContent = "❌ " + (d.message || d.error || "Промокод недействителен.");
+      } else {
+        const gained = Number(d.amount || 0).toFixed(2);
+        withdrawStatus.textContent = `✅ Промокод активирован. +${gained} DOMIT`;
+        if (d.user && typeof d.user.balance_usd === "number") {
+          balance = d.user.balance_usd;
+          updateBalanceDisplay();
+          const rt = document.getElementById("ref-total");
+          const ra = document.getElementById("ref-active");
+          const rd = document.getElementById("ref-deposits");
+          if (rt && typeof d.user.ref_count !== "undefined") rt.textContent = d.user.ref_count;
+          if (ra && typeof d.user.active_refs !== "undefined") ra.textContent = d.user.active_refs;
+          if (rd && typeof d.user.team_deposit_usd !== "undefined") rd.textContent = d.user.team_deposit_usd.toFixed(2) + " DOMIT";
+        }
+      }
+    } catch (err) {
+      withdrawStatus.textContent = "❌ Ошибка сервера";
+      console.error(err);
+    }
   });
 }
 
