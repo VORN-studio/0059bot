@@ -209,30 +209,18 @@ body::after {
 
 /* ✅ Mobile performance: disable heavy overlays & animations */
 @media (max-width: 768px), (hover: none) {
-  html, body {
-    -webkit-overflow-scrolling: touch;
-    overflow-x: hidden;
-    touch-action: pan-y;
-    overscroll-behavior-x: none;
-  }
-  body::before,
-  body::after {
-    filter: blur(20px) !important;
-    opacity: 0.18 !important;
-  }
+  html, body { -webkit-overflow-scrolling: touch; overflow-x: hidden; touch-action: pan-y; overscroll-behavior-x: none; }
+  body::before, body::after { filter: blur(18px) !important; opacity: 0.16 !important; }
   .starfield { opacity: 0.2 !important; }
   .vignette { opacity: 0.15 !important; }
-  .glow-rim {
-    filter: blur(40px) !important;
-    opacity: 0.3 !important;
-  }
+  .glow-rim { filter: blur(36px) !important; opacity: 0.28 !important; }
   .particles { opacity: 0.2 !important; }
 
-  body::before { animation: glowShift 30s ease-in-out infinite alternate !important; }
-  body::after  { animation: glowShift2 42s ease-in-out infinite alternate !important; }
-  .glow-rim    { animation: rimPulse 22s ease-in-out infinite alternate !important; }
-  .starfield .star { animation-duration: 18s !important; }
-  .particles span   { animation-duration: 24s !important; }
+  body::before { animation: glowShift 36s ease-in-out infinite alternate !important; }
+  body::after  { animation: glowShift2 52s ease-in-out infinite alternate !important; }
+  .glow-rim    { animation: rimPulse 26s ease-in-out infinite alternate !important; }
+  .starfield .star { animation-duration: 22s !important; }
+  .particles span   { animation-duration: 28s !important; }
 }
 
 /* Scroll performance mode (temporary while user is scrolling) */
@@ -371,14 +359,14 @@ body::after {
     padding: 28px 20px 40px;
     border-radius: 22px;
 
-    backdrop-filter: blur(18px) saturate(160%);
-    background: rgba(10, 15, 28, 0.55);
+    backdrop-filter: blur(14px) saturate(145%);
+    background: rgba(10, 15, 28, 0.52);
 
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
-        0 0 40px rgba(0,0,0,0.55),
-        0 20px 60px rgba(0,0,0,0.8),
-        inset 0 0 12px rgba(255,255,255,0.04);
+        0 0 32px rgba(0,0,0,0.5),
+        0 16px 44px rgba(0,0,0,0.75),
+        inset 0 0 10px rgba(255,255,255,0.04);
 
     animation: appEntrance 0.8s ease-out both;
     overflow: hidden;
@@ -479,10 +467,10 @@ body::after {
     );
 
     mix-blend-mode: screen;
-    filter: blur(32px);
-    opacity: 0.55;
+    filter: blur(28px);
+    opacity: 0.5;
 
-    animation: haloFloat 14s ease-in-out infinite alternate;
+    animation: haloFloat 18s ease-in-out infinite alternate;
 }
 
 @keyframes haloFloat {
@@ -511,10 +499,10 @@ body::after {
         rgba(255,255,255,0) 55%
     );
 
-    filter: blur(28px);
-    opacity: 0.25;
+    filter: blur(24px);
+    opacity: 0.22;
 
-    animation: glassMove 11s ease-in-out infinite;
+    animation: glassMove 16s ease-in-out infinite;
 }
 
 @keyframes glassMove {
@@ -526,11 +514,11 @@ body::after {
     pointer-events: none;
     position: absolute;
     inset: 0;
-    opacity: 0.08;
+    opacity: 0.06;
     background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAbCAYAAADBEobZAAAA...") repeat;
     mix-blend-mode: soft-light;
 
-    animation: noisePulse 0.6s steps(2) infinite;
+    animation: noisePulse 0.8s steps(2) infinite;
 }
 
 @keyframes noisePulse {
