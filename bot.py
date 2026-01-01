@@ -1428,9 +1428,9 @@ def api_duels_pay_bot():
         # Use apply_burn_transaction to burn 2 DOMIT
         apply_burn_transaction(
             from_user=user_id,
-            total_amount=2.0,
+            total_amount=0.05,
             transfers=[],
-            burn_amount=2.0,
+            burn_amount=0.05,
             reason="bot_game_entry"
         )
 
@@ -2889,9 +2889,9 @@ def api_follow():
 
     balance = float(row[0])
 
-    FOLLOW_PRICE = 5.0
-    PAY_TARGET = 2.0
-    BURN_AMOUNT = 3.0
+    FOLLOW_PRICE = 0.5
+    PAY_TARGET = 0.2
+    BURN_AMOUNT = 0.3
 
     try:
         apply_burn_transaction(

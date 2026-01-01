@@ -167,8 +167,8 @@ async function playBotGame(game) {
     return;
   }
 
-  if (domitBalance < 2) {
-    return showStatus("❌ У вас его нет. 2 DOMIT։", "lose");
+  if (domitBalance < 0.05) {
+    return showStatus("❌ У вас его нет. 0.05 DOMIT։", "lose");
   }
 
   try {
