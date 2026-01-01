@@ -865,6 +865,24 @@ initFromTelegram();
 initReferralLink();
 updateBalanceDisplay();
 
+function initEffectObserver() {
+  if (!('IntersectionObserver' in window)) return;
+  const targets = document.querySelectorAll(
+    '.screen, .task-card, .task-btn, #app .inner-ring, #app .glass-reflect, #app .noise-overlay, #app .corner-node'
+  );
+  if (!targets || targets.length === 0) return;
+  const io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e){
+      if (e.isIntersecting) {
+        e.target.classList.remove('effect-off');
+      } else {
+        e.target.classList.add('effect-off');
+      }
+    });
+  }, { threshold: 0.01 });
+  targets.forEach(function(t){ io.observe(t); });
+}
+
 // ═══════════════════════════════════════════
 // DOMIT/TON CHART (Lightweight Charts)
 // ═══════════════════════════════════════════
@@ -1071,6 +1089,7 @@ window.addEventListener('load', function() {
     });
     observer.observe(container);
   }
+  initEffectObserver();
 });
 
 const portalOrb = document.getElementById("portal-orb");
