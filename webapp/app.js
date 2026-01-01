@@ -286,7 +286,8 @@ async function loadFakeHistory() {
   if (!box) return;
   
   try {
-    const res = await fetch(`${API_BASE}/api/fake_history`);
+    const uidParam = CURRENT_USER_ID ? `?uid=${CURRENT_USER_ID}` : "";
+    const res = await fetch(`${API_BASE}/api/fake_history${uidParam}`);
     const data = await res.json();
     if (data.ok && Array.isArray(data.history)) {
       if (data.history.length === 0) {

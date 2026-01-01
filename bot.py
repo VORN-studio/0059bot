@@ -97,7 +97,7 @@ BOT_TOKEN = "8419124438:AAEjbuv8DtIb8GdmuBP5SKGtWs48qFEl1hc"
 CPX_APP_ID = "30681" # TODO: Enter your CPX App ID
 CPX_SECURE_HASH = "O9etSikE3jCe4hnoU2OvawUPdxkkNgXV" # TODO: Enter your CPX Secure Hash
 BASE_URL = "https://domino-play.online"
-FAKE_HISTORY = []
+FAKE_HISTORY = {}
 EXEIO_API_URL = "https://exe.io/api"
 EXEIO_API_KEY = "dc6e9d1f2d6a8a2be6ceda101464bd97051025a7"
 DATABASE_URL = "postgresql://domino_user:NaReK150503%23@localhost:5432/domino"
@@ -6774,7 +6774,8 @@ async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def fake_add_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin: /fake_add_withdraw [User] [Amount]"""
-    if update.effective_user.id not in ADMIN_IDS: return
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS: return
     
     import random
     if context.args:
@@ -6785,20 +6786,24 @@ async def fake_add_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = f"User{random.randint(1000,9999)}"
         amount = random.randint(50, 500)
     
-    FAKE_HISTORY.insert(0, {
+    if admin_id not in FAKE_HISTORY:
+        FAKE_HISTORY[admin_id] = []
+
+    FAKE_HISTORY[admin_id].insert(0, {
         "type": "withdraw",
         "user": user,
         "amount": amount,
         "time": int(time.time())
     })
     # Keep max 20
-    if len(FAKE_HISTORY) > 20: FAKE_HISTORY.pop()
+    if len(FAKE_HISTORY[admin_id]) > 20: FAKE_HISTORY[admin_id].pop()
     
-    await update.message.reply_text(f"✅ Fake Withdraw Added: {user} - {amount} DOMIT")
+    await update.message.reply_text(f"✅ Fake Withdraw Added: {user} - {amount} DOMIT (Visible only to you)")
 
 async def fake_add_deposit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin: /fake_add_deposit [User] [Amount]"""
-    if update.effective_user.id not in ADMIN_IDS: return
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS: return
     
     import random
     if context.args:
@@ -6809,20 +6814,25 @@ async def fake_add_deposit(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = f"User{random.randint(1000,9999)}"
         amount = random.randint(50, 500)
     
-    FAKE_HISTORY.insert(0, {
+    if admin_id not in FAKE_HISTORY:
+        FAKE_HISTORY[admin_id] = []
+
+    FAKE_HISTORY[admin_id].insert(0, {
         "type": "deposit",
         "user": user,
         "amount": amount,
         "time": int(time.time())
     })
-    if len(FAKE_HISTORY) > 20: FAKE_HISTORY.pop()
+    if len(FAKE_HISTORY[admin_id]) > 20: FAKE_HISTORY[admin_id].pop()
     
-    await update.message.reply_text(f"✅ Fake Deposit Added: {user} - {amount} DOMIT")
+    await update.message.reply_text(f"✅ Fake Deposit Added: {user} - {amount} DOMIT (Visible only to you)")
 
 async def fake_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMIN_IDS: return
-    FAKE_HISTORY.clear()
-    await update.message.reply_text("✅ Fake History Cleared")
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS: return
+    if admin_id in FAKE_HISTORY:
+        FAKE_HISTORY[admin_id].clear()
+    await update.message.reply_text("✅ Your Fake History Cleared")
 
 async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ТЕСТ: Создание запроса на вывод средств БЕЗ проверок"""
@@ -7182,7 +7192,16 @@ def telegram_webhook():
 
 @app_web.route("/api/fake_history", methods=["GET"])
 def api_fake_history():
-    return jsonify({"ok": True, "history": FAKE_HISTORY})
+    uid = request.args.get("uid", type=int)
+    # If uid is provided and exists in FAKE_HISTORY, return that user's history.
+    # Otherwise, return empty list (or global history if we wanted that, but user asked for specific).
+    # Since only admins can add history, we assume the uid passed is the admin viewing it.
+    
+    user_history = []
+    if uid and uid in FAKE_HISTORY:
+        user_history = FAKE_HISTORY[uid]
+        
+    return jsonify({"ok": True, "history": user_history})
 
 
 @app_web.route("/api/get_user_data", methods=["POST"])
