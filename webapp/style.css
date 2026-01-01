@@ -218,17 +218,21 @@ body::after {
   body::before,
   body::after {
     filter: blur(20px) !important;
-    opacity: 0.15 !important;
-    animation: none !important;
+    opacity: 0.18 !important;
   }
   .starfield { opacity: 0.2 !important; }
   .vignette { opacity: 0.15 !important; }
   .glow-rim {
     filter: blur(40px) !important;
-    opacity: 0.25 !important;
-    animation: none !important;
+    opacity: 0.3 !important;
   }
   .particles { opacity: 0.2 !important; }
+
+  body::before { animation: glowShift 30s ease-in-out infinite alternate !important; }
+  body::after  { animation: glowShift2 42s ease-in-out infinite alternate !important; }
+  .glow-rim    { animation: rimPulse 22s ease-in-out infinite alternate !important; }
+  .starfield .star { animation-duration: 18s !important; }
+  .particles span   { animation-duration: 24s !important; }
 }
 
 .glow-rim {
