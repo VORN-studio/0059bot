@@ -235,6 +235,31 @@ body::after {
   .particles span   { animation-duration: 24s !important; }
 }
 
+/* Scroll performance mode (temporary while user is scrolling) */
+@media (max-width: 768px), (hover: none) {
+  body.scrolling::before,
+  body.scrolling::after {
+    animation-play-state: paused !important;
+    opacity: 0.08 !important;
+    filter: blur(12px) !important;
+  }
+  body.scrolling .glow-rim,
+  body.scrolling .starfield .star,
+  body.scrolling .particles span,
+  body.scrolling #app::before,
+  body.scrolling #app::after,
+  body.scrolling #app .inner-ring,
+  body.scrolling #app .glass-reflect,
+  body.scrolling #app .noise-overlay,
+  body.scrolling #app .corner-node {
+    animation-play-state: paused !important;
+  }
+  body.scrolling #app {
+    backdrop-filter: blur(12px) saturate(130%) !important;
+    transition: none !important;
+  }
+}
+
 .glow-rim {
   content: "";
   position: fixed;

@@ -922,7 +922,7 @@ function applyDomitUpdate(data) {
 
 function scheduleDomitUpdate(data) {
   latestDomitData = data;
-  if (!chartVisible || !domitCandleSeries) return;
+  if (!chartVisible || !domitCandleSeries || scrollingNow) return;
   const now = Date.now();
   const dueIn = throttleMs - (now - lastUpdateTs);
   if (dueIn <= 0) {
@@ -1109,6 +1109,28 @@ if (portalOrb) {
 // 🔌 Socket.IO Real-time Connection
 const socket = io();
 let lastCandleTime = 0;  
+
+// Smooth scroll performance mode
+let scrollingNow = false;
+let scrollEndTimer = null;
+function setScrolling(state){
+  scrollingNow = state;
+  try {
+    if (state) {
+      document.body.classList.add('scrolling');
+    } else {
+      document.body.classList.remove('scrolling');
+    }
+  } catch(_){ }
+}
+function onScrollPerf(){
+  if (!scrollingNow) setScrolling(true);
+  if (scrollEndTimer) clearTimeout(scrollEndTimer);
+  scrollEndTimer = setTimeout(function(){ setScrolling(false); }, 160);
+}
+window.addEventListener('scroll', onScrollPerf, { passive: true });
+window.addEventListener('touchmove', onScrollPerf, { passive: true });
+window.addEventListener('wheel', onScrollPerf, { passive: true });
 
 socket.on('connect', () => {
   console.log('🟢 Realtime connected');

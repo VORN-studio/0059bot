@@ -1905,6 +1905,20 @@ h2::after {
   }
 }
 
+/* Scroll performance mode for Tasks */
+@media (max-width: 768px), (hover: none) {
+  body.scrolling .screen {
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+    animation-play-state: paused !important;
+  }
+  body.scrolling .task-card,
+  body.scrolling .task-btn {
+    box-shadow: 0 6px 14px rgba(0,0,0,0.55), 0 0 12px rgba(0,255,255,0.18) !important;
+    transition: none !important;
+  }
+}
+
 .task-card button:hover {
     transform: scale(1.02);
     background: linear-gradient(135deg, #00f2ffa0, #8b5fff80);
