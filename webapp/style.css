@@ -260,6 +260,28 @@ body::after {
   }
 }
 
+/* Low-performance mode (persistent lighten, not remove) */
+@media (max-width: 768px), (hover: none) {
+  body.lowperf::before,
+  body.lowperf::after {
+    filter: blur(16px) !important;
+    opacity: 0.14 !important;
+    animation-duration: 48s !important;
+  }
+  body.lowperf .starfield .star { animation-duration: 22s !important; opacity: 0.6 !important; }
+  body.lowperf .particles span   { animation-duration: 28s !important; opacity: 0.5 !important; }
+
+  body.lowperf #app {
+    backdrop-filter: blur(12px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(130%) !important;
+  }
+  body.lowperf #app .inner-ring { filter: blur(26px) !important; opacity: 0.48 !important; animation-duration: 18s !important; }
+  body.lowperf #app .glass-reflect { filter: blur(22px) !important; opacity: 0.22 !important; animation-duration: 15s !important; }
+  body.lowperf #app .noise-overlay { opacity: 0.06 !important; }
+  body.lowperf #app::before, body.lowperf #app::after { animation-duration: 8s !important; }
+  body.lowperf .glow-rim { filter: blur(60px) !important; animation-duration: 15s !important; }
+}
+
 .glow-rim {
   content: "";
   position: fixed;

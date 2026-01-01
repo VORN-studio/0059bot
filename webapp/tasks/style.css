@@ -1919,6 +1919,21 @@ h2::after {
   }
 }
 
+/* Low-performance mode (persistent lighten for Tasks) */
+@media (max-width: 768px), (hover: none) {
+  body.lowperf .screen {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    animation-duration: 24s !important;
+  }
+  body.lowperf .task-card {
+    box-shadow: 0 8px 18px rgba(0,0,0,0.65), 0 0 14px rgba(0,255,255,0.2) !important;
+  }
+  body.lowperf .task-btn {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.65), 0 0 16px rgba(0,255,255,0.22) !important;
+  }
+}
+
 .task-card button:hover {
     transform: scale(1.02);
     background: linear-gradient(135deg, #00f2ffa0, #8b5fff80);

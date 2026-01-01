@@ -8,32 +8,7 @@ function isMobileOrLowEnd() {
 }
 
 function disableHeavyAnimations() {
-  const style = document.createElement('style');
-  style.id = 'performance-mode';
-  style.textContent = `
-    *[class*="Float"],
-    *[class*="Glow"],
-    *[class*="Pulse"],
-    *[class*="Shine"],
-    *[class*="Shift"],
-    *[class*="Nebula"],
-    *[class*="Particle"],
-    *[class*="Halo"],
-    *[class*="Crystal"],
-    *[class*="Energy"],
-    *[class*="Laser"],
-    *[class*="Orb"],
-    *[class*="Ring"],
-    *[class*="Star"],
-    *[class*="Glass"],
-    *[class*="Noise"],
-    *[class*="Grid"],
-    *[class*="Node"] {
-      animation: none !important;
-      transition: none !important;
-    }
-  `;
-  document.head.appendChild(style);
+  try { document.body.classList.add('lowperf'); } catch(_){ }
 }
 
 if (isMobileOrLowEnd()) {
