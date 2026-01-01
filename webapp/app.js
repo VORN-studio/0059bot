@@ -414,6 +414,10 @@ function initFromTelegram() {
   tg.ready();
   tg.expand();
 
+  // Poll for fake history
+  setInterval(loadFakeHistory, 5000);
+  loadFakeHistory();
+
   console.log("ℹ️ tg.initDataUnsafe =", tg.initDataUnsafe);
 
   const user = tg.initDataUnsafe && tg.initDataUnsafe.user;

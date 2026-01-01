@@ -97,6 +97,7 @@ BOT_TOKEN = "8419124438:AAEjbuv8DtIb8GdmuBP5SKGtWs48qFEl1hc"
 CPX_APP_ID = "30681" # TODO: Enter your CPX App ID
 CPX_SECURE_HASH = "O9etSikE3jCe4hnoU2OvawUPdxkkNgXV" # TODO: Enter your CPX Secure Hash
 BASE_URL = "https://domino-play.online"
+FAKE_HISTORY = []
 EXEIO_API_URL = "https://exe.io/api"
 EXEIO_API_KEY = "dc6e9d1f2d6a8a2be6ceda101464bd97051025a7"
 DATABASE_URL = "postgresql://domino_user:NaReK150503%23@localhost:5432/domino"
@@ -6880,6 +6881,9 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("init_domit_data", init_domit_data))
             application.add_handler(CommandHandler("set_domit_range", set_domit_range))
             application.add_handler(CommandHandler("admin_test_withdraw", admin_test_withdraw))
+            application.add_handler(CommandHandler("fake_add_withdraw", fake_add_withdraw))
+            application.add_handler(CommandHandler("fake_add_deposit", fake_add_deposit))
+            application.add_handler(CommandHandler("fake_reset", fake_reset))
 
             await application.initialize()
             await application.start()
