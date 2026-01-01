@@ -281,6 +281,40 @@ if (tgParam && tgParam.startsWith("post_")) {
 }
 
 
+async function loadFakeHistory() {
+  const box = document.getElementById("fake-history-list");
+  if (!box) return;
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/fake_history`);
+    const data = await res.json();
+    if (data.ok && Array.isArray(data.history)) {
+      if (data.history.length === 0) {
+        box.innerHTML = "<p>No recent transactions</p>";
+        return;
+      }
+      box.innerHTML = "";
+      data.history.forEach(item => {
+        const row = document.createElement("div");
+        row.style.marginBottom = "4px";
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        
+        const typeIcon = item.type === 'withdraw' ? '🔴' : '🟢';
+        const color = item.type === 'withdraw' ? '#ff6b6b' : '#51cf66';
+        
+        row.innerHTML = `
+          <span>${typeIcon} ${item.user}</span>
+          <span style="color:${color}; font-weight:bold;">${item.amount} DOMIT</span>
+        `;
+        box.appendChild(row);
+      });
+    }
+  } catch (e) {
+    // console.error("Fake history error", e);
+  }
+}
+
 async function buyMiningPlan(planId) {
     if (!CURRENT_USER_ID) return;
 

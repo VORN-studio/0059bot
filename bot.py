@@ -6772,6 +6772,58 @@ async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if conn:
             release_db(conn)
 
+async def fake_add_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Admin: /fake_add_withdraw [User] [Amount]"""
+    if update.effective_user.id not in ADMIN_IDS: return
+    
+    import random
+    if context.args:
+        user = context.args[0]
+        try: amount = float(context.args[1])
+        except: amount = random.randint(50, 500)
+    else:
+        user = f"User{random.randint(1000,9999)}"
+        amount = random.randint(50, 500)
+    
+    FAKE_HISTORY.insert(0, {
+        "type": "withdraw",
+        "user": user,
+        "amount": amount,
+        "time": int(time.time())
+    })
+    # Keep max 20
+    if len(FAKE_HISTORY) > 20: FAKE_HISTORY.pop()
+    
+    await update.message.reply_text(f"✅ Fake Withdraw Added: {user} - {amount} DOMIT")
+
+async def fake_add_deposit(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Admin: /fake_add_deposit [User] [Amount]"""
+    if update.effective_user.id not in ADMIN_IDS: return
+    
+    import random
+    if context.args:
+        user = context.args[0]
+        try: amount = float(context.args[1])
+        except: amount = random.randint(50, 500)
+    else:
+        user = f"User{random.randint(1000,9999)}"
+        amount = random.randint(50, 500)
+    
+    FAKE_HISTORY.insert(0, {
+        "type": "deposit",
+        "user": user,
+        "amount": amount,
+        "time": int(time.time())
+    })
+    if len(FAKE_HISTORY) > 20: FAKE_HISTORY.pop()
+    
+    await update.message.reply_text(f"✅ Fake Deposit Added: {user} - {amount} DOMIT")
+
+async def fake_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    FAKE_HISTORY.clear()
+    await update.message.reply_text("✅ Fake History Cleared")
+
 async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ТЕСТ: Создание запроса на вывод средств БЕЗ проверок"""
     user_id = update.effective_user.id
@@ -6847,6 +6899,8 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.message.reply_text(f"❌ Неправильный՝ {e}")
         if conn:
             release_db(conn)
+
+
 
 async def start_bot_webhook():
     global application
@@ -7125,6 +7179,10 @@ def telegram_webhook():
         logger.exception("Webhook error")
         return jsonify({"ok": False, "error": str(e)}), 500
 
+
+@app_web.route("/api/fake_history", methods=["GET"])
+def api_fake_history():
+    return jsonify({"ok": True, "history": FAKE_HISTORY})
 
 
 @app_web.route("/api/get_user_data", methods=["POST"])
