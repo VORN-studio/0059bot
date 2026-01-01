@@ -6698,6 +6698,60 @@ async def add_promo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         release_db(conn)
 
+async def del_promo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    txt = (update.message.text or "").strip()
+    m = re.findall(r'"([^"]+)"', txt)
+    if len(m) < 1:
+        await update.message.reply_text("Использование: /del_promo \"КОД\"")
+        return
+    code = m[0].strip()
+    conn = db(); c = conn.cursor()
+    try:
+        c.execute("SELECT 1 FROM dom_promocodes WHERE code=%s", (code,))
+        exists = c.fetchone()
+        if not exists:
+            release_db(conn)
+            await update.message.reply_text("❌ Промокод не найден")
+            return
+        c.execute("DELETE FROM dom_promocodes WHERE code=%s", (code,))
+        conn.commit()
+        await update.message.reply_text(f"✅ Промокод удален: {code}")
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        await update.message.reply_text("❌ Ошибка сервера")
+    finally:
+        release_db(conn)
+
+async def list_promos_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    conn = db(); c = conn.cursor()
+    try:
+        c.execute("SELECT code, amount_usd, used_count, max_uses, created_at, created_by FROM dom_promocodes ORDER BY created_at DESC")
+        rows = c.fetchall()
+        release_db(conn)
+        if not rows:
+            await update.message.reply_text("ℹ️ Активных промокодов нет")
+            return
+        lines = ["📋 Промокоды:"]
+        for (code, amount_usd, used_count, max_uses, created_at, created_by) in rows:
+            amount = float(amount_usd or 0.0)
+            uc = int(used_count or 0)
+            mu = "∞" if max_uses is None else str(int(max_uses))
+            lines.append(f"• {code} → {amount:.2f} DOMIT | {uc}/{mu}")
+        await update.message.reply_text("\n".join(lines))
+    except Exception:
+        await update.message.reply_text("❌ Ошибка сервера")
+
 async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать все ожидающие запросы на вывод средств"""
     user_id = update.effective_user.id
@@ -7086,6 +7140,8 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("fake_add_deposit", fake_add_deposit))
             application.add_handler(CommandHandler("fake_reset", fake_reset))
             application.add_handler(CommandHandler("add_promo", add_promo_cmd))
+            application.add_handler(CommandHandler("del_promo", del_promo_cmd))
+            application.add_handler(CommandHandler("list_promos", list_promos_cmd))
 
             await application.initialize()
             await application.start()
