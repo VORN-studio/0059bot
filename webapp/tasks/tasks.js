@@ -4,26 +4,20 @@
   
   if (isMobile) {
     console.log('📱 Tasks: Mobile performance mode enabled');
-    
-    // Disable heavy animations
-    const style = document.createElement('style');
-    style.textContent = `
-      *[class*="Float"],
-      *[class*="Glow"],
-      *[class*="Pulse"],
-      *[class*="Shine"],
-      *[class*="Shift"] {
-        animation: none !important;
-      }
-    `;
-    
-    if (document.head) {
-      document.head.appendChild(style);
-    } else {
-      document.addEventListener('DOMContentLoaded', () => {
-        document.head.appendChild(style);
-      });
-    }
+    const observe = function(){
+      if (!('IntersectionObserver' in window)) return;
+      const targets = document.querySelectorAll('.screen, .task-card, .task-btn');
+      if (!targets || targets.length === 0) return;
+      const io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting) { e.target.classList.remove('effect-off'); }
+          else { e.target.classList.add('effect-off'); }
+        });
+      }, { threshold: 0.01 });
+      targets.forEach(function(t){ io.observe(t); });
+    };
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', observe); }
+    else { observe(); }
   }
 })();
 

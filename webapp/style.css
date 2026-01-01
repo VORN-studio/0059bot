@@ -180,6 +180,12 @@ body::after {
   .glow-rim    { animation: rimPulse 26s ease-in-out infinite alternate !important; }
   .starfield .star { animation-duration: 22s !important; }
   .particles span   { animation-duration: 28s !important; }
+
+  #app .inner-ring { filter: blur(24px) !important; opacity: 0.42 !important; animation-duration: 22s !important; }
+  #app .glass-reflect { filter: blur(20px) !important; opacity: 0.18 !important; animation-duration: 20s !important; }
+  #app .noise-overlay { opacity: 0.05 !important; }
+  #app .corner-node { box-shadow: 0 0 8px rgba(56,189,248,0.7), 0 0 12px rgba(56,189,248,0.4) !important; }
+  #app { backdrop-filter: blur(10px) saturate(125%) !important; -webkit-backdrop-filter: blur(10px) saturate(125%) !important; }
 }
 
 /* Scroll performance mode (temporary while user is scrolling) */
