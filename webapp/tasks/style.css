@@ -1968,3 +1968,41 @@ h2::after {
     z-index: 10;
     pointer-events: auto;
 }
+
+/* ============================================================
+   FPS-FRIENDLY OVERRIDES (Tasks page)
+   Goal: remove heavy animations/filters and keep light visuals
+   Scope: Tasks only (CSS-only, no JS/HTML changes)
+   ============================================================ */
+
+/* Disable recurring animations globally on Tasks */
+.screen, .task-card, .task-btn { animation: none !important; }
+*[class*="Float"], *[class*="Glow"], *[class*="Pulse"], *[class*="Shine"],
+*[class*="Sweep"], *[class*="Orbit"], *[class*="Particles"], *[class*="Holo"],
+*[class*="Scan"], *[class*="Energy"], *[class*="Laser"] { animation: none !important; }
+
+/* Kill pseudo-element animations (scan bars, moving lines) */
+*:before, *:after { animation: none !important; }
+
+/* Lighten all backdrop filters on major blocks */
+.page-wrap, .header, .balance-box, .screen, .task-card, .task-card button, .task-btn {
+  backdrop-filter: blur(4px) saturate(115%) !important;
+  -webkit-backdrop-filter: blur(4px) saturate(115%) !important;
+}
+
+/* Reduce heavy shadows across tiles/buttons */
+.task-btn, .task-card { box-shadow: 0 6px 12px rgba(0,0,0,0.55) !important; }
+.task-btn::after { box-shadow: 0 0 10px rgba(140,170,255,0.7), 0 6px 12px rgba(0,0,0,0.6) !important; }
+.screen { box-shadow: 0 -3px 10px rgba(0,0,0,0.6) !important; }
+.task-card button { box-shadow: 0 0 8px #00eaff22, inset 0 0 6px #ffffff1e !important; }
+
+/* Remove mix-blend-mode overlays and special glows */
+.task-menu, .main-overlay-scan::after { mix-blend-mode: normal !important; filter: none !important; }
+
+/* Remove text shadows on headings and balance to reduce paints */
+.balance-box strong, #tasks-balance, .screen h3 { text-shadow: none !important; }
+.screen h3 { -webkit-text-fill-color: initial !important; background: none !important; }
+
+/* Keep hover responsive but cheap */
+.task-btn { transition: transform 0.16s ease, box-shadow 0.16s ease !important; }
+.task-btn:hover { transform: translateY(-2px) !important; }
