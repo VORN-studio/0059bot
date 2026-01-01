@@ -197,7 +197,7 @@ body::after {
   #app .noise-overlay, #app .corner-node {
     animation: none !important;
   }
-}
+  
 
 /* Scroll performance mode (temporary while user is scrolling) */
 @media (max-width: 768px), (hover: none) {
@@ -1927,4 +1927,84 @@ input[readonly] {
 @keyframes modalBounce {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.15); }
+}
+
+.screen,
+.screen::before,
+.screen::after,
+.screen.active,
+#app::before,
+#app::after,
+#app .inner-ring,
+#app .glass-reflect,
+#app .noise-overlay,
+#app .corner-node,
+.header-lasers,
+.top h1::before,
+.top h1::after,
+.badge-pill::after,
+.game-menu,
+.game-card::before,
+.game-card .card-icon {
+  animation: none !important;
+}
+
+#app,
+.user-info,
+.badge-pill,
+.task-card,
+.plan-card,
+input[type="text"],
+input[type="number"] {
+  backdrop-filter: blur(6px) saturate(115%) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(115%) !important;
+}
+
+.top h1,
+.top-subtitle,
+.screen h2,
+.screen-title-sub,
+.ref-stats p,
+.field-label,
+.status,
+.status.success,
+.status.info,
+.text-muted,
+.text-accent {
+  text-shadow: none !important;
+}
+
+#app {
+  box-shadow: 0 12px 24px rgba(0,0,0,0.6), inset 0 0 12px rgba(255,255,255,0.03) !important;
+}
+
+.user-info {
+  box-shadow: 0 12px 24px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.03) !important;
+}
+
+.game-card {
+  box-shadow: 0 12px 24px rgba(15,23,42,0.8), inset 0 0 12px rgba(56,189,248,0.06) !important;
+}
+
+.badge-pill {
+  box-shadow: 0 8px 16px rgba(15,23,42,0.7), inset 0 0 8px rgba(56,189,248,0.08) !important;
+}
+
+.screen {
+  box-shadow: 0 8px 18px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.04) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen, .game-card, .tasks-btn, .modal-content, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 768px), (hover: none) {
+  body::before, body::after { opacity: 0.12 !important; filter: blur(16px) !important; }
+  #app { backdrop-filter: blur(5px) saturate(110%) !important; -webkit-backdrop-filter: blur(5px) saturate(110%) !important; }
+  .screen { box-shadow: 0 6px 12px rgba(0,0,0,0.55), inset 0 0 10px rgba(255,255,255,0.04) !important; }
+  .game-card { box-shadow: 0 8px 16px rgba(15,23,42,0.75), inset 0 0 10px rgba(56,189,248,0.06) !important; }
+  .badge-pill { backdrop-filter: blur(4px) saturate(108%) !important; -webkit-backdrop-filter: blur(4px) saturate(108%) !important; }
 }
