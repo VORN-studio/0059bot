@@ -1937,6 +1937,19 @@ h2::after {
   }
 }
 
+/* Performance overrides for visible elements (mobile) */
+@media (max-width: 768px), (hover: none) {
+  .header { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: none; }
+  .balance-box { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: none; }
+  h2 { text-shadow: none; }
+  .screen h3 { -webkit-text-fill-color: initial; background: none; text-shadow: none; animation: none; }
+  .task-menu { mix-blend-mode: normal; }
+  .task-btn { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+  .task-btn:hover { transform: translateY(-2px); }
+  .screen { animation: none; }
+  .task-card { box-shadow: 0 6px 12px rgba(0,0,0,0.55); }
+}
+
 .task-card button:hover {
     transform: scale(1.02);
     background: linear-gradient(135deg, #00f2ffa0, #8b5fff80);
