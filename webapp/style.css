@@ -209,19 +209,26 @@ body::after {
 
 /* ✅ Mobile performance: disable heavy overlays & animations */
 @media (max-width: 768px), (hover: none) {
-  body::before,
-  body::after,
-  .starfield,
-  .vignette,
-  .glow-rim,
-  .particles {
-    display: none !important;
-  }
-
-  /* Avoid extra compositing on mobile */
   html, body {
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    touch-action: pan-y;
+    overscroll-behavior-x: none;
   }
+  body::before,
+  body::after {
+    filter: blur(20px) !important;
+    opacity: 0.15 !important;
+    animation: none !important;
+  }
+  .starfield { opacity: 0.2 !important; }
+  .vignette { opacity: 0.15 !important; }
+  .glow-rim {
+    filter: blur(40px) !important;
+    opacity: 0.25 !important;
+    animation: none !important;
+  }
+  .particles { opacity: 0.2 !important; }
 }
 
 .glow-rim {

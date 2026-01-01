@@ -153,6 +153,9 @@ body {
     scroll-behavior: auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    touch-action: pan-y;
+    overscroll-behavior-x: none;
 
     /* iPhone / notch safe-area, Telegram WebApp-ի համար օգտակար */
     padding-bottom: env(safe-area-inset-bottom);
@@ -1139,6 +1142,7 @@ h2::after {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: none;
 
     animation: screenFade 0.32s ease-out;
 }
