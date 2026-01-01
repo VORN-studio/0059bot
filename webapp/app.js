@@ -897,6 +897,51 @@ updateBalanceDisplay();
 let domitChart;
 let domitCandleSeries;
 
+let chartVisible = true;
+let throttleMs = isMobileOrLowEnd() ? 150 : 80;
+let lastUpdateTs = 0;
+let pendingUpdateTimer = null;
+let latestDomitData = null;
+
+function applyDomitUpdate(data) {
+  domitCandleSeries.update(data);
+  lastCandleTime = data.time;
+
+  const currentEl = document.getElementById('domit-current');
+  if (currentEl) {
+    currentEl.textContent = Number(data.close).toFixed(4);
+  }
+
+  const changeEl = document.getElementById('domit-change');
+  if (changeEl && window.firstCandleOpen) {
+    const change = ((data.close - window.firstCandleOpen) / window.firstCandleOpen * 100).toFixed(2);
+    changeEl.textContent = (change >= 0 ? '+' : '') + change + '%';
+    changeEl.style.color = change >= 0 ? '#26a69a' : '#ef5350';
+  }
+}
+
+function scheduleDomitUpdate(data) {
+  latestDomitData = data;
+  if (!chartVisible || !domitCandleSeries) return;
+  const now = Date.now();
+  const dueIn = throttleMs - (now - lastUpdateTs);
+  if (dueIn <= 0) {
+    lastUpdateTs = now;
+    applyDomitUpdate(latestDomitData);
+    latestDomitData = null;
+    if (pendingUpdateTimer) { clearTimeout(pendingUpdateTimer); pendingUpdateTimer = null; }
+  } else if (!pendingUpdateTimer) {
+    pendingUpdateTimer = setTimeout(function() {
+      pendingUpdateTimer = null;
+      if (chartVisible && domitCandleSeries && latestDomitData) {
+        lastUpdateTs = Date.now();
+        applyDomitUpdate(latestDomitData);
+        latestDomitData = null;
+      }
+    }, dueIn);
+  }
+}
+
 function loadDomitChart() {
   const container = document.getElementById('domit-chart');
 
@@ -1044,6 +1089,13 @@ window.addEventListener('load', function() {
       setTimeout(loadDomitChart, 300);
     }
   }, 500);
+  const container = document.getElementById('domit-chart');
+  if (container && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(function(entries) {
+      chartVisible = entries[0].isIntersecting;
+    });
+    observer.observe(container);
+  }
 });
 
 const portalOrb = document.getElementById("portal-orb");
@@ -1065,38 +1117,14 @@ socket.on('connect', () => {
 });
 
 socket.on('domit_update', (data) => {
-  console.log('📊 DOMIT Update:', data);
-  if (domitCandleSeries) {
-    domitCandleSeries.update(data);
-    lastCandleTime = data.time;
-    
-    // ✅ Update price display
-    const currentEl = document.getElementById('domit-current');
-    if (currentEl) {
-      currentEl.textContent = Number(data.close).toFixed(4);
-    }
-    
-    // ✅ Update change % in real-time
-    const changeEl = document.getElementById('domit-change');
-    if (changeEl && window.firstCandleOpen) {
-      const change = ((data.close - window.firstCandleOpen) / window.firstCandleOpen * 100).toFixed(2);
-      changeEl.textContent = (change >= 0 ? '+' : '') + change + '%';
-      changeEl.style.color = change >= 0 ? '#26a69a' : '#ef5350';
-    }
-  }
+  scheduleDomitUpdate(data);
 });
 
 socket.on('new_candle', (data) => {
-  console.log('🕐 New Candle:', data);
   if (domitCandleSeries && data.time !== lastCandleTime) {
-    // ✅ Add new candle
-    domitCandleSeries.update(data);
-    lastCandleTime = data.time;
-    
-    // ✅ Auto-scroll and fit content
+    scheduleDomitUpdate(data);
     if (domitChart) {
       domitChart.timeScale().scrollToRealTime();
-      domitChart.timeScale().fitContent();
     }
   }
 });
