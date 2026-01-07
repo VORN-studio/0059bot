@@ -1,0 +1,59 @@
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: narek
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 1505
+          script: |
+            cd ${{ secrets.APP_PATH }}
+            git fetch origin
+            git reset --hard origin/main
+
+            # Install FFmpeg if not present
+            if ! command -v ffmpeg &> /dev/null; then
+              echo "📦 Installing FFmpeg..."
+              apt update -qq
+              apt install -y -qq ffmpeg
+              echo "✅ FFmpeg installed"
+            else
+              echo "✅ FFmpeg already installed"
+            fi
+
+            rm -rf venv
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -q -r requirements.txt
+
+            # Copy service file if changed
+            cp -f domino-bot.service /etc/systemd/system/domino-bot.service
+            systemctl daemon-reload
+            systemctl enable domino-bot
+            systemctl restart domino-bot
+
+            # Update nginx config
+            cp -f nginx-domino.conf /etc/nginx/sites-available/domino-play.online
+            nginx -t && systemctl reload nginx
+
+            # Remove old service if exists
+            if systemctl is-enabled 0059bot.service 2>/dev/null; then
+              systemctl stop 0059bot.service
+              systemctl disable 0059bot.service
+              rm -f /etc/systemd/system/0059bot.service
+              systemctl daemon-reload
+            fi
