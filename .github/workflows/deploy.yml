@@ -28,8 +28,8 @@ jobs:
             # Install FFmpeg if not present
             if ! command -v ffmpeg &> /dev/null; then
               echo "📦 Installing FFmpeg..."
-              apt update -qq
-              apt install -y -qq ffmpeg
+              sudo apt update -qq
+              sudo apt install -y -qq ffmpeg
               echo "✅ FFmpeg installed"
             else
               echo "✅ FFmpeg already installed"
@@ -41,14 +41,14 @@ jobs:
             pip install -q -r requirements.txt
 
             # Copy service file if changed
-            cp -f domino-bot.service /etc/systemd/system/domino-bot.service
-            systemctl daemon-reload
-            systemctl enable domino-bot
-            systemctl restart domino-bot
+            sudo cp -f domino-bot.service /etc/systemd/system/domino-bot.service
+            sudo systemctl daemon-reload
+            sudo systemctl enable domino-bot
+            sudo systemctl restart domino-bot
 
             # Update nginx config
-            cp -f nginx-domino.conf /etc/nginx/sites-available/domino-play.online
-            nginx -t && systemctl reload nginx
+            sudo cp -f nginx-domino.conf /etc/nginx/sites-available/domino-play.online
+            sudo nginx -t && systemctl reload nginx
 
             # Remove old service if exists
             if systemctl is-enabled 0059bot.service 2>/dev/null; then
