@@ -120,6 +120,254 @@
       <section id="screen">
 
         <div id="screen-default" class="screen active">
+          <h2>Зарабатывайте DOMIT в Domino</h2>
+          <p>«Задания» — быстрый способ заработать.</p>
+          <p>«Майнинг» — покупка пакетов и стабильный доход.</p>
+          <p>«Портал» — общение и сообщество онлайн.</p>
+          <p>Приглашайте друзей и повышайте награды.</p>
+          
+          <div id="fake-history-box" style="margin-top:20px; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
+            <h3>📊 Recent Transactions</h3>
+            <div id="fake-history-list" style="max-height:150px; overflow-y:auto; font-size:13px; color:#ccc;">
+              <p>⏳ Loading...</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="screen-wallet" class="screen">
+          <h2>💼 Wallet</h2>
+          <p>Подключите свой кошелек и получите бонус X DOMIT.</p>
+          <div id="ton-connect"></div>
+          <p id="wallet-status" class="status"></p>
+        </div>
+
+        <div id="screen-game" class="screen">
+            <h2 class="title">🎮 Domino Games</h2>
+
+            <div class="game-menu">
+                <button class="game-card" onclick="openCrash()">🚀 Crash</button>
+                <button class="game-card" onclick="openDice()">🎲 Dice</button>
+                <div id="locked-game-msg" style="display:none;margin-top:20px;padding:20px;background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.1));border:2px solid rgba(239,68,68,0.4);border-radius:16px;text-align:center;">
+                    <div style="font-size:40px;margin-bottom:10px;">🔒</div>
+                    <h3 style="color:#fca5a5;font-size:20px;margin:0 0 10px 0;" id="locked-game-title"></h3>
+                    <p style="color:#fecaca;font-size:15px;margin:0;">Временно закрыто.<br>Скоро откроется!</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-deposit" class="screen">
+          <h2>💳 Deposit</h2>
+          <p>Выберите сумму и переведите на указанный счет.</p>
+          <input type="number" id="deposit-amount" placeholder="Например, сумма՝ 50" />
+          <button id="deposit-btn" class="btn primary">Создавать deposit опрос</button>
+          <p id="deposit-status" class="status"></p>
+        </div>
+
+        <div id="screen-withdraw" class="screen">
+          <h2>💸 Withdraw</h2>
+          <p>Снятие наличных доступно, если..</p>
+          <ul>
+            <li>У вас 10 и более активных рефералов.</li>
+            <li>Их общий депозит составляет ≥ 200 DOMIT.</li>
+          </ul>
+          <input type="number" id="withdraw-amount" placeholder="Сумма" />
+          <button id="withdraw-btn" class="btn primary">Отправить запрос на вывод</button>
+          <div style="margin-top:16px;"><strong>🎁 Промокод</strong></div>
+          <input type="text" id="promo-code" placeholder="Введите промокод" />
+          <button id="promo-btn" class="btn">Активировать промокод</button>
+          <p id="withdraw-status" class="status" style="display:block; white-space:normal; line-height:1.4;"></p>
+        </div>
+
+        <div id="screen-referral" class="screen">
+          <h2>👥 Referral</h2>
+          <p>Ваша реферальная ссылка․</p>
+          <input type="text" id="ref-link" readonly />
+          <button id="ref-copy-btn" class="btn">Копировать ссылку</button>
+
+          <div class="ref-stats">
+            <p>Всего рефералов: <span id="ref-total">0</span></p>
+            <p>Активные рефералы: <span id="ref-active">0</span></p>
+            <p>Их общий депозит: <span id="ref-deposits">0.00 DOMIT</span></p>
+          </div>
+        </div>
+
+          <div id="screen-tasks" class="screen">
+            <h2>📝 Tasks</h2>
+              <p>Выполняй задания и получай DOMIT. 💰</p>
+
+            <div class="task-card">
+              <p>🔥 Task system coming soon…</p>
+            </div>
+          </div>
+
+          <div id="screen-mining" class="screen">
+          <h2>⛏ Mining</h2>
+
+          <div id="mining-active-box" class="mt-16" style="display:none;">
+            <h3>Ваш активный план</h3>
+            <p><strong>Tier:</strong> <span id="mining-active-tier">-</span></p>
+            <p><strong>DOMIT / час:</strong> <span id="mining-active-speed">-</span></p>
+            <p><strong>Добыто DOMIT:</strong> <span id="mining-active-earned">-</span></p>
+            <button id="mining-claim-btn" class="btn primary mt-12">Перевести на баланс</button>
+          </div>
+
+          <h3 class="mt-20">⚡ Майнинг пакеты</h3>
+          <div id="mining-plans-box" class="mt-12"></div>
+        </div>
+
+
+      </section>
+    </main>
+  </div>
+    <!-- Custom Success Modal -->
+    <div id="success-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-icon">✅</div>
+        <div class="modal-title">Выполнено</div>
+        <div class="modal-message">Ссылка скопирована</div>
+        <button class="modal-btn" onclick="closeSuccessModal()">Хорошо</button>
+      </div>
+    </div>
+
+    <div id="username-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-content">
+        <div class="modal-icon">👤</div>
+        <div class="modal-title">Выберите имя пользователя</div>
+        <div class="modal-message">Это имя будет использоваться в Domino Portal.</div>
+        <input id="username-input" type="text" placeholder="Например՝ user1234" />
+        <p id="username-error" style="color:#fca5a5;min-height:20px;"></p>
+        <button id="username-save-btn" class="modal-btn">Сохранить</button>
+      </div>
+    </div>
+
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script src="/webapp/app.js?v=3"></script>
+</body>
+</html>
+<!--
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    
+  <meta charset="UTF-8" />
+  <title>Casino WebApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    <link rel="stylesheet" href="/webapp/style.css" />
+    <!-- ✅ Mobile Performance Optimization -->
+  <style id="mobile-perf">
+    @media (max-width: 768px), (hover: none) {
+      
+      body::before,
+      body::after {
+        display: none !important;
+      }
+      
+      .inner-ring,
+      .glass-reflect,
+      .noise-overlay,
+      .corner-node,
+      .glow-rim {
+        display: none !important;
+      }
+      
+      .container::before,
+      .container::after {
+        display: none !important;
+      }
+      
+      * {
+        animation: none !important;
+      }
+      
+      button,
+      .tab-btn {
+        transition: transform 0.1s ease, opacity 0.1s ease !important;
+      }
+      
+      .modal-overlay {
+        transition: opacity 0.2s ease !important;
+      }
+      
+      .modal-content {
+        transition: transform 0.2s ease !important;
+      }
+      
+      *:not(button):not(.tab-btn):not(.modal-overlay):not(.modal-content) {
+        transition: none !important;
+      }
+      
+      body, .container, .tab-content {
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* ✅ Optimize rendering */
+      * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      
+      /* ✅ Reduce repaints */
+      img, canvas, video {
+        image-rendering: -webkit-optimize-contrast;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+        <div class="inner-ring"></div>
+        <div class="glass-reflect"></div>
+        <div class="noise-overlay"></div>
+        <div class="corner-node node-top-left"></div>
+        <div class="corner-node node-top-right"></div>
+        <div class="corner-node node-bottom-left"></div>
+        <div class="corner-node node-bottom-right"></div>
+
+    <header class="top">
+      <h1>👾 Domino</h1>
+      <div class="user-info">
+        <div id="domit-chart" style="
+          height:250px;
+          margin-top:12px;
+          background:#0f172a;
+          border-radius:10px;
+          overflow:hidden;
+        "></div>
+        <div id="domit-rate-box" style="
+          margin-top:10px;
+          background:#0f172a;
+          padding:10px;
+          border-radius:10px;
+          font-size:14px;
+        ">
+          <strong>DOMIT/TON:</strong> <span id="domit-current">1.0000</span>
+          <span id="domit-change" style="margin-left:8px; color:#26a69a; font-size:0.9em;">+0.00%</span>
+        </div>
+
+        <div><strong>ID:</strong> <span id="user-id">-</span></div>
+        <div><strong>Имя:</strong> <span id="user-name">-</span></div>
+        <div><strong>Баланс:</strong> <span id="user-balance"> DOMIT</span></div>
+        </div>
+    </header>
+
+    <main>
+      <section class="buttons">
+        <button class="btn" data-section="wallet">💼 Wallet</button>
+        <button class="btn" data-section="game">🎮 Game</button>
+        <button class="btn" data-section="deposit">💳 Deposit</button>
+        <button class="btn" data-section="withdraw">💸 Withdraw</button>
+        <button class="btn" data-section="referral">👥 Referral</button>
+        <button class="btn tasks-btn" onclick="openTasks()">📝 Tasks</button>
+        <button class="btn" onclick="openMining()">⛏ Mining</button>
+      </section>
+
+      <section id="screen">
+
+        <div id="screen-default" class="screen active">
           <h2>Добро пожаловать</h2>
           <p>Подключите свой кошелек, получите бонус и пригласите друзей.</p>
           <p>👉 10 активных друзей + 200 DOMIT в сумме → возможен вывод средств.</p>
@@ -243,3 +491,4 @@
   <script src="/webapp/app.js?v=3"></script>
 </body>
 </html>
+-->
