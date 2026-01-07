@@ -71,7 +71,7 @@ console_handler.setLevel(logging.INFO)
 
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
-# --- Redirect all print() to logger ---
+# --- Redirect all print() too logger ---
 class _PrintToLogger:
     def __init__(self, _logger, level=logging.INFO, prefix=""):
         self.logger = _logger
