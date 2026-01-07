@@ -2012,20 +2012,20 @@ input[type="number"] {
    MULTI-LAYER EFFECTS OFF (Domino)
    Disable decorative overlays/pseudo-elements for smoothness
    ================================ */
-body::before,
-body::after,
-#app::before,
-#app::after,
-#app .inner-ring,
-#app .glass-reflect,
-#app .noise-overlay,
-.header-lasers,
-.top::before,
-.top::after,
-.top h1::before,
-.top h1::after,
-.screen::after,
-.corner-node {
+body.effects-off::before,
+body.effects-off::after,
+body.effects-off #app::before,
+body.effects-off #app::after,
+body.effects-off #app .inner-ring,
+body.effects-off #app .glass-reflect,
+body.effects-off #app .noise-overlay,
+body.effects-off .header-lasers,
+body.effects-off .top::before,
+body.effects-off .top::after,
+body.effects-off .top h1::before,
+body.effects-off .top h1::after,
+body.effects-off .screen::after,
+body.effects-off .corner-node {
   animation: none !important;
   background: none !important;
   mix-blend-mode: normal !important;
@@ -2033,7 +2033,7 @@ body::after,
   box-shadow: none !important;
 }
 
-.corner-node { display: none !important; }
+body.effects-off .corner-node { display: none !important; }
  
 .effect-off {
   animation: none !important;

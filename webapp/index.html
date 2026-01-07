@@ -9,65 +9,6 @@
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <link rel="stylesheet" href="/webapp/style.css" />
-    <!-- ✅ Mobile Performance Optimization -->
-  <style id="mobile-perf">
-    @media (max-width: 768px), (hover: none) {
-      
-      body::before,
-      body::after {
-        display: none !important;
-      }
-      
-      .inner-ring,
-      .glass-reflect,
-      .noise-overlay,
-      .corner-node,
-      .glow-rim {
-        display: none !important;
-      }
-      
-      .container::before,
-      .container::after {
-        display: none !important;
-      }
-      
-      * {
-        animation: none !important;
-      }
-      
-      button,
-      .tab-btn {
-        transition: transform 0.1s ease, opacity 0.1s ease !important;
-      }
-      
-      .modal-overlay {
-        transition: opacity 0.2s ease !important;
-      }
-      
-      .modal-content {
-        transition: transform 0.2s ease !important;
-      }
-      
-      *:not(button):not(.tab-btn):not(.modal-overlay):not(.modal-content) {
-        transition: none !important;
-      }
-      
-      body, .container, .tab-content {
-        -webkit-overflow-scrolling: touch;
-      }
-      
-      /* ✅ Optimize rendering */
-      * {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      
-      /* ✅ Reduce repaints */
-      img, canvas, video {
-        image-rendering: -webkit-optimize-contrast;
-      }
-    }
-  </style>
 </head>
 <body>
   <div id="app">
