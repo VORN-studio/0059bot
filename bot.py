@@ -6380,6 +6380,73 @@ scheduler.add_job(
     replace_existing=True
 )
 
+def auto_transfer_pending():
+    """
+    Automatically transfer pending micro balance to main balance when it reaches 0.001000
+    """
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        # Find users with pending balance >= 0.001000
+        c.execute("""
+            SELECT user_id, pending_micro_usd 
+            FROM dom_users_micro 
+            WHERE pending_micro_usd >= 0.001000
+        """)
+        
+        users_to_transfer = c.fetchall()
+        
+        for user_id, pending_amount in users_to_transfer:
+            # Transfer to main balance
+            c.execute("""
+                UPDATE dom_users
+                   SET balance_usd = COALESCE(balance_usd, 0) + %s,
+                       total_deposit_usd = COALESCE(total_deposit_usd, 0) + %s
+                 WHERE user_id = %s
+            """, (pending_amount, pending_amount, user_id))
+            
+            # Reset pending balance
+            c.execute("""
+                UPDATE dom_users_micro
+                   SET pending_micro_usd = 0
+                 WHERE user_id = %s
+            """, (user_id,))
+            
+            # Send real-time update
+            try:
+                realtime_emit("balance_update", {
+                    "user_id": user_id,
+                    "amount": pending_amount,
+                    "source": "auto_pending_transfer"
+                }, room=f"user_{user_id}")
+            except Exception:
+                pass
+            
+            print(f"✅ Auto transfer: uid={user_id} amount={pending_amount:.6f} USD")
+        
+        conn.commit()
+        release_db(conn)
+        
+        if users_to_transfer:
+            print(f"🔄 Auto transferred {len(users_to_transfer)} users pending balances")
+            
+    except Exception as e:
+        print(f"❌ Auto transfer error: {e}")
+        try:
+            conn.rollback()
+            release_db(conn)
+        except Exception:
+            pass
+
+scheduler.add_job(
+    auto_transfer_pending,
+    'interval',
+    minutes=1,  # Check every minute
+    id='auto_pending_transfer',
+    replace_existing=True
+)
+
 async def block_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Чтобы чат оставался чистым, мы удаляем все текстовые сообщения.
