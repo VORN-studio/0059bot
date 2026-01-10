@@ -1155,6 +1155,66 @@ body {
 /* =============================
    FEED LIST POSTS (future-proof)
    ============================= */
+/* ==================== TEMPORARY CLOSED NOTIFICATION ==================== */
+.temp-closed-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999999;
+    animation: notificationFadeIn 0.3s ease-out;
+}
+
+.temp-closed-notification.hidden {
+    display: none;
+}
+
+.notification-content {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(185, 28, 28, 0.95));
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(239, 68, 68, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 280px;
+    justify-content: center;
+}
+
+.notification-icon {
+    font-size: 20px;
+    animation: lockPulse 1.5s ease-in-out infinite;
+}
+
+.notification-text {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes notificationFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes lockPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
 /* ==================== POST CARD ==================== */
 .post-card {
     background: var(--bg-card);

@@ -2633,6 +2633,25 @@ function openDuels() {
   window.location.replace(`${window.location.origin}/portal/duels/duels.html?uid=${viewerId}&t=${Date.now()}`);
 }
 
+// ================= TEMPORARY CLOSED NOTIFICATION =================
+function showTempClosedNotification() {
+    const notification = document.getElementById('temp-closed-notification');
+    if (!notification) return;
+    
+    // Show the notification
+    notification.classList.remove('hidden');
+    
+    // Automatically hide after 3 seconds
+    setTimeout(() => {
+        notification.classList.add('hidden');
+    }, 3000);
+}
+
+function showPortalClosed(portalName) {
+    console.log(`🔒 ${portalName} is temporarily closed`);
+    showTempClosedNotification();
+}
+
 function startHotUserRefresh() {
     if (hotUserInterval) {
         clearInterval(hotUserInterval);

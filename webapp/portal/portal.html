@@ -142,8 +142,8 @@
 
             <div class="play-grid">
                 <div class="play-card" onclick="openDuels()">Duels</div>
-                <div class="play-card">Leagues</div>
-                <div class="play-card muted">Coming Soon</div>
+                <div class="play-card" onclick="showPortalClosed('Leagues')">Leagues</div>
+                <div class="play-card muted" onclick="showPortalClosed('Coming Soon')">Coming Soon</div>
             </div>
         </div>
 
@@ -461,6 +461,14 @@
                 </div>
             </div>
         </div>
+
+    <!-- Temporary Closed Notification -->
+    <div id="temp-closed-notification" class="temp-closed-notification hidden">
+        <div class="notification-content">
+            <span class="notification-icon">🔒</span>
+            <span class="notification-text">ժամանակավորապես փակ է</span>
+        </div>
+    </div>
 
 </body>
 </html>
