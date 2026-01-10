@@ -466,8 +466,28 @@ async function loadTonRate() {
     }
 }
 
-function openPortal() {
+async function openPortal() {
     if (!window.Telegram.WebApp.initDataUnsafe.user) return;
+
+    // Check portal status first
+    try {
+        const res = await fetch(`${API_BASE}/api/portal_status`);
+        const data = await res.json();
+        
+        if (!data.ok || !data.portal_enabled) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    message: "🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։"
+                });
+            } else {
+                alert("🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։");
+            }
+            return;
+        }
+    } catch (error) {
+        console.error("Portal status check failed:", error);
+        // Continue anyway if check fails
+    }
 
     const uid = window.Telegram.WebApp.initDataUnsafe.user.id;
 
@@ -530,8 +550,29 @@ function initFromTelegram() {
   loadUserFromBackend();
 }
 
-document.querySelector(".top h1").addEventListener("click", () => {
+document.querySelector(".top h1").addEventListener("click", async () => {
     if (!CURRENT_USER_ID) return;
+    
+    // Check portal status first
+    try {
+        const res = await fetch(`${API_BASE}/api/portal_status`);
+        const data = await res.json();
+        
+        if (!data.ok || !data.portal_enabled) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    message: "🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։"
+                });
+            } else {
+                alert("🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։");
+            }
+            return;
+        }
+    } catch (error) {
+        console.error("Portal status check failed:", error);
+        // Continue anyway if check fails
+    }
+    
     window.location.href =
       `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}&viewer=${CURRENT_USER_ID}`;
 });
@@ -1184,8 +1225,29 @@ window.addEventListener('load', function() {
 
 const portalOrb = document.getElementById("portal-orb");
 if (portalOrb) {
-  portalOrb.addEventListener("click", function() {
+  portalOrb.addEventListener("click", async function() {
     if (!CURRENT_USER_ID) return;
+    
+    // Check portal status first
+    try {
+        const res = await fetch(`${API_BASE}/api/portal_status`);
+        const data = await res.json();
+        
+        if (!data.ok || !data.portal_enabled) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    message: "🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։"
+                });
+            } else {
+                alert("🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։");
+            }
+            return;
+        }
+    } catch (error) {
+        console.error("Portal status check failed:", error);
+        // Continue anyway if check fails
+    }
+    
     window.location.href = window.location.origin + '/portal/portal.html?uid=' + CURRENT_USER_ID + '&viewer=' + CURRENT_USER_ID;
   });
 }
@@ -1703,8 +1765,28 @@ async function loadTonRate() {
     }
 }
 
-function openPortal() {
+async function openPortal() {
     if (!window.Telegram.WebApp.initDataUnsafe.user) return;
+
+    // Check portal status first
+    try {
+        const res = await fetch(`${API_BASE}/api/portal_status`);
+        const data = await res.json();
+        
+        if (!data.ok || !data.portal_enabled) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    message: "🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։"
+                });
+            } else {
+                alert("🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։");
+            }
+            return;
+        }
+    } catch (error) {
+        console.error("Portal status check failed:", error);
+        // Continue anyway if check fails
+    }
 
     const uid = window.Telegram.WebApp.initDataUnsafe.user.id;
 
@@ -1767,8 +1849,29 @@ function initFromTelegram() {
   loadUserFromBackend();
 }
 
-document.querySelector(".top h1").addEventListener("click", () => {
+document.querySelector(".top h1").addEventListener("click", async () => {
     if (!CURRENT_USER_ID) return;
+    
+    // Check portal status first
+    try {
+        const res = await fetch(`${API_BASE}/api/portal_status`);
+        const data = await res.json();
+        
+        if (!data.ok || !data.portal_enabled) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    message: "🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։"
+                });
+            } else {
+                alert("🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։");
+            }
+            return;
+        }
+    } catch (error) {
+        console.error("Portal status check failed:", error);
+        // Continue anyway if check fails
+    }
+    
     window.location.href =
       `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}&viewer=${CURRENT_USER_ID}`;
 });
@@ -2421,8 +2524,29 @@ window.addEventListener('load', function() {
 
 const portalOrb = document.getElementById("portal-orb");
 if (portalOrb) {
-  portalOrb.addEventListener("click", function() {
+  portalOrb.addEventListener("click", async function() {
     if (!CURRENT_USER_ID) return;
+    
+    // Check portal status first
+    try {
+        const res = await fetch(`${API_BASE}/api/portal_status`);
+        const data = await res.json();
+        
+        if (!data.ok || !data.portal_enabled) {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.showPopup({
+                    message: "🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։"
+                });
+            } else {
+                alert("🚫 Portal ժամանակավոր փակ է։ Խնդրում ենք փորձել ավելի ուշ։");
+            }
+            return;
+        }
+    } catch (error) {
+        console.error("Portal status check failed:", error);
+        // Continue anyway if check fails
+    }
+    
     window.location.href = window.location.origin + '/portal/portal.html?uid=' + CURRENT_USER_ID + '&viewer=' + CURRENT_USER_ID;
   });
 }

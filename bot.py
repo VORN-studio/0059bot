@@ -8625,6 +8625,99 @@ def api_postback_cpx():
         return "Error", 500
 
 
+# Portal settings API
+@app_web.route("/api/portal_status", methods=["GET"])
+def get_portal_status():
+    """Get portal enabled/disabled status"""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Create portal_settings table if not exists
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS dom_portal_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Get portal status
+        c.execute("SELECT value FROM dom_portal_settings WHERE key = 'portal_enabled'")
+        result = c.fetchone()
+        
+        if result:
+            portal_enabled = result[0] == 'true'
+        else:
+            # Default to enabled
+            portal_enabled = True
+            c.execute("""
+                INSERT INTO dom_portal_settings (key, value) 
+                VALUES ('portal_enabled', 'true')
+            """)
+            conn.commit()
+        
+        release_db(conn)
+        
+        return jsonify({
+            "ok": True,
+            "portal_enabled": portal_enabled
+        })
+        
+    except Exception as e:
+        logger.exception("Portal status error")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app_web.route("/api/portal_toggle", methods=["POST"])
+def toggle_portal():
+    """Toggle portal enabled/disabled status"""
+    try:
+        data = request.get_json()
+        if not data or "enabled" not in data:
+            return jsonify({"ok": False, "error": "enabled parameter required"}), 400
+        
+        enabled = data["enabled"]
+        if not isinstance(enabled, bool):
+            return jsonify({"ok": False, "error": "enabled must be boolean"}), 400
+        
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Create portal_settings table if not exists
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS dom_portal_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Update portal status
+        c.execute("""
+            INSERT INTO dom_portal_settings (key, value, updated_at) 
+            VALUES ('portal_enabled', %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (key) DO UPDATE SET 
+                value = EXCLUDED.value,
+                updated_at = CURRENT_TIMESTAMP
+        """, (str(enabled).lower(),))
+        
+        conn.commit()
+        release_db(conn)
+        
+        logger.info(f"Portal status toggled to: {enabled}")
+        
+        return jsonify({
+            "ok": True,
+            "portal_enabled": enabled,
+            "message": f"Portal {'enabled' if enabled else 'disabled'} successfully"
+        })
+        
+    except Exception as e:
+        logger.exception("Portal toggle error")
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 if __name__ == "__main__":
     print("✅ Domino bot script loaded.")
     try:
