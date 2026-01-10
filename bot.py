@@ -8630,7 +8630,7 @@ def api_postback_cpx():
 def get_portal_status():
     """Get portal enabled/disabled status"""
     try:
-        conn = get_db()
+        conn = db()
         c = conn.cursor()
         
         # Create portal_settings table if not exists
@@ -8681,7 +8681,7 @@ def toggle_portal():
         if not isinstance(enabled, bool):
             return jsonify({"ok": False, "error": "enabled must be boolean"}), 400
         
-        conn = get_db()
+        conn = db()
         c = conn.cursor()
         
         # Create portal_settings table if not exists
