@@ -37,7 +37,7 @@ body::before {
         rgba(37, 99, 235, 0.05),
         transparent 70%
     );
-    filter: blur(40px);
+    filter: blur(20px);
     z-index: -1;
     animation: glowShift 12s ease-in-out infinite alternate;
 }
@@ -61,7 +61,7 @@ body::after {
         rgba(6, 182, 212, 0.05),
         transparent 70%
     );
-    filter: blur(50px);
+    filter: blur(25px);
     z-index: -1;
     animation: glowShift2 16s ease-in-out infinite alternate;
 }
@@ -362,7 +362,7 @@ body::after {
     );
 
     mix-blend-mode: screen;
-    filter: blur(28px);
+    filter: blur(18px);
     opacity: 0.5;
 
     animation: haloFloat 18s ease-in-out infinite alternate;
@@ -394,7 +394,7 @@ body::after {
         rgba(255,255,255,0) 55%
     );
 
-    filter: blur(24px);
+    filter: blur(16px);
     opacity: 0.22;
 
     animation: glassMove 16s ease-in-out infinite;
@@ -469,7 +469,7 @@ body::after {
       radial-gradient(circle at 40% 70%, rgba(56, 189, 248, 0.38), transparent 75%),
       radial-gradient(circle at 60% 30%, rgba(168, 85, 247, 0.45), transparent 80%);
 
-    filter: blur(42px) saturate(160%);
+    filter: blur(20px) saturate(160%);
     animation: nebulaShift 14s ease-in-out infinite alternate;
 
     z-index: -3;
@@ -677,7 +677,7 @@ body::after {
       radial-gradient(circle at 0% 0%, var(--highlight-1), transparent 60%),
       radial-gradient(circle at 100% 100%, var(--highlight-2), transparent 65%),
       var(--glass-bg);
-    backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
     border: 1.4px solid var(--border-main);
 
     box-shadow:
@@ -985,7 +985,7 @@ body::after {
 
     border: 1.5px solid rgba(148,163,184,0.55);
 
-    backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
 
     box-shadow:
       0 26px 55px rgba(0,0,0,0.82),
@@ -2120,7 +2120,7 @@ body::before {
         rgba(37, 99, 235, 0.05),
         transparent 70%
     );
-    filter: blur(40px);
+    filter: blur(20px);
     z-index: -1;
     animation: glowShift 12s ease-in-out infinite alternate;
 }
@@ -2144,7 +2144,7 @@ body::after {
         rgba(6, 182, 212, 0.05),
         transparent 70%
     );
-    filter: blur(50px);
+    filter: blur(25px);
     z-index: -1;
     animation: glowShift2 16s ease-in-out infinite alternate;
 }
@@ -2445,7 +2445,7 @@ body::after {
     );
 
     mix-blend-mode: screen;
-    filter: blur(28px);
+    filter: blur(18px);
     opacity: 0.5;
 
     animation: haloFloat 18s ease-in-out infinite alternate;
@@ -2477,7 +2477,7 @@ body::after {
         rgba(255,255,255,0) 55%
     );
 
-    filter: blur(24px);
+    filter: blur(16px);
     opacity: 0.22;
 
     animation: glassMove 16s ease-in-out infinite;
@@ -2552,7 +2552,7 @@ body::after {
       radial-gradient(circle at 40% 70%, rgba(56, 189, 248, 0.38), transparent 75%),
       radial-gradient(circle at 60% 30%, rgba(168, 85, 247, 0.45), transparent 80%);
 
-    filter: blur(42px) saturate(160%);
+    filter: blur(20px) saturate(160%);
     animation: nebulaShift 14s ease-in-out infinite alternate;
 
     z-index: -3;
@@ -2760,7 +2760,7 @@ body::after {
       radial-gradient(circle at 0% 0%, var(--highlight-1), transparent 60%),
       radial-gradient(circle at 100% 100%, var(--highlight-2), transparent 65%),
       var(--glass-bg);
-    backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
     border: 1.4px solid var(--border-main);
 
     box-shadow:
@@ -3068,7 +3068,7 @@ body::after {
 
     border: 1.5px solid rgba(148,163,184,0.55);
 
-    backdrop-filter: blur(28px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
 
     box-shadow:
       0 26px 55px rgba(0,0,0,0.82),
