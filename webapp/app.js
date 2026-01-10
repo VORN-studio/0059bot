@@ -533,29 +533,9 @@ function showPortalNotification() {
 async function openPortal() {
     if (!window.Telegram.WebApp.initDataUnsafe.user) return;
 
-    // Check portal status first
-    try {
-        const res = await fetch(`${API_BASE}/api/portal_status`);
-        const data = await res.json();
-        
-        if (!data.ok || !data.portal_enabled) {
-            showPortalNotification();
-            return;
-        }
-    } catch (error) {
-        console.error("Portal status check failed:", error);
-        // Continue anyway if check fails
-    }
-
-    const uid = window.Telegram.WebApp.initDataUnsafe.user.id;
-
-    let url = `${window.location.origin}/portal/portal.html?uid=${uid}&viewer=${uid}`;
-
-    if (window.DEEP_LINK_POST_ID) {
-        url += `&open_post=${window.DEEP_LINK_POST_ID}`;
-    }
-
-    window.location.href = url;
+    // Always show portal closed notification
+    showPortalNotification();
+    return;
 }
 
 
@@ -611,22 +591,9 @@ function initFromTelegram() {
 document.querySelector(".top h1").addEventListener("click", async () => {
     if (!CURRENT_USER_ID) return;
     
-    // Check portal status first
-    try {
-        const res = await fetch(`${API_BASE}/api/portal_status`);
-        const data = await res.json();
-        
-        if (!data.ok || !data.portal_enabled) {
-            showPortalNotification();
-            return;
-        }
-    } catch (error) {
-        console.error("Portal status check failed:", error);
-        // Continue anyway if check fails
-    }
-    
-    window.location.href =
-      `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}&viewer=${CURRENT_USER_ID}`;
+    // Always show portal closed notification
+    showPortalNotification();
+    return;
 });
 
 
@@ -1280,21 +1247,9 @@ if (portalOrb) {
   portalOrb.addEventListener("click", async function() {
     if (!CURRENT_USER_ID) return;
     
-    // Check portal status first
-    try {
-        const res = await fetch(`${API_BASE}/api/portal_status`);
-        const data = await res.json();
-        
-        if (!data.ok || !data.portal_enabled) {
-            showPortalNotification();
-            return;
-        }
-    } catch (error) {
-        console.error("Portal status check failed:", error);
-        // Continue anyway if check fails
-    }
-    
-    window.location.href = window.location.origin + '/portal/portal.html?uid=' + CURRENT_USER_ID + '&viewer=' + CURRENT_USER_ID;
+    // Always show portal closed notification
+    showPortalNotification();
+    return;
   });
 }
 
@@ -1809,43 +1764,7 @@ async function loadTonRate() {
     } catch (e) {
         document.getElementById("ton-current").textContent = "—";
     }
-}
 
-async function openPortal() {
-    if (!window.Telegram.WebApp.initDataUnsafe.user) return;
-
-    // Check portal status first
-    try {
-        const res = await fetch(`${API_BASE}/api/portal_status`);
-        const data = await res.json();
-        
-        if (!data.ok || !data.portal_enabled) {
-            showPortalNotification();
-            return;
-        }
-    } catch (error) {
-        console.error("Portal status check failed:", error);
-        // Continue anyway if check fails
-    }
-
-    const uid = window.Telegram.WebApp.initDataUnsafe.user.id;
-
-    let url = `${window.location.origin}/portal/portal.html?uid=${uid}&viewer=${uid}`;
-
-    if (window.DEEP_LINK_POST_ID) {
-        url += `&open_post=${window.DEEP_LINK_POST_ID}`;
-    }
-
-    window.location.href = url;
-}
-
-
-function openTasks() {
-    const url = "/webapp/tasks/index.html?uid=" + CURRENT_USER_ID;
-    if (window.Telegram && Telegram.WebApp) {
-        window.location.href = url;  
-        return;
-    }
     window.location.href = url;
 }
 
@@ -1892,22 +1811,9 @@ function initFromTelegram() {
 document.querySelector(".top h1").addEventListener("click", async () => {
     if (!CURRENT_USER_ID) return;
     
-    // Check portal status first
-    try {
-        const res = await fetch(`${API_BASE}/api/portal_status`);
-        const data = await res.json();
-        
-        if (!data.ok || !data.portal_enabled) {
-            showPortalNotification();
-            return;
-        }
-    } catch (error) {
-        console.error("Portal status check failed:", error);
-        // Continue anyway if check fails
-    }
-    
-    window.location.href =
-      `${window.location.origin}/portal/portal.html?uid=${CURRENT_USER_ID}&viewer=${CURRENT_USER_ID}`;
+    // Always show portal closed notification
+    showPortalNotification();
+    return;
 });
 
 
@@ -2561,21 +2467,9 @@ if (portalOrb) {
   portalOrb.addEventListener("click", async function() {
     if (!CURRENT_USER_ID) return;
     
-    // Check portal status first
-    try {
-        const res = await fetch(`${API_BASE}/api/portal_status`);
-        const data = await res.json();
-        
-        if (!data.ok || !data.portal_enabled) {
-            showPortalNotification();
-            return;
-        }
-    } catch (error) {
-        console.error("Portal status check failed:", error);
-        // Continue anyway if check fails
-    }
-    
-    window.location.href = window.location.origin + '/portal/portal.html?uid=' + CURRENT_USER_ID + '&viewer=' + CURRENT_USER_ID;
+    // Always show portal closed notification
+    showPortalNotification();
+    return;
   });
 }
 
