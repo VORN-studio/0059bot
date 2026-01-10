@@ -30,7 +30,6 @@ function showModal(icon, title, message, type = "success") {
     modalTitle.textContent = title;
     modalMessage.textContent = message;
     
-    // Գույնը փոխում ենք type-ի համաձայն
     if (type === "error") {
         modalContent.style.background = "linear-gradient(135deg, #4a1a1a 0%, #2d0f0f 100%)";
         modalContent.style.borderColor = "rgba(239, 68, 68, 0.3)";
@@ -41,7 +40,6 @@ function showModal(icon, title, message, type = "success") {
         modalContent.style.boxShadow = "0 0 60px rgba(56, 189, 248, 0.4), 0 20px 80px rgba(0, 0, 0, 0.9)";
     }
     
-    // 🔥 Դնենք modal-ը USER-Ի VIEWPORT-Ի ՄԵՋՏԵՂՈՒՄ
     const scrollY = window.scrollY || window.pageYOffset;
     const viewportHeight = window.innerHeight;
     
@@ -73,9 +71,6 @@ async function goBack(){
   window.location.href = `${window.location.origin}/app?uid=${USER_ID}`;
 }
 
-
-
-
 // ---------------------------------------
 // LOAD USER
 // ---------------------------------------
@@ -86,13 +81,10 @@ async function loadUser() {
     if (data.ok) {
         userBalance = data.user.balance_usd;
 
-        // ❗ Այստեղ այլևս division, DOMIT calculation չկան
         document.getElementById("user-balance").textContent = userBalance.toFixed(2);
         document.getElementById("header-balance").textContent = userBalance.toFixed(2);
     }
 }
-
-
 
 // ---------------------------------------
 // LOAD MINING PLANS
@@ -105,7 +97,6 @@ async function loadPlans() {
 
     const box = document.getElementById("plans-box");
     
-    // ✅ Batch render - ավելի արագ է քան forEach appendChilds
     const fragment = document.createDocumentFragment();
 
     data.plans.forEach(plan => {
@@ -122,27 +113,16 @@ async function loadPlans() {
         fragment.appendChild(div);
     });
     
-    // ✅ Մեկ անգամ append (ոչ թե N անգամ)
     box.innerHTML = "";
     box.appendChild(fragment);
 }
 
-// ---------------------------------------
-// LOAD CURRENT MINING STATE
-// ---------------------------------------
-// ---------------------------------------
-// LOAD CURRENT MINING STATE
-// ---------------------------------------
-// ---------------------------------------
-// LOAD CURRENT MINING STATE
-// ---------------------------------------
 async function loadState() {
     const res = await fetch(`${API_BASE}/api/mining/state/${USER_ID}`);
     const data = await res.json();
 
     if (!data.ok) return;
 
-    // Եթե ընդհանրապես փաթեթ չկա
     if (!data.miners || data.miners.length === 0) {
         document.getElementById("active-miner-box").style.display = "none";
         document.getElementById("header-speed").textContent = "0.000";
@@ -157,7 +137,6 @@ async function loadState() {
         // pending_domit – նույնը թողնում ենք
         totalPending += Number(miner.pending_domit || 0);
 
-        // ⚡ speed-ը հաշվում ենք reward_per_second_usd-ից
         // reward_per_second_usd → DOMIT/վայրկյան, ուրեմն *3600 → DOMIT/ժամ
         const rps = Number(miner.reward_per_second_usd || 0);
         const minerSpeed = rps * 3600;

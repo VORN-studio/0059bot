@@ -343,7 +343,7 @@ async function loadFakeHistory() {
     const data = await res.json();
     if (data.ok && Array.isArray(data.history)) {
       if (data.history.length === 0) {
-        box.innerHTML = "<p>No recent transactions</p>";
+        box.innerHTML = "<p>Нет недавних транзакций</p>";
         return;
       }
       box.innerHTML = "";
@@ -486,7 +486,7 @@ function showPortalNotification() {
         max-width: 90%;
         text-align: center;
     `;
-    notification.innerHTML = '🚫 Portal-ը ժամանակավոր փակ է։ Կփորձեք ավելի ուշ։';
+    notification.innerHTML = '🚫 Portal временно недоступен. Повторите попытку позже.';
     
     // Add animation keyframes if not exists
     if (!document.getElementById('portal-notification-styles')) {
@@ -1643,7 +1643,7 @@ async function loadFakeHistory() {
     const data = await res.json();
     if (data.ok && Array.isArray(data.history)) {
       if (data.history.length === 0) {
-        box.innerHTML = "<p>No recent transactions</p>";
+        box.innerHTML = "<p>Нет недавних транзакций</p>";
         return;
       }
       box.innerHTML = "";

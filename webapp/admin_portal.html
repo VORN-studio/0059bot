@@ -100,15 +100,15 @@
     <div class="container">
         <h1>🚪 Portal Admin Panel</h1>
         
-        <div id="loading" class="loading">Բեռնում...</div>
+        <div id="loading" class="loading">Загрузка...</div>
         
         <div id="content" style="display: none;">
             <div id="status-box" class="status-box"></div>
             
             <div class="button-group">
-                <button id="btn-enable" class="btn-enable" onclick="togglePortal(true)">✅ Բացել Portal</button>
-                <button id="btn-disable" class="btn-disable" onclick="togglePortal(false)">🚫 Փակել Portal</button>
-                <button class="btn-refresh" onclick="loadStatus()">🔄 Թարմացնել</button>
+                <button id="btn-enable" class="btn-enable" onclick="togglePortal(true)">✅ Открыть Portal</button>
+                <button id="btn-disable" class="btn-disable" onclick="togglePortal(false)">🚫 Закрыть Portal</button>
+                <button class="btn-refresh" onclick="loadStatus()">🔄 Обновить</button>
             </div>
             
             <div id="message"></div>
@@ -130,10 +130,10 @@
                 if (data.ok) {
                     updateStatusDisplay(data.portal_enabled);
                 } else {
-                    showError('Ստատուսի ստուգման սխալ: ' + (data.error || 'Անհայտ սխալ'));
+                    showError('Ошибка проверки статуса: ' + (data.error || 'Неизвестная ошибка'));
                 }
             } catch (error) {
-                showError('Ցանցային սխալ: ' + error.message);
+                showError('Сетевая ошибка: ' + error.message);
             }
         }
         
@@ -144,12 +144,12 @@
             
             if (enabled) {
                 statusBox.className = 'status-box status-enabled';
-                statusBox.innerHTML = '✅ Portal-ը <strong>ԲԱՑ Է</strong>';
+                statusBox.innerHTML = '✅ Portal <strong>ОТКРЫТО</strong>';
                 btnEnable.style.display = 'none';
                 btnDisable.style.display = 'inline-block';
             } else {
                 statusBox.className = 'status-box status-disabled';
-                statusBox.innerHTML = '🚫 Portal-ը <strong>ՓԱԿ Է</strong>';
+                statusBox.innerHTML = '🚫 Portal <strong>ЗАКРЫТО</strong>';
                 btnEnable.style.display = 'inline-block';
                 btnDisable.style.display = 'none';
             }
@@ -173,13 +173,13 @@
                 const data = await res.json();
                 
                 if (data.ok) {
-                    showSuccess(data.message || `Portal-ը ${enabled ? 'բացվեց' : 'փակվեց'} հաջողությամբ`);
+                    showSuccess(data.message || `Portal ${enabled ? 'Открыто' : 'Закрыто'} Успешно`);
                     updateStatusDisplay(data.portal_enabled);
                 } else {
-                    showError('Սխալ: ' + (data.error || 'Անհայտ սխալ'));
+                    showError('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
                 }
             } catch (error) {
-                showError('Ցանցային սխալ: ' + error.message);
+                showError('Сетевая ошибка: ' + error.message);
             }
         }
         

@@ -18,24 +18,20 @@
     <!-- ✅ Mobile Performance Optimization -->
     <style>
       @media (max-width: 768px), (hover: none) {
-        /* ❌ Անջատել body backgrounds */
         body::before,
         body::after {
           display: none !important;
         }
 
-        /* ❌ Անջատել #mining-app pseudo-elements */
         #mining-app::before,
         #mining-app::after {
           display: none !important;
         }
 
-        /* ❌ Անջատել ԲՈԼՈՐ animations-ները (բայց ՈՉ modal-ի) */
         *:not(.modal-overlay):not(.modal-content):not(.modal-icon) {
           animation: none !important;
         }
 
-        /* ✅ Modal-ը ՊԱՀՊԱՆԵՆՔ animation-ով */
         .modal-overlay {
           animation: modalFadeIn 0.3s ease-out forwards !important;
         }
@@ -48,7 +44,6 @@
           animation: modalIconBounce 0.6s ease-out 0.2s forwards !important;
         }
 
-        /* ❌ Անջատել backdrop-filter */
         #mining-app,
         #top-bar,
         #user-balance-box,
@@ -59,7 +54,6 @@
           -webkit-backdrop-filter: none !important;
         }
 
-        /* ✅ Թողնել ՄԻԱՅՆ կարճ transitions */
         button,
         .btn,
         .plan-card,
@@ -67,7 +61,6 @@
           transition: transform 0.15s ease, opacity 0.15s ease !important;
         }
 
-        /* ❌ Մնացածը - NO transition */
         *:not(button):not(.btn):not(.plan-card):not(.card) {
           transition: none !important;
         }

@@ -172,7 +172,7 @@ async function performTask(taskId) {
     if (!task) return;
 
     const btn = document.querySelector(`button[onclick="performTask(${taskId})"]`);
-    if (btn) btn.textContent = "⏳ Loading...";
+    if (btn) btn.textContent = "⏳ Загрузка...";
 
     try {
         const res = await fetch(`/api/task/generate_link`, {
@@ -189,7 +189,7 @@ async function performTask(taskId) {
         const shortU = data.short_url || "";
         const directU = data.direct_url || (task.url || "");
         const attemptId = data.attempt_id || "";
-        var msg = "Ուշադիր.\n\n1) Բացված էջում սպասեք թայմերի ավարտին։\n2) Սեղմեք ‘Get Link’.\n3) Սեղմեք ‘Open/Открыть’.\n4) Եթե էջը չի բեռնվում, փորձեք Firefox/Brave/Opera կամ բացեք արտաքինով։";
+        var msg = "Внимание!\n\n1) На открывшейся странице дождитесь завершения таймера.\n2) Нажмите «Get Link».\n3) Нажмите «Open/Открыть».\n4) Если страница не загружается, попробуйте Firefox/Brave/Opera или откройте через внешний браузер.";
         try {
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.showPopup === 'function') {
                 window.Telegram.WebApp.showPopup({ message: msg });
