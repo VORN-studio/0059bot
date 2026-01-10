@@ -67,6 +67,83 @@ function setStoredUsername(name){
   try { localStorage.setItem('uname_' + String(CURRENT_USER_ID), name); } catch(_){ }
 }
 
+// Функция для обновления ежедневного бонуса
+function updateDailyBonus() {
+  if (!CURRENT_USER_ID) return;
+  
+  const today = new Date().toDateString();
+  const lastVisit = localStorage.getItem(`last_visit_${CURRENT_USER_ID}`);
+  const bonusClaimed = localStorage.getItem(`daily_bonus_${CURRENT_USER_ID}`) === 'true';
+  
+  const bonusText = document.getElementById("daily-bonus-text");
+  const bonusBtn = document.getElementById("daily-bonus-btn");
+  
+  if (!bonusText || !bonusBtn) return;
+  
+  if (lastVisit === today && bonusClaimed) {
+    bonusText.textContent = "Бонус уже получен сегодня. Приходите завтра!";
+    bonusBtn.style.display = "none";
+  } else {
+    bonusText.textContent = "Получите 0.01 DOMIT ежедневный бонус!";
+    bonusBtn.style.display = "inline-block";
+  }
+}
+
+// Функция для получения ежедневного бонуса
+async function claimDailyBonus() {
+  if (!CURRENT_USER_ID) {
+    alert("❌ Откройте приложение из Telegram бота!");
+    return;
+  }
+  
+  const today = new Date().toDateString();
+  const bonusClaimed = localStorage.getItem(`daily_bonus_${CURRENT_USER_ID}`) === 'true';
+  
+  if (bonusClaimed) {
+    alert("❌ Бонус уже получен сегодня!");
+    return;
+  }
+  
+  const bonusBtn = document.getElementById("daily-bonus-btn");
+  const bonusText = document.getElementById("daily-bonus-text");
+  
+  bonusBtn.textContent = "⏳ Загрузка...";
+  bonusBtn.disabled = true;
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/daily_bonus`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: CURRENT_USER_ID })
+    });
+    
+    const data = await res.json();
+    
+    if (data.ok) {
+      localStorage.setItem(`daily_bonus_${CURRENT_USER_ID}`, 'true');
+      localStorage.setItem(`last_visit_${CURRENT_USER_ID}`, today);
+      
+      bonusText.textContent = "✅ Бонус получен! +0.01 DOMIT";
+      bonusBtn.style.display = "none";
+      
+      // Обновляем баланс
+      balance += 0.01;
+      updateBalanceDisplay();
+      
+      alert("✅ Ежедневный бонус 0.01 DOMIT получен!");
+    } else {
+      bonusBtn.textContent = "Получить бонус";
+      bonusBtn.disabled = false;
+      alert("❌ " + (data.message || "Ошибка при получении бонуса"));
+    }
+  } catch (error) {
+    console.error("Daily bonus error:", error);
+    bonusBtn.textContent = "Получить бонус";
+    bonusBtn.disabled = false;
+    alert("❌ Ошибка сервера. Попробуйте позже.");
+  }
+}
+
 function showUsernameModal(){
   const m = $("username-modal");
   const i = $("username-input");
@@ -475,14 +552,27 @@ async function loadUserFromBackend() {
 
     if (!data.ok || !data.user) {
       console.log("⚠️ user not found");
+      alert("❌ Пользователь не найден. Попробуйте перезапустить приложение.");
       return;
     }
 
-  
+    // Проверяем, новый ли пользователь
     const U = data.user;
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem(`last_visit_${CURRENT_USER_ID}`);
+    
+    if (lastVisit !== today) {
+      // Новый день - сбрасываем бонус
+      localStorage.setItem(`last_visit_${CURRENT_USER_ID}`, today);
+      localStorage.setItem(`daily_bonus_${CURRENT_USER_ID}`, 'false');
+      console.log("🗓️ Новый день для пользователя:", CURRENT_USER_ID);
+    }
 
     console.log("🔍 DEBUG: U.ref_count =", U.ref_count);
     console.log("🔍 DEBUG: element exists?", $("ref-total"));
+
+    // Обновляем ежедневный бонус
+    updateDailyBonus();
 
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";
@@ -1214,6 +1304,83 @@ function setStoredUsername(name){
   try { localStorage.setItem('uname_' + String(CURRENT_USER_ID), name); } catch(_){ }
 }
 
+// Функция для обновления ежедневного бонуса
+function updateDailyBonus() {
+  if (!CURRENT_USER_ID) return;
+  
+  const today = new Date().toDateString();
+  const lastVisit = localStorage.getItem(`last_visit_${CURRENT_USER_ID}`);
+  const bonusClaimed = localStorage.getItem(`daily_bonus_${CURRENT_USER_ID}`) === 'true';
+  
+  const bonusText = document.getElementById("daily-bonus-text");
+  const bonusBtn = document.getElementById("daily-bonus-btn");
+  
+  if (!bonusText || !bonusBtn) return;
+  
+  if (lastVisit === today && bonusClaimed) {
+    bonusText.textContent = "Бонус уже получен сегодня. Приходите завтра!";
+    bonusBtn.style.display = "none";
+  } else {
+    bonusText.textContent = "Получите 0.01 DOMIT ежедневный бонус!";
+    bonusBtn.style.display = "inline-block";
+  }
+}
+
+// Функция для получения ежедневного бонуса
+async function claimDailyBonus() {
+  if (!CURRENT_USER_ID) {
+    alert("❌ Откройте приложение из Telegram бота!");
+    return;
+  }
+  
+  const today = new Date().toDateString();
+  const bonusClaimed = localStorage.getItem(`daily_bonus_${CURRENT_USER_ID}`) === 'true';
+  
+  if (bonusClaimed) {
+    alert("❌ Бонус уже получен сегодня!");
+    return;
+  }
+  
+  const bonusBtn = document.getElementById("daily-bonus-btn");
+  const bonusText = document.getElementById("daily-bonus-text");
+  
+  bonusBtn.textContent = "⏳ Загрузка...";
+  bonusBtn.disabled = true;
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/daily_bonus`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: CURRENT_USER_ID })
+    });
+    
+    const data = await res.json();
+    
+    if (data.ok) {
+      localStorage.setItem(`daily_bonus_${CURRENT_USER_ID}`, 'true');
+      localStorage.setItem(`last_visit_${CURRENT_USER_ID}`, today);
+      
+      bonusText.textContent = "✅ Бонус получен! +0.01 DOMIT";
+      bonusBtn.style.display = "none";
+      
+      // Обновляем баланс
+      balance += 0.01;
+      updateBalanceDisplay();
+      
+      alert("✅ Ежедневный бонус 0.01 DOMIT получен!");
+    } else {
+      bonusBtn.textContent = "Получить бонус";
+      bonusBtn.disabled = false;
+      alert("❌ " + (data.message || "Ошибка при получении бонуса"));
+    }
+  } catch (error) {
+    console.error("Daily bonus error:", error);
+    bonusBtn.textContent = "Получить бонус";
+    bonusBtn.disabled = false;
+    alert("❌ Ошибка сервера. Попробуйте позже.");
+  }
+}
+
 function showUsernameModal(){
   const m = $("username-modal");
   const i = $("username-input");
@@ -1622,14 +1789,27 @@ async function loadUserFromBackend() {
 
     if (!data.ok || !data.user) {
       console.log("⚠️ user not found");
+      alert("❌ Пользователь не найден. Попробуйте перезапустить приложение.");
       return;
     }
 
-  
+    // Проверяем, новый ли пользователь
     const U = data.user;
+    const today = new Date().toDateString();
+    const lastVisit = localStorage.getItem(`last_visit_${CURRENT_USER_ID}`);
+    
+    if (lastVisit !== today) {
+      // Новый день - сбрасываем бонус
+      localStorage.setItem(`last_visit_${CURRENT_USER_ID}`, today);
+      localStorage.setItem(`daily_bonus_${CURRENT_USER_ID}`, 'false');
+      console.log("🗓️ Новый день для пользователя:", CURRENT_USER_ID);
+    }
 
     console.log("🔍 DEBUG: U.ref_count =", U.ref_count);
     console.log("🔍 DEBUG: element exists?", $("ref-total"));
+
+    // Обновляем ежедневный бонус
+    updateDailyBonus();
 
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";

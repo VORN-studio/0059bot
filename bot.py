@@ -3578,6 +3578,17 @@ def init_db():
     c = conn.cursor()
 
     c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_daily_bonuses (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            amount NUMERIC(10,6) NOT NULL,
+            date DATE NOT NULL,
+            created_at BIGINT NOT NULL,
+            UNIQUE(user_id, date)
+        )
+    """)
+
+    c.execute("""
         CREATE TABLE IF NOT EXISTS dom_users (
             user_id BIGINT PRIMARY KEY,
             username TEXT,
@@ -4906,6 +4917,63 @@ def api_crash_withdraw():
     release_db(conn)
 
     return jsonify({"ok": True})
+
+@app_web.route("/api/daily_bonus", methods=["POST"])
+def api_daily_bonus():
+    """
+    Выдача ежедневного бонуса 0.01 DOMIT
+    """
+    data = request.get_json(force=True, silent=True) or {}
+    user_id = int(data.get("user_id", 0))
+    
+    if not user_id:
+        return jsonify({"ok": False, "error": "bad_params"}), 400
+    
+    # Проверяем, получал ли пользователь бонус сегодня
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = db()
+    c = conn.cursor()
+    
+    c.execute("""
+        SELECT id FROM dom_daily_bonuses 
+        WHERE user_id = %s AND date = %s
+    """, (user_id, today))
+    
+    if c.fetchone():
+        release_db(conn)
+        return jsonify({"ok": False, "message": "Бонус уже получен сегодня"}), 200
+    
+    # Начисляем бонус
+    bonus_amount = 0.01  # 0.01 DOMIT = 1 цент при 1 DOMIT = 1 USD
+    
+    try:
+        # Записываем бонус
+        c.execute("""
+            INSERT INTO dom_daily_bonuses (user_id, amount, date, created_at)
+            VALUES (%s, %s, %s, %s)
+        """, (user_id, bonus_amount, today, int(time.time())))
+        
+        # Обновляем баланс
+        c.execute("""
+            UPDATE dom_users 
+            SET balance_usd = balance_usd + %s
+            WHERE user_id = %s
+        """, (bonus_amount, user_id))
+        
+        conn.commit()
+        release_db(conn)
+        
+        return jsonify({
+            "ok": True, 
+            "message": "Ежедневный бонус получен",
+            "amount": bonus_amount
+        })
+        
+    except Exception as e:
+        conn.rollback()
+        release_db(conn)
+        logger.error(f"Daily bonus error: {e}")
+        return jsonify({"ok": False, "message": "Ошибка сервера"}), 500
 
 @app_web.route("/api/withdraw_request", methods=["POST"])
 def api_withdraw_request():
