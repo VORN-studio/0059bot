@@ -469,7 +469,7 @@ async function loadTonRate() {
 function showPortalNotification() {
     // Create notification element
     const notification = document.createElement('div');
-    notification.style.cssText = 
+    notification.style.cssText = `
         position: fixed;
         top: 20px;
         left: 50%;
@@ -485,14 +485,14 @@ function showPortalNotification() {
         animation: slideDown 0.3s ease-out;
         max-width: 90%;
         text-align: center;
-    ;
+    `;
     notification.innerHTML = '🚫 Portal-ը ժամանակավոր փակ է։ Կփորձեք ավելի ուշ։';
     
     // Add animation keyframes if not exists
     if (!document.getElementById('portal-notification-styles')) {
         const style = document.createElement('style');
         style.id = 'portal-notification-styles';
-        style.textContent = 
+        style.textContent = `
             @keyframes slideDown {
                 from {
                     opacity: 0;
@@ -513,7 +513,7 @@ function showPortalNotification() {
                     transform: translateX(-50%) translateY(-20px);
                 }
             }
-        ;
+        `;
         document.head.appendChild(style);
     }
     
