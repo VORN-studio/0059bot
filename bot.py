@@ -4941,18 +4941,18 @@ def api_withdraw_request():
             "message": "У вас достаточно средств на счету для снятия наличных?"
         }), 200
 
-    if ref_count < 10:
+    if ref_count < 5:
         return jsonify({
             "ok": False,
             "error": "not_enough_refs",
-            "message": "Для вывода средств необходимо пригласить не менее 10 друзей."
+            "message": "Для вывода средств необходимо пригласить не менее 5 друзей."
         }), 200
 
-    if team_dep < 200.0:
+    if team_dep < 50.0:
         return jsonify({
             "ok": False,
             "error": "not_enough_team_deposit",
-            "message": "Для вывода средств общая сумма депозита ваших приглашенных должна составлять не менее 200 DOMIT.։"
+            "message": "Для вывода средств общая сумма депозита ваших приглашенных должна составлять не менее 50 DOMIT."
         }), 200
 
     create_withdraw_request(user_id, amount)
