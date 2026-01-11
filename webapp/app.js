@@ -127,10 +127,10 @@ async function claimDailyBonus() {
       bonusBtn.style.display = "none";
       
       // Обновляем баланс
-      balance += 0.01;
+      balance += 0.50;
       updateBalanceDisplay();
       
-      alert("✅ Ежедневный бонус 0.01 DOMIT получен!");
+      alert("✅ Ежедневный бонус 0.50 DOMIT получен!");
     } else {
       bonusBtn.textContent = "Получить бонус";
       bonusBtn.disabled = false;

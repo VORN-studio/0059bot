@@ -4944,7 +4944,7 @@ def api_daily_bonus():
         return jsonify({"ok": False, "message": "Бонус уже получен сегодня"}), 200
     
     # Начисляем бонус
-    bonus_amount = 0.01  # 0.01 DOMIT = 1 цент при 1 DOMIT = 1 USD
+    bonus_amount = 0.50  # 0.50 DOMIT = 1 цент при 1 DOMIT = 1 USD
     
     try:
         # Записываем бонус
@@ -5582,11 +5582,11 @@ def api_ad_monetag_reward():
     tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
 
     if country in tier1:
-        reward = 0.0005
+        reward = 0.005
     elif country in tier2:
-        reward = 0.0002
+        reward = 0.002
     else:
-        reward = 0.0001
+        reward = 0.001
 
     conn = db(); c = conn.cursor()
     try:
@@ -5631,11 +5631,11 @@ def api_ad_richads_reward():
     tier1 = ["US", "GB", "CA", "AU", "DE", "CH", "NO", "SE", "DK", "NZ"]
     tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
     if country in tier1:
-        reward = 0.0005
+        reward = 0.005
     elif country in tier2:
-        reward = 0.0002
+        reward = 0.002
     else:
-        reward = 0.0001
+        reward = 0.001
     conn = db(); c = conn.cursor()
     try:
         c.execute(
