@@ -25,6 +25,11 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 import asyncio
 import psycopg2
 from psycopg2 import pool
+import redis
+import json
+from functools import wraps
+from contextlib import contextmanager
+from collections import defaultdict
 from telegram import (
     Update,
     InlineKeyboardMarkup,
@@ -114,6 +119,76 @@ BOT_READY = False
 ONLINE_USERS = {}
 REMATCH_REQUESTS = {}
 MONETAG_SMARTLINK = os.getenv("MONETAG_SMARTLINK", "").strip()
+
+# Redis client for caching
+try:
+    redis_client = redis.Redis(
+        host='localhost', 
+        port=6379, 
+        db=0, 
+        decode_responses=True,
+        socket_connect_timeout=5,
+        socket_timeout=5,
+        retry_on_timeout=True
+    )
+    redis_client.ping()  # Test connection
+    REDIS_AVAILABLE = True
+    logger.info("Redis connected successfully")
+except:
+    REDIS_AVAILABLE = False
+    redis_client = None
+    logger.warning("Redis not available, running without cache")
+
+# Rate limiting storage
+rate_limits = defaultdict(list)
+
+def cache_result(expire_time=300):
+    """Cache decorator for expensive operations"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if not REDIS_AVAILABLE:
+                return func(*args, **kwargs)
+            
+            cache_key = f"{func.__name__}:{hash(str(args) + str(kwargs))}"
+            try:
+                cached = redis_client.get(cache_key)
+                if cached:
+                    return json.loads(cached)
+            except:
+                pass
+            
+            result = func(*args, **kwargs)
+            try:
+                redis_client.setex(cache_key, expire_time, json.dumps(result))
+            except:
+                pass
+            return result
+        return wrapper
+    return decorator
+
+def check_rate_limit(user_id, limit=100, window=60):
+    """Check if user exceeds rate limit"""
+    now = time.time()
+    user_requests = rate_limits[user_id]
+    
+    # Remove old requests
+    user_requests[:] = [req_time for req_time in user_requests if now - req_time < window]
+    
+    if len(user_requests) >= limit:
+        return False
+    
+    user_requests.append(now)
+    return True
+
+@contextmanager
+def get_db_connection():
+    """Context manager for database connections"""
+    conn = db()
+    try:
+        yield conn
+    finally:
+        release_db(conn)
 if not MONETAG_SMARTLINK:
     MONETAG_SMARTLINK = "https://otieu.com/4/10388580"
 MONETAG_SMARTLINKS = {
@@ -157,9 +232,12 @@ socketio = SocketIO(
     app_web,
     cors_allowed_origins="*",
     async_mode="gevent",
-    logger=True,
+    logger=False,
     engineio_logger=False,
-    transports=['polling', 'websocket'] 
+    ping_timeout=60,
+    ping_interval=25,
+    max_http_buffer_size=1000000,
+    transports=['polling', 'websocket']
 )
 
 def ensure_balance_precision():
@@ -3509,11 +3587,11 @@ def db():
 
     if _db_pool is None:
         _db_pool = pool.SimpleConnectionPool(
-            minconn=1,
-            maxconn=100,
+            minconn=50,
+            maxconn=1000,
             dsn=DATABASE_URL
         )
-        logger.info("PostgreSQL pool initialized (100 connections)")
+        logger.info("PostgreSQL pool initialized (1000 connections)")
 
     try:
         conn = _db_pool.getconn()

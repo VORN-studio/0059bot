@@ -10,3 +10,4 @@ gevent
 gevent-websocket
 Pillow
 APScheduler==3.10.4
+redis==4.5.4
