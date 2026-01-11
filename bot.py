@@ -4077,10 +4077,23 @@ def init_db():
 
 def realtime_emit(event: str, data: dict, room: str = None):
     try:
+        # Convert Decimal objects to float for JSON serialization
+        def convert_decimals(obj):
+            if isinstance(obj, dict):
+                return {k: convert_decimals(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_decimals(item) for item in obj]
+            elif hasattr(obj, '__class__') and obj.__class__.__name__ == 'Decimal':
+                return float(obj)
+            else:
+                return obj
+        
+        converted_data = convert_decimals(data)
+        
         if room:
-            socketio.emit(event, data, room=room)
+            socketio.emit(event, converted_data, room=room)
         else:
-            socketio.emit(event, data)
+            socketio.emit(event, converted_data)
     except Exception:
         logger.exception("Realtime emit failed")
 
