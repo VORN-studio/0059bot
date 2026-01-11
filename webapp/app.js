@@ -84,7 +84,7 @@ function updateDailyBonus() {
     bonusText.textContent = "Бонус уже получен сегодня. Приходите завтра!";
     bonusBtn.style.display = "none";
   } else {
-    bonusText.textContent = "Получите 0.01 DOMIT ежедневный бонус!";
+    bonusText.textContent = "Получите 0.50 DOMIT ежедневный бонус!";
     bonusBtn.style.display = "inline-block";
   }
 }
@@ -123,7 +123,7 @@ async function claimDailyBonus() {
       localStorage.setItem(`daily_bonus_${CURRENT_USER_ID}`, 'true');
       localStorage.setItem(`last_visit_${CURRENT_USER_ID}`, today);
       
-      bonusText.textContent = "✅ Бонус получен! +0.01 DOMIT";
+      bonusText.textContent = "✅ Бонус получен! +0.50 DOMIT";
       bonusBtn.style.display = "none";
       
       // Обновляем баланс
