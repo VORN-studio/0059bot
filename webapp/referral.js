@@ -19,9 +19,9 @@ async function loadReferralStats() {
       if (progressBar && progressText) {
         progressBar.style.width = `${data.progress}%`;
         if (data.tier === 'bronze') {
-          progressText.textContent = `${data.active_refs}/6 ակտիվ ռեֆերալ`;
+          progressText.textContent = `${data.active_refs}/6 Активный реферал`;
         } else {
-          progressText.textContent = `${data.active_refs} ակտիվ ռեֆերալ (Մաքսիմում)`;
+          progressText.textContent = `${data.active_refs} Активных рефералов (Максимум)`;
         }
       }
       
@@ -54,8 +54,8 @@ async function loadReferralStats() {
         if (data.tier === 'bronze') {
           nextTier.style.display = 'block';
           const needed = data.tier_info.next_needed - data.active_refs;
-          nextTier.querySelector('h4').textContent = '📈 Հաջորդ մակարդակ՝ Gold';
-          nextTier.querySelector('p').textContent = `Պահանջվում է ևս ${needed} ակտիվ ռեֆերալ`;
+          nextTier.querySelector('h4').textContent = '📈 Следующий уровень՝ Gold';
+          nextTier.querySelector('p').textContent = `Требуется еще ${needed} активных рефералов`;
         } else {
           nextTier.style.display = 'none';
         }

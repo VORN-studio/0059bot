@@ -4331,7 +4331,7 @@ def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int]
 
 def award_signup_bonus(inviter_id: int, referred_id: int):
     """
-    Տալիս է բոնուս ռեֆերալի գրանցման համար
+    Начисляет бонус за регистрацию реферала
     """
     try:
         # Get inviter's referral tier
@@ -4366,7 +4366,7 @@ def award_signup_bonus(inviter_id: int, referred_id: int):
 
 def count_active_referrals(user_id: int) -> int:
     """
-    Հաշվում է ակտիվ ռեֆերալների քանակը (նրանք, ովքեր դեպոզիտ ունեն)
+    Подсчитывает количество активных рефералов
     """
     conn = db()
     c = conn.cursor()
@@ -4381,14 +4381,14 @@ def count_active_referrals(user_id: int) -> int:
 
 def get_referral_tier(user_id: int) -> str:
     """
-    Ստուգում է օգտատիրոջ ռեֆերալ մակարդակը
+    Проверяет реферальный уровень пользователя
     """
     active_refs = count_active_referrals(user_id)
     return 'gold' if active_refs >= 6 else 'bronze'
 
 def award_deposit_bonus(referred_id: int, deposit_amount: float):
     """
-    Տալիս է հոնորար ռեֆերալի դեպոզիտից
+    Начисляет вознаграждение от депозита реферала
     """
     try:
         conn = db()
@@ -4433,7 +4433,7 @@ def award_deposit_bonus(referred_id: int, deposit_amount: float):
 
 def award_mining_commission(referred_id: int, mining_amount: float):
     """
-    Տալիս է հոնորար ռեֆերալի մայնինգից
+    Начисляет вознаграждение за майнинг реферала
     """
     try:
         conn = db()
@@ -5240,7 +5240,7 @@ def api_daily_bonus():
 @app_web.route("/api/referral_stats", methods=["GET"])
 def api_referral_stats():
     """
-    Վերադարձնում է ռեֆերալ վիճակագրություն
+    Возвращает реферальную статистику
     """
     user_id = request.args.get("user_id", type=int)
     if not user_id:
@@ -5281,8 +5281,8 @@ def api_referral_stats():
         
         # Get benefits for current tier
         benefits = {
-            'bronze': ['⛏ 5% մայնինգից', '💳 10% դեպոզիտից', '🎁 0.10 DOMIT գրանցման համար'],
-            'gold': ['⛏ 8% մայնինգից', '💳 15% դեպոզիտից', '🎁 0.25 DOMIT գրանցման համար']
+            'bronze': ['⛏ 5% с майнинга', '💳 10% с депозита', '🎁 0.10 DOMIT за регистрацию'],
+            'gold': ['⛏ 8% с майнинга', '💳 15% с депозита', '🎁 0.25 DOMIT за регистрацию']
         }
         
         release_db(conn)
@@ -5306,7 +5306,7 @@ def api_referral_stats():
 @app_web.route("/api/referral_earnings", methods=["GET"])
 def api_referral_earnings():
     """
-    Վերադարձնում է ռեֆերալ եկամուտների պատմություն
+    Возвращает историю реферальных доходов
     """
     user_id = request.args.get("user_id", type=int)
     if not user_id:
