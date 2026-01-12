@@ -6817,7 +6817,7 @@ def auto_transfer_pending():
 scheduler.add_job(
     auto_transfer_pending,
     'interval',
-    minutes=1,  # Check every minute
+    seconds=10,  # Check every 10 seconds
     id='auto_pending_transfer',
     replace_existing=True
 )
