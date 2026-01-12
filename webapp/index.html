@@ -127,14 +127,42 @@
 
         <div id="screen-referral" class="screen">
           <h2>👥 Referral</h2>
-          <p>Ваша реферальная ссылка․</p>
+          
+          <!-- Մակարդակի ցուցադրում -->
+          <div class="ref-tier-box" style="margin-bottom:20px; padding:15px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius:15px; text-align:center;">
+            <div class="tier-badge" id="ref-tier-badge" style="font-size:24px; font-weight:bold; color:#fff; margin-bottom:10px;">🥉 Bronze</div>
+            <div class="tier-progress" style="background:rgba(255,255,255,0.2); border-radius:10px; height:8px; margin:10px 0;">
+              <div class="progress-bar" id="tier-progress" style="background:#4ade80; height:100%; border-radius:10px; width:0%; transition:width 0.3s;"></div>
+            </div>
+            <span id="tier-progress-text" style="color:#fff; font-size:14px;">0/6 ակտիվ ռեֆերալ</span>
+          </div>
+          
+          <p>Ձեր ռեֆերալ հղումը․</p>
           <input type="text" id="ref-link" readonly />
-          <button id="ref-copy-btn" class="btn">Копировать ссылку</button>
+          <button id="ref-copy-btn" class="btn">Կոպիտել հղումը</button>
 
           <div class="ref-stats">
-            <p>Всего рефералов: <span id="ref-total">0</span></p>
-            <p>Активные рефералы: <span id="ref-active">0</span></p>
-            <p>Их общий депозит: <span id="ref-deposits">0.00 DOMIT</span></p>
+            <p>Ընդհանուր ռեֆերալներ: <span id="ref-total">0</span></p>
+            <p>Ակտիվ ռեֆերալներ: <span id="ref-active">0</span></p>
+            <p>Ընդհանուր եկամուտ: <span id="ref-earnings">0.00 DOMIT</span></p>
+            <p>Իրենց դեպոզիտը: <span id="ref-deposits">0.00 DOMIT</span></p>
+          </div>
+          
+          <!-- Մակարդակի բոնուսներ -->
+          <div class="tier-benefits" id="tier-benefits" style="margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:10px;">
+            <h3>🎁 Ձեր բոնուսները</h3>
+            <ul id="benefits-list" style="list-style:none; padding:0; margin:10px 0;">
+              <li style="margin:5px 0;">⛏ 5% մայնինգից</li>
+              <li style="margin:5px 0;">💳 10% դեպոզիտից</li>
+              <li style="margin:5px 0;">🎁 0.10 DOMIT գրանցման համար</li>
+            </ul>
+          </div>
+          
+          <!-- Հաջորդ մակարդակ -->
+          <div class="next-tier" id="next-tier" style="margin-top:20px; padding:15px; background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05)); border:2px solid rgba(255,215,0,0.3); border-radius:10px; text-align:center;">
+            <h4 style="color:#ffd700; margin:0 0 10px 0;">📈 Հաջորդ մակարդակ՝ Gold</h4>
+            <p style="margin:0; color:#ffd700; font-size:14px;">Պահանջվում է ևս 6 ակտիվ ռեֆերալ</p>
+            <p style="margin:5px 0 0 0; color:#ffd700; font-size:12px;">⛏ 8% • 💳 15% • 🎁 0.25 DOMIT</p>
           </div>
         </div>
 
@@ -189,6 +217,7 @@
 
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script src="/webapp/referral.js"></script>
   <script src="/webapp/app.js?v=3"></script>
 </body>
 </html>

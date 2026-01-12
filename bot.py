@@ -3643,7 +3643,8 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS avatar_data TEXT",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS allow_forward INTEGER DEFAULT 1",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS total_games INTEGER DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS total_wins INTEGER DEFAULT 0"    
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS total_wins INTEGER DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS referral_earnings NUMERIC(18,6) DEFAULT 0"
 ]
 
 def init_db():
@@ -3701,6 +3702,18 @@ def init_db():
         CREATE TABLE IF NOT EXISTS dom_users_micro (
             user_id BIGINT PRIMARY KEY,
             pending_micro_usd NUMERIC(18,6) DEFAULT 0
+        )
+    """)
+
+    # Referral earnings table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS dom_referral_earnings (
+            id SERIAL PRIMARY KEY,
+            inviter_id BIGINT,
+            referred_id BIGINT,
+            amount NUMERIC(10,6),
+            type VARCHAR(20),
+            created_at BIGINT
         )
     """)
 
@@ -4311,6 +4324,157 @@ def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int]
 
     conn.commit()
     release_db(conn)
+    
+    # Award signup bonus to inviter if this is a new referral
+    if inviter_id and row is None:
+        award_signup_bonus(inviter_id, user_id)
+
+def award_signup_bonus(inviter_id: int, referred_id: int):
+    """
+    Տալիս է բոնուս ռեֆերալի գրանցման համար
+    """
+    try:
+        # Get inviter's referral tier
+        active_refs = count_active_referrals(inviter_id)
+        bonus = 0.25 if active_refs >= 6 else 0.10  # Gold tier gets 0.25, Bronze gets 0.10
+        
+        conn = db()
+        c = conn.cursor()
+        
+        # Add to inviter's balance
+        c.execute("""
+            UPDATE dom_users 
+            SET balance_usd = COALESCE(balance_usd,0) + %s,
+                referral_earnings = COALESCE(referral_earnings,0) + %s
+            WHERE user_id = %s
+        """, (bonus, bonus, inviter_id))
+        
+        # Log the referral earning
+        now = int(time.time())
+        c.execute("""
+            INSERT INTO dom_referral_earnings (inviter_id, referred_id, amount, type, created_at)
+            VALUES (%s, %s, %s, 'signup', %s)
+        """, (inviter_id, referred_id, bonus, now))
+        
+        conn.commit()
+        release_db(conn)
+        
+        print(f"✅ Referral signup bonus: inviter={inviter_id} got {bonus} DOMIT for referring {referred_id}")
+        
+    except Exception as e:
+        logger.error(f"Error awarding signup bonus: {e}")
+
+def count_active_referrals(user_id: int) -> int:
+    """
+    Հաշվում է ակտիվ ռեֆերալների քանակը (նրանք, ովքեր դեպոզիտ ունեն)
+    """
+    conn = db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT COUNT(*)
+        FROM dom_users
+        WHERE inviter_id=%s AND total_deposit_usd > 0
+    """, (user_id,))
+    count = c.fetchone()[0] or 0
+    release_db(conn)
+    return count
+
+def get_referral_tier(user_id: int) -> str:
+    """
+    Ստուգում է օգտատիրոջ ռեֆերալ մակարդակը
+    """
+    active_refs = count_active_referrals(user_id)
+    return 'gold' if active_refs >= 6 else 'bronze'
+
+def award_deposit_bonus(referred_id: int, deposit_amount: float):
+    """
+    Տալիս է հոնորար ռեֆերալի դեպոզիտից
+    """
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        # Get inviter
+        c.execute("SELECT inviter_id FROM dom_users WHERE user_id=%s", (referred_id,))
+        inviter_row = c.fetchone()
+        if not inviter_row or not inviter_row[0]:
+            release_db(conn)
+            return
+            
+        inviter_id = inviter_row[0]
+        
+        # Get commission rate based on tier
+        tier = get_referral_tier(inviter_id)
+        commission_rate = 0.15 if tier == 'gold' else 0.10  # Gold gets 15%, Bronze gets 10%
+        bonus = deposit_amount * commission_rate
+        
+        # Add to inviter's balance
+        c.execute("""
+            UPDATE dom_users 
+            SET balance_usd = COALESCE(balance_usd,0) + %s,
+                referral_earnings = COALESCE(referral_earnings,0) + %s
+            WHERE user_id = %s
+        """, (bonus, bonus, inviter_id))
+        
+        # Log the referral earning
+        now = int(time.time())
+        c.execute("""
+            INSERT INTO dom_referral_earnings (inviter_id, referred_id, amount, type, created_at)
+            VALUES (%s, %s, %s, 'deposit', %s)
+        """, (inviter_id, referred_id, bonus, now))
+        
+        conn.commit()
+        release_db(conn)
+        
+        print(f"✅ Referral deposit bonus: inviter={inviter_id} got {bonus} DOMIT from {referred_id} deposit")
+        
+    except Exception as e:
+        logger.error(f"Error awarding deposit bonus: {e}")
+
+def award_mining_commission(referred_id: int, mining_amount: float):
+    """
+    Տալիս է հոնորար ռեֆերալի մայնինգից
+    """
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        # Get inviter
+        c.execute("SELECT inviter_id FROM dom_users WHERE user_id=%s", (referred_id,))
+        inviter_row = c.fetchone()
+        if not inviter_row or not inviter_row[0]:
+            release_db(conn)
+            return
+            
+        inviter_id = inviter_row[0]
+        
+        # Get commission rate based on tier
+        tier = get_referral_tier(inviter_id)
+        commission_rate = 0.08 if tier == 'gold' else 0.05  # Gold gets 8%, Bronze gets 5%
+        bonus = mining_amount * commission_rate
+        
+        # Add to inviter's balance
+        c.execute("""
+            UPDATE dom_users 
+            SET balance_usd = COALESCE(balance_usd,0) + %s,
+                referral_earnings = COALESCE(referral_earnings,0) + %s
+            WHERE user_id = %s
+        """, (bonus, bonus, inviter_id))
+        
+        # Log the referral earning
+        now = int(time.time())
+        c.execute("""
+            INSERT INTO dom_referral_earnings (inviter_id, referred_id, amount, type, created_at)
+            VALUES (%s, %s, %s, 'mining', %s)
+        """, (inviter_id, referred_id, bonus, now))
+        
+        conn.commit()
+        release_db(conn)
+        
+        print(f"✅ Referral mining commission: inviter={inviter_id} got {bonus} DOMIT from {referred_id} mining")
+        
+    except Exception as e:
+        logger.error(f"Error awarding mining commission: {e}")
 
 def get_user_stats(user_id: int):
     """
@@ -4596,6 +4760,9 @@ def apply_deposit(user_id: int, amount: float):
         conn.commit()
     finally:
         release_db(conn)
+    
+    # Award referral bonus for deposit
+    award_deposit_bonus(user_id, amount)
 
 def redeem_promocode(user_id: int, code: str):
     now = int(time.time())
@@ -4784,6 +4951,10 @@ def claim_user_mining_rewards(user_id: int):
     row = c.fetchone()
     conn.commit()
     release_db(conn)
+
+    # Award referral commission for mining
+    if total_reward > 0:
+        award_mining_commission(user_id, total_reward)
 
     new_balance = float(row[0]) if row else 0.0
     return total_reward, len(miners), new_balance
@@ -5064,6 +5235,113 @@ def api_daily_bonus():
         conn.rollback()
         release_db(conn)
         logger.error(f"Daily bonus error: {e}")
+        return jsonify({"ok": False, "message": "Ошибка сервера"}), 500
+
+@app_web.route("/api/referral_stats", methods=["GET"])
+def api_referral_stats():
+    """
+    Վերադարձնում է ռեֆերալ վիճակագրություն
+    """
+    user_id = request.args.get("user_id", type=int)
+    if not user_id:
+        return jsonify({"ok": False, "error": "user_id_required"}), 400
+    
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        # Get referral counts
+        c.execute("SELECT COUNT(*) FROM dom_users WHERE inviter_id=%s", (user_id,))
+        total_refs = c.fetchone()[0] or 0
+        
+        c.execute("""
+            SELECT COUNT(*)
+            FROM dom_users
+            WHERE inviter_id=%s AND total_deposit_usd > 0
+        """, (user_id,))
+        active_refs = c.fetchone()[0] or 0
+        
+        c.execute("""
+            SELECT COALESCE(SUM(total_deposit_usd),0)
+            FROM dom_users
+            WHERE inviter_id=%s
+        """, (user_id,))
+        team_deposits = float(c.fetchone()[0] or 0.0)
+        
+        # Get referral earnings
+        c.execute("SELECT COALESCE(referral_earnings,0) FROM dom_users WHERE user_id=%s", (user_id,))
+        referral_earnings = float(c.fetchone()[0] or 0.0)
+        
+        # Get tier info
+        tier = 'gold' if active_refs >= 6 else 'bronze'
+        tier_data = {
+            'bronze': {'name': '🥉 Bronze', 'color': '#CD7F32', 'next_needed': 6},
+            'gold': {'name': '🥇 Gold', 'color': '#FFD700', 'next_needed': 0}
+        }
+        
+        # Get benefits for current tier
+        benefits = {
+            'bronze': ['⛏ 5% մայնինգից', '💳 10% դեպոզիտից', '🎁 0.10 DOMIT գրանցման համար'],
+            'gold': ['⛏ 8% մայնինգից', '💳 15% դեպոզիտից', '🎁 0.25 DOMIT գրանցման համար']
+        }
+        
+        release_db(conn)
+        
+        return jsonify({
+            "ok": True,
+            "total_refs": total_refs,
+            "active_refs": active_refs,
+            "team_deposits": round(team_deposits, 2),
+            "referral_earnings": round(referral_earnings, 6),
+            "tier": tier,
+            "tier_info": tier_data[tier],
+            "benefits": benefits[tier],
+            "progress": min(100, (active_refs / 6) * 100) if tier == 'bronze' else 100
+        })
+        
+    except Exception as e:
+        logger.error(f"Referral stats error: {e}")
+        return jsonify({"ok": False, "message": "Ошибка сервера"}), 500
+
+@app_web.route("/api/referral_earnings", methods=["GET"])
+def api_referral_earnings():
+    """
+    Վերադարձնում է ռեֆերալ եկամուտների պատմություն
+    """
+    user_id = request.args.get("user_id", type=int)
+    if not user_id:
+        return jsonify({"ok": False, "error": "user_id_required"}), 400
+    
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        c.execute("""
+            SELECT amount, type, created_at, referred_id
+            FROM dom_referral_earnings
+            WHERE inviter_id=%s
+            ORDER BY created_at DESC
+            LIMIT 50
+        """, (user_id,))
+        
+        earnings = []
+        for row in c.fetchall():
+            earnings.append({
+                "amount": float(row[0]),
+                "type": row[1],
+                "created_at": row[2],
+                "referred_id": row[3]
+            })
+        
+        release_db(conn)
+        
+        return jsonify({
+            "ok": True,
+            "earnings": earnings
+        })
+        
+    except Exception as e:
+        logger.error(f"Referral earnings error: {e}")
         return jsonify({"ok": False, "message": "Ошибка сервера"}), 500
 
 @app_web.route("/api/withdraw_request", methods=["POST"])
