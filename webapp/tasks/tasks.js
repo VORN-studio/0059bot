@@ -53,8 +53,11 @@ async function loadBalance() {
     try {
         // Add cache-busting parameter to force fresh data
         const timestamp = Date.now();
+        console.log(`🔍 DEBUG: Loading balance for user ${uid} with timestamp ${timestamp}`);
         const res = await fetch(`/api/user/${uid}?t=${timestamp}`);
         const data = await res.json();
+        
+        console.log(`🔍 DEBUG: API response:`, data);
 
         const el = document.getElementById("tasks-balance");
         if (!el) return;
@@ -81,14 +84,21 @@ async function loadBalance() {
 }
 
 function updateDailyLevelDisplay(userData) {
+    console.log("🔍 DEBUG: updateDailyLevelDisplay called with:", userData);
+    
     const dailyTasksCompleted = userData.daily_tasks_completed || 0;
     const dailyBonusLevel = userData.daily_bonus_level || 1;
     const has2xMultiplier = userData.has_2x_multiplier || false;
+    
+    console.log(`🔍 DEBUG: dailyTasksCompleted=${dailyTasksCompleted}, level=${dailyBonusLevel}, 2x=${has2xMultiplier}`);
     
     // Update level display
     const levelEl = document.getElementById("daily-level");
     if (levelEl) {
         levelEl.textContent = `Level ${dailyBonusLevel}`;
+        console.log(`✅ DEBUG: Level updated to: Level ${dailyBonusLevel}`);
+    } else {
+        console.log("❌ DEBUG: daily-level element not found");
     }
     
     // Update tasks count
@@ -96,6 +106,9 @@ function updateDailyLevelDisplay(userData) {
     if (tasksCountEl) {
         const nextMilestone = getNextMilestone(dailyTasksCompleted);
         tasksCountEl.textContent = `${dailyTasksCompleted}/${nextMilestone}`;
+        console.log(`✅ DEBUG: Tasks count updated to: ${dailyTasksCompleted}/${nextMilestone}`);
+    } else {
+        console.log("❌ DEBUG: daily-tasks-count element not found");
     }
     
     // Update progress bar with animation
@@ -415,6 +428,8 @@ function startTaskCompletionMonitoring(taskId) {
             const res = await fetch(`/api/task/status?uid=${uid}&task_id=${taskId}&t=${timestamp}`);
             const data = await res.json();
             
+            console.log(`🔍 DEBUG: Task status check for task ${taskId}:`, data);
+            
             if (data.completed) {
                 clearInterval(checkInterval);
                 
@@ -424,14 +439,17 @@ function startTaskCompletionMonitoring(taskId) {
                 // Show completion feedback immediately
                 showTaskCompletionFeedback();
                 
-                // Update balance and daily level with fresh data
-                await loadBalance();
-                
-                // Check for bonus updates
-                await checkBonusUpdate();
-                
-                // Show success message
-                showSuccessMessage(`Task completed! Progress updated.`);
+                // Wait a moment for backend to process, then force update
+                setTimeout(async () => {
+                    console.log("🔄 DEBUG: Force updating balance after task completion...");
+                    await loadBalance();
+                    
+                    // Also check for bonus updates
+                    await checkBonusUpdate();
+                    
+                    // Show success message
+                    showSuccessMessage(`Task completed! Progress updated.`);
+                }, 1000); // Wait 1 second for backend processing
             }
         } catch (e) {
             console.error('Error checking task status:', e);
