@@ -53,11 +53,8 @@ async function loadBalance() {
     try {
         // Add cache-busting parameter to force fresh data
         const timestamp = Date.now();
-        console.log(`🔍 DEBUG: Loading balance for user ${uid} with timestamp ${timestamp}`);
         const res = await fetch(`/api/user/${uid}?t=${timestamp}`);
         const data = await res.json();
-        
-        console.log(`🔍 DEBUG: API response:`, data);
 
         const el = document.getElementById("tasks-balance");
         if (!el) return;
@@ -96,9 +93,6 @@ function updateDailyLevelDisplay(userData) {
     const levelEl = document.getElementById("daily-level");
     if (levelEl) {
         levelEl.textContent = `Level ${dailyBonusLevel}`;
-        console.log(`✅ DEBUG: Level updated to: Level ${dailyBonusLevel}`);
-    } else {
-        console.log("❌ DEBUG: daily-level element not found");
     }
     
     // Update tasks count
@@ -106,9 +100,6 @@ function updateDailyLevelDisplay(userData) {
     if (tasksCountEl) {
         const nextMilestone = getNextMilestone(dailyTasksCompleted);
         tasksCountEl.textContent = `${dailyTasksCompleted}/${nextMilestone}`;
-        console.log(`✅ DEBUG: Tasks count updated to: ${dailyTasksCompleted}/${nextMilestone}`);
-    } else {
-        console.log("❌ DEBUG: daily-tasks-count element not found");
     }
     
     // Update progress bar with animation
@@ -428,8 +419,6 @@ function startTaskCompletionMonitoring(taskId) {
             const res = await fetch(`/api/task/status?uid=${uid}&task_id=${taskId}&t=${timestamp}`);
             const data = await res.json();
             
-            console.log(`🔍 DEBUG: Task status check for task ${taskId}:`, data);
-            
             if (data.completed) {
                 clearInterval(checkInterval);
                 
@@ -441,7 +430,6 @@ function startTaskCompletionMonitoring(taskId) {
                 
                 // Wait a moment for backend to process, then force update
                 setTimeout(async () => {
-                    console.log("🔄 DEBUG: Force updating balance after task completion...");
                     await loadBalance();
                     
                     // Also check for bonus updates

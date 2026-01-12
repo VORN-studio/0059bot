@@ -6068,6 +6068,10 @@ def api_ad_monetag_reward():
             (uid, reward)
         )
         row = c.fetchone()
+        
+        # Update daily tasks count for Monetag task completion
+        update_daily_tasks_and_bonuses(c, uid)
+        
         conn.commit()
         pending = float(row[0]) if row else 0.0
     except Exception:
@@ -6115,7 +6119,12 @@ def api_ad_richads_reward():
             """,
             (uid, reward)
         )
-        row = c.fetchone(); conn.commit()
+        row = c.fetchone()
+        
+        # Update daily tasks count for RichAds task completion
+        update_daily_tasks_and_bonuses(c, uid)
+        
+        conn.commit()
         pending = float(row[0]) if row else 0.0
     except Exception:
         try: conn.rollback()
