@@ -51,7 +51,9 @@ async function loadBalance() {
     }
 
     try {
-        const res = await fetch(`/api/user/${uid}`);
+        // Add cache-busting parameter to force fresh data
+        const timestamp = Date.now();
+        const res = await fetch(`/api/user/${uid}?t=${timestamp}`);
         const data = await res.json();
 
         const el = document.getElementById("tasks-balance");
@@ -232,7 +234,9 @@ async function checkBonusUpdate() {
     if (!uid) return;
     
     try {
-        const res = await fetch(`/api/user/${uid}`);
+        // Add cache-busting parameter to force fresh data
+        const timestamp = Date.now();
+        const res = await fetch(`/api/user/${uid}?t=${timestamp}`);
         const data = await res.json();
         
         if (data.ok && data.user) {
@@ -403,32 +407,142 @@ async function performTask(taskId) {
 }
 
 function startTaskCompletionMonitoring(taskId) {
-    // Check every 2 seconds for task completion
+    // Check every 1 second for task completion (more responsive)
     const checkInterval = setInterval(async () => {
         try {
             const uid = new URLSearchParams(window.location.search).get("uid");
-            const res = await fetch(`/api/task/status?uid=${uid}&task_id=${taskId}`);
+            const timestamp = Date.now();
+            const res = await fetch(`/api/task/status?uid=${uid}&task_id=${taskId}&t=${timestamp}`);
             const data = await res.json();
             
             if (data.completed) {
                 clearInterval(checkInterval);
-                // Immediately update the daily level display
-                await checkBonusUpdate();
-                // Also reload balance to show updated progress
-                loadBalance();
                 
-                // Show completion feedback
-                console.log(`✅ Task ${taskId} completed! Daily progress updated.`);
+                // Force immediate UI update with fresh data
+                console.log(`✅ Task ${taskId} completed! Updating UI immediately...`);
+                
+                // Show completion feedback immediately
+                showTaskCompletionFeedback();
+                
+                // Update balance and daily level with fresh data
+                await loadBalance();
+                
+                // Check for bonus updates
+                await checkBonusUpdate();
+                
+                // Show success message
+                showSuccessMessage(`Task completed! Progress updated.`);
             }
         } catch (e) {
             console.error('Error checking task status:', e);
         }
-    }, 2000);
+    }, 1000); // Check every 1 second for faster response
     
     // Stop checking after 5 minutes to avoid infinite polling
     setTimeout(() => {
         clearInterval(checkInterval);
     }, 300000);
+}
+
+function showTaskCompletionFeedback() {
+    // Create a subtle completion indicator
+    const feedback = document.createElement('div');
+    feedback.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 10001;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        animation: slideIn 0.3s ease-out;
+    `;
+    feedback.textContent = '✅ Task completed!';
+    
+    document.body.appendChild(feedback);
+    
+    // Remove after 2 seconds
+    setTimeout(() => {
+        feedback.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 300);
+    }, 2000);
+    
+    // Add animations if not already present
+    if (!document.getElementById('task-feedback-animations')) {
+        const style = document.createElement('style');
+        style.id = 'task-feedback-animations';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+function showSuccessMessage(message) {
+    // Create success notification
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        z-index: 10002;
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        animation: bounceIn 0.5s ease-out;
+        text-align: center;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'fadeOut 0.3s ease-out';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+    
+    // Add animations if not already present
+    if (!document.getElementById('success-message-animations')) {
+        const style = document.createElement('style');
+        style.id = 'success-message-animations';
+        style.textContent = `
+            @keyframes bounceIn {
+                0% { transform: translateX(-50%) scale(0.8); opacity: 0; }
+                50% { transform: translateX(-50%) scale(1.05); }
+                100% { transform: translateX(-50%) scale(1); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { transform: translateX(-50%) scale(1); opacity: 1; }
+                to { transform: translateX(-50%) scale(0.9); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 
@@ -442,22 +556,23 @@ openCategory('special');
 loadTasks();
 loadBalance();
 
-// Set up periodic bonus checking
-setInterval(checkBonusUpdate, 2000); // Check every 2 seconds for faster updates
+// Set up periodic bonus checking (reduced frequency to avoid conflicts)
+setInterval(checkBonusUpdate, 5000); // Check every 5 seconds instead of 2
 
-// Also update the display more frequently
+// Also update the display more frequently but with cache-busting
 setInterval(() => {
     const uid = new URLSearchParams(window.location.search).get("uid");
     if (uid) {
-        loadBalance(); // This will update daily level display
+        loadBalance(); // This will update daily level display with fresh data
     }
-}, 3000); // Update every 3 seconds
+}, 4000); // Update every 4 seconds instead of 3
 
 // Store initial level
 loadBalance().then(() => {
     const uid = new URLSearchParams(window.location.search).get("uid");
     if (uid) {
-        fetch(`/api/user/${uid}`)
+        const timestamp = Date.now();
+        fetch(`/api/user/${uid}?t=${timestamp}`)
             .then(res => res.json())
             .then(data => {
                 if (data.ok && data.user) {
