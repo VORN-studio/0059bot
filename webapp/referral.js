@@ -74,3 +74,25 @@ window.initReferralLink = function() {
   }
   loadReferralStats();
 };
+
+// Auto-refresh referral stats when screen is shown
+function setupReferralAutoRefresh() {
+  const referralScreen = document.getElementById('screen-referral');
+  if (referralScreen) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.target.classList.contains('active')) {
+          loadReferralStats();
+        }
+      });
+    });
+    
+    observer.observe(referralScreen, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+}
+
+// Setup auto-refresh when page loads
+document.addEventListener('DOMContentLoaded', setupReferralAutoRefresh);
