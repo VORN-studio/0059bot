@@ -73,6 +73,25 @@
 
 </div>
 
+<!-- Daily Bonus Level Display -->
+<div class="daily-level-box" style="margin: 15px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; text-align: center;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div>
+            <div style="font-size: 14px; color: #fff; opacity: 0.9;">📅 Daily Level</div>
+            <div id="daily-level" style="font-size: 24px; font-weight: bold; color: #fff;">Level 1</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 14px; color: #fff; opacity: 0.9;">Tasks Today</div>
+            <div id="daily-tasks-count" style="font-size: 20px; font-weight: bold; color: #fff;">0/10</div>
+        </div>
+    </div>
+    <div class="level-progress" style="background: rgba(255,255,255,0.2); border-radius: 10px; height: 8px; margin: 10px 0;">
+        <div id="daily-progress" style="background: #4ade80; height: 100%; border-radius: 10px; width: 0%; transition: width 0.3s;"></div>
+    </div>
+    <div id="next-bonus-text" style="font-size: 12px; color: #fff; opacity: 0.8;">Next bonus: 0.25 DOMIT at 10 tasks</div>
+    <div id="2x-status" style="margin-top: 8px; font-size: 12px; color: #ffd700; display: none;">🔥 2x Multiplier Active!</div>
+</div>
+
 <div class="task-menu">
 
     <!-- <button onclick="openCategory('video')" class="task-btn" style="display: none;">🎬 Video Tasks</button> -->

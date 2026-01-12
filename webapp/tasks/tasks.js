@@ -66,12 +66,169 @@ async function loadBalance() {
             } else {
                 el.textContent = bal;
             }
+            
+            // Update daily bonus level display
+            updateDailyLevelDisplay(data.user);
         } else {
             el.textContent = "—";
         }
     } catch {
         const el = document.getElementById("tasks-balance");
         if (el) el.textContent = "—";
+    }
+}
+
+function updateDailyLevelDisplay(userData) {
+    const dailyTasksCompleted = userData.daily_tasks_completed || 0;
+    const dailyBonusLevel = userData.daily_bonus_level || 1;
+    const has2xMultiplier = userData.has_2x_multiplier || false;
+    
+    // Update level display
+    const levelEl = document.getElementById("daily-level");
+    if (levelEl) {
+        levelEl.textContent = `Level ${dailyBonusLevel}`;
+    }
+    
+    // Update tasks count
+    const tasksCountEl = document.getElementById("daily-tasks-count");
+    if (tasksCountEl) {
+        const nextMilestone = getNextMilestone(dailyTasksCompleted);
+        tasksCountEl.textContent = `${dailyTasksCompleted}/${nextMilestone}`;
+    }
+    
+    // Update progress bar
+    const progressEl = document.getElementById("daily-progress");
+    if (progressEl) {
+        const nextMilestone = getNextMilestone(dailyTasksCompleted);
+        const progress = Math.min((dailyTasksCompleted / nextMilestone) * 100, 100);
+        progressEl.style.width = `${progress}%`;
+    }
+    
+    // Update next bonus text
+    const nextBonusEl = document.getElementById("next-bonus-text");
+    if (nextBonusEl) {
+        const nextBonusInfo = getNextBonusInfo(dailyTasksCompleted);
+        nextBonusEl.textContent = nextBonusInfo;
+    }
+    
+    // Show/hide 2x multiplier status
+    const twoXStatusEl = document.getElementById("2x-status");
+    if (twoXStatusEl) {
+        twoXStatusEl.style.display = has2xMultiplier ? "block" : "none";
+    }
+}
+
+function getNextMilestone(currentTasks) {
+    if (currentTasks < 10) return 10;
+    if (currentTasks < 30) return 30;
+    if (currentTasks < 100) return 100;
+    if (currentTasks < 200) return 200;
+    return currentTasks + 1; // After 200, every task counts
+}
+
+function getNextBonusInfo(currentTasks) {
+    if (currentTasks < 10) return "Next bonus: 0.25 DOMIT at 10 tasks";
+    if (currentTasks < 30) return "Next bonus: 0.50 DOMIT at 30 tasks";
+    if (currentTasks < 100) return "Next bonus: 1.00 DOMIT at 100 tasks";
+    if (currentTasks < 200) return "Next bonus: 1.50 DOMIT at 200 tasks";
+    return "🔥 2x Multiplier active for all tasks!";
+}
+
+function showBonusNotification(bonusAmount, newLevel) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 15px;
+        font-size: 18px;
+        font-weight: bold;
+        z-index: 10000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        animation: bonusPop 0.5s ease-out;
+        text-align: center;
+    `;
+    
+    if (newLevel === 5) {
+        notification.innerHTML = `
+            <div style="font-size: 24px; margin-bottom: 10px;">🔥</div>
+            <div>Daily Bonus Level ${newLevel}!</div>
+            <div style="font-size: 14px; margin-top: 5px;">+${bonusAmount} DOMIT</div>
+            <div style="font-size: 12px; margin-top: 10px; color: #ffd700;">2x Multiplier Activated!</div>
+        `;
+    } else {
+        notification.innerHTML = `
+            <div style="font-size: 24px; margin-bottom: 10px;">🎉</div>
+            <div>Daily Bonus Level ${newLevel}!</div>
+            <div style="font-size: 14px; margin-top: 5px;">+${bonusAmount} DOMIT</div>
+        `;
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'bonusFade 0.5s ease-out';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 500);
+    }, 3000);
+    
+    // Add CSS animations if not already added
+    if (!document.getElementById('bonus-animations')) {
+        const style = document.createElement('style');
+        style.id = 'bonus-animations';
+        style.textContent = `
+            @keyframes bonusPop {
+                0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+                50% { transform: translate(-50%, -50%) scale(1.1); }
+                100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+            @keyframes bonusFade {
+                0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+                100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Check for bonus updates after task completion
+async function checkBonusUpdate() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (!uid) return;
+    
+    try {
+        const res = await fetch(`/api/user/${uid}`);
+        const data = await res.json();
+        
+        if (data.ok && data.user) {
+            const previousLevel = window.currentDailyLevel || 1;
+            const newLevel = data.user.daily_bonus_level || 1;
+            
+            if (newLevel > previousLevel) {
+                // Calculate bonus amount based on level
+                let bonusAmount = 0;
+                if (newLevel === 2) bonusAmount = 0.25;
+                else if (newLevel === 3) bonusAmount = 0.50;
+                else if (newLevel === 4) bonusAmount = 1.00;
+                else if (newLevel === 5) bonusAmount = 1.50;
+                
+                showBonusNotification(bonusAmount, newLevel);
+                window.currentDailyLevel = newLevel;
+            }
+            
+            updateDailyLevelDisplay(data.user);
+        }
+    } catch (e) {
+        console.error('Error checking bonus update:', e);
     }
 }
 
@@ -225,3 +382,21 @@ hideAll();
 openCategory('special');
 loadTasks();
 loadBalance();
+
+// Set up periodic bonus checking
+setInterval(checkBonusUpdate, 5000); // Check every 5 seconds
+
+// Store initial level
+loadBalance().then(() => {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (uid) {
+        fetch(`/api/user/${uid}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok && data.user) {
+                    window.currentDailyLevel = data.user.daily_bonus_level || 1;
+                }
+            })
+            .catch(e => console.error('Error setting initial level:', e));
+    }
+});

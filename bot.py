@@ -3631,6 +3631,75 @@ def release_db(conn):
 
 ensure_balance_precision()
 
+def update_daily_tasks_and_bonuses(cursor, user_id):
+    """Update daily tasks count and check for bonus eligibility"""
+    from datetime import date
+    
+    today = date.today()
+    
+    # Reset daily count if it's a new day
+    cursor.execute("SELECT last_daily_reset FROM dom_users WHERE user_id=%s", (user_id,))
+    last_reset = cursor.fetchone()
+    
+    if not last_reset or last_reset[0] != today:
+        cursor.execute("""
+            UPDATE dom_users 
+            SET daily_tasks_completed = 0, 
+                daily_bonus_level = 1, 
+                last_daily_reset = %s,
+                has_2x_multiplier = FALSE
+            WHERE user_id=%s
+        """, (today, user_id))
+    
+    # Increment daily tasks count
+    cursor.execute("""
+        UPDATE dom_users 
+        SET daily_tasks_completed = daily_tasks_completed + 1 
+        WHERE user_id=%s
+    """, (user_id,))
+    
+    # Get current daily tasks count
+    cursor.execute("SELECT daily_tasks_completed FROM dom_users WHERE user_id=%s", (user_id,))
+    daily_count = cursor.fetchone()[0]
+    
+    # Check for bonuses and update level
+    bonus_given = None
+    new_level = None
+    
+    if daily_count == 10:
+        bonus_given = 0.25
+        new_level = 2
+    elif daily_count == 30:
+        bonus_given = 0.50
+        new_level = 3
+    elif daily_count == 100:
+        bonus_given = 1.00
+        new_level = 4
+    elif daily_count == 200:
+        bonus_given = 1.50
+        new_level = 5
+        # Activate 2x multiplier for 2 hours
+        cursor.execute("""
+            UPDATE dom_users 
+            SET has_2x_multiplier = TRUE 
+            WHERE user_id=%s
+        """, (user_id,))
+    
+    if bonus_given:
+        cursor.execute("""
+            UPDATE dom_users 
+            SET balance_usd = COALESCE(balance_usd,0) + %s,
+                daily_bonus_level = %s
+            WHERE user_id=%s
+        """, (bonus_given, new_level, user_id))
+        
+        try:
+            print(f"🎉 Daily bonus: uid={user_id} completed {daily_count} tasks, bonus={bonus_given} DOMIT")
+        except Exception:
+            pass
+    
+    return bonus_given, new_level
+
 
 
 alters = [
@@ -3644,7 +3713,11 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS allow_forward INTEGER DEFAULT 1",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS total_games INTEGER DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS total_wins INTEGER DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS referral_earnings NUMERIC(18,6) DEFAULT 0"
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS referral_earnings NUMERIC(18,6) DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS daily_tasks_completed INTEGER DEFAULT 0",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS daily_bonus_level INTEGER DEFAULT 1",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_daily_reset DATE DEFAULT CURRENT_DATE",
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS has_2x_multiplier BOOLEAN DEFAULT FALSE"
 ]
 
 def init_db():
@@ -4499,7 +4572,11 @@ def get_user_stats(user_id: int):
                COALESCE(ton_balance,0),
                COALESCE(last_rate,0),
                COALESCE(total_games,0),
-               COALESCE(total_wins,0)
+               COALESCE(total_wins,0),
+               COALESCE(daily_tasks_completed,0),
+               COALESCE(daily_bonus_level,1),
+               COALESCE(last_daily_reset,CURRENT_DATE),
+               COALESCE(has_2x_multiplier,FALSE)
         FROM dom_users
         WHERE user_id=%s
     """, (user_id,))
@@ -4509,7 +4586,7 @@ def get_user_stats(user_id: int):
         release_db(conn)
         return None
 
-    (username, avatar, avatar_data, balance_usd, total_dep, total_wd, ton_balance, last_rate, total_games, total_wins) = row
+    (username, avatar, avatar_data, balance_usd, total_dep, total_wd, ton_balance, last_rate, total_games, total_wins, daily_tasks_completed, daily_bonus_level, last_daily_reset, has_2x_multiplier) = row
 
     c.execute("""
         SELECT COALESCE(MAX(p.tier), 0)
@@ -4674,6 +4751,10 @@ def get_user_stats(user_id: int):
         "intellect_score": float(intellect_score),
         "total_games": int(total_games),
         "total_wins": int(total_wins),
+        "daily_tasks_completed": int(daily_tasks_completed),
+        "daily_bonus_level": int(daily_bonus_level),
+        "last_daily_reset": str(last_daily_reset),
+        "has_2x_multiplier": bool(has_2x_multiplier),
     }
 
 
@@ -6328,9 +6409,19 @@ def api_task_complete():
         c.execute("SELECT 1 FROM dom_task_awards WHERE user_id=%s AND task_id=%s", (user_id, task_id))
         already_awarded = bool(c.fetchone())
         if not already_awarded:
-            c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, user_id))
+            # Apply 2x multiplier if user has it
+            final_reward = reward
+            c.execute("SELECT has_2x_multiplier FROM dom_users WHERE user_id=%s", (user_id,))
+            has_2x = c.fetchone()
+            if has_2x and has_2x[0]:
+                final_reward = reward * 2
+            
+            c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (final_reward, user_id))
             c.execute("INSERT INTO dom_task_awards (user_id, task_id, awarded_at) VALUES (%s, %s, %s)", (user_id, task_id, now))
             awarded_now = True
+            
+            # Update daily tasks and check for bonuses
+            update_daily_tasks_and_bonuses(c, user_id)
 
     try:
         print(f"🟢 task_complete uid={user_id} task_id={task_id} reward={reward}")
@@ -6814,11 +6905,45 @@ def auto_transfer_pending():
         except Exception:
             pass
 
+def reset_daily_bonuses():
+    """Reset daily bonus counters at midnight"""
+    from datetime import date
+    today = date.today()
+    
+    conn = db()
+    c = conn.cursor()
+    
+    try:
+        c.execute("""
+            UPDATE dom_users 
+            SET daily_tasks_completed = 0, 
+                daily_bonus_level = 1, 
+                last_daily_reset = %s,
+                has_2x_multiplier = FALSE
+            WHERE last_daily_reset != %s
+        """, (today, today))
+        
+        conn.commit()
+        logger.info(f"🔄 Daily bonuses reset for {today}")
+    except Exception as e:
+        logger.error(f"Error resetting daily bonuses: {e}")
+        conn.rollback()
+    finally:
+        release_db(conn)
+
 scheduler.add_job(
     auto_transfer_pending,
     'interval',
     seconds=10,  # Check every 10 seconds
     id='auto_pending_transfer',
+    replace_existing=True
+)
+
+# Add daily reset job at midnight
+scheduler.add_job(
+    reset_daily_bonuses,
+    CronTrigger(hour=0, minute=0),
+    id='daily_bonus_reset',
     replace_existing=True
 )
 
