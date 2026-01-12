@@ -4320,13 +4320,19 @@ def ensure_user(user_id: int, username: Optional[str], inviter_id: Optional[int]
             VALUES (%s, %s, %s, %s)
         """, (user_id, username, inviter_id, now))
     else:
-        c.execute("UPDATE dom_users SET username=%s WHERE user_id=%s", (username, user_id))
+        # Update username and potentially set inviter_id if it was empty
+        current_inviter_id = row[1]
+        if not current_inviter_id and inviter_id and inviter_id != user_id:
+            c.execute("UPDATE dom_users SET username=%s, inviter_id=%s WHERE user_id=%s", 
+                    (username, inviter_id, user_id))
+        else:
+            c.execute("UPDATE dom_users SET username=%s WHERE user_id=%s", (username, user_id))
 
     conn.commit()
     release_db(conn)
     
     # Award signup bonus to inviter if this is a new referral
-    if inviter_id and row is None:
+    if inviter_id and (row is None or (row[1] is None and inviter_id != user_id)):
         award_signup_bonus(inviter_id, user_id)
 
 def award_signup_bonus(inviter_id: int, referred_id: int):
