@@ -4366,14 +4366,14 @@ def award_signup_bonus(inviter_id: int, referred_id: int):
 
 def count_active_referrals(user_id: int) -> int:
     """
-    Подсчитывает количество активных рефералов
+    Подсчитывает количество активных рефералов (все приглашенные считаются активными)
     """
     conn = db()
     c = conn.cursor()
     c.execute("""
         SELECT COUNT(*)
         FROM dom_users
-        WHERE inviter_id=%s AND total_deposit_usd > 0
+        WHERE inviter_id=%s
     """, (user_id,))
     count = c.fetchone()[0] or 0
     release_db(conn)
@@ -5257,7 +5257,7 @@ def api_referral_stats():
         c.execute("""
             SELECT COUNT(*)
             FROM dom_users
-            WHERE inviter_id=%s AND total_deposit_usd > 0
+            WHERE inviter_id=%s
         """, (user_id,))
         active_refs = c.fetchone()[0] or 0
         
