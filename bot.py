@@ -6414,6 +6414,9 @@ def api_task_complete():
             INSERT INTO dom_task_completions (user_id, task_id, completed_at)
             VALUES (%s, %s, %s)
         """, (user_id, task_id, now))
+        
+        # Always update daily tasks count when a task is completed, regardless of reward
+        update_daily_tasks_and_bonuses(c, user_id)
 
     awarded_now = False
     if reward > 0:
@@ -6430,9 +6433,6 @@ def api_task_complete():
             c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (final_reward, user_id))
             c.execute("INSERT INTO dom_task_awards (user_id, task_id, awarded_at) VALUES (%s, %s, %s)", (user_id, task_id, now))
             awarded_now = True
-            
-            # Update daily tasks and check for bonuses
-            update_daily_tasks_and_bonuses(c, user_id)
 
     try:
         print(f"🟢 task_complete uid={user_id} task_id={task_id} reward={reward}")
