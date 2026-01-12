@@ -96,12 +96,26 @@ function updateDailyLevelDisplay(userData) {
         tasksCountEl.textContent = `${dailyTasksCompleted}/${nextMilestone}`;
     }
     
-    // Update progress bar
+    // Update progress bar with animation
     const progressEl = document.getElementById("daily-progress");
     if (progressEl) {
         const nextMilestone = getNextMilestone(dailyTasksCompleted);
         const progress = Math.min((dailyTasksCompleted / nextMilestone) * 100, 100);
+        
+        // Add smooth transition
+        progressEl.style.transition = 'width 0.5s ease-in-out';
         progressEl.style.width = `${progress}%`;
+        
+        // Change color based on progress
+        if (progress >= 100) {
+            progressEl.style.background = '#ffd700'; // Gold for completed milestone
+        } else if (progress >= 75) {
+            progressEl.style.background = '#4ade80'; // Green for high progress
+        } else if (progress >= 50) {
+            progressEl.style.background = '#60a5fa'; // Blue for medium progress
+        } else {
+            progressEl.style.background = '#4ade80'; // Default green
+        }
     }
     
     // Update next bonus text
@@ -115,7 +129,14 @@ function updateDailyLevelDisplay(userData) {
     const twoXStatusEl = document.getElementById("2x-status");
     if (twoXStatusEl) {
         twoXStatusEl.style.display = has2xMultiplier ? "block" : "none";
+        if (has2xMultiplier) {
+            // Add pulsing animation for 2x multiplier
+            twoXStatusEl.style.animation = 'pulse 1.5s infinite';
+        }
     }
+    
+    // Add console log for debugging
+    console.log(`📊 Daily Level Updated: Level ${dailyBonusLevel}, Tasks: ${dailyTasksCompleted}, 2x: ${has2xMultiplier}`);
 }
 
 function getNextMilestone(currentTasks) {
@@ -194,6 +215,11 @@ function showBonusNotification(bonusAmount, newLevel) {
             @keyframes bonusFade {
                 0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
                 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            }
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.05); opacity: 0.8; }
+                100% { transform: scale(1); opacity: 1; }
             }
         `;
         document.head.appendChild(style);
@@ -365,11 +391,44 @@ async function performTask(taskId) {
             }
         } catch(_e) { window.location.href = directU; }
         try { openTaskBrowser(directU); } catch(_m) {}
+        
+        // Start checking for task completion more frequently
+        startTaskCompletionMonitoring(taskId);
+        
     } catch (e) {
         if (btn) btn.textContent = `Выполнить → +${task.reward}`;
         alert("❌ Ошибка сервера");
         return;
     }
+}
+
+function startTaskCompletionMonitoring(taskId) {
+    // Check every 2 seconds for task completion
+    const checkInterval = setInterval(async () => {
+        try {
+            const uid = new URLSearchParams(window.location.search).get("uid");
+            const res = await fetch(`/api/task/status?uid=${uid}&task_id=${taskId}`);
+            const data = await res.json();
+            
+            if (data.completed) {
+                clearInterval(checkInterval);
+                // Immediately update the daily level display
+                await checkBonusUpdate();
+                // Also reload balance to show updated progress
+                loadBalance();
+                
+                // Show completion feedback
+                console.log(`✅ Task ${taskId} completed! Daily progress updated.`);
+            }
+        } catch (e) {
+            console.error('Error checking task status:', e);
+        }
+    }, 2000);
+    
+    // Stop checking after 5 minutes to avoid infinite polling
+    setTimeout(() => {
+        clearInterval(checkInterval);
+    }, 300000);
 }
 
 
@@ -384,7 +443,15 @@ loadTasks();
 loadBalance();
 
 // Set up periodic bonus checking
-setInterval(checkBonusUpdate, 5000); // Check every 5 seconds
+setInterval(checkBonusUpdate, 2000); // Check every 2 seconds for faster updates
+
+// Also update the display more frequently
+setInterval(() => {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (uid) {
+        loadBalance(); // This will update daily level display
+    }
+}, 3000); // Update every 3 seconds
 
 // Store initial level
 loadBalance().then(() => {
