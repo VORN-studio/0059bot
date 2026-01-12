@@ -5156,13 +5156,26 @@ def api_deposit():
     if not stats:
         return jsonify({"ok": False, "error": "user_not_found"}), 404
 
-    # Try live TON→USD rate; fall back to fixed DOMIT price if unavailable
-    try:
-        ton_rate = fetch_ton_rate() or 0.0
-    except Exception:
-        ton_rate = 0.0
+    # Get current DOMIT/TON rate from chart (same as withdrawal)
+    conn = db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT close FROM domit_price_history 
+        ORDER BY timestamp DESC LIMIT 1
+    """)
+    price_row = c.fetchone()
+    release_db(conn)
+    
+    ton_rate = float(price_row[0]) if price_row else 1.0
+    
+    # Fallback to TON API if chart data unavailable
     if ton_rate <= 0:
-        ton_rate = float(DOMIT_PRICE_USD)  # fallback 1 TON ≈ 1 DOMIT (USD)
+        try:
+            ton_rate = fetch_ton_rate() or 0.0
+        except Exception:
+            ton_rate = 0.0
+        if ton_rate <= 0:
+            ton_rate = float(DOMIT_PRICE_USD)  # fallback 1 TON ≈ 1 DOMIT (USD)
 
     amount_usd = round(amount_ton * ton_rate, 6)
     apply_deposit(user_id, amount_usd)
