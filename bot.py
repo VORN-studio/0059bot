@@ -3650,6 +3650,7 @@ def update_daily_tasks_and_bonuses(cursor, user_id):
                 has_2x_multiplier = FALSE
             WHERE user_id=%s
         """, (today, user_id))
+        print(f"🔄 Daily reset for user {user_id} on {today}")
     
     # Increment daily tasks count
     cursor.execute("""
@@ -3661,6 +3662,8 @@ def update_daily_tasks_and_bonuses(cursor, user_id):
     # Get current daily tasks count
     cursor.execute("SELECT daily_tasks_completed FROM dom_users WHERE user_id=%s", (user_id,))
     daily_count = cursor.fetchone()[0]
+    
+    print(f"📊 User {user_id} daily tasks count: {daily_count}")
     
     # Check for bonuses and update level
     bonus_given = None
@@ -3693,10 +3696,9 @@ def update_daily_tasks_and_bonuses(cursor, user_id):
             WHERE user_id=%s
         """, (bonus_given, new_level, user_id))
         
-        try:
-            print(f"🎉 Daily bonus: uid={user_id} completed {daily_count} tasks, bonus={bonus_given} DOMIT")
-        except Exception:
-            pass
+        print(f"🎉 Daily bonus: uid={user_id} completed {daily_count} tasks, bonus={bonus_given} DOMIT, level={new_level}")
+    else:
+        print(f"ℹ️ No bonus for user {user_id} at {daily_count} tasks")
     
     return bonus_given, new_level
 
@@ -5771,6 +5773,9 @@ def timewall_postback():
             VALUES (%s, %s, %s)
             ON CONFLICT DO NOTHING
         """, (user_id, task_id, now))
+        
+        # Update daily tasks and check for bonuses
+        update_daily_tasks_and_bonuses(c, user_id)
 
     c.execute("""
         INSERT INTO conversions (conversion_id, user_id, offer_id, payout, status, created_at)
@@ -5839,6 +5844,9 @@ def ogads_postback():
                 VALUES (%s, %s, %s)
                 ON CONFLICT DO NOTHING
             """, (user_id, task_id, now))
+            
+            # Update daily tasks and check for bonuses
+            update_daily_tasks_and_bonuses(c, user_id)
         except:
             pass
 
@@ -5938,6 +5946,9 @@ def mylead_postback():
             VALUES (%s, %s, %s)
             ON CONFLICT DO NOTHING
         """, (user_id, task_id, now))
+        
+        # Update daily tasks and check for bonuses
+        update_daily_tasks_and_bonuses(c, user_id)
 
     conn.commit()
     release_db(conn)
@@ -8851,10 +8862,21 @@ def exeio_complete():
                 c.execute("SELECT 1 FROM dom_task_awards WHERE user_id=%s AND task_id=%s", (uid, task_id))
                 already_awarded = bool(c.fetchone())
                 if not already_awarded:
-                    c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (reward, uid))
+                    # Apply 2x multiplier if user has it
+                    final_reward = reward
+                    c.execute("SELECT has_2x_multiplier FROM dom_users WHERE user_id=%s", (uid,))
+                    has_2x = c.fetchone()
+                    if has_2x and has_2x[0]:
+                        final_reward = reward * 2
+                    
+                    c.execute("UPDATE dom_users SET balance_usd = COALESCE(balance_usd,0) + %s WHERE user_id=%s", (final_reward, uid))
                     c.execute("INSERT INTO dom_task_awards (user_id, task_id, awarded_at) VALUES (%s, %s, %s)", (uid, task_id, now))
+                    
+                    # Update daily tasks and check for bonuses
+                    update_daily_tasks_and_bonuses(c, uid)
+                    
                     conn.commit()
-                    print(f"✅ Awarded: uid={uid} task_id={task_id} reward={reward} ref={ref} from_exe={from_exe} attempt_id={attempt_id}")
+                    print(f"✅ Awarded: uid={uid} task_id={task_id} reward={final_reward} ref={ref} from_exe={from_exe} attempt_id={attempt_id}")
                 else:
                     conn.commit()
                     print(f"ℹ️ Already awarded earlier: uid={uid} task_id={task_id} ref={ref} attempt_id={attempt_id}")
