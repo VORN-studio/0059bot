@@ -9881,8 +9881,10 @@ if __name__ == "__main__":
                                         logger.info(f"Status string: {status_str}")
                                         
                                         # Check if user has any valid status
-                                        valid_statuses = ['MEMBER', 'ADMINISTRATOR', 'CREATOR', 'OWNER', 'MEMBER_STATUS.MEMBER', 'MEMBER_STATUS.ADMINISTRATOR', 'MEMBER_STATUS.CREATOR', 'MEMBER_STATUS.OWNER']
+                                        valid_statuses = ['MEMBER', 'ADMINISTRATOR', 'CREATOR', 'OWNER', 'CHATMEMBERSTATUS.MEMBER', 'CHATMEMBERSTATUS.ADMINISTRATOR', 'CHATMEMBERSTATUS.CREATOR', 'CHATMEMBERSTATUS.OWNER']
                                         is_member = status_str in valid_statuses
+                                        logger.info(f"Valid statuses: {valid_statuses}")
+                                        logger.info(f"Is {status_str} in valid_statuses? {is_member}")
                                         
                                         pyrogram_results[request_id] = {
                                             'is_member': is_member,
