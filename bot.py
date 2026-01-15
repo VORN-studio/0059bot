@@ -298,6 +298,13 @@ def app_page():
     URL-адрес веб-приложения Telegram будет следующим:՝
     https://domino-play.online/app?uid=XXXX
     """
+    user_id = request.args.get('uid')
+    
+    if user_id:
+        if not check_user_follows_pages(int(user_id)):
+            asyncio.create_task(send_access_denied_message(int(user_id)))
+            return "❌ Доступ ограничен", 403
+    
     return send_from_directory(WEBAPP_DIR, "index.html")
 
 @app_web.route("/api/required-pages")
@@ -7943,6 +7950,84 @@ async def check_user_page_membership(user_id: int) -> bool:
     except Exception as e:
         logger.error(f"Error in check_user_page_membership: {e}")
         return True  # Allow access if verification fail
+
+def check_user_follows_pages(user_id: int) -> bool:
+    """Check if user follows all required pages (sync version for Flask)"""
+    if not pyrogram_client:
+        return True  # Allow access if Pyrogram not available
+    
+    try:
+        # Get all required pages
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT page_link FROM telegram_pages")
+        pages = c.fetchall()
+        release_db(conn)
+        
+        if not pages:
+            return True  # No pages required
+        
+        # Check each page
+        for page_row in pages:
+            page_link = page_row[0]
+            page_username = page_link.replace('https://t.me/', '')
+            
+            try:
+                # Use sync version of pyrogram check
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                try:
+                    member = loop.run_until_complete(
+                        pyrogram_client.get_chat_member(page_username, user_id)
+                    )
+                    if member.status not in ['member', 'administrator', 'creator']:
+                        logger.info(f"User {user_id} is not member of {page_username}")
+                        return False
+                finally:
+                    loop.close()
+                    
+            except ChannelPrivate:
+                logger.warning(f"Channel {page_username} is private or bot doesn't have access")
+                return False
+            except UserBannedInChannel:
+                logger.info(f"User {user_id} is banned in {page_username}")
+                return False
+            except Exception as e:
+                logger.error(f"Error checking membership for {page_username}: {e}")
+                return False
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error in check_user_follows_pages: {e}")
+        return True  # Allow access if verification fail
+
+async def send_access_denied_message(user_id: int):
+    """Send access denied message to user"""
+    try:
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT page_link, page_name FROM telegram_pages")
+        pages = c.fetchall()
+        release_db(conn)
+        
+        message = "🚫 **Доступ к приложению ограничен**\n\n"
+        message += "Для доступа к приложению необходимо подписаться на все каналы.\n\n"
+        
+        for page_link, page_name in pages:
+            message += f"📄 [{page_name}]({page_link})\n"
+        
+        message += "\nВы не можете открыть приложение."
+        
+        await application.bot.send_message(
+            chat_id=user_id,
+            text=message,
+            parse_mode="Markdown",
+            disable_web_page_preview=True
+        )
+    except Exception as e:
+        logger.error(f"Error sending access denied: {e}")
 
 async def addpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Add a Telegram page for verification"""
