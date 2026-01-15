@@ -9646,8 +9646,10 @@ if __name__ == "__main__":
             if PYROGRAM_API_ID and PYROGRAM_API_HASH:
                 print("🔍 Starting Pyrogram client for page verification...")
                 
+                # Declare global at the beginning
+                global pyrogram_client
+                
                 async def start_pyrogram():
-                    nonlocal pyrogram_client
                     try:
                         # Validate API_ID
                         api_id = int(PYROGRAM_API_ID)
