@@ -9647,6 +9647,7 @@ if __name__ == "__main__":
                 print("🔍 Starting Pyrogram client for page verification...")
                 
                 async def start_pyrogram():
+                    nonlocal pyrogram_client
                     try:
                         # Validate API_ID
                         api_id = int(PYROGRAM_API_ID)
@@ -9654,7 +9655,6 @@ if __name__ == "__main__":
                             raise ValueError("API_ID must be a positive integer")
                         
                         # Create client
-                        global pyrogram_client
                         pyrogram_client = Client(
                             "domino_page_checker",
                             api_id=api_id,
@@ -9674,7 +9674,6 @@ if __name__ == "__main__":
                     except Exception as e:
                         print(f"❌ Failed to start Pyrogram client: {e}")
                         logger.error(f"Failed to start Pyrogram client: {e}")
-                        global pyrogram_client
                         pyrogram_client = None
                 
                 # Run pyrogram in its own thread with event loop
