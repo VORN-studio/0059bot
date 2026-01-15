@@ -7908,7 +7908,7 @@ async def addpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not pyrogram_client:
-        await update.message.reply_text("❌ Pyrogram client не доступен. Сначала настройте PYROGRAM_API_ID и PYROGRAM_API_HASH в .env файле.")
+        await update.message.reply_text("⏳ Pyrogram client еще запускается... Пожалуйста, подождите несколько секунд и попробуйте снова.")
         return
     
     if len(context.args) < 1:
@@ -7990,7 +7990,7 @@ async def delpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not pyrogram_client:
-        await update.message.reply_text("❌ Pyrogram client не доступен. Сначала настройте PYROGRAM_API_ID и PYROGRAM_API_HASH в .env файле.")
+        await update.message.reply_text("⏳ Pyrogram client еще запускается... Пожалуйста, подождите несколько секунд и попробуйте снова.")
         return
     
     if len(context.args) < 1:
