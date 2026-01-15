@@ -9875,12 +9875,16 @@ if __name__ == "__main__":
                                             request_data['page_username'], 
                                             request_data['user_id']
                                         )
-                                        is_member = member.status in ['member', 'administrator', 'creator']
+                                        # Check both string and enum values
+                                        status_str = str(member.status).lower()
+                                        is_member = (status_str in ['member', 'administrator', 'creator', 'owner'] or 
+                                                    member.status in ['member', 'administrator', 'creator'])
+                                        
                                         pyrogram_results[request_id] = {
                                             'is_member': is_member,
-                                            'status': member.status
+                                            'status': str(member.status)
                                         }
-                                        logger.info(f"Pyrogram check completed for {request_data['page_username']}: {member.status}")
+                                        logger.info(f"Pyrogram check completed for {request_data['page_username']}: {member.status} (is_member: {is_member})")
                                     except ChannelPrivate:
                                         pyrogram_results[request_id] = {
                                             'is_member': False,
