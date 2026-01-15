@@ -386,18 +386,18 @@ def webapp_index():
 <body>
     <div class="container">
         <div class="loading" id="loading">⏳</div>
-        <h1 id="title">Ստուգում...</h1>
+        <h1 id="title">Проверка...</h1>
         <div class="message" id="message">
-            Խնդրում ենք սպասել, ստուգում ենք ձեր բաժանորդագրությունները...
+            Пожалуйста, подождите, проверяем ваши подписки...
         </div>
         <div id="error" class="error" style="display: none;">
-            Սխալ է տեղի ունեցել։ Խնդրում ենք թարմացնել էջը։
+           Произошла ошибка. Пожалуйста, обновите страницу.
         </div>
         <div id="pages-list" class="pages-list" style="display: none;">
-            <h3>Պահանջվող էջեր՝</h3>
+            <h3>Необходимые подписки:</h3>
             <div id="pages-container">
                 <div class="page-item">
-                    <strong>Բեռնում...</strong>
+                    <strong>Загрузка...</strong>
                 </div>
             </div>
         </div>
@@ -413,14 +413,14 @@ def webapp_index():
                 webApp.expand();
                 checkUserAccess();
             } else {
-                showError('Telegram WebApp հասանելի չէ');
+                showError('Telegram WebApp Недоступно');
             }
         }
         
         async function checkUserAccess() {
             try {
                 if (!webApp || !webApp.initDataUnsafe || !webApp.initDataUnsafe.user) {
-                    showError('Օգտատերի տվյալները հասանելի չեն');
+                    showError('Данные пользователя недоступны');
                     return;
                 }
                 
@@ -436,18 +436,18 @@ def webapp_index():
                     // User doesn't have access, show required pages
                     showAccessDenied();
                 } else {
-                    showError('Ստուգման սխալ');
+                    showError('Ошибка проверки');
                 }
             } catch (error) {
                 console.error('Error checking access:', error);
-                showError('Ցանցային սխալ');
+                showError('Сетевая ошибка');
             }
         }
         
         function showAccessDenied() {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('title').textContent = 'Մուտքը արգելափակված է';
-            document.getElementById('message').textContent = 'Դուք պետք է լինեք ֆոլով հետևյալ էջերին՝ հավելվածը օգտագործելու համար։';
+            document.getElementById('title').textContent = 'Доступ заблокирован';
+            document.getElementById('message').textContent = 'Для использования приложения необходимо подписаться на следующие каналы:';
             document.getElementById('pages-list').style.display = 'block';
             
             // Load required pages
@@ -468,13 +468,13 @@ def webapp_index():
                 .catch(error => {
                     console.error('Error loading pages:', error);
                     document.getElementById('pages-container').innerHTML = 
-                        '<div class="page-item"><strong>Չհաջողվեց բեռնել էջերը</strong></div>';
+                        '<div class="page-item"><strong>Не удалось загрузить страницы</strong></div>';
                 });
         }
         
         function showError(message) {
             document.getElementById('loading').style.display = 'none';
-            document.getElementById('title').textContent = 'Սխալ';
+            document.getElementById('title').textContent = 'Ошибка';
             document.getElementById('message').style.display = 'none';
             document.getElementById('error').style.display = 'block';
             document.getElementById('error').textContent = message;
@@ -523,7 +523,7 @@ def webapp_index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Դուք արգելափակված եք</title>
+    <title>Вы заблокированы</title>
     <title>Доступ заблокирован</title>
     <style>
         body {
