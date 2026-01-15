@@ -7969,7 +7969,12 @@ async def check_user_page_membership(user_id: int) -> bool:
 
 def check_user_follows_pages(user_id: int) -> bool:
     """Check if user follows all required pages (sync version for Flask)"""
+    print(f"🔍 Checking pages for user {user_id}")
+    print(f"🔍 Pyrogram client: {pyrogram_client}")
+    print(f"🔍 Pyrogram queue: {pyrogram_queue}")
+    
     if not pyrogram_client or not pyrogram_queue:
+        print("❌ Pyrogram client or queue not available")
         return True  # Allow access if Pyrogram not available
     
     try:
@@ -9845,12 +9850,15 @@ if __name__ == "__main__":
                     global pyrogram_queue, pyrogram_loop
                     import queue
                     
+                    print("🔄 Initializing pyrogram thread...")
                     # Create queue for inter-thread communication
                     pyrogram_queue = queue.Queue()
+                    print(f"✅ Queue created: {pyrogram_queue}")
                     
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     pyrogram_loop = loop
+                    print(f"✅ Event loop created: {loop}")
                     
                     async def handle_queue_requests():
                         """Handle requests from other threads"""
@@ -9900,9 +9908,14 @@ if __name__ == "__main__":
                                 continue
                     
                     async def start_pyrogram_with_queue():
+                        print("🔄 Starting pyrogram with queue handler...")
                         await start_pyrogram()
+                        print("✅ Pyrogram client started, starting queue handler...")
                         # Start queue handler after pyrogram is ready
-                        asyncio.create_task(handle_queue_requests())
+                        task = asyncio.create_task(handle_queue_requests())
+                        print("✅ Queue handler started")
+                        # Keep the task alive
+                        await task
                     
                     loop.run_until_complete(start_pyrogram_with_queue())
                 
