@@ -128,22 +128,39 @@ PYROGRAM_API_ID = os.getenv("PYROGRAM_API_ID", "").strip()
 PYROGRAM_API_HASH = os.getenv("PYROGRAM_API_HASH", "").strip()
 pyrogram_client = None
 
+print(f"🔍 Pyrogram config check:")
+print(f"   API_ID: {'✅ Set' if PYROGRAM_API_ID else '❌ Missing'}")
+print(f"   API_HASH: {'✅ Set' if PYROGRAM_API_HASH else '❌ Missing'}")
+
 if PYROGRAM_API_ID and PYROGRAM_API_HASH:
     try:
+        # Validate API_ID is a number
+        api_id = int(PYROGRAM_API_ID)
+        if api_id <= 0:
+            raise ValueError("API_ID must be a positive integer")
+        
         pyrogram_client = Client(
             "domino_page_checker",
-            api_id=int(PYROGRAM_API_ID),
+            api_id=api_id,
             api_hash=PYROGRAM_API_HASH,
             bot_token=BOT_TOKEN,
             in_memory=True
         )
-        logger.info("Pyrogram client configured successfully")
+        logger.info("✅ Pyrogram client configured successfully")
+        print("✅ Pyrogram client configured successfully")
+    except ValueError as e:
+        logger.error(f"❌ Invalid PYROGRAM_API_ID: {e}")
+        print(f"❌ Invalid PYROGRAM_API_ID: {e}")
+        pyrogram_client = None
     except Exception as e:
-        logger.error(f"Failed to configure Pyrogram client: {e}")
+        logger.error(f"❌ Failed to configure Pyrogram client: {e}")
+        print(f"❌ Failed to configure Pyrogram client: {e}")
         pyrogram_client = None
 else:
-    logger.warning("Pyrogram API credentials not found in environment variables")
+    logger.warning("❌ Pyrogram API credentials not found in environment variables")
     logger.info("Set PYROGRAM_API_ID and PYROGRAM_API_HASH to enable page verification")
+    print("❌ Pyrogram API credentials not found")
+    print("Please set PYROGRAM_API_ID and PYROGRAM_API_HASH in .env file")
 
 # Redis client for caching
 try:
@@ -9640,8 +9657,14 @@ if __name__ == "__main__":
             # Start pyrogram client if available
             if pyrogram_client:
                 print("🔍 Starting Pyrogram client for page verification...")
-                asyncio.create_task(pyrogram_client.start())
-                print("✅ Pyrogram client started")
+                try:
+                    bot_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(bot_loop)
+                    bot_loop.run_until_complete(pyrogram_client.start())
+                    print("✅ Pyrogram client started successfully")
+                except Exception as e:
+                    print(f"❌ Failed to start Pyrogram client: {e}")
+                    logger.error(f"Failed to start Pyrogram client: {e}")
             
             bot_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(bot_loop)
