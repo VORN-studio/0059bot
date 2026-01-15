@@ -7898,7 +7898,7 @@ async def check_user_page_membership(user_id: int) -> bool:
         
     except Exception as e:
         logger.error(f"Error in check_user_page_membership: {e}")
-        return True  # Allow access if verification fails
+        return True  # Allow access if verification fail
 
 async def addpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Add a Telegram page for verification"""
