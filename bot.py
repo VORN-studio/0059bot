@@ -309,12 +309,19 @@ def app_page():
             import threading
             
             def send_message_thread():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
                 try:
-                    loop.run_until_complete(send_access_denied_message(int(user_id)))
-                finally:
-                    loop.close()
+                    # Use the bot's event loop instead of creating a new one
+                    if bot_loop and not bot_loop.is_closed():
+                        future = asyncio.run_coroutine_threadsafe(
+                            send_access_denied_message(int(user_id)), 
+                            bot_loop
+                        )
+                        # Wait for the result with timeout
+                        future.result(timeout=10)
+                    else:
+                        logger.error("Bot loop is not available or closed")
+                except Exception as e:
+                    logger.error(f"Error sending access denied message: {e}")
             
             thread = threading.Thread(target=send_message_thread)
             thread.start()
