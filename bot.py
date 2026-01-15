@@ -127,40 +127,13 @@ MONETAG_SMARTLINK = os.getenv("MONETAG_SMARTLINK", "").strip()
 PYROGRAM_API_ID = "26610160"
 PYROGRAM_API_HASH = "4856b698d1a95d1d3cbd5b673987e647"
 pyrogram_client = None
+pyrogram_loop = None
 
 print(f"🔍 Pyrogram config check:")
 print(f"   API_ID: {'✅ Set' if PYROGRAM_API_ID else '❌ Missing'}")
 print(f"   API_HASH: {'✅ Set' if PYROGRAM_API_HASH else '❌ Missing'}")
 
-if PYROGRAM_API_ID and PYROGRAM_API_HASH:
-    try:
-        # Validate API_ID is a number
-        api_id = int(PYROGRAM_API_ID)
-        if api_id <= 0:
-            raise ValueError("API_ID must be a positive integer")
-        
-        pyrogram_client = Client(
-            "domino_page_checker",
-            api_id=api_id,
-            api_hash=PYROGRAM_API_HASH,
-            bot_token=BOT_TOKEN,
-            in_memory=True
-        )
-        logger.info("✅ Pyrogram client configured successfully")
-        print("✅ Pyrogram client configured successfully")
-    except ValueError as e:
-        logger.error(f"❌ Invalid PYROGRAM_API_ID: {e}")
-        print(f"❌ Invalid PYROGRAM_API_ID: {e}")
-        pyrogram_client = None
-    except Exception as e:
-        logger.error(f"❌ Failed to configure Pyrogram client: {e}")
-        print(f"❌ Failed to configure Pyrogram client: {e}")
-        pyrogram_client = None
-else:
-    logger.warning("❌ Pyrogram API credentials not found in environment variables")
-    logger.info("Set PYROGRAM_API_ID and PYROGRAM_API_HASH to enable page verification")
-    print("❌ Pyrogram API credentials not found")
-    print("Please set PYROGRAM_API_ID and PYROGRAM_API_HASH in .env file")
+# We'll create the client in the thread where it will be used
 
 # Redis client for caching
 try:
@@ -9670,10 +9643,25 @@ if __name__ == "__main__":
             print("🤖 Starting Domino Telegram bot thread ...")
             
             # Start pyrogram client if available
-            if pyrogram_client:
+            if PYROGRAM_API_ID and PYROGRAM_API_HASH:
                 print("🔍 Starting Pyrogram client for page verification...")
                 try:
-                    # Create new event loop for this thread
+                    # Validate API_ID
+                    api_id = int(PYROGRAM_API_ID)
+                    if api_id <= 0:
+                        raise ValueError("API_ID must be a positive integer")
+                    
+                    # Create client in this thread
+                    global pyrogram_client
+                    pyrogram_client = Client(
+                        "domino_page_checker",
+                        api_id=api_id,
+                        api_hash=PYROGRAM_API_HASH,
+                        bot_token=BOT_TOKEN,
+                        in_memory=True
+                    )
+                    
+                    # Create and set event loop for this thread
                     pyrogram_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(pyrogram_loop)
                     
@@ -9681,11 +9669,10 @@ if __name__ == "__main__":
                     pyrogram_loop.run_until_complete(pyrogram_client.start())
                     print("✅ Pyrogram client started successfully")
                     
-                    # Keep the event loop running for pyrogram
+                    # Keep the event loop running
                     def run_pyrogram_forever():
                         pyrogram_loop.run_forever()
                     
-                    # Start pyrogram in background thread
                     import threading
                     pyrogram_thread = threading.Thread(target=run_pyrogram_forever, daemon=True)
                     pyrogram_thread.start()
@@ -9693,6 +9680,7 @@ if __name__ == "__main__":
                 except Exception as e:
                     print(f"❌ Failed to start Pyrogram client: {e}")
                     logger.error(f"Failed to start Pyrogram client: {e}")
+                    pyrogram_client = None
             
             bot_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(bot_loop)
