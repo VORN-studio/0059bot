@@ -10036,11 +10036,19 @@ if __name__ == "__main__":
                                         }
                                         logger.info(f"User {request_data['user_id']} banned in {request_data['page_username']}")
                                     except Exception as e:
-                                        pyrogram_results[request_id] = {
-                                            'is_member': False,
-                                            'error': str(e)
-                                        }
-                                        logger.error(f"Error checking {request_data['page_username']}: {e}")
+                                        # Check if it's USER_NOT_PARTICIPANT (user not following)
+                                        if "USER_NOT_PARTICIPANT" in str(e) or "not a member" in str(e):
+                                            pyrogram_results[request_id] = {
+                                                'is_member': False,
+                                                'error': 'USER_NOT_PARTICIPANT'
+                                            }
+                                            logger.info(f"User {request_data['user_id']} is not member of {request_data['page_username']}")
+                                        else:
+                                            pyrogram_results[request_id] = {
+                                                'is_member': False,
+                                                'error': str(e)
+                                            }
+                                            logger.error(f"Error checking {request_data['page_username']}: {e}")
                                 
                             except queue.Empty:
                                 # No request in queue, continue loop
