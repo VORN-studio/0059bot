@@ -294,17 +294,19 @@ def index():
     return "✅ Domino backend is online. Go to /app for WebApp.", 200
 
 @app_web.route("/app")
-def app_page():
-    """
-    Добро пожаловать на главную страницу веб-приложения!.
-    URL-адрес веб-приложения Telegram будет следующим:՝
-    https://domino-play.online/app?uid=XXXX
-    """
+def webapp_index():
+    """Main webapp entry point with page verification"""
     user_id = request.args.get('uid')
+    
+    logger.info(f"🌐 Webapp access request - User ID: {user_id}, IP: {request.remote_addr}")
     
     if user_id:
         # Ստուգել էջերին հետևելը
-        if not check_user_follows_pages(int(user_id)):
+        logger.info(f"🔍 Starting page membership check for user {user_id}")
+        has_access = check_user_follows_pages(int(user_id))
+        logger.info(f"✅ Page check completed for user {user_id}: {'ACCESS GRANTED' if has_access else 'ACCESS DENIED'}")
+        
+        if not has_access:
             # Ուղարկել հաղորդագրություն բոտին առանձին thread-ում
             import threading
             
@@ -7976,6 +7978,7 @@ async def check_user_page_membership(user_id: int) -> bool:
 
 def check_user_follows_pages(user_id: int) -> bool:
     """Check if user follows all required pages (sync version for Flask)"""
+    start_time = time.time()
     print(f"🔍 Checking pages for user {user_id}")
     print(f"🔍 Pyrogram client: {pyrogram_client}")
     print(f"🔍 Pyrogram queue: {pyrogram_queue}")
@@ -8041,6 +8044,10 @@ def check_user_follows_pages(user_id: int) -> bool:
     except Exception as e:
         logger.error(f"Error in check_user_follows_pages: {e}")
         return True  # Allow access if verification fail
+    finally:
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f"⏱️ Page check completed in {duration:.2f} seconds for user {user_id}")
 
 async def send_access_denied_message(user_id: int):
     """Send access denied message to user"""
