@@ -6697,33 +6697,37 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ensure_user(user.id, user.username, inviter_id)
 
-    # Check page membership
-    is_member = await check_user_page_membership(user.id)
-    
-    if not is_member:
-        # Get required pages list
-        conn = db()
-        c = conn.cursor()
-        c.execute("SELECT page_link, page_name FROM telegram_pages ORDER BY id")
-        pages = c.fetchall()
-        release_db(conn)
+    # Skip page verification if Pyrogram is not available
+    if not pyrogram_client:
+        print("⚠️ Page verification disabled - Pyrogram client not available")
+    else:
+        # Check page membership
+        is_member = await check_user_page_membership(user.id)
         
-        if pages:
-            message = "🚫 **Доступ запрещен**\n\n"
-            message += "Для использования бота необходимо подписаться на следующие страницы:\n\n"
+        if not is_member:
+            # Get required pages list
+            conn = db()
+            c = conn.cursor()
+            c.execute("SELECT page_link, page_name FROM telegram_pages ORDER BY id")
+            pages = c.fetchall()
+            release_db(conn)
             
-            for page_link, page_name in pages:
-                message += f"📄 [{page_name}]({page_link})\n"
-            
-            message += "\nПосле подписки попробуйте снова: /start"
-            
-            await context.bot.send_message(
-                chat_id=user.id,
-                text=message,
-                parse_mode='Markdown',
-                disable_web_page_preview=True
-            )
-            return
+            if pages:
+                message = "🚫 **Доступ запрещен**\n\n"
+                message += "Для использования бота необходимо подписаться на следующие страницы:\n\n"
+                
+                for page_link, page_name in pages:
+                    message += f"📄 [{page_name}]({page_link})\n"
+                
+                message += "\nПосле подписки попробуйте снова: /start"
+                
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text=message,
+                    parse_mode='Markdown',
+                    disable_web_page_preview=True
+                )
+                return
 
     wa_url = f"{BASE_URL}/app?uid={user.id}"
     if open_post_id:
@@ -7930,6 +7934,10 @@ async def addpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Вы не являетесь администратором.")
         return
     
+    if not pyrogram_client:
+        await update.message.reply_text("❌ Pyrogram client не доступен. Сначала настройте PYROGRAM_API_ID и PYROGRAM_API_HASH в .env файле.")
+        return
+    
     if len(context.args) < 1:
         await update.message.reply_text("Использование: /addpage <link>\nПример: /addpage @mypage или /addpage https://t.me/mypage")
         return
@@ -7980,10 +7988,13 @@ async def listpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         release_db(conn)
         
         if not pages:
-            await update.message.reply_text("📋 Список страниц пуст")
+            status = "✅ Активен" if pyrogram_client else "❌ Неактивен (настройте Pyrogram)"
+            await update.message.reply_text(f"📋 Список страниц пуст\n\nСтатус проверки: {status}")
             return
         
-        message = "📋 **Список страниц для проверки:**\n\n"
+        message = f"📋 **Список страниц для проверки:**\n\n"
+        message += f"🔧 Статус Pyrogram: {'✅ Активен' if pyrogram_client else '❌ Неактивен'}\n\n"
+        
         for page in pages:
             page_id, page_link, page_name, created_at = page
             created_date = datetime.fromtimestamp(created_at).strftime('%Y-%m-%d %H:%M')
@@ -8003,6 +8014,10 @@ async def delpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     if user_id not in ADMIN_IDS:
         await update.message.reply_text("❌ Вы не являетесь администратором.")
+        return
+    
+    if not pyrogram_client:
+        await update.message.reply_text("❌ Pyrogram client не доступен. Сначала настройте PYROGRAM_API_ID и PYROGRAM_API_HASH в .env файле.")
         return
     
     if len(context.args) < 1:
