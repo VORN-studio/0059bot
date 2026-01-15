@@ -8002,6 +8002,11 @@ def check_user_follows_pages(user_id: int) -> bool:
         import queue
         request_id = f"check_{user_id}_{int(time.time())}"
         
+        # Clear old results for this user to prevent cache issues
+        keys_to_remove = [key for key in pyrogram_results.keys() if key.startswith(f"check_{user_id}_")]
+        for key in keys_to_remove:
+            pyrogram_results.pop(key, None)
+        
         for page_row in pages:
             page_link = page_row[0]
             page_username = page_link.replace('https://t.me/', '')
