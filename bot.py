@@ -9661,16 +9661,16 @@ if __name__ == "__main__":
                         in_memory=True
                     )
                     
-                    # Create and set event loop for this thread
+                    # Create event loop for pyrogram
                     pyrogram_loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(pyrogram_loop)
                     
-                    # Start the client
+                    # Start the client in the pyrogram loop
                     pyrogram_loop.run_until_complete(pyrogram_client.start())
                     print("✅ Pyrogram client started successfully")
                     
-                    # Keep the event loop running
+                    # Keep the event loop running in background
                     def run_pyrogram_forever():
+                        asyncio.set_event_loop(pyrogram_loop)
                         pyrogram_loop.run_forever()
                     
                     import threading
