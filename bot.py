@@ -7908,7 +7908,11 @@ async def addpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not pyrogram_client:
-        await update.message.reply_text("⏳ Pyrogram client еще запускается... Пожалуйста, подождите несколько секунд и попробуйте снова.")
+        # Check if we have the credentials but client is still starting
+        if PYROGRAM_API_ID and PYROGRAM_API_HASH:
+            await update.message.reply_text("⏳ Pyrogram client еще запускается... Пожалуйста, подождите несколько секунд и попробуйте снова.")
+        else:
+            await update.message.reply_text("❌ Pyrogram client не настроен. Проверьте API credentials.")
         return
     
     if len(context.args) < 1:
@@ -7990,7 +7994,11 @@ async def delpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not pyrogram_client:
-        await update.message.reply_text("⏳ Pyrogram client еще запускается... Пожалуйста, подождите несколько секунд и попробуйте снова.")
+        # Check if we have the credentials but client is still starting
+        if PYROGRAM_API_ID and PYROGRAM_API_HASH:
+            await update.message.reply_text("⏳ Pyrogram client еще запускается... Пожалуйста, подождите несколько секунд и попробуйте снова.")
+        else:
+            await update.message.reply_text("❌ Pyrogram client не настроен. Проверьте API credentials.")
         return
     
     if len(context.args) < 1:
