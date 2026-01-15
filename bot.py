@@ -9875,16 +9875,20 @@ if __name__ == "__main__":
                                             request_data['page_username'], 
                                             request_data['user_id']
                                         )
-                                        # Check both string and enum values
-                                        status_str = str(member.status).lower()
-                                        is_member = (status_str in ['member', 'administrator', 'creator', 'owner'] or 
-                                                    member.status in ['member', 'administrator', 'creator'])
+                                        
+                                        # Convert status to string for comparison
+                                        status_str = str(member.status).upper()
+                                        logger.info(f"Status string: {status_str}")
+                                        
+                                        # Check if user has any valid status
+                                        valid_statuses = ['MEMBER', 'ADMINISTRATOR', 'CREATOR', 'OWNER', 'MEMBER_STATUS.MEMBER', 'MEMBER_STATUS.ADMINISTRATOR', 'MEMBER_STATUS.CREATOR', 'MEMBER_STATUS.OWNER']
+                                        is_member = status_str in valid_statuses
                                         
                                         pyrogram_results[request_id] = {
                                             'is_member': is_member,
-                                            'status': str(member.status)
+                                            'status': status_str
                                         }
-                                        logger.info(f"Pyrogram check completed for {request_data['page_username']}: {member.status} (is_member: {is_member})")
+                                        logger.info(f"Pyrogram check completed for {request_data['page_username']}: {status_str} (is_member: {is_member})")
                                     except ChannelPrivate:
                                         pyrogram_results[request_id] = {
                                             'is_member': False,
