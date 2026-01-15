@@ -9673,9 +9673,9 @@ if __name__ == "__main__":
             if pyrogram_client:
                 print("🔍 Starting Pyrogram client for page verification...")
                 try:
-                    bot_loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(bot_loop)
-                    bot_loop.run_until_complete(pyrogram_client.start())
+                    pyrogram_loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(pyrogram_loop)
+                    pyrogram_loop.run_until_complete(pyrogram_client.start())
                     print("✅ Pyrogram client started successfully")
                 except Exception as e:
                     print(f"❌ Failed to start Pyrogram client: {e}")
