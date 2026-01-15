@@ -7822,15 +7822,22 @@ async def start_bot_webhook():
             for attempt in range(1, 6):
                 try:
                     await application.bot.delete_webhook(drop_pending_updates=True)
-                    await application.bot.set_webhook(url=webhook_url)
+                    await application.bot.set_webhook(url=webhook_url, timeout=30)
                     set_ok = True
                     break
                 except Exception as e:
                     print(f"⚠️ Webhook set failed (attempt {attempt}/5): {e}")
-                    try:
-                        await asyncio.sleep(10)
-                    except Exception:
-                        pass
+                    if "temporary failure in name resolution" in str(e) or "failed to resolve host" in str(e):
+                        print(f"🔍 DNS resolution failed for {webhook_url}, retrying in 15 seconds...")
+                        try:
+                            await asyncio.sleep(15)
+                        except Exception:
+                            pass
+                    else:
+                        try:
+                            await asyncio.sleep(10)
+                        except Exception:
+                            pass
 
             if set_ok:
                 global BOT_READY
