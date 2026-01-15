@@ -298,7 +298,124 @@ def app_page():
     URL-адрес веб-приложения Telegram будет следующим:՝
     https://domino-play.online/app?uid=XXXX
     """
+    # Check if user has access to webapp
+    uid = request.args.get('uid')
+    if uid:
+        try:
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            has_access = loop.run_until_complete(check_webapp_access(int(uid)))
+            loop.close()
+            
+            if not has_access:
+                # Return access denied page instead of webapp
+                return """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Доступ запрещен</title>
+    <meta charset="utf-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white; 
+            text-align: center; 
+            padding: 50px;
+            margin: 0;
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { color: #ff6b6b; }
+        .message { 
+            background: rgba(255,255,255,0.05); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+            border-left: 4px solid #ff6b6b;
+        }
+        .pages { 
+            text-align: left; 
+            background: rgba(255,255,255,0.05); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0;
+        }
+        .page-item { margin: 10px 0; }
+        a { color: #4ecdc4; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚫 Доступ к WebApp запрещен</h1>
+        <div class="message">
+            <p>Для открытия приложения необходимо подписаться на следующие страницы:</p>
+            <div class="pages" id="pages-list">
+                <p>Загрузка списка страниц...</p>
+            </div>
+            <p><strong>После подписки вернитесь и нажмите снова:</strong><br>
+            <a href="tg://resolve?domain=domino_play_bot">/start</a></p>
+        </div>
+    </div>
+    <script>
+        // Fetch required pages from API
+        fetch('/api/required-pages')
+            .then(response => response.json())
+            .then(data => {
+                if (data.pages && data.pages.length > 0) {
+                    let pagesHtml = '';
+                    data.pages.forEach(page => {
+                        pagesHtml += `<div class="page-item">📄 <a href="${page.link}" target="_blank">${page.name}</a></div>`;
+                    });
+                    document.getElementById('pages-list').innerHTML = pagesHtml;
+                } else {
+                    document.getElementById('pages-list').innerHTML = '<p>Нет обязательных страниц для подписки.</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('pages-list').innerHTML = '<p>Ошибка загрузки списка страниц. Попробуйте позже.</p>';
+            });
+    </script>
+</body>
+</html>
+                """, 403
+        except Exception as e:
+            print(f"Error checking webapp access: {e}")
+            # If error occurs, allow access
+            pass
+    
     return send_from_directory(WEBAPP_DIR, "index.html")
+
+@app_web.route("/api/required-pages")
+def api_required_pages():
+    """API endpoint to get list of required pages"""
+    try:
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT page_link, page_name FROM telegram_pages ORDER BY id")
+        pages = c.fetchall()
+        release_db(conn)
+        
+        pages_list = [{"name": page_name, "link": page_link} for page_link, page_name in pages]
+        
+        return jsonify({
+            "ok": True,
+            "pages": pages_list
+        })
+    except Exception as e:
+        print(f"Error getting required pages: {e}")
+        return jsonify({
+            "ok": False,
+            "error": str(e)
+        }), 500
 
 @app_web.route("/webapp/<path:filename>")
 def serve_webapp(filename):
@@ -2862,6 +2979,98 @@ def webapp_tasks(filename):
 @app_web.route("/portal")
 @app_web.route("/portal/")
 def portal_page():
+    # Check if user has access to webapp
+    uid = request.args.get('uid')
+    if uid:
+        try:
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            has_access = loop.run_until_complete(check_webapp_access(int(uid)))
+            loop.close()
+            
+            if not has_access:
+                # Return access denied page
+                return """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Доступ запрещен</title>
+    <meta charset="utf-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white; 
+            text-align: center; 
+            padding: 50px;
+            margin: 0;
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { color: #ff6b6b; }
+        .message { 
+            background: rgba(255,255,255,0.05); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+            border-left: 4px solid #ff6b6b;
+        }
+        .pages { 
+            text-align: left; 
+            background: rgba(255,255,255,0.05); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0;
+        }
+        .page-item { margin: 10px 0; }
+        a { color: #4ecdc4; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚫 Доступ к Portal запрещен</h1>
+        <div class="message">
+            <p>Для открытия portal необходимо подписаться на следующие страницы:</p>
+            <div class="pages" id="pages-list">
+                <p>Загрузка списка страниц...</p>
+            </div>
+            <p><strong>После подписки вернитесь и нажмите снова:</strong><br>
+            <a href="tg://resolve?domain=domino_play_bot">/start</a></p>
+        </div>
+    </div>
+    <script>
+        fetch('/api/required-pages')
+            .then(response => response.json())
+            .then(data => {
+                if (data.pages && data.pages.length > 0) {
+                    let pagesHtml = '';
+                    data.pages.forEach(page => {
+                        pagesHtml += `<div class="page-item">📄 <a href="${page.link}" target="_blank">${page.name}</a></div>`;
+                    });
+                    document.getElementById('pages-list').innerHTML = pagesHtml;
+                } else {
+                    document.getElementById('pages-list').innerHTML = '<p>Нет обязательных страниц для подписки.</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('pages-list').innerHTML = '<p>Ошибка загрузки списка страниц. Попробуйте позже.</p>';
+            });
+    </script>
+</body>
+</html>
+                """, 403
+        except Exception as e:
+            print(f"Error checking portal access: {e}")
+            pass
+    
     return send_from_directory(PORTAL_DIR, "portal.html")
 
 @app_web.route("/portal/<path:filename>")
@@ -6423,6 +6632,98 @@ def api_mining_state(user_id):
 
 @app_web.route("/app/mining")
 def app_mining():
+    # Check if user has access to webapp
+    uid = request.args.get('uid')
+    if uid:
+        try:
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            has_access = loop.run_until_complete(check_webapp_access(int(uid)))
+            loop.close()
+            
+            if not has_access:
+                # Return access denied page
+                return """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Доступ запрещен</title>
+    <meta charset="utf-8">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white; 
+            text-align: center; 
+            padding: 50px;
+            margin: 0;
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { color: #ff6b6b; }
+        .message { 
+            background: rgba(255,255,255,0.05); 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+            border-left: 4px solid #ff6b6b;
+        }
+        .pages { 
+            text-align: left; 
+            background: rgba(255,255,255,0.05); 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0;
+        }
+        .page-item { margin: 10px 0; }
+        a { color: #4ecdc4; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚫 Доступ к Mining запрещен</h1>
+        <div class="message">
+            <p>Для открытия mining необходимо подписаться на следующие страницы:</p>
+            <div class="pages" id="pages-list">
+                <p>Загрузка списка страниц...</p>
+            </div>
+            <p><strong>После подписки вернитесь и нажмите снова:</strong><br>
+            <a href="tg://resolve?domain=domino_play_bot">/start</a></p>
+        </div>
+    </div>
+    <script>
+        fetch('/api/required-pages')
+            .then(response => response.json())
+            .then(data => {
+                if (data.pages && data.pages.length > 0) {
+                    let pagesHtml = '';
+                    data.pages.forEach(page => {
+                        pagesHtml += `<div class="page-item">📄 <a href="${page.link}" target="_blank">${page.name}</a></div>`;
+                    });
+                    document.getElementById('pages-list').innerHTML = pagesHtml;
+                } else {
+                    document.getElementById('pages-list').innerHTML = '<p>Нет обязательных страниц для подписки.</p>';
+                }
+            })
+            .catch(error => {
+                document.getElementById('pages-list').innerHTML = '<p>Ошибка загрузки списка страниц. Попробуйте позже.</p>';
+            });
+    </script>
+</body>
+</html>
+                """, 403
+        except Exception as e:
+            print(f"Error checking mining access: {e}")
+            pass
+    
     return send_from_directory("webapp/mining", "index.html")
 
 @app_web.route("/api/task_complete", methods=["POST"])
@@ -6648,6 +6949,44 @@ def parse_startapp_payload(text: str):
             return None
     return None
 
+async def check_webapp_access(user_id: int) -> bool:
+    """Check if user has access to webapp (follows all required pages)"""
+    if not pyrogram_client:
+        return True  # Allow access if Pyrogram not available
+    
+    try:
+        return await check_user_page_membership(user_id)
+    except Exception as e:
+        logger.error(f"Error checking webapp access: {e}")
+        return True  # Allow access if verification fails
+
+async def send_webapp_access_denied(user_id: int, context: ContextTypes.DEFAULT_TYPE):
+    """Send message when user doesn't have access to webapp"""
+    try:
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT page_link, page_name FROM telegram_pages ORDER BY id")
+        pages = c.fetchall()
+        release_db(conn)
+        
+        if pages:
+            message = "🚫 **Доступ к WebApp запрещен**\n\n"
+            message += "Для открытия приложения необходимо подписаться на следующие страницы:\n\n"
+            
+            for page_link, page_name in pages:
+                message += f"📄 [{page_name}]({page_link})\n"
+            
+            message += "\nПосле подписки попробуйте снова: /start"
+            
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=message,
+                parse_mode='Markdown',
+                disable_web_page_preview=True
+            )
+    except Exception as e:
+        logger.error(f"Error sending webapp access denied: {e}")
+
 async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     if not user:
@@ -6670,38 +7009,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ensure_user(user.id, user.username, inviter_id)
 
-    # Skip page verification if Pyrogram is not available
-    if not pyrogram_client:
-        print("⚠️ Page verification disabled - Pyrogram client not available")
-    else:
-        # Check page membership
-        is_member = await check_user_page_membership(user.id)
-        
-        if not is_member:
-            # Get required pages list
-            conn = db()
-            c = conn.cursor()
-            c.execute("SELECT page_link, page_name FROM telegram_pages ORDER BY id")
-            pages = c.fetchall()
-            release_db(conn)
-            
-            if pages:
-                message = "🚫 **Доступ запрещен**\n\n"
-                message += "Для использования бота необходимо подписаться на следующие страницы:\n\n"
-                
-                for page_link, page_name in pages:
-                    message += f"📄 [{page_name}]({page_link})\n"
-                
-                message += "\nПосле подписки попробуйте снова: /start"
-                
-                await context.bot.send_message(
-                    chat_id=user.id,
-                    text=message,
-                    parse_mode='Markdown',
-                    disable_web_page_preview=True
-                )
-                return
-
+    # Create webapp URL
     wa_url = f"{BASE_URL}/app?uid={user.id}"
     if open_post_id:
         wa_url += f"&open_post={open_post_id}"
