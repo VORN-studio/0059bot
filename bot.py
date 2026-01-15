@@ -17,7 +17,7 @@ import time
 import sys
 import threading
 from typing import Optional
-from flask import Flask, jsonify, send_from_directory, request, redirect
+from flask import Flask, jsonify, send_from_directory, request, redirect, render_template_string
 from werkzeug.utils import secure_filename
 import subprocess
 from flask_cors import CORS
@@ -307,7 +307,7 @@ def webapp_index():
         logger.info(f"✅ Page check completed for user {user_id}: {'ACCESS GRANTED' if has_access else 'ACCESS DENIED'}")
         
         if not has_access:
-            # Ուղարկել հաղորդագրություն բոտին առանձին thread-ում
+            # Ուղարկել հաղորդագրություն բոտին առաձին thread-ում
             import threading
             
             def send_message_thread():
@@ -328,7 +328,123 @@ def webapp_index():
             thread = threading.Thread(target=send_message_thread)
             thread.start()
             
-            return "❌ Доступ ограничен", 403
+            # Ցուցադրել հատուկ էջ՝ մուտքի արգելափակման համար
+            return render_template_string('''
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Մուտքը արգելափակված է</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+        }
+        .lock-icon {
+            font-size: 80px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .message {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .pages-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .page-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .page-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .page-link:hover {
+            text-decoration: underline;
+        }
+        .note {
+            color: #95a5a6;
+            font-size: 14px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="lock-icon">🔒</div>
+        <h1>Մուտքը արգելափակված է</h1>
+        <div class="message">
+            Դուք պետք է լինեք ֆոլով հետևյալ էջերին՝ հավելվածը օգտագործելու համար։
+        </div>
+        <div class="pages-list">
+            <h3>Պահանջվող էջեր՝</h3>
+            <div id="pages-container">
+                <div class="page-item">
+                    <strong>Բեռնում...</strong>
+                </div>
+            </div>
+        </div>
+        <div class="note">
+            Ֆոլով անելուց հետո սպասեք 1-2 րոպե և թարմացրեք էջը։
+        </div>
+    </div>
+
+    <script>
+        // Ստանալ պահանջվող էջերը
+        fetch('/api/required-pages')
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok && data.pages) {
+                    const container = document.getElementById('pages-container');
+                    container.innerHTML = data.pages.map(page => `
+                        <div class="page-item">
+                            <a href="${page.link}" target="_blank" class="page-link">
+                                📄 ${page.name}
+                            </a>
+                        </div>
+                    `).join('');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading pages:', error);
+                document.getElementById('pages-container').innerHTML = 
+                    '<div class="page-item"><strong>Չհաջողվեց բեռնել էջերը</strong></div>';
+            });
+    </script>
+</body>
+</html>
+            '''), 403
     
     return send_from_directory(WEBAPP_DIR, "index.html")
 
