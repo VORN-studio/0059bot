@@ -9655,7 +9655,7 @@ if __name__ == "__main__":
                 print("🔍 Starting Pyrogram client for page verification...")
                 
                 async def start_pyrogram():
-                    nonlocal pyrogram_client
+                    global pyrogram_client
                     try:
                         # Validate API_ID
                         api_id = int(PYROGRAM_API_ID)
@@ -9684,12 +9684,8 @@ if __name__ == "__main__":
                         logger.error(f"Failed to start Pyrogram client: {e}")
                         pyrogram_client = None
                 
-                # Initialize pyrogram_client as None before starting
-                pyrogram_client = None
-                
                 # Run pyrogram in its own thread with event loop
                 def run_pyrogram_thread():
-                    nonlocal pyrogram_client
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(start_pyrogram())
