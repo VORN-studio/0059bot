@@ -302,18 +302,19 @@ def webapp_index():
     
     # Check if Telegram failed to substitute user_id (e.g., from default Telegram buttons)
     if user_id_str == '{user_id}' or not user_id_str:
-        # Return error page for invalid access
+        # Return page that uses Telegram WebApp API to get user_id and check follows
         return render_template_string('''
 <!DOCTYPE html>
 <html lang="hy">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Սխալ մուտք</title>
+    <title>DOMINO</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             margin: 0;
             padding: 0;
             min-height: 100vh;
@@ -330,10 +331,15 @@ def webapp_index():
             max-width: 500px;
             margin: 20px;
         }
-        .error-icon {
-            font-size: 80px;
-            color: #e74c3c;
+        .loading {
+            font-size: 60px;
+            color: #3498db;
             margin-bottom: 20px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         h1 {
             color: #2c3e50;
@@ -345,42 +351,141 @@ def webapp_index():
             margin-bottom: 30px;
             line-height: 1.6;
         }
-        .instruction {
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+        .pages-list {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
-            border-left: 4px solid #e74c3c;
+            margin-bottom: 30px;
+            text-align: left;
         }
-        .bot-link {
+        .page-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .page-link {
             color: #3498db;
             text-decoration: none;
             font-weight: bold;
-            font-size: 18px;
         }
-        .bot-link:hover {
+        .page-link:hover {
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="error-icon">⚠️</div>
-        <h1>Սխալ մուտք</h1>
-        <div class="message">
-            Խնդրում ենք բացել հավելվածը բոտի միջոցով՝ /start հրամանով։
+        <div class="loading" id="loading">⏳</div>
+        <h1 id="title">Ստուգում...</h1>
+        <div class="message" id="message">
+            Խնդրում ենք սպասել, ստուգում ենք ձեր բաժանորդագրությունները...
         </div>
-        <div class="instruction">
-            <strong>Ճիշտ օգտագործում՝</strong><br>
-            1. Բացեք բոտը Telegram-ում<br>
-            2. Սեղմեք /start<br>
-            3. Սեղմեք "🎰 OPEN DOMINO APP" կոճակը
+        <div id="error" class="error" style="display: none;">
+            Սխալ է տեղի ունեցել։ Խնդրում ենք թարմացնել էջը։
         </div>
-        <a href="https://t.me/DominoPlayBot" class="bot-link">🤖 Բացել բոտը</a>
+        <div id="pages-list" class="pages-list" style="display: none;">
+            <h3>Պահանջվող էջեր՝</h3>
+            <div id="pages-container">
+                <div class="page-item">
+                    <strong>Բեռնում...</strong>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        let webApp = null;
+        
+        function initWebApp() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                webApp = window.Telegram.WebApp;
+                webApp.ready();
+                webApp.expand();
+                checkUserAccess();
+            } else {
+                showError('Telegram WebApp հասանելի չէ');
+            }
+        }
+        
+        async function checkUserAccess() {
+            try {
+                if (!webApp || !webApp.initDataUnsafe || !webApp.initDataUnsafe.user) {
+                    showError('Օգտատերի տվյալները հասանելի չեն');
+                    return;
+                }
+                
+                const userId = webApp.initDataUnsafe.user.id;
+                
+                // Check user access
+                const response = await fetch(`/app?uid=${userId}`);
+                
+                if (response.ok) {
+                    // User has access, redirect to main app
+                    window.location.href = `/app?uid=${userId}`;
+                } else if (response.status === 403) {
+                    // User doesn't have access, show required pages
+                    showAccessDenied();
+                } else {
+                    showError('Ստուգման սխալ');
+                }
+            } catch (error) {
+                console.error('Error checking access:', error);
+                showError('Ցանցային սխալ');
+            }
+        }
+        
+        function showAccessDenied() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('title').textContent = 'Մուտքը արգելափակված է';
+            document.getElementById('message').textContent = 'Դուք պետք է լինեք ֆոլով հետևյալ էջերին՝ հավելվածը օգտագործելու համար։';
+            document.getElementById('pages-list').style.display = 'block';
+            
+            // Load required pages
+            fetch('/api/required-pages')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok && data.pages) {
+                        const container = document.getElementById('pages-container');
+                        container.innerHTML = data.pages.map(page => `
+                            <div class="page-item">
+                                <a href="${page.link}" target="_blank" class="page-link">
+                                    📄 ${page.name}
+                                </a>
+                            </div>
+                        `).join('');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading pages:', error);
+                    document.getElementById('pages-container').innerHTML = 
+                        '<div class="page-item"><strong>Չհաջողվեց բեռնել էջերը</strong></div>';
+                });
+        }
+        
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('title').textContent = 'Սխալ';
+            document.getElementById('message').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initWebApp);
+    </script>
 </body>
 </html>
-        '''), 400
+        ''')
     
     try:
         user_id = int(user_id_str)
