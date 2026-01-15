@@ -44,6 +44,9 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from pyrogram import Client
+from pyrogram.types import Message
+from pyrogram.errors import FloodWait, ChannelPrivate, UserBannedInChannel
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -119,6 +122,28 @@ BOT_READY = False
 ONLINE_USERS = {}
 REMATCH_REQUESTS = {}
 MONETAG_SMARTLINK = os.getenv("MONETAG_SMARTLINK", "").strip()
+
+# Pyrogram client for page verification
+PYROGRAM_API_ID = os.getenv("PYROGRAM_API_ID", "").strip()
+PYROGRAM_API_HASH = os.getenv("PYROGRAM_API_HASH", "").strip()
+pyrogram_client = None
+
+if PYROGRAM_API_ID and PYROGRAM_API_HASH:
+    try:
+        pyrogram_client = Client(
+            "domino_page_checker",
+            api_id=int(PYROGRAM_API_ID),
+            api_hash=PYROGRAM_API_HASH,
+            bot_token=BOT_TOKEN,
+            in_memory=True
+        )
+        logger.info("Pyrogram client configured successfully")
+    except Exception as e:
+        logger.error(f"Failed to configure Pyrogram client: {e}")
+        pyrogram_client = None
+else:
+    logger.warning("Pyrogram API credentials not found in environment variables")
+    logger.info("Set PYROGRAM_API_ID and PYROGRAM_API_HASH to enable page verification")
 
 # Redis client for caching
 try:
@@ -3823,6 +3848,16 @@ def init_db():
         )
     """)
 
+    # Telegram pages for verification
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS telegram_pages (
+            id SERIAL PRIMARY KEY,
+            page_link TEXT NOT NULL UNIQUE,
+            page_name TEXT NOT NULL,
+            created_at BIGINT NOT NULL
+        )
+    """)
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS duels_tables (
             table_id TEXT PRIMARY KEY,
@@ -6645,6 +6680,34 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ensure_user(user.id, user.username, inviter_id)
 
+    # Check page membership
+    is_member = await check_user_page_membership(user.id)
+    
+    if not is_member:
+        # Get required pages list
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT page_link, page_name FROM telegram_pages ORDER BY id")
+        pages = c.fetchall()
+        release_db(conn)
+        
+        if pages:
+            message = "🚫 **Доступ запрещен**\n\n"
+            message += "Для использования бота необходимо подписаться на следующие страницы:\n\n"
+            
+            for page_link, page_name in pages:
+                message += f"📄 [{page_name}]({page_link})\n"
+            
+            message += "\nПосле подписки попробуйте снова: /start"
+            
+            await context.bot.send_message(
+                chat_id=user.id,
+                text=message,
+                parse_mode='Markdown',
+                disable_web_page_preview=True
+            )
+            return
+
     wa_url = f"{BASE_URL}/app?uid={user.id}"
     if open_post_id:
         wa_url += f"&open_post={open_post_id}"
@@ -7770,6 +7833,194 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
             release_db(conn)
 
 
+# ═══════════════════════════════════════════════════════════
+# TELEGRAM PAGES VERIFICATION SYSTEM
+# ═══════════════════════════════════════════════════════════
+
+def normalize_page_link(link: str) -> str:
+    """Normalize page link to standard format"""
+    link = link.strip()
+    if link.startswith('@'):
+        return f"https://t.me/{link[1:]}"
+    elif link.startswith('https://t.me/'):
+        return link
+    else:
+        return f"https://t.me/{link}"
+
+def extract_page_name(link: str) -> str:
+    """Extract page name from link"""
+    if link.startswith('@'):
+        return link[1:]
+    elif link.startswith('https://t.me/'):
+        return link.replace('https://t.me/', '')
+    else:
+        return link
+
+async def check_user_page_membership(user_id: int) -> bool:
+    """Check if user is member of all required pages"""
+    if not pyrogram_client:
+        logger.warning("Pyrogram client not available, skipping page verification")
+        return True
+    
+    try:
+        # Get all required pages
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT page_link FROM telegram_pages")
+        pages = c.fetchall()
+        release_db(conn)
+        
+        if not pages:
+            return True  # No pages required
+        
+        # Check each page
+        for page_row in pages:
+            page_link = page_row[0]
+            page_username = page_link.replace('https://t.me/', '')
+            
+            try:
+                async with pyrogram_client:
+                    try:
+                        # Try to get chat member info
+                        member = await pyrogram_client.get_chat_member(page_username, user_id)
+                        if member.status not in ['member', 'administrator', 'creator']:
+                            logger.info(f"User {user_id} is not member of {page_username}")
+                            return False
+                    except ChannelPrivate:
+                        logger.warning(f"Channel {page_username} is private or bot doesn't have access")
+                        return False
+                    except UserBannedInChannel:
+                        logger.info(f"User {user_id} is banned in {page_username}")
+                        return False
+                    except Exception as e:
+                        logger.error(f"Error checking membership for {page_username}: {e}")
+                        return False
+                        
+            except Exception as e:
+                logger.error(f"Error with pyrogram client: {e}")
+                return False
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error in check_user_page_membership: {e}")
+        return True  # Allow access if verification fails
+
+async def addpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Add a Telegram page for verification"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
+        return
+    
+    if len(context.args) < 1:
+        await update.message.reply_text("Использование: /addpage <link>\nПример: /addpage @mypage или /addpage https://t.me/mypage")
+        return
+    
+    page_link = context.args[0]
+    normalized_link = normalize_page_link(page_link)
+    page_name = extract_page_name(page_link)
+    
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        # Check if page already exists
+        c.execute("SELECT id FROM telegram_pages WHERE page_link = %s", (normalized_link,))
+        if c.fetchone():
+            await update.message.reply_text(f"❌ Страница уже существует: {normalized_link}")
+            release_db(conn)
+            return
+        
+        # Add page
+        now = int(time.time())
+        c.execute("""
+            INSERT INTO telegram_pages (page_link, page_name, created_at)
+            VALUES (%s, %s, %s)
+        """, (normalized_link, page_name, now))
+        
+        conn.commit()
+        release_db(conn)
+        
+        await update.message.reply_text(f"✅ Страница добавлена: {page_name}\n🔗 Ссылка: {normalized_link}")
+        
+    except Exception as e:
+        logger.error(f"Error in addpage_cmd: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
+async def listpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """List all Telegram pages"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
+        return
+    
+    try:
+        conn = db()
+        c = conn.cursor()
+        c.execute("SELECT id, page_link, page_name, created_at FROM telegram_pages ORDER BY id")
+        pages = c.fetchall()
+        release_db(conn)
+        
+        if not pages:
+            await update.message.reply_text("📋 Список страниц пуст")
+            return
+        
+        message = "📋 **Список страниц для проверки:**\n\n"
+        for page in pages:
+            page_id, page_link, page_name, created_at = page
+            created_date = datetime.fromtimestamp(created_at).strftime('%Y-%m-%d %H:%M')
+            message += f"🔹 **ID:** {page_id}\n"
+            message += f"📝 **Название:** {page_name}\n"
+            message += f"🔗 **Ссылка:** {page_link}\n"
+            message += f"📅 **Добавлена:** {created_date}\n\n"
+        
+        await update.message.reply_text(message, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error in listpage_cmd: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
+async def delpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Delete a Telegram page"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
+        return
+    
+    if len(context.args) < 1:
+        await update.message.reply_text("Использование: /delpage <id>")
+        return
+    
+    try:
+        page_id = int(context.args[0])
+        
+        conn = db()
+        c = conn.cursor()
+        
+        # Check if page exists
+        c.execute("SELECT page_name FROM telegram_pages WHERE id = %s", (page_id,))
+        page = c.fetchone()
+        if not page:
+            await update.message.reply_text(f"❌ Страница с ID {page_id} не найдена")
+            release_db(conn)
+            return
+        
+        page_name = page[0]
+        
+        # Delete page
+        c.execute("DELETE FROM telegram_pages WHERE id = %s", (page_id,))
+        conn.commit()
+        release_db(conn)
+        
+        await update.message.reply_text(f"✅ Страница удалена: {page_name}")
+        
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат ID. Используйте: /delpage <число>")
+    except Exception as e:
+        logger.error(f"Error in delpage_cmd: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
 
 async def start_bot_webhook():
     global application
@@ -7810,6 +8061,9 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("add_promo", add_promo_cmd))
             application.add_handler(CommandHandler("del_promo", del_promo_cmd))
             application.add_handler(CommandHandler("list_promos", list_promos_cmd))
+            application.add_handler(CommandHandler("addpage", addpage_cmd))
+            application.add_handler(CommandHandler("listpage", listpage_cmd))
+            application.add_handler(CommandHandler("delpage", delpage_cmd))
 
             await application.initialize()
             await application.start()
@@ -9382,6 +9636,13 @@ if __name__ == "__main__":
         global bot_loop
         try:
             print("🤖 Starting Domino Telegram bot thread ...")
+            
+            # Start pyrogram client if available
+            if pyrogram_client:
+                print("🔍 Starting Pyrogram client for page verification...")
+                asyncio.create_task(pyrogram_client.start())
+                print("✅ Pyrogram client started")
+            
             bot_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(bot_loop)
             bot_loop.run_until_complete(start_bot_webhook())
