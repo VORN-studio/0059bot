@@ -301,8 +301,22 @@ def app_page():
     user_id = request.args.get('uid')
     
     if user_id:
+        # Ստուգել էջերին հետևելը
         if not check_user_follows_pages(int(user_id)):
-            asyncio.create_task(send_access_denied_message(int(user_id)))
+            # Ուղարկել հաղորդագրություն բոտին առանձին thread-ում
+            import threading
+            
+            def send_message_thread():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(send_access_denied_message(int(user_id)))
+                finally:
+                    loop.close()
+            
+            thread = threading.Thread(target=send_message_thread)
+            thread.start()
+            
             return "❌ Доступ ограничен", 403
     
     return send_from_directory(WEBAPP_DIR, "index.html")
