@@ -124,8 +124,8 @@ REMATCH_REQUESTS = {}
 MONETAG_SMARTLINK = os.getenv("MONETAG_SMARTLINK", "").strip()
 
 # Pyrogram client for page verification
-PYROGRAM_API_ID = os.getenv("PYROGRAM_API_ID", "").strip()
-PYROGRAM_API_HASH = os.getenv("PYROGRAM_API_HASH", "").strip()
+PYROGRAM_API_ID = "26610160"
+PYROGRAM_API_HASH = "4856b698d1a95d1d3cbd5b673987e647"
 pyrogram_client = None
 
 print(f"🔍 Pyrogram config check:")
