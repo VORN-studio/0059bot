@@ -8001,6 +8001,7 @@ def check_user_follows_pages(user_id: int) -> bool:
             
             try:
                 pyrogram_queue.put(request_data)
+                logger.info(f"Sent membership check request for {page_username} (user: {user_id})")
                 
                 # Wait for result (with timeout)
                 timeout = 10  # 10 seconds timeout
@@ -8008,11 +8009,13 @@ def check_user_follows_pages(user_id: int) -> bool:
                 
                 while request_id not in pyrogram_results:
                     if time.time() - start_time > timeout:
-                        logger.error(f"Timeout checking membership for {page_username}")
+                        logger.error(f"Timeout checking membership for {page_username} - no response from pyrogram thread")
                         return False
                     time.sleep(0.1)
                 
                 result = pyrogram_results.pop(request_id)
+                logger.info(f"Received membership result for {page_username}: {result}")
+                
                 if not result.get('is_member', False):
                     logger.info(f"User {user_id} is not member of {page_username}")
                     return False
@@ -9853,43 +9856,48 @@ if __name__ == "__main__":
                         """Handle requests from other threads"""
                         while True:
                             try:
-                                if not pyrogram_queue.empty():
-                                    request_data = pyrogram_queue.get_nowait()
-                                    request_id = request_data.get('request_id')
-                                    
-                                    if request_data['type'] == 'check_membership':
-                                        try:
-                                            member = await pyrogram_client.get_chat_member(
-                                                request_data['page_username'], 
-                                                request_data['user_id']
-                                            )
-                                            is_member = member.status in ['member', 'administrator', 'creator']
-                                            pyrogram_results[request_id] = {
-                                                'is_member': is_member,
-                                                'status': member.status
-                                            }
-                                        except ChannelPrivate:
-                                            pyrogram_results[request_id] = {
-                                                'is_member': False,
-                                                'error': 'ChannelPrivate'
-                                            }
-                                        except UserBannedInChannel:
-                                            pyrogram_results[request_id] = {
-                                                'is_member': False,
-                                                'error': 'UserBannedInChannel'
-                                            }
-                                        except Exception as e:
-                                            pyrogram_results[request_id] = {
-                                                'is_member': False,
-                                                'error': str(e)
-                                            }
+                                # Wait for request with timeout
+                                request_data = pyrogram_queue.get(timeout=0.1)
+                                request_id = request_data.get('request_id')
+                                logger.info(f"Pyrogram thread received request: {request_data}")
                                 
-                                await asyncio.sleep(0.1)  # Small delay to prevent busy waiting
+                                if request_data['type'] == 'check_membership':
+                                    try:
+                                        member = await pyrogram_client.get_chat_member(
+                                            request_data['page_username'], 
+                                            request_data['user_id']
+                                        )
+                                        is_member = member.status in ['member', 'administrator', 'creator']
+                                        pyrogram_results[request_id] = {
+                                            'is_member': is_member,
+                                            'status': member.status
+                                        }
+                                        logger.info(f"Pyrogram check completed for {request_data['page_username']}: {member.status}")
+                                    except ChannelPrivate:
+                                        pyrogram_results[request_id] = {
+                                            'is_member': False,
+                                            'error': 'ChannelPrivate'
+                                        }
+                                        logger.warning(f"Channel {request_data['page_username']} is private")
+                                    except UserBannedInChannel:
+                                        pyrogram_results[request_id] = {
+                                            'is_member': False,
+                                            'error': 'UserBannedInChannel'
+                                        }
+                                        logger.info(f"User {request_data['user_id']} banned in {request_data['page_username']}")
+                                    except Exception as e:
+                                        pyrogram_results[request_id] = {
+                                            'is_member': False,
+                                            'error': str(e)
+                                        }
+                                        logger.error(f"Error checking {request_data['page_username']}: {e}")
+                                
                             except queue.Empty:
-                                await asyncio.sleep(0.1)
+                                # No request in queue, continue loop
+                                continue
                             except Exception as e:
                                 logger.error(f"Error handling queue request: {e}")
-                                await asyncio.sleep(0.1)
+                                continue
                     
                     async def start_pyrogram_with_queue():
                         await start_pyrogram()
