@@ -9673,10 +9673,23 @@ if __name__ == "__main__":
             if pyrogram_client:
                 print("🔍 Starting Pyrogram client for page verification...")
                 try:
+                    # Create new event loop for this thread
                     pyrogram_loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(pyrogram_loop)
+                    
+                    # Start the client
                     pyrogram_loop.run_until_complete(pyrogram_client.start())
                     print("✅ Pyrogram client started successfully")
+                    
+                    # Keep the event loop running for pyrogram
+                    def run_pyrogram_forever():
+                        pyrogram_loop.run_forever()
+                    
+                    # Start pyrogram in background thread
+                    import threading
+                    pyrogram_thread = threading.Thread(target=run_pyrogram_forever, daemon=True)
+                    pyrogram_thread.start()
+                    
                 except Exception as e:
                     print(f"❌ Failed to start Pyrogram client: {e}")
                     logger.error(f"Failed to start Pyrogram client: {e}")
