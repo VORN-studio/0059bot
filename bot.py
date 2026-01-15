@@ -298,100 +298,6 @@ def app_page():
     URL-адрес веб-приложения Telegram будет следующим:՝
     https://domino-play.online/app?uid=XXXX
     """
-    # Check if user has access to webapp
-    uid = request.args.get('uid')
-    if uid:
-        try:
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            has_access = loop.run_until_complete(check_webapp_access(int(uid)))
-            loop.close()
-            
-            if not has_access:
-                # Return access denied page instead of webapp
-                return """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Доступ запрещен</title>
-    <meta charset="utf-8">
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white; 
-            text-align: center; 
-            padding: 50px;
-            margin: 0;
-        }
-        .container { 
-            max-width: 500px; 
-            margin: 0 auto; 
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        h1 { color: #ff6b6b; }
-        .message { 
-            background: rgba(255,255,255,0.05); 
-            padding: 20px; 
-            border-radius: 10px; 
-            margin: 20px 0;
-            border-left: 4px solid #ff6b6b;
-        }
-        .pages { 
-            text-align: left; 
-            background: rgba(255,255,255,0.05); 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin: 15px 0;
-        }
-        .page-item { margin: 10px 0; }
-        a { color: #4ecdc4; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚫 Доступ к WebApp запрещен</h1>
-        <div class="message">
-            <p>Для открытия приложения необходимо подписаться на следующие страницы:</p>
-            <div class="pages" id="pages-list">
-                <p>Загрузка списка страниц...</p>
-            </div>
-            <p><strong>После подписки вернитесь и нажмите снова:</strong><br>
-            <a href="tg://resolve?domain=domino_play_bot">/start</a></p>
-        </div>
-    </div>
-    <script>
-        // Fetch required pages from API
-        fetch('/api/required-pages')
-            .then(response => response.json())
-            .then(data => {
-                if (data.pages && data.pages.length > 0) {
-                    let pagesHtml = '';
-                    data.pages.forEach(page => {
-                        pagesHtml += `<div class="page-item">📄 <a href="${page.link}" target="_blank">${page.name}</a></div>`;
-                    });
-                    document.getElementById('pages-list').innerHTML = pagesHtml;
-                } else {
-                    document.getElementById('pages-list').innerHTML = '<p>Нет обязательных страниц для подписки.</p>';
-                }
-            })
-            .catch(error => {
-                document.getElementById('pages-list').innerHTML = '<p>Ошибка загрузки списка страниц. Попробуйте позже.</p>';
-            });
-    </script>
-</body>
-</html>
-                """, 403
-        except Exception as e:
-            print(f"Error checking webapp access: {e}")
-            # If error occurs, allow access
-            pass
-    
     return send_from_directory(WEBAPP_DIR, "index.html")
 
 @app_web.route("/api/required-pages")
@@ -2979,98 +2885,6 @@ def webapp_tasks(filename):
 @app_web.route("/portal")
 @app_web.route("/portal/")
 def portal_page():
-    # Check if user has access to webapp
-    uid = request.args.get('uid')
-    if uid:
-        try:
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            has_access = loop.run_until_complete(check_webapp_access(int(uid)))
-            loop.close()
-            
-            if not has_access:
-                # Return access denied page
-                return """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Доступ запрещен</title>
-    <meta charset="utf-8">
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white; 
-            text-align: center; 
-            padding: 50px;
-            margin: 0;
-        }
-        .container { 
-            max-width: 500px; 
-            margin: 0 auto; 
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        h1 { color: #ff6b6b; }
-        .message { 
-            background: rgba(255,255,255,0.05); 
-            padding: 20px; 
-            border-radius: 10px; 
-            margin: 20px 0;
-            border-left: 4px solid #ff6b6b;
-        }
-        .pages { 
-            text-align: left; 
-            background: rgba(255,255,255,0.05); 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin: 15px 0;
-        }
-        .page-item { margin: 10px 0; }
-        a { color: #4ecdc4; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚫 Доступ к Portal запрещен</h1>
-        <div class="message">
-            <p>Для открытия portal необходимо подписаться на следующие страницы:</p>
-            <div class="pages" id="pages-list">
-                <p>Загрузка списка страниц...</p>
-            </div>
-            <p><strong>После подписки вернитесь и нажмите снова:</strong><br>
-            <a href="tg://resolve?domain=domino_play_bot">/start</a></p>
-        </div>
-    </div>
-    <script>
-        fetch('/api/required-pages')
-            .then(response => response.json())
-            .then(data => {
-                if (data.pages && data.pages.length > 0) {
-                    let pagesHtml = '';
-                    data.pages.forEach(page => {
-                        pagesHtml += `<div class="page-item">📄 <a href="${page.link}" target="_blank">${page.name}</a></div>`;
-                    });
-                    document.getElementById('pages-list').innerHTML = pagesHtml;
-                } else {
-                    document.getElementById('pages-list').innerHTML = '<p>Нет обязательных страниц для подписки.</p>';
-                }
-            })
-            .catch(error => {
-                document.getElementById('pages-list').innerHTML = '<p>Ошибка загрузки списка страниц. Попробуйте позже.</p>';
-            });
-    </script>
-</body>
-</html>
-                """, 403
-        except Exception as e:
-            print(f"Error checking portal access: {e}")
-            pass
-    
     return send_from_directory(PORTAL_DIR, "portal.html")
 
 @app_web.route("/portal/<path:filename>")
@@ -6632,98 +6446,6 @@ def api_mining_state(user_id):
 
 @app_web.route("/app/mining")
 def app_mining():
-    # Check if user has access to webapp
-    uid = request.args.get('uid')
-    if uid:
-        try:
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            has_access = loop.run_until_complete(check_webapp_access(int(uid)))
-            loop.close()
-            
-            if not has_access:
-                # Return access denied page
-                return """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Доступ запрещен</title>
-    <meta charset="utf-8">
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white; 
-            text-align: center; 
-            padding: 50px;
-            margin: 0;
-        }
-        .container { 
-            max-width: 500px; 
-            margin: 0 auto; 
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        h1 { color: #ff6b6b; }
-        .message { 
-            background: rgba(255,255,255,0.05); 
-            padding: 20px; 
-            border-radius: 10px; 
-            margin: 20px 0;
-            border-left: 4px solid #ff6b6b;
-        }
-        .pages { 
-            text-align: left; 
-            background: rgba(255,255,255,0.05); 
-            padding: 15px; 
-            border-radius: 8px; 
-            margin: 15px 0;
-        }
-        .page-item { margin: 10px 0; }
-        a { color: #4ecdc4; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>🚫 Доступ к Mining запрещен</h1>
-        <div class="message">
-            <p>Для открытия mining необходимо подписаться на следующие страницы:</p>
-            <div class="pages" id="pages-list">
-                <p>Загрузка списка страниц...</p>
-            </div>
-            <p><strong>После подписки вернитесь и нажмите снова:</strong><br>
-            <a href="tg://resolve?domain=domino_play_bot">/start</a></p>
-        </div>
-    </div>
-    <script>
-        fetch('/api/required-pages')
-            .then(response => response.json())
-            .then(data => {
-                if (data.pages && data.pages.length > 0) {
-                    let pagesHtml = '';
-                    data.pages.forEach(page => {
-                        pagesHtml += `<div class="page-item">📄 <a href="${page.link}" target="_blank">${page.name}</a></div>`;
-                    });
-                    document.getElementById('pages-list').innerHTML = pagesHtml;
-                } else {
-                    document.getElementById('pages-list').innerHTML = '<p>Нет обязательных страниц для подписки.</p>';
-                }
-            })
-            .catch(error => {
-                document.getElementById('pages-list').innerHTML = '<p>Ошибка загрузки списка страниц. Попробуйте позже.</p>';
-            });
-    </script>
-</body>
-</html>
-                """, 403
-        except Exception as e:
-            print(f"Error checking mining access: {e}")
-            pass
-    
     return send_from_directory("webapp/mining", "index.html")
 
 @app_web.route("/api/task_complete", methods=["POST"])
@@ -7009,6 +6731,20 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ensure_user(user.id, user.username, inviter_id)
 
+    # Check if user wants to open webapp with verification
+    if "&verify=1" in text:
+        # Check page membership before sending webapp button
+        if not pyrogram_client:
+            print("⚠️ Page verification disabled - Pyrogram client not available")
+            has_access = True
+        else:
+            has_access = await check_user_page_membership(user.id)
+        
+        if not has_access:
+            # Send access denied message instead of webapp
+            await send_webapp_access_denied(user.id, context)
+            return
+    
     # Create webapp URL
     wa_url = f"{BASE_URL}/app?uid={user.id}"
     if open_post_id:
