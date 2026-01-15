@@ -296,42 +296,129 @@ def index():
 @app_web.route("/app")
 def webapp_index():
     """Main webapp entry point with page verification"""
-    user_id = request.args.get('uid')
+    user_id_str = request.args.get('uid')
     
-    logger.info(f"🌐 Webapp access request - User ID: {user_id}, IP: {request.remote_addr}")
+    logger.info(f"🌐 Webapp access request - User ID: {user_id_str}, IP: {request.remote_addr}")
     
-    if user_id:
-        logger.info(f"🔍 Starting page membership check for user {user_id}")
-        has_access = check_user_follows_pages(int(user_id))
-        logger.info(f"✅ Page check completed for user {user_id}: {'ACCESS GRANTED' if has_access else 'ACCESS DENIED'}")
-        
-        if not has_access:
-            import threading
-            
-            def send_message_thread():
-                try:
-                    # Use the bot's event loop instead of creating a new one
-                    if bot_loop and not bot_loop.is_closed():
-                        future = asyncio.run_coroutine_threadsafe(
-                            send_access_denied_message(int(user_id)), 
-                            bot_loop
-                        )
-                        # Wait for the result with timeout
-                        future.result(timeout=10)
-                    else:
-                        logger.error("Bot loop is not available or closed")
-                except Exception as e:
-                    logger.error(f"Error sending access denied message: {e}")
-            
-            thread = threading.Thread(target=send_message_thread)
-            thread.start()
-            
-            return render_template_string('''
+    # Check if Telegram failed to substitute user_id (e.g., from default Telegram buttons)
+    if user_id_str == '{user_id}' or not user_id_str:
+        # Return error page for invalid access
+        return render_template_string('''
 <!DOCTYPE html>
 <html lang="hy">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Սխալ մուտք</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+        }
+        .error-icon {
+            font-size: 80px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .message {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .instruction {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e74c3c;
+        }
+        .bot-link {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .bot-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">⚠️</div>
+        <h1>Սխալ մուտք</h1>
+        <div class="message">
+            Խնդրում ենք բացել հավելվածը բոտի միջոցով՝ /start հրամանով։
+        </div>
+        <div class="instruction">
+            <strong>Ճիշտ օգտագործում՝</strong><br>
+            1. Բացեք բոտը Telegram-ում<br>
+            2. Սեղմեք /start<br>
+            3. Սեղմեք "🎰 OPEN DOMINO APP" կոճակը
+        </div>
+        <a href="https://t.me/DominoPlayBot" class="bot-link">🤖 Բացել բոտը</a>
+    </div>
+</body>
+</html>
+        '''), 400
+    
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        return "Invalid User ID format", 400
+    
+    logger.info(f"🔍 Starting page membership check for user {user_id}")
+    has_access = check_user_follows_pages(user_id)
+    logger.info(f"✅ Page check completed for user {user_id}: {'ACCESS GRANTED' if has_access else 'ACCESS DENIED'}")
+    
+    if not has_access:
+        import threading
+        
+        def send_message_thread():
+            try:
+                # Use the bot's event loop instead of creating a new one
+                if bot_loop and not bot_loop.is_closed():
+                    future = asyncio.run_coroutine_threadsafe(
+                        send_access_denied_message(int(user_id)), 
+                        bot_loop
+                    )
+                    # Wait for the result with timeout
+                    future.result(timeout=10)
+                else:
+                    logger.error("Bot loop is not available or closed")
+            except Exception as e:
+                logger.error(f"Error sending access denied message: {e}")
+        
+        thread = threading.Thread(target=send_message_thread)
+        thread.start()
+        
+        return render_template_string('''
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Դուք արգելափակված եք</title>
     <title>Доступ заблокирован</title>
     <style>
         body {
