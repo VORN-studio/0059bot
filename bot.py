@@ -9836,14 +9836,14 @@ if __name__ == "__main__":
                         await pyrogram_client.start()
                         print("✅ Pyrogram client started successfully")
                         
-                        # Keep it running
-                        while True:
-                            await asyncio.sleep(1)
+                        # Don't block here - let the queue handler keep it alive
+                        return True
                             
                     except Exception as e:
                         print(f"❌ Failed to start Pyrogram client: {e}")
                         logger.error(f"Failed to start Pyrogram client: {e}")
                         pyrogram_client = None
+                        return False
                 
                 # Run pyrogram in its own thread with event loop
                 def run_pyrogram_thread():
@@ -9909,7 +9909,11 @@ if __name__ == "__main__":
                     
                     async def start_pyrogram_with_queue():
                         print("🔄 Starting pyrogram with queue handler...")
-                        await start_pyrogram()
+                        success = await start_pyrogram()
+                        if not success:
+                            print("❌ Pyrogram client failed to start, queue handler not started")
+                            return
+                        
                         print("✅ Pyrogram client started, starting queue handler...")
                         # Start queue handler after pyrogram is ready
                         task = asyncio.create_task(handle_queue_requests())
