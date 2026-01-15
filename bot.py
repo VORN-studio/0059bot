@@ -301,13 +301,11 @@ def webapp_index():
     logger.info(f"🌐 Webapp access request - User ID: {user_id}, IP: {request.remote_addr}")
     
     if user_id:
-        # Ստուգել էջերին հետևելը
         logger.info(f"🔍 Starting page membership check for user {user_id}")
         has_access = check_user_follows_pages(int(user_id))
         logger.info(f"✅ Page check completed for user {user_id}: {'ACCESS GRANTED' if has_access else 'ACCESS DENIED'}")
         
         if not has_access:
-            # Ուղարկել հաղորդագրություն բոտին առաձին thread-ում
             import threading
             
             def send_message_thread():
@@ -328,14 +326,13 @@ def webapp_index():
             thread = threading.Thread(target=send_message_thread)
             thread.start()
             
-            # Ցուցադրել հատուկ էջ՝ մուտքի արգելափակման համար
             return render_template_string('''
 <!DOCTYPE html>
 <html lang="hy">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Մուտքը արգելափակված է</title>
+    <title>Доступ заблокирован</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -403,25 +400,25 @@ def webapp_index():
 <body>
     <div class="container">
         <div class="lock-icon">🔒</div>
-        <h1>Մուտքը արգելափակված է</h1>
+        <h1>Доступ заблокирован</h1>
         <div class="message">
-            Դուք պետք է լինեք ֆոլով հետևյալ էջերին՝ հավելվածը օգտագործելու համար։
+            Для использования приложения необходимо подписаться на следующие каналы:
         </div>
         <div class="pages-list">
-            <h3>Պահանջվող էջեր՝</h3>
+            <h3>Необходимые подписки:</h3>
             <div id="pages-container">
                 <div class="page-item">
-                    <strong>Բեռնում...</strong>
+                    <strong>Загрузка...</strong>
                 </div>
             </div>
         </div>
         <div class="note">
-            Ֆոլով անելուց հետո սպասեք 1-2 րոպե և թարմացրեք էջը։
+            Обновите страницу после подписки.
         </div>
     </div>
 
     <script>
-        // Ստանալ պահանջվող էջերը
+        // Получить список каналов
         fetch('/api/required-pages')
             .then(response => response.json())
             .then(data => {
@@ -439,7 +436,7 @@ def webapp_index():
             .catch(error => {
                 console.error('Error loading pages:', error);
                 document.getElementById('pages-container').innerHTML = 
-                    '<div class="page-item"><strong>Չհաջողվեց բեռնել էջերը</strong></div>';
+                    '<div class="page-item"><strong>Не удалось загрузить страницы</strong></div>';
             });
     </script>
 </body>
