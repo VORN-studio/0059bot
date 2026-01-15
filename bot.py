@@ -9645,42 +9645,47 @@ if __name__ == "__main__":
             # Start pyrogram client if available
             if PYROGRAM_API_ID and PYROGRAM_API_HASH:
                 print("🔍 Starting Pyrogram client for page verification...")
-                try:
-                    # Validate API_ID
-                    api_id = int(PYROGRAM_API_ID)
-                    if api_id <= 0:
-                        raise ValueError("API_ID must be a positive integer")
-                    
-                    # Create client in this thread
-                    global pyrogram_client
-                    pyrogram_client = Client(
-                        "domino_page_checker",
-                        api_id=api_id,
-                        api_hash=PYROGRAM_API_HASH,
-                        bot_token=BOT_TOKEN,
-                        in_memory=True
-                    )
-                    
-                    # Create event loop for pyrogram
-                    pyrogram_loop = asyncio.new_event_loop()
-                    
-                    # Start the client in the pyrogram loop
-                    pyrogram_loop.run_until_complete(pyrogram_client.start())
-                    print("✅ Pyrogram client started successfully")
-                    
-                    # Keep the event loop running in background
-                    def run_pyrogram_forever():
-                        asyncio.set_event_loop(pyrogram_loop)
-                        pyrogram_loop.run_forever()
-                    
-                    import threading
-                    pyrogram_thread = threading.Thread(target=run_pyrogram_forever, daemon=True)
-                    pyrogram_thread.start()
-                    
-                except Exception as e:
-                    print(f"❌ Failed to start Pyrogram client: {e}")
-                    logger.error(f"Failed to start Pyrogram client: {e}")
-                    pyrogram_client = None
+                
+                async def start_pyrogram():
+                    try:
+                        # Validate API_ID
+                        api_id = int(PYROGRAM_API_ID)
+                        if api_id <= 0:
+                            raise ValueError("API_ID must be a positive integer")
+                        
+                        # Create client
+                        global pyrogram_client
+                        pyrogram_client = Client(
+                            "domino_page_checker",
+                            api_id=api_id,
+                            api_hash=PYROGRAM_API_HASH,
+                            bot_token=BOT_TOKEN,
+                            in_memory=True
+                        )
+                        
+                        # Start the client
+                        await pyrogram_client.start()
+                        print("✅ Pyrogram client started successfully")
+                        
+                        # Keep it running
+                        while True:
+                            await asyncio.sleep(1)
+                            
+                    except Exception as e:
+                        print(f"❌ Failed to start Pyrogram client: {e}")
+                        logger.error(f"Failed to start Pyrogram client: {e}")
+                        global pyrogram_client
+                        pyrogram_client = None
+                
+                # Run pyrogram in its own thread with event loop
+                def run_pyrogram_thread():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(start_pyrogram())
+                
+                import threading
+                pyrogram_thread = threading.Thread(target=run_pyrogram_thread, daemon=True)
+                pyrogram_thread.start()
             
             bot_loop = asyncio.new_event_loop()
             asyncio.set_event_loop(bot_loop)
