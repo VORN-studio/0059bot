@@ -7822,7 +7822,7 @@ async def start_bot_webhook():
             for attempt in range(1, 6):
                 try:
                     await application.bot.delete_webhook(drop_pending_updates=True)
-                    await application.bot.set_webhook(url=webhook_url, timeout=30)
+                    await application.bot.set_webhook(url=webhook_url)
                     set_ok = True
                     break
                 except Exception as e:
@@ -7831,6 +7831,12 @@ async def start_bot_webhook():
                         print(f"🔍 DNS resolution failed for {webhook_url}, retrying in 15 seconds...")
                         try:
                             await asyncio.sleep(15)
+                        except Exception:
+                            pass
+                    elif "unexpected keyword argument" in str(e):
+                        print(f"⚠️ Bot API version incompatibility. Using default timeout.")
+                        try:
+                            await asyncio.sleep(5)
                         except Exception:
                             pass
                     else:
