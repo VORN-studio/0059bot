@@ -156,7 +156,9 @@ function showOnboardingModal(currentStep = 0) {
                 <button onclick="nextOnboardingStep()" 
                     style="background: #4ade80; border: none; 
                            padding: 12px 20px; border-radius: 10px; color: #064e3b; 
-                           cursor: pointer; font-size: 14px; font-weight: bold;">
+                           cursor: pointer; font-size: 14px; font-weight: bold;
+                           pointer-events: auto; z-index: 10001;"
+                    id="onboarding-next-btn">
                     ${step.action}
                 </button>
             </div>
@@ -168,14 +170,67 @@ function showOnboardingModal(currentStep = 0) {
     
     document.body.appendChild(onboardingModal);
     
-    // Wait a bit for DOM to be ready
+    // Add event listener to button
     setTimeout(() => {
+        const nextBtn = document.getElementById('onboarding-next-btn');
+        console.log('🔍 Looking for next button...');
+        console.log('🔍 DOM elements:', document.querySelectorAll('#onboarding-next-btn'));
+        
+        if (nextBtn) {
+            console.log('✅ Found next button, adding click listener');
+            console.log('🔍 Button styles:', nextBtn.style.cssText);
+            
+            // Test click directly
+            nextBtn.addEventListener('click', function(e) {
+                console.log('🖱️ Next button clicked via event listener');
+                e.preventDefault();
+                e.stopPropagation();
+                nextOnboardingStep();
+            });
+            
+            // Also test onclick
+            nextBtn.onclick = function(e) {
+                console.log('🖱️ Next button clicked via onclick');
+                e.preventDefault();
+                e.stopPropagation();
+                nextOnboardingStep();
+            };
+            
+        } else {
+            console.error('❌ Next button not found');
+            console.log('🔍 All buttons:', document.querySelectorAll('button'));
+        }
+        
+        // Also add previous button listener if exists
+        const prevBtn = document.querySelector('button[onclick="previousOnboardingStep()"]');
+        if (prevBtn) {
+            console.log('✅ Found previous button, adding click listener');
+            prevBtn.addEventListener('click', function(e) {
+                console.log('🖱️ Previous button clicked via event listener');
+                e.preventDefault();
+                previousOnboardingStep();
+            });
+        }
+        
         console.log('🎯 Modal added to DOM, ready for interaction');
-    }, 100);
+    }, 200);
 }
 
 async function nextOnboardingStep() {
+    console.log('🚀 nextOnboardingStep called');
+    
     const uid = new URLSearchParams(window.location.search).get("uid");
+    console.log('👤 UID:', uid);
+    
+    if (!uid) {
+        console.error('❌ No UID found');
+        return;
+    }
+    
+    if (!onboardingModal) {
+        console.error('❌ No onboarding modal found');
+        return;
+    }
     
     // Get current step from modal
     const stepElement = onboardingModal.querySelector('div > div:last-child');
