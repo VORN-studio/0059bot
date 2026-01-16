@@ -10191,21 +10191,29 @@ if __name__ == "__main__":
                         if api_id <= 0:
                             raise ValueError("API_ID must be a positive integer")
                         
-                        # Create client
+                        # Create client with session management
                         pyrogram_client = Client(
                             "domino_page_checker",
                             api_id=api_id,
                             api_hash=PYROGRAM_API_HASH,
-                            bot_token=BOT_TOKEN,
-                            in_memory=True
+                            sleep_threshold=60,  # Add sleep threshold for flood protection
+                            no_updates=True,      # Don't receive updates to reduce load
                         )
                         
-                        # Start the client
-                        await pyrogram_client.start()
-                        print("✅ Pyrogram client started successfully")
-                        
-                        # Don't block here - let the queue handler keep it alive
-                        return True
+                        # Start the client with retry logic for flood wait
+                        max_retries = 3
+                        for attempt in range(max_retries):
+                            try:
+                                await pyrogram_client.start()
+                                print("✅ Pyrogram client started successfully")
+                                return True
+                            except FloodWait as e:
+                                if attempt < max_retries - 1:
+                                    wait_time = e.value + 5  # Add extra buffer
+                                    print(f"⏳ Flood wait detected, waiting {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
+                                    await asyncio.sleep(wait_time)
+                                else:
+                                    raise
                             
                     except Exception as e:
                         print(f"❌ Failed to start Pyrogram client: {e}")
