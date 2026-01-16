@@ -180,21 +180,13 @@ function showOnboardingModal(currentStep = 0) {
             console.log('✅ Found next button, adding click listener');
             console.log('🔍 Button styles:', nextBtn.style.cssText);
             
-            // Test click directly
+            // Use only addEventListener to avoid conflicts
             nextBtn.addEventListener('click', function(e) {
-                console.log('🖱️ Next button clicked via event listener');
+                console.log('🖱️ Next button clicked');
                 e.preventDefault();
                 e.stopPropagation();
                 nextOnboardingStep();
             });
-            
-            // Also test onclick
-            nextBtn.onclick = function(e) {
-                console.log('🖱️ Next button clicked via onclick');
-                e.preventDefault();
-                e.stopPropagation();
-                nextOnboardingStep();
-            };
             
         } else {
             console.error('❌ Next button not found');
@@ -205,9 +197,12 @@ function showOnboardingModal(currentStep = 0) {
         const prevBtn = document.querySelector('button[onclick="previousOnboardingStep()"]');
         if (prevBtn) {
             console.log('✅ Found previous button, adding click listener');
+            // Remove onclick attribute to avoid conflicts
+            prevBtn.removeAttribute('onclick');
             prevBtn.addEventListener('click', function(e) {
-                console.log('🖱️ Previous button clicked via event listener');
+                console.log('🖱️ Previous button clicked');
                 e.preventDefault();
+                e.stopPropagation();
                 previousOnboardingStep();
             });
         }
@@ -334,6 +329,21 @@ async function completeOnboarding() {
                 </button>
             </div>
         `;
+        
+        // Add event listener to completion button
+        setTimeout(() => {
+            const completeBtn = document.querySelector('button[onclick="closeOnboarding()"]');
+            if (completeBtn) {
+                completeBtn.removeAttribute('onclick');
+                completeBtn.addEventListener('click', function(e) {
+                    console.log('🎉 Completion button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeOnboarding();
+                    showFirstTaskHint();
+                });
+            }
+        }, 200);
         
         setTimeout(() => {
             closeOnboarding();
