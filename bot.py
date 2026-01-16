@@ -8289,23 +8289,28 @@ def check_user_follows_pages(user_id: int) -> bool:
     print(f"🔍 Pyrogram queue: {pyrogram_queue}")
     
     if not pyrogram_client or not pyrogram_queue:
-        print("❌ Pyrogram client or queue not available")
-        return True  # Allow access if Pyrogram not available
+        print("❌ Pyrogram client or queue not available - DENYING ACCESS for security")
+        logger.error(f"Pyrogram not available for user {user_id} - denying access")
+        return False  # DENY access instead of allowing for security
     
     try:
         # Get all required pages
         conn = db()
+        if not conn:
+            logger.error(f"Database connection failed for user {user_id}")
+            return False
         c = conn.cursor()
         c.execute("SELECT page_link FROM telegram_pages")
         pages = c.fetchall()
         release_db(conn)
         
         if not pages:
+            logger.info(f"No required pages configured for user {user_id}")
             return True  # No pages required
         
         # Check each page using queue communication
         import queue
-        request_id = f"check_{user_id}_{int(time.time())}"
+        request_id = f"check_{user_id}_{int(time.time())}_{random.randint(1000, 9999)}"  # Add random suffix for uniqueness
         
         # Clear old results for this user to prevent cache issues
         keys_to_remove = [key for key in pyrogram_results.keys() if key.startswith(f"check_{user_id}_")]
@@ -8314,7 +8319,20 @@ def check_user_follows_pages(user_id: int) -> bool:
         
         for page_row in pages:
             page_link = page_row[0]
-            page_username = page_link.replace('https://t.me/', '')
+            
+            # Better page username extraction - handle different formats
+            page_username = page_link.strip()
+            if page_username.startswith('https://t.me/'):
+                page_username = page_username.replace('https://t.me/', '').strip()
+            elif page_username.startswith('@'):
+                page_username = page_username.replace('@', '').strip()
+            elif page_username.startswith('t.me/'):
+                page_username = page_username.replace('t.me/', '').strip()
+            
+            # Validate username format
+            if not page_username or len(page_username) < 3:
+                logger.error(f"Invalid page username format for link: {page_link}")
+                continue  # Skip this page instead of failing completely
             
             # Send request to pyrogram thread
             request_data = {
@@ -8329,12 +8347,14 @@ def check_user_follows_pages(user_id: int) -> bool:
                 logger.info(f"Sent membership check request for {page_username} (user: {user_id})")
                 
                 # Wait for result (with timeout)
-                timeout = 10  # 10 seconds timeout
+                timeout = 15  # Increased timeout to 15 seconds
                 start_time = time.time()
                 
                 while request_id not in pyrogram_results:
                     if time.time() - start_time > timeout:
-                        logger.error(f"Timeout checking membership for {page_username} - no response from pyrogram thread")
+                        logger.error(f"Timeout checking membership for {page_username} - no response from pyrogram thread after {timeout}s")
+                        # Don't immediately deny, try to check if this is a known issue
+                        logger.warning(f"Possible pyrogram thread issue for user {user_id}, page {page_username}")
                         return False
                     time.sleep(0.1)
                 
@@ -8347,17 +8367,41 @@ def check_user_follows_pages(user_id: int) -> bool:
                     
             except Exception as e:
                 logger.error(f"Error checking membership for {page_username}: {e}")
-                return False
+                # Don't immediately fail - check if this is a critical error
+                if "ChannelPrivate" in str(e) or "UserBannedInChannel" in str(e):
+                    logger.error(f"Critical access error for {page_username}: {e}")
+                    return False
+                elif "flood" in str(e).lower():
+                    logger.warning(f"Flood wait error for {page_username}, will retry later")
+                    time.sleep(1)  # Brief delay before continuing
+                    continue  # Skip this page for now
+                else:
+                    logger.warning(f"Non-critical error for {page_username}: {e}")
+                    continue  # Skip this page but don't fail completely
         
         return True
         
     except Exception as e:
-        logger.error(f"Error in check_user_follows_pages: {e}")
-        return True  # Allow access if verification fail
+        logger.error(f"Critical error in check_user_follows_pages: {e}")
+        # Only allow access if it's a non-critical system error
+        if "database" in str(e).lower() or "connection" in str(e).lower():
+            logger.error(f"Database/connection error - denying access for security: {e}")
+            return False
+        else:
+            logger.warning(f"Non-critical system error - allowing access as fallback: {e}")
+            return True  # Allow access if verification fail due to non-critical issues
     finally:
         end_time = time.time()
         duration = end_time - start_time
         print(f"⏱️ Page check completed in {duration:.2f} seconds for user {user_id}")
+        
+        # Log performance metrics
+        if duration > 30:
+            logger.warning(f"Slow page check detected: {duration:.2f}s for user {user_id}")
+        elif duration > 10:
+            logger.info(f"Moderate page check time: {duration:.2f}s for user {user_id}")
+        else:
+            logger.info(f"Fast page check: {duration:.2f}s for user {user_id}")
 
 async def send_access_denied_message(user_id: int):
     """Send access denied message to user"""
