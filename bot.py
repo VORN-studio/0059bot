@@ -10359,33 +10359,43 @@ if __name__ == "__main__":
                 
                 async def start_pyrogram():
                     global pyrogram_client
-                    try:
-                        # Validate API_ID
-                        api_id = int(PYROGRAM_API_ID)
-                        if api_id <= 0:
-                            raise ValueError("API_ID must be a positive integer")
-                        
-                        # Create client
-                        pyrogram_client = Client(
-                            "domino_page_checker",
-                            api_id=api_id,
-                            api_hash=PYROGRAM_API_HASH,
-                            bot_token=BOT_TOKEN,
-                            in_memory=True
-                        )
-                        
-                        # Start the client
-                        await pyrogram_client.start()
-                        print("✅ Pyrogram client started successfully")
-                        
-                        # Don't block here - let the queue handler keep it alive
-                        return True
+                    max_retries = 3
+                    retry_delay = 10  # seconds
+                    
+                    for attempt in range(max_retries):
+                        try:
+                            # Validate API_ID
+                            api_id = int(PYROGRAM_API_ID)
+                            if api_id <= 0:
+                                raise ValueError("API_ID must be a positive integer")
                             
-                    except Exception as e:
-                        print(f"❌ Failed to start Pyrogram client: {e}")
-                        logger.error(f"Failed to start Pyrogram client: {e}")
-                        pyrogram_client = None
-                        return False
+                            # Create client
+                            pyrogram_client = Client(
+                                "domino_page_checker",
+                                api_id=api_id,
+                                api_hash=PYROGRAM_API_HASH,
+                                bot_token=BOT_TOKEN,
+                                in_memory=True
+                            )
+                            
+                            # Start the client
+                            await pyrogram_client.start()
+                            print("✅ Pyrogram client started successfully")
+                            
+                            # Don't block here - let the queue handler keep it alive
+                            return True
+                                
+                        except Exception as e:
+                            if "FLOOD_WAIT" in str(e) and attempt < max_retries - 1:
+                                wait_time = retry_delay * (attempt + 1)
+                                print(f"⏳ Flood wait detected, retrying in {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
+                                await asyncio.sleep(wait_time)
+                                continue
+                            
+                            print(f"❌ Failed to start Pyrogram client: {e}")
+                            logger.error(f"Failed to start Pyrogram client: {e}")
+                            pyrogram_client = None
+                            return False
                 
                 # Run pyrogram in its own thread with event loop
                 def run_pyrogram_thread():
