@@ -239,14 +239,16 @@ async function nextOnboardingStep() {
     console.log('🔍 Step 1: Checking UID');
     
     if (!uid) {
-        console.error('❌ No UID found');
+        console.error('❌ No UID found - RETURNING');
         return;
     }
+    console.log('✅ UID found:', uid);
     
     if (!onboardingModal) {
-        console.error('❌ No onboarding modal found');
+        console.error('❌ No onboarding modal found - RETURNING');
         return;
     }
+    console.log('✅ Modal found');
     
     // Get current step from modal
     console.log('🔍 Modal HTML structure:', onboardingModal.innerHTML.substring(0, 200));
@@ -284,8 +286,9 @@ async function nextOnboardingStep() {
     console.log('📝 Step text:', stepText);
     
     const parts = stepText.split(' / ');
+    console.log('📝 Step parts:', parts);
     if (parts.length < 2) {
-        console.error('❌ Invalid step format:', stepText);
+        console.error('❌ Invalid step format:', stepText, '- RETURNING');
         return;
     }
     
@@ -296,21 +299,28 @@ async function nextOnboardingStep() {
     
     // Validate nextStep
     if (isNaN(nextStep) || nextStep < 0) {
-        console.error('❌ Invalid nextStep:', nextStep);
+        console.error('❌ Invalid nextStep:', nextStep, '- RETURNING');
         return;
     }
+    console.log('✅ Step validation passed');
     
     // Update step in database
     try {
         console.log('🔍 Step 2: Starting API request');
         console.log('🔄 Sending API request:', { uid, step: nextStep });
         
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+        
         const res = await fetch('/api/onboarding/step', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid, step: nextStep })
+            body: JSON.stringify({ uid, step: nextStep }),
+            signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
         console.log('📡 API response status:', res.status);
         console.log('🔍 Step 3: Parsing API response');
         
@@ -323,7 +333,11 @@ async function nextOnboardingStep() {
             // Don't return - continue with UI update
         }
     } catch (e) {
-        console.error('❌ Error updating onboarding step:', e);
+        if (e.name === 'AbortError') {
+            console.error('❌ API request timed out after 5 seconds');
+        } else {
+            console.error('❌ Error updating onboarding step:', e);
+        }
         console.log('⚠️ Continuing with UI update despite API error');
         // Don't return here - continue with UI update even if API fails
     }
