@@ -183,9 +183,19 @@ function showOnboardingModal(currentStep = 0) {
             // Use only addEventListener to avoid conflicts
             nextBtn.addEventListener('click', function(e) {
                 console.log('🖱️ Next button clicked');
+                console.log('🔍 Event details:', e);
+                console.log('🔍 Button element:', this);
                 e.preventDefault();
                 e.stopPropagation();
-                nextOnboardingStep();
+                
+                // Add visual feedback
+                this.style.background = '#22c55e';
+                this.textContent = '⏳ Загрузка...';
+                
+                // Call the function with a small delay to show visual feedback
+                setTimeout(() => {
+                    nextOnboardingStep();
+                }, 100);
             });
             
         } else {
@@ -228,9 +238,34 @@ async function nextOnboardingStep() {
     }
     
     // Get current step from modal
+    console.log('🔍 Modal HTML structure:', onboardingModal.innerHTML.substring(0, 200));
     const stepElement = onboardingModal.querySelector('div > div:last-child');
+    console.log('🔍 Step element found:', stepElement);
     if (!stepElement) {
         console.error('❌ Step element not found');
+        // Try alternative selector
+        const altStepElement = onboardingModal.querySelector('div[style*="font-size: 12px"]');
+        console.log('🔍 Alternative step element:', altStepElement);
+        if (!altStepElement) {
+            console.error('❌ No step element found with any method');
+            return;
+        }
+        // Use alternative element
+        const stepText = altStepElement.textContent;
+        console.log('📝 Alternative step text:', stepText);
+        const parts = stepText.split(' / ');
+        const currentStep = parseInt(parts[0]) - 1;
+        const nextStep = currentStep + 1;
+        console.log('🔄 Alternative next step:', currentStep, '->', nextStep);
+        
+        // Continue with UI update
+        if (nextStep >= 3) {
+            completeOnboarding();
+        } else {
+            onboardingModal.remove();
+            onboardingModal = null;
+            showOnboardingModal(nextStep);
+        }
         return;
     }
     
@@ -256,15 +291,23 @@ async function nextOnboardingStep() {
     
     // Update step in database
     try {
+        console.log('🔄 Sending API request:', { uid, step: nextStep });
         const res = await fetch('/api/onboarding/step', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid, step: nextStep })
         });
+        console.log('📡 API response status:', res.status);
         const data = await res.json();
         console.log('✅ Step update response:', data);
+        
+        if (!res.ok) {
+            console.error('❌ API request failed:', res.status, data);
+            return;
+        }
     } catch (e) {
         console.error('❌ Error updating onboarding step:', e);
+        // Don't return here - continue with UI update even if API fails
     }
     
     // Check if this is the last step (we have 4 steps: 0,1,2,3)
