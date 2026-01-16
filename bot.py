@@ -8962,6 +8962,7 @@ def api_get_user(uid):
     db(conn)
 
     if not row:
+        print(f"❌ User not found: {uid}")
         return jsonify({"error": "User not found"}), 404
 
     total_games = row[8] or 0
@@ -8973,6 +8974,8 @@ def api_get_user(uid):
     daily_tasks_completed = row[14] or 0
     daily_bonus_level = row[15] or 1
     has_2x_multiplier = row[16] or False
+    
+    print(f"✅ User {uid}: onboarding_completed={onboarding_completed}, step={onboarding_step}")
     
     intellect_score = round((total_wins / total_games * 10), 1) if total_games > 0 else 0.0
     
@@ -9010,10 +9013,14 @@ def api_onboarding_step():
     uid = data.get("uid")
     step = data.get("step", 0)
     
+    print(f"📝 Updating onboarding step: user={uid}, step={step}")
+    
     conn = db(); c = conn.cursor()
     c.execute("UPDATE dom_users SET onboarding_step = %s WHERE user_id = %s", (step, uid))
     conn.commit()
     release_db(conn)
+    
+    print(f"✅ Onboarding step updated: user={uid}, step={step}")
     
     return jsonify({"ok": True, "step": step})
 
@@ -9022,10 +9029,14 @@ def api_onboarding_complete():
     data = request.get_json()
     uid = data.get("uid")
     
+    print(f"🎉 Completing onboarding for user: {uid}")
+    
     conn = db(); c = conn.cursor()
     c.execute("UPDATE dom_users SET onboarding_completed = TRUE, onboarding_step = 999 WHERE user_id = %s", (uid,))
     conn.commit()
     release_db(conn)
+    
+    print(f"✅ Onboarding completed for user: {uid}")
     
     return jsonify({"ok": True, "completed": True})
 

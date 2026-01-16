@@ -29,30 +29,42 @@ async function checkOnboarding() {
     const uid = new URLSearchParams(window.location.search).get("uid");
     if (!uid) return;
     
+    console.log('🔍 Checking onboarding for UID:', uid); // Debug log
+    
     try {
         const res = await fetch(`/api/user/${uid}`);
         const data = await res.json();
         
-        console.log('Onboarding check:', data); // Debug log
+        console.log('📊 Onboarding check response:', data); // Debug log
         
         if (data.ok && data.user) {
             currentUserData = data.user;
             
-            // Show onboarding if not completed (handle null/undefined)
-            if (!data.user.onboarding_completed || data.user.onboarding_completed === false) {
-                console.log('Showing onboarding modal, step:', data.user.onboarding_step);
+            // Show onboarding if not completed (handle null/undefined/false)
+            const isCompleted = data.user.onboarding_completed === true;
+            console.log('✅ Onboarding status:', isCompleted, 'value:', data.user.onboarding_completed);
+            
+            if (!isCompleted) {
+                console.log('🎓 Showing onboarding modal, step:', data.user.onboarding_step);
                 showOnboardingModal(data.user.onboarding_step || 0);
             } else {
-                console.log('Onboarding already completed');
+                console.log('✅ Onboarding already completed, skipping');
             }
+        } else {
+            console.log('❌ API response error:', data);
         }
     } catch (e) {
-        console.error('Error checking onboarding:', e);
+        console.error('❌ Error checking onboarding:', e);
     }
 }
 
 function showOnboardingModal(currentStep = 0) {
-    if (onboardingModal) return; // Already showing
+    console.log('🎓 Opening onboarding modal, step:', currentStep);
+    
+    if (onboardingModal) {
+        console.log('⚠️ Onboarding modal already showing');
+        return; // Already showing
+    }
     
     onboardingModal = document.createElement('div');
     onboardingModal.style.cssText = `
@@ -246,9 +258,13 @@ async function completeOnboarding() {
 }
 
 function closeOnboarding() {
+    console.log('🔒 Closing onboarding modal');
     if (onboardingModal) {
         onboardingModal.remove();
         onboardingModal = null;
+        console.log('✅ Onboarding modal closed');
+    } else {
+        console.log('⚠️ No onboarding modal to close');
     }
 }
 
