@@ -10191,11 +10191,12 @@ if __name__ == "__main__":
                         if api_id <= 0:
                             raise ValueError("API_ID must be a positive integer")
                         
-                        # Create client with session management
+                        # Create client for bot (not user account)
                         pyrogram_client = Client(
                             "domino_page_checker",
                             api_id=api_id,
                             api_hash=PYROGRAM_API_HASH,
+                            bot_token=BOT_TOKEN,  # Use bot token instead of phone
                             sleep_threshold=60,  # Add sleep threshold for flood protection
                             no_updates=True,      # Don't receive updates to reduce load
                         )
