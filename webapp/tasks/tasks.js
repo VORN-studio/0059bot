@@ -31,6 +31,15 @@ async function checkOnboarding() {
     
     console.log('🔍 Checking onboarding for UID:', uid); // Debug log
     
+    // Check if we've already shown onboarding in this session
+    const sessionKey = `onboarding_shown_${uid}`;
+    const alreadyShown = sessionStorage.getItem(sessionKey);
+    
+    if (alreadyShown) {
+        console.log('✅ Onboarding already shown in this session, skipping');
+        return;
+    }
+    
     try {
         const res = await fetch(`/api/user/${uid}`);
         const data = await res.json();
@@ -46,6 +55,10 @@ async function checkOnboarding() {
             
             if (!isCompleted) {
                 console.log('🎓 Showing onboarding modal, step:', data.user.onboarding_step);
+                
+                // Mark as shown in this session
+                sessionStorage.setItem(sessionKey, 'true');
+                
                 showOnboardingModal(data.user.onboarding_step || 0);
             } else {
                 console.log('✅ Onboarding already completed, skipping');
@@ -365,17 +378,54 @@ async function nextOnboardingStep() {
 }
 
 function previousOnboardingStep() {
-    const stepElement = onboardingModal.querySelector('div > div:last-child');
+    console.log('⬅️ previousOnboardingStep called');
+    
+    if (!onboardingModal) {
+        console.error('❌ No onboarding modal found in previous');
+        return;
+    }
+    
+    // Use same parsing logic as nextOnboardingStep
+    let stepElement = onboardingModal.querySelector('div > div:last-child');
     if (!stepElement) {
-        console.error('❌ Step element not found in previous');
+        stepElement = onboardingModal.querySelector('div[style*="font-size: 12px"]');
+    }
+    if (!stepElement) {
+        stepElement = onboardingModal.querySelector('div');
+    }
+    
+    if (!stepElement) {
+        console.error('❌ No step element found in previous');
         return;
     }
     
     const stepText = stepElement.textContent;
-    const currentStep = parseInt(stepText.split(' / ')[0]) - 1;
-    const prevStep = Math.max(0, currentStep - 1);
+    console.log('⬅️ Previous step text:', stepText);
     
+    // Parse current step
+    let currentStep = 0;
+    const match = stepText.match(/(\d+)\s*\/\s*(\d+)/);
+    if (match) {
+        currentStep = parseInt(match[1]) - 1;
+    } else {
+        const numMatch = stepText.match(/(\d+)/);
+        if (numMatch) {
+            currentStep = parseInt(numMatch[1]) - 1;
+        }
+    }
+    
+    const prevStep = Math.max(0, currentStep - 1);
     console.log('⬅️ Previous step:', currentStep, '->', prevStep);
+    
+    // Update step in database
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (uid) {
+        fetch('/api/onboarding/step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid, step: prevStep })
+        }).catch(e => console.log('⚠️ API error in previous step:', e));
+    }
     
     onboardingModal.remove();
     onboardingModal = null;
@@ -450,6 +500,14 @@ function closeOnboarding() {
         onboardingModal.remove();
         onboardingModal = null;
         console.log('✅ Onboarding modal closed');
+        
+        // Mark as manually closed - don't show again in this session
+        const uid = new URLSearchParams(window.location.search).get("uid");
+        if (uid) {
+            const sessionKey = `onboarding_shown_${uid}`;
+            sessionStorage.setItem(sessionKey, 'true');
+            console.log('📝 Marked onboarding as manually closed for session');
+        }
     } else {
         console.log('⚠️ No onboarding modal to close');
     }
