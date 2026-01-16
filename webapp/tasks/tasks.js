@@ -33,12 +33,17 @@ async function checkOnboarding() {
         const res = await fetch(`/api/user/${uid}`);
         const data = await res.json();
         
+        console.log('Onboarding check:', data); // Debug log
+        
         if (data.ok && data.user) {
             currentUserData = data.user;
             
-            // Show onboarding if not completed
-            if (!data.user.onboarding_completed) {
+            // Show onboarding if not completed (handle null/undefined)
+            if (!data.user.onboarding_completed || data.user.onboarding_completed === false) {
+                console.log('Showing onboarding modal, step:', data.user.onboarding_step);
                 showOnboardingModal(data.user.onboarding_step || 0);
+            } else {
+                console.log('Onboarding already completed');
             }
         }
     } catch (e) {
@@ -65,31 +70,31 @@ function showOnboardingModal(currentStep = 0) {
     
     const steps = [
         {
-            title: "👋 Բարի գալուդ Domino Bot!",
+            title: "👋 Добро пожаловать в Domino Bot!!",
             content: `
-                <p>Եկեք սովորենք, թե ինչպես վաստակել DOMIT դրամականիշներ։</p>
-                <p>Սա պարզապես կատարելու եք պարզ առաջադրություններ և ստանում գումար։</p>
+                <p>Давайте узнаем, как заработать токены DOMIT!</p>
+                <p>Все просто: выполняйте простые задания и получайте вознаграждение.</p>
             `,
-            action: "Սկսել ուսումնը →"
+            action: "Начать обучение →"
         },
         {
-            title: "📝 Tasks-երի մասին",
+            title: "📝 О Tasks",
             content: `
-                <p><strong>Tasks-երը</strong> պարզ առաջադրություններ են։</p>
+                <p><strong>Tasks</strong> это простые задания.</p>
                 <ul style="text-align: left; margin: 10px 0;">
-                    <li>🔔 Հետևել Telegram էջերի</li>
-                    <li>🎮 Խաղալ խաղեր</li>
-                    <li>📺 Դիտել տեսահոլովակներ</li>
-                    <li>👥 Հրավիրել ընկերների</li>
+                    <li>🔔 Подписываться на Telegram-каналы</li>
+                    <li>🎮 Играть в игры</li>
+                    <li>📺 Смотреть видеоролики</li>
+                    <li>👥 Приглашать друзей</li>
                 </ul>
-                <p>Յուրաքանչյուր task տալիս է 0.01-0.05 DOMIT։</p>
+                <p>Каждый task дает от 0.01 до 0.09 DOMIT.</p>
             `,
-            action: "Հասկանալի է →"
+            action: "Понятно →"
         },
         {
-            title: "🏆 Daily Bonus Համակարգ",
+            title: "🏆 Система Daily Bonus",
             content: `
-                <p><strong>Ամենօրյա բոնուսներ</strong> կատարելով՝ ստանում եք լրացուցիչ գումար։</p>
+                <p><strong>Выполняя <strong>ежедневные бонусы</strong>, вы получаете дополнительные средства.</p>
                 <p><strong>Levels:</strong></p>
                 <ul style="text-align: left; margin: 10px 0;">
                     <li>Level 1-10: 0.25 DOMIT</li>
@@ -99,22 +104,22 @@ function showOnboardingModal(currentStep = 0) {
                     <li>Level 200+: 🔥 2x Multiplier!</li>
                 </ul>
             `,
-            action: "Հիանալի է →"
+            action: "Понятно →"
         },
         {
-            title: "💰 Գումարի դուրսբերում",
+            title: "💰 Вывод средств",
             content: `
-                <p><strong>Ինչպես դուրս բերել գումարը։</p>
+                <p><strong>Как вывести средства:</p>
                 <ol style="text-align: left; margin: 10px 0;">
-                    <li>Վաստակեք առնվազն 1 DOMIT</li>
-                    <li>Գտեք Wallet բաժինը</li>
-                    <li>Մուտքագրեք ձեր TON դրամապանակը</li>
-                    <li>Սեղմեք "Withdraw"</li>
-                    <li>Ստացեք գումարը 5-10 րոպեում</li>
+                    <li>Заработайте минимум 1 DOMIT</li>
+                    <li>Найдите раздел Wallet</li>
+                    <li>Введите ваш TON-кошелек</li>
+                    <li>Нажмите "Withdraw"</li>
+                    <li>Получите средства в течение 5-10 минут</li>
                 </ol>
-                <p>⚠️ Նվազագույն՝ 1 DOMIT</p>
+                <p>⚠️ Минимум: 1 DOMIT</p>
             `,
-            action: "Սկսել աշխատանքը →"
+            action: "Начать работу →"
         }
     ];
     
@@ -133,7 +138,7 @@ function showOnboardingModal(currentStep = 0) {
                     style="background: rgba(255,255,255,0.2); border: none; 
                            padding: 12px 20px; border-radius: 10px; color: white; 
                            cursor: pointer; font-size: 14px;">
-                    ← Հետ
+                    ← Назад
                 </button>` : ''}
                 <button onclick="nextOnboardingStep()" 
                     style="background: #4ade80; border: none; 
@@ -153,21 +158,28 @@ function showOnboardingModal(currentStep = 0) {
 
 async function nextOnboardingStep() {
     const uid = new URLSearchParams(window.location.search).get("uid");
-    const currentStep = parseInt(onboardingModal.querySelector('div > div:last-child').textContent.split(' / ')[0]) - 1;
+    
+    // Get current step from modal
+    const stepText = onboardingModal.querySelector('div > div:last-child').textContent;
+    const currentStep = parseInt(stepText.split(' / ')[0]) - 1;
     const nextStep = currentStep + 1;
+    
+    console.log('Next step:', currentStep, '->', nextStep); // Debug log
     
     // Update step in database
     try {
-        await fetch('/api/onboarding/step', {
+        const res = await fetch('/api/onboarding/step', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid, step: nextStep })
         });
+        const data = await res.json();
+        console.log('Step update response:', data);
     } catch (e) {
         console.error('Error updating onboarding step:', e);
     }
     
-    // Check if this is the last step
+    // Check if this is the last step (we have 4 steps: 0,1,2,3)
     if (nextStep >= 3) {
         completeOnboarding();
     } else {
@@ -189,30 +201,34 @@ function previousOnboardingStep() {
 async function completeOnboarding() {
     const uid = new URLSearchParams(window.location.search).get("uid");
     
+    console.log('Completing onboarding for user:', uid); // Debug log
+    
     try {
-        await fetch('/api/onboarding/complete', {
+        const res = await fetch('/api/onboarding/complete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid })
         });
+        const data = await res.json();
+        console.log('Onboarding completion response:', data);
         
         // Show completion message
         onboardingModal.innerHTML = `
             <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
                         border-radius: 20px; padding: 30px; max-width: 400px; 
                         margin: 20px; color: white; text-align: center;">
-                <h2 style="margin: 0 0 20px 0; font-size: 28px;">🎉 Շնորհավոր!</h2>
+                <h2 style="margin: 0 0 20px 0; font-size: 28px;">🎉 Поздравляем!</h2>
                 <p style="margin: 20px 0; font-size: 18px;">
-                    Դուք ավարտել եք ուսումնական դասը։
+                    Вы завершили обучение.
                 </p>
                 <p style="margin: 20px 0; font-size: 16px;">
-                    Այժմ կարող եք սկսել վաստակել DOMIT։
+                    Теперь вы можете начать зарабатывать DOMIT.
                 </p>
                 <button onclick="closeOnboarding()" 
                     style="background: white; border: none; 
                            padding: 15px 30px; border-radius: 10px; color: #059669; 
                            cursor: pointer; font-size: 16px; font-weight: bold;">
-                    Սկսել աշխատանքը →
+                    Начать работу →
                 </button>
             </div>
         `;
@@ -253,8 +269,8 @@ function showFirstTaskHint() {
         max-width: 300px;
     `;
     hint.innerHTML = `
-        <div style="font-weight: bold; margin-bottom: 8px;">💡 Խորհուրդ</div>
-        <div>Սկսեք առաջին task-ից՝ սեղմելով "Выполнить" կոճակը։</div>
+        <div style="font-weight: bold; margin-bottom: 8px;">💡 Совет</div>
+        <div>Начните с первого task-а, нажав кнопку "Выполнить".</div>
     `;
     
     document.body.appendChild(hint);
@@ -812,10 +828,10 @@ function showFirstTaskCelebration() {
     `;
     celebration.innerHTML = `
         <div style="font-size: 48px; margin-bottom: 15px;">🎊</div>
-        <div>Շնորհավոր!</div>
+        <div>Поздравляем!</div>
         <div style="font-size: 16px; margin-top: 10px; font-weight: normal;">
-            Դուք կատարել եք ձեր առաջին task-ը!<br>
-            +0.01 DOMIT բոնուս
+            Вы выполнили свой первый task!<br>
+            Бонус +0.01 DOMIT
         </div>
     `;
     

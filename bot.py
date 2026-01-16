@@ -8920,25 +8920,88 @@ def api_get_user_data():
     progress_bar = "━" * filled + "░" * (10 - filled)
 
     return jsonify({
-        "telegram_id": row[0],
-        "username": row[1],
-        "status_level": row[2],
-        "ton_balance": float(row[3]),
-        "usd_balance": float(row[4]),
-        "avatar_data": row[5],
-        "fires_received": row[6],
-        "fires_given": row[7],
-        "total_games": total_games,
-        "total_wins": total_wins,
-        "intellect_score": intellect_score,
-        "intellect_bar": progress_bar,
-        "onboarding_completed": onboarding_completed,
-        "onboarding_step": onboarding_step,
-        "streak_days": streak_days,
-        "last_streak_date": str(last_streak_date) if last_streak_date else None,
-        "daily_tasks_completed": daily_tasks_completed,
-        "daily_bonus_level": daily_bonus_level,
-        "has_2x_multiplier": has_2x_multiplier
+        "ok": True,
+        "user": {
+            "telegram_id": row[0],
+            "username": row[1],
+            "status_level": row[2],
+            "ton_balance": float(row[3]),
+            "usd_balance": float(row[4]),
+            "avatar_data": row[5],
+            "fires_received": row[6],
+            "fires_given": row[7],
+            "total_games": total_games,
+            "total_wins": total_wins,
+            "intellect_score": intellect_score,
+            "intellect_bar": progress_bar,
+            "onboarding_completed": onboarding_completed,
+            "onboarding_step": onboarding_step,
+            "streak_days": streak_days,
+            "last_streak_date": str(last_streak_date) if last_streak_date else None,
+            "daily_tasks_completed": daily_tasks_completed,
+            "daily_bonus_level": daily_bonus_level,
+            "has_2x_multiplier": has_2x_multiplier
+        }
+    })
+
+@app_web.route("/api/user/<int:uid>")
+def api_get_user(uid):
+    """Get user data by user_id (not telegram_id)"""
+    conn = db()
+    c = conn.cursor()
+    c.execute("""
+        SELECT user_id, username, status_level, ton_balance, usd_balance, 
+               avatar_data, fires_received, fires_given, total_games, total_wins,
+               onboarding_completed, onboarding_step, streak_days, last_streak_date,
+               daily_tasks_completed, daily_bonus_level, has_2x_multiplier
+        FROM dom_users
+        WHERE user_id = %s
+    """, (uid,))
+    row = c.fetchone()
+    c.close()
+    db(conn)
+
+    if not row:
+        return jsonify({"error": "User not found"}), 404
+
+    total_games = row[8] or 0
+    total_wins = row[9] or 0
+    onboarding_completed = row[10] or False
+    onboarding_step = row[11] or 0
+    streak_days = row[12] or 0
+    last_streak_date = row[13]
+    daily_tasks_completed = row[14] or 0
+    daily_bonus_level = row[15] or 1
+    has_2x_multiplier = row[16] or False
+    
+    intellect_score = round((total_wins / total_games * 10), 1) if total_games > 0 else 0.0
+    
+    filled = int(intellect_score)  # 0-10
+    progress_bar = "━" * filled + "░" * (10 - filled)
+
+    return jsonify({
+        "ok": True,
+        "user": {
+            "user_id": row[0],
+            "username": row[1],
+            "status_level": row[2],
+            "ton_balance": float(row[3]),
+            "usd_balance": float(row[4]),
+            "avatar_data": row[5],
+            "fires_received": row[6],
+            "fires_given": row[7],
+            "total_games": total_games,
+            "total_wins": total_wins,
+            "intellect_score": intellect_score,
+            "intellect_bar": progress_bar,
+            "onboarding_completed": onboarding_completed,
+            "onboarding_step": onboarding_step,
+            "streak_days": streak_days,
+            "last_streak_date": str(last_streak_date) if last_streak_date else None,
+            "daily_tasks_completed": daily_tasks_completed,
+            "daily_bonus_level": daily_bonus_level,
+            "has_2x_multiplier": has_2x_multiplier
+        }
     })
 
 @app_web.route("/api/onboarding/step", methods=["POST"])
