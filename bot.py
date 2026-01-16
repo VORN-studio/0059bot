@@ -10386,9 +10386,20 @@ if __name__ == "__main__":
                             return True
                                 
                         except Exception as e:
-                            if "FLOOD_WAIT" in str(e) and attempt < max_retries - 1:
-                                wait_time = retry_delay * (attempt + 1)
-                                print(f"⏳ Flood wait detected, retrying in {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
+                            error_str = str(e)
+                            print(f"🔍 Error details: {error_str}")
+                            
+                            if ("FLOOD_WAIT" in error_str or "420" in error_str or "flood" in error_str.lower()) and attempt < max_retries - 1:
+                                # Extract wait time from error message if possible
+                                import re
+                                wait_match = re.search(r'wait of (\d+) seconds', error_str)
+                                if wait_match:
+                                    wait_time = int(wait_match.group(1))
+                                    print(f"⏳ Flood wait detected, Telegram wants {wait_time} seconds. Waiting... (attempt {attempt + 1}/{max_retries})")
+                                else:
+                                    wait_time = retry_delay * (attempt + 1)
+                                    print(f"⏳ Flood wait detected, retrying in {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
+                                
                                 await asyncio.sleep(wait_time)
                                 continue
                             
