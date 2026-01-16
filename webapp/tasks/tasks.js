@@ -21,6 +21,271 @@
   }
 })();
 
+// ========== Onboarding System ==========
+let currentUserData = null;
+let onboardingModal = null;
+
+async function checkOnboarding() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (!uid) return;
+    
+    try {
+        const res = await fetch(`/api/user/${uid}`);
+        const data = await res.json();
+        
+        if (data.ok && data.user) {
+            currentUserData = data.user;
+            
+            // Show onboarding if not completed
+            if (!data.user.onboarding_completed) {
+                showOnboardingModal(data.user.onboarding_step || 0);
+            }
+        }
+    } catch (e) {
+        console.error('Error checking onboarding:', e);
+    }
+}
+
+function showOnboardingModal(currentStep = 0) {
+    if (onboardingModal) return; // Already showing
+    
+    onboardingModal = document.createElement('div');
+    onboardingModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    const steps = [
+        {
+            title: "👋 Բարի գալուդ Domino Bot!",
+            content: `
+                <p>Եկեք սովորենք, թե ինչպես վաստակել DOMIT դրամականիշներ։</p>
+                <p>Սա պարզապես կատարելու եք պարզ առաջադրություններ և ստանում գումար։</p>
+            `,
+            action: "Սկսել ուսումնը →"
+        },
+        {
+            title: "📝 Tasks-երի մասին",
+            content: `
+                <p><strong>Tasks-երը</strong> պարզ առաջադրություններ են։</p>
+                <ul style="text-align: left; margin: 10px 0;">
+                    <li>🔔 Հետևել Telegram էջերի</li>
+                    <li>🎮 Խաղալ խաղեր</li>
+                    <li>📺 Դիտել տեսահոլովակներ</li>
+                    <li>👥 Հրավիրել ընկերների</li>
+                </ul>
+                <p>Յուրաքանչյուր task տալիս է 0.01-0.05 DOMIT։</p>
+            `,
+            action: "Հասկանալի է →"
+        },
+        {
+            title: "🏆 Daily Bonus Համակարգ",
+            content: `
+                <p><strong>Ամենօրյա բոնուսներ</strong> կատարելով՝ ստանում եք լրացուցիչ գումար։</p>
+                <p><strong>Levels:</strong></p>
+                <ul style="text-align: left; margin: 10px 0;">
+                    <li>Level 1-10: 0.25 DOMIT</li>
+                    <li>Level 11-30: 0.50 DOMIT</li>
+                    <li>Level 31-100: 1.00 DOMIT</li>
+                    <li>Level 101-200: 1.50 DOMIT</li>
+                    <li>Level 200+: 🔥 2x Multiplier!</li>
+                </ul>
+            `,
+            action: "Հիանալի է →"
+        },
+        {
+            title: "💰 Գումարի դուրսբերում",
+            content: `
+                <p><strong>Ինչպես դուրս բերել գումարը։</p>
+                <ol style="text-align: left; margin: 10px 0;">
+                    <li>Վաստակեք առնվազն 1 DOMIT</li>
+                    <li>Գտեք Wallet բաժինը</li>
+                    <li>Մուտքագրեք ձեր TON դրամապանակը</li>
+                    <li>Սեղմեք "Withdraw"</li>
+                    <li>Ստացեք գումարը 5-10 րոպեում</li>
+                </ol>
+                <p>⚠️ Նվազագույն՝ 1 DOMIT</p>
+            `,
+            action: "Սկսել աշխատանքը →"
+        }
+    ];
+    
+    const step = steps[Math.min(currentStep, steps.length - 1)];
+    
+    onboardingModal.innerHTML = `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    border-radius: 20px; padding: 30px; max-width: 400px; 
+                    margin: 20px; color: white; text-align: center;">
+            <h2 style="margin: 0 0 20px 0; font-size: 24px;">${step.title}</h2>
+            <div style="margin: 20px 0; line-height: 1.6; font-size: 16px;">
+                ${step.content}
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                ${currentStep > 0 ? `<button onclick="previousOnboardingStep()" 
+                    style="background: rgba(255,255,255,0.2); border: none; 
+                           padding: 12px 20px; border-radius: 10px; color: white; 
+                           cursor: pointer; font-size: 14px;">
+                    ← Հետ
+                </button>` : ''}
+                <button onclick="nextOnboardingStep()" 
+                    style="background: #4ade80; border: none; 
+                           padding: 12px 20px; border-radius: 10px; color: #064e3b; 
+                           cursor: pointer; font-size: 14px; font-weight: bold;">
+                    ${step.action}
+                </button>
+            </div>
+            <div style="margin-top: 20px; font-size: 12px; opacity: 0.8;">
+                ${currentStep + 1} / ${steps.length}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(onboardingModal);
+}
+
+async function nextOnboardingStep() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    const currentStep = parseInt(onboardingModal.querySelector('div > div:last-child').textContent.split(' / ')[0]) - 1;
+    const nextStep = currentStep + 1;
+    
+    // Update step in database
+    try {
+        await fetch('/api/onboarding/step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid, step: nextStep })
+        });
+    } catch (e) {
+        console.error('Error updating onboarding step:', e);
+    }
+    
+    // Check if this is the last step
+    if (nextStep >= 3) {
+        completeOnboarding();
+    } else {
+        onboardingModal.remove();
+        onboardingModal = null;
+        showOnboardingModal(nextStep);
+    }
+}
+
+function previousOnboardingStep() {
+    const currentStep = parseInt(onboardingModal.querySelector('div > div:last-child').textContent.split(' / ')[0]) - 1;
+    const prevStep = Math.max(0, currentStep - 1);
+    
+    onboardingModal.remove();
+    onboardingModal = null;
+    showOnboardingModal(prevStep);
+}
+
+async function completeOnboarding() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    
+    try {
+        await fetch('/api/onboarding/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid })
+        });
+        
+        // Show completion message
+        onboardingModal.innerHTML = `
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                        border-radius: 20px; padding: 30px; max-width: 400px; 
+                        margin: 20px; color: white; text-align: center;">
+                <h2 style="margin: 0 0 20px 0; font-size: 28px;">🎉 Շնորհավոր!</h2>
+                <p style="margin: 20px 0; font-size: 18px;">
+                    Դուք ավարտել եք ուսումնական դասը։
+                </p>
+                <p style="margin: 20px 0; font-size: 16px;">
+                    Այժմ կարող եք սկսել վաստակել DOMIT։
+                </p>
+                <button onclick="closeOnboarding()" 
+                    style="background: white; border: none; 
+                           padding: 15px 30px; border-radius: 10px; color: #059669; 
+                           cursor: pointer; font-size: 16px; font-weight: bold;">
+                    Սկսել աշխատանքը →
+                </button>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            closeOnboarding();
+            // Show first task hint
+            showFirstTaskHint();
+        }, 5000);
+        
+    } catch (e) {
+        console.error('Error completing onboarding:', e);
+        closeOnboarding();
+    }
+}
+
+function closeOnboarding() {
+    if (onboardingModal) {
+        onboardingModal.remove();
+        onboardingModal = null;
+    }
+}
+
+function showFirstTaskHint() {
+    const hint = document.createElement('div');
+    hint.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 15px;
+        font-size: 14px;
+        z-index: 9999;
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+        animation: slideIn 0.5s ease-out;
+        max-width: 300px;
+    `;
+    hint.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 8px;">💡 Խորհուրդ</div>
+        <div>Սկսեք առաջին task-ից՝ սեղմելով "Выполнить" կոճակը։</div>
+    `;
+    
+    document.body.appendChild(hint);
+    
+    // Add animations if not already present
+    if (!document.getElementById('onboarding-animations')) {
+        const style = document.createElement('style');
+        style.id = 'onboarding-animations';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    setTimeout(() => {
+        hint.style.animation = 'slideOut 0.5s ease-in';
+        setTimeout(() => {
+            if (hint.parentNode) {
+                hint.parentNode.removeChild(hint);
+            }
+        }, 500);
+    }, 8000);
+}
+
 function closeTasks() {
     window.location.href = "../index.html";
 }
@@ -437,6 +702,9 @@ function startTaskCompletionMonitoring(taskId) {
                     
                     // Show success message
                     showSuccessMessage(`Task completed! Progress updated.`);
+                    
+                    // Check if this is first task completed
+                    checkFirstTaskCompletion();
                 }, 1000); // Wait 1 second for backend processing
             }
         } catch (e) {
@@ -497,6 +765,84 @@ function showTaskCompletionFeedback() {
         `;
         document.head.appendChild(style);
     }
+}
+
+async function checkFirstTaskCompletion() {
+    const uid = new URLSearchParams(window.location.search).get("uid");
+    if (!uid) return;
+    
+    try {
+        const res = await fetch(`/api/user/${uid}`);
+        const data = await res.json();
+        
+        if (data.ok && data.user && !data.user.first_task_completed) {
+            // Mark first task as completed
+            await fetch('/api/first_task/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid })
+            });
+            
+            // Show celebration
+            showFirstTaskCelebration();
+        }
+    } catch (e) {
+        console.error('Error checking first task completion:', e);
+    }
+}
+
+function showFirstTaskCelebration() {
+    const celebration = document.createElement('div');
+    celebration.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: white;
+        padding: 30px;
+        border-radius: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        z-index: 10003;
+        box-shadow: 0 15px 35px rgba(251, 191, 36, 0.3);
+        animation: celebrationPop 0.6s ease-out;
+        text-align: center;
+        max-width: 350px;
+    `;
+    celebration.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 15px;">🎊</div>
+        <div>Շնորհավոր!</div>
+        <div style="font-size: 16px; margin-top: 10px; font-weight: normal;">
+            Դուք կատարել եք ձեր առաջին task-ը!<br>
+            +0.01 DOMIT բոնուս
+        </div>
+    `;
+    
+    document.body.appendChild(celebration);
+    
+    // Add celebration animation
+    if (!document.getElementById('celebration-animations')) {
+        const style = document.createElement('style');
+        style.id = 'celebration-animations';
+        style.textContent = `
+            @keyframes celebrationPop {
+                0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+                50% { transform: translate(-50%, -50%) scale(1.1); }
+                100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    setTimeout(() => {
+        celebration.style.animation = 'fadeOut 0.5s ease-in';
+        setTimeout(() => {
+            if (celebration.parentNode) {
+                celebration.parentNode.removeChild(celebration);
+            }
+        }, 500);
+    }, 4000);
 }
 
 function showSuccessMessage(message) {
@@ -587,4 +933,7 @@ loadBalance().then(() => {
             })
             .catch(e => console.error('Error setting initial level:', e));
     }
+    
+    // Start onboarding check
+    checkOnboarding();
 });
