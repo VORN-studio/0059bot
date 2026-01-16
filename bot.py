@@ -4094,12 +4094,7 @@ alters = [
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS daily_tasks_completed INTEGER DEFAULT 0",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS daily_bonus_level INTEGER DEFAULT 1",
     "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_daily_reset DATE DEFAULT CURRENT_DATE",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS has_2x_multiplier BOOLEAN DEFAULT FALSE",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS onboarding_step INTEGER DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS first_task_completed BOOLEAN DEFAULT FALSE",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS streak_days INTEGER DEFAULT 0",
-    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS last_streak_date DATE"
+    "ALTER TABLE dom_users ADD COLUMN IF NOT EXISTS has_2x_multiplier BOOLEAN DEFAULT FALSE"
 ]
 
 def init_db():
@@ -8891,9 +8886,7 @@ def api_get_user_data():
     c = conn.cursor()
     c.execute("""
         SELECT telegram_id, username, status_level, ton_balance, usd_balance, 
-               avatar_data, fires_received, fires_given, total_games, total_wins,
-               onboarding_completed, onboarding_step, streak_days, last_streak_date,
-               daily_tasks_completed, daily_bonus_level, has_2x_multiplier
+               avatar_data, fires_received, fires_given, total_games, total_wins
         FROM dom_users
         WHERE telegram_id = %s
     """, (telegram_id,))
@@ -8906,13 +8899,6 @@ def api_get_user_data():
 
     total_games = row[8] or 0
     total_wins = row[9] or 0
-    onboarding_completed = row[10] or False
-    onboarding_step = row[11] or 0
-    streak_days = row[12] or 0
-    last_streak_date = row[13]
-    daily_tasks_completed = row[14] or 0
-    daily_bonus_level = row[15] or 1
-    has_2x_multiplier = row[16] or False
     
     intellect_score = round((total_wins / total_games * 10), 1) if total_games > 0 else 0.0
     
@@ -8920,179 +8906,19 @@ def api_get_user_data():
     progress_bar = "━" * filled + "░" * (10 - filled)
 
     return jsonify({
-        "ok": True,
-        "user": {
-            "telegram_id": row[0],
-            "username": row[1],
-            "status_level": row[2],
-            "ton_balance": float(row[3]),
-            "usd_balance": float(row[4]),
-            "avatar_data": row[5],
-            "fires_received": row[6],
-            "fires_given": row[7],
-            "total_games": total_games,
-            "total_wins": total_wins,
-            "intellect_score": intellect_score,
-            "intellect_bar": progress_bar,
-            "onboarding_completed": onboarding_completed,
-            "onboarding_step": onboarding_step,
-            "streak_days": streak_days,
-            "last_streak_date": str(last_streak_date) if last_streak_date else None,
-            "daily_tasks_completed": daily_tasks_completed,
-            "daily_bonus_level": daily_bonus_level,
-            "has_2x_multiplier": has_2x_multiplier
-        }
+        "telegram_id": row[0],
+        "username": row[1],
+        "status_level": row[2],
+        "ton_balance": float(row[3]),
+        "usd_balance": float(row[4]),
+        "avatar_data": row[5],
+        "fires_received": row[6],
+        "fires_given": row[7],
+        "total_games": total_games,
+        "total_wins": total_wins,
+        "intellect_score": intellect_score,
+        "intellect_bar": progress_bar
     })
-
-@app_web.route("/api/user/<int:uid>")
-def api_get_user(uid):
-    """Get user data by user_id (not telegram_id)"""
-    conn = db()
-    c = conn.cursor()
-    c.execute("""
-        SELECT user_id, username, status_level, ton_balance, usd_balance, 
-               avatar_data, fires_received, fires_given, total_games, total_wins,
-               onboarding_completed, onboarding_step, streak_days, last_streak_date,
-               daily_tasks_completed, daily_bonus_level, has_2x_multiplier
-        FROM dom_users
-        WHERE user_id = %s
-    """, (uid,))
-    row = c.fetchone()
-    c.close()
-    db(conn)
-
-    if not row:
-        print(f"❌ User not found: {uid}")
-        return jsonify({"error": "User not found"}), 404
-
-    total_games = row[8] or 0
-    total_wins = row[9] or 0
-    onboarding_completed = row[10] or False
-    onboarding_step = row[11] or 0
-    streak_days = row[12] or 0
-    last_streak_date = row[13]
-    daily_tasks_completed = row[14] or 0
-    daily_bonus_level = row[15] or 1
-    has_2x_multiplier = row[16] or False
-    
-    print(f"✅ User {uid}: onboarding_completed={onboarding_completed}, step={onboarding_step}")
-    
-    intellect_score = round((total_wins / total_games * 10), 1) if total_games > 0 else 0.0
-    
-    filled = int(intellect_score)  # 0-10
-    progress_bar = "━" * filled + "░" * (10 - filled)
-
-    return jsonify({
-        "ok": True,
-        "user": {
-            "user_id": row[0],
-            "username": row[1],
-            "status_level": row[2],
-            "ton_balance": float(row[3]),
-            "usd_balance": float(row[4]),
-            "avatar_data": row[5],
-            "fires_received": row[6],
-            "fires_given": row[7],
-            "total_games": total_games,
-            "total_wins": total_wins,
-            "intellect_score": intellect_score,
-            "intellect_bar": progress_bar,
-            "onboarding_completed": onboarding_completed,
-            "onboarding_step": onboarding_step,
-            "streak_days": streak_days,
-            "last_streak_date": str(last_streak_date) if last_streak_date else None,
-            "daily_tasks_completed": daily_tasks_completed,
-            "daily_bonus_level": daily_bonus_level,
-            "has_2x_multiplier": has_2x_multiplier
-        }
-    })
-
-@app_web.route("/api/onboarding/step", methods=["POST"])
-def api_onboarding_step():
-    data = request.get_json()
-    uid = data.get("uid")
-    step = data.get("step", 0)
-    
-    # Validate step value
-    if step is None:
-        print(f"❌ Invalid step value (None) for user={uid}")
-        return jsonify({"ok": False, "error": "Invalid step value"}), 400
-    
-    try:
-        step = int(step)
-    except (ValueError, TypeError):
-        print(f"❌ Invalid step value (not integer): {step} for user={uid}")
-        return jsonify({"ok": False, "error": "Step must be integer"}), 400
-    
-    if step < 0 or step > 999:
-        print(f"❌ Step out of range: {step} for user={uid}")
-        return jsonify({"ok": False, "error": "Step out of range"}), 400
-    
-    print(f"📝 Updating onboarding step: user={uid}, step={step}")
-    
-    conn = db(); c = conn.cursor()
-    c.execute("UPDATE dom_users SET onboarding_step = %s WHERE user_id = %s", (step, uid))
-    conn.commit()
-    release_db(conn)
-    
-    print(f"✅ Onboarding step updated: user={uid}, step={step}")
-    
-    return jsonify({"ok": True, "step": step})
-
-@app_web.route("/api/onboarding/complete", methods=["POST"])
-def api_onboarding_complete():
-    data = request.get_json()
-    uid = data.get("uid")
-    
-    print(f"🎉 Completing onboarding for user: {uid}")
-    
-    conn = db(); c = conn.cursor()
-    c.execute("UPDATE dom_users SET onboarding_completed = TRUE, onboarding_step = 999 WHERE user_id = %s", (uid,))
-    conn.commit()
-    release_db(conn)
-    
-    print(f"✅ Onboarding completed for user: {uid}")
-    
-    return jsonify({"ok": True, "completed": True})
-
-@app_web.route("/api/streak/update", methods=["POST"])
-def api_streak_update():
-    data = request.get_json()
-    uid = data.get("uid")
-    
-    conn = db(); c = conn.cursor()
-    c.execute("SELECT last_streak_date, streak_days FROM dom_users WHERE user_id = %s", (uid,))
-    row = c.fetchone()
-    
-    today = datetime.now().date()
-    last_date = row[0] if row and row[0] else None
-    streak = row[1] if row and row[1] else 0
-    
-    if last_date == today:
-        pass
-    elif last_date == today - timedelta(days=1):
-        streak += 1
-    else:
-        streak = 1
-    
-    c.execute("UPDATE dom_users SET last_streak_date = %s, streak_days = %s WHERE user_id = %s", 
-             (today, streak, uid))
-    conn.commit()
-    release_db(conn)
-    
-    return jsonify({"ok": True, "streak_days": streak})
-
-@app_web.route("/api/first_task/complete", methods=["POST"])
-def api_first_task_complete():
-    data = request.get_json()
-    uid = data.get("uid")
-    
-    conn = db(); c = conn.cursor()
-    c.execute("UPDATE dom_users SET first_task_completed = TRUE WHERE user_id = %s", (uid,))
-    conn.commit()
-    release_db(conn)
-    
-    return jsonify({"ok": True, "completed": True})
 
 @app_web.route("/api/game/bet", methods=["POST"])
 def api_game_bet():
@@ -10359,54 +10185,33 @@ if __name__ == "__main__":
                 
                 async def start_pyrogram():
                     global pyrogram_client
-                    max_retries = 3
-                    retry_delay = 10  # seconds
-                    
-                    for attempt in range(max_retries):
-                        try:
-                            # Validate API_ID
-                            api_id = int(PYROGRAM_API_ID)
-                            if api_id <= 0:
-                                raise ValueError("API_ID must be a positive integer")
+                    try:
+                        # Validate API_ID
+                        api_id = int(PYROGRAM_API_ID)
+                        if api_id <= 0:
+                            raise ValueError("API_ID must be a positive integer")
+                        
+                        # Create client
+                        pyrogram_client = Client(
+                            "domino_page_checker",
+                            api_id=api_id,
+                            api_hash=PYROGRAM_API_HASH,
+                            bot_token=BOT_TOKEN,
+                            in_memory=True
+                        )
+                        
+                        # Start the client
+                        await pyrogram_client.start()
+                        print("✅ Pyrogram client started successfully")
+                        
+                        # Don't block here - let the queue handler keep it alive
+                        return True
                             
-                            # Create client
-                            pyrogram_client = Client(
-                                "domino_page_checker",
-                                api_id=api_id,
-                                api_hash=PYROGRAM_API_HASH,
-                                bot_token=BOT_TOKEN,
-                                in_memory=True
-                            )
-                            
-                            # Start the client
-                            await pyrogram_client.start()
-                            print("✅ Pyrogram client started successfully")
-                            
-                            # Don't block here - let the queue handler keep it alive
-                            return True
-                                
-                        except Exception as e:
-                            error_str = str(e)
-                            print(f"🔍 Error details: {error_str}")
-                            
-                            if ("FLOOD_WAIT" in error_str or "420" in error_str or "flood" in error_str.lower()) and attempt < max_retries - 1:
-                                # Extract wait time from error message if possible
-                                import re
-                                wait_match = re.search(r'wait of (\d+) seconds', error_str)
-                                if wait_match:
-                                    wait_time = int(wait_match.group(1))
-                                    print(f"⏳ Flood wait detected, Telegram wants {wait_time} seconds. Waiting... (attempt {attempt + 1}/{max_retries})")
-                                else:
-                                    wait_time = retry_delay * (attempt + 1)
-                                    print(f"⏳ Flood wait detected, retrying in {wait_time} seconds... (attempt {attempt + 1}/{max_retries})")
-                                
-                                await asyncio.sleep(wait_time)
-                                continue
-                            
-                            print(f"❌ Failed to start Pyrogram client: {e}")
-                            logger.error(f"Failed to start Pyrogram client: {e}")
-                            pyrogram_client = None
-                            return False
+                    except Exception as e:
+                        print(f"❌ Failed to start Pyrogram client: {e}")
+                        logger.error(f"Failed to start Pyrogram client: {e}")
+                        pyrogram_client = None
+                        return False
                 
                 # Run pyrogram in its own thread with event loop
                 def run_pyrogram_thread():
