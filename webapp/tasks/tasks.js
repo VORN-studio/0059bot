@@ -62,8 +62,9 @@ function showOnboardingModal(currentStep = 0) {
     console.log('🎓 Opening onboarding modal, step:', currentStep);
     
     if (onboardingModal) {
-        console.log('⚠️ Onboarding modal already showing');
-        return; // Already showing
+        console.log('⚠️ Onboarding modal already showing, closing it first');
+        onboardingModal.remove();
+        onboardingModal = null;
     }
     
     onboardingModal = document.createElement('div');
@@ -166,17 +167,42 @@ function showOnboardingModal(currentStep = 0) {
     `;
     
     document.body.appendChild(onboardingModal);
+    
+    // Wait a bit for DOM to be ready
+    setTimeout(() => {
+        console.log('🎯 Modal added to DOM, ready for interaction');
+    }, 100);
 }
 
 async function nextOnboardingStep() {
     const uid = new URLSearchParams(window.location.search).get("uid");
     
     // Get current step from modal
-    const stepText = onboardingModal.querySelector('div > div:last-child').textContent;
-    const currentStep = parseInt(stepText.split(' / ')[0]) - 1;
+    const stepElement = onboardingModal.querySelector('div > div:last-child');
+    if (!stepElement) {
+        console.error('❌ Step element not found');
+        return;
+    }
+    
+    const stepText = stepElement.textContent;
+    console.log('📝 Step text:', stepText);
+    
+    const parts = stepText.split(' / ');
+    if (parts.length < 2) {
+        console.error('❌ Invalid step format:', stepText);
+        return;
+    }
+    
+    const currentStep = parseInt(parts[0]) - 1;
     const nextStep = currentStep + 1;
     
-    console.log('Next step:', currentStep, '->', nextStep); // Debug log
+    console.log('🔄 Next step:', currentStep, '->', nextStep); // Debug log
+    
+    // Validate nextStep
+    if (isNaN(nextStep) || nextStep < 0) {
+        console.error('❌ Invalid nextStep:', nextStep);
+        return;
+    }
     
     // Update step in database
     try {
@@ -186,9 +212,9 @@ async function nextOnboardingStep() {
             body: JSON.stringify({ uid, step: nextStep })
         });
         const data = await res.json();
-        console.log('Step update response:', data);
+        console.log('✅ Step update response:', data);
     } catch (e) {
-        console.error('Error updating onboarding step:', e);
+        console.error('❌ Error updating onboarding step:', e);
     }
     
     // Check if this is the last step (we have 4 steps: 0,1,2,3)
@@ -202,8 +228,17 @@ async function nextOnboardingStep() {
 }
 
 function previousOnboardingStep() {
-    const currentStep = parseInt(onboardingModal.querySelector('div > div:last-child').textContent.split(' / ')[0]) - 1;
+    const stepElement = onboardingModal.querySelector('div > div:last-child');
+    if (!stepElement) {
+        console.error('❌ Step element not found in previous');
+        return;
+    }
+    
+    const stepText = stepElement.textContent;
+    const currentStep = parseInt(stepText.split(' / ')[0]) - 1;
     const prevStep = Math.max(0, currentStep - 1);
+    
+    console.log('⬅️ Previous step:', currentStep, '->', prevStep);
     
     onboardingModal.remove();
     onboardingModal = null;

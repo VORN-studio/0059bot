@@ -9013,6 +9013,21 @@ def api_onboarding_step():
     uid = data.get("uid")
     step = data.get("step", 0)
     
+    # Validate step value
+    if step is None:
+        print(f"❌ Invalid step value (None) for user={uid}")
+        return jsonify({"ok": False, "error": "Invalid step value"}), 400
+    
+    try:
+        step = int(step)
+    except (ValueError, TypeError):
+        print(f"❌ Invalid step value (not integer): {step} for user={uid}")
+        return jsonify({"ok": False, "error": "Step must be integer"}), 400
+    
+    if step < 0 or step > 999:
+        print(f"❌ Step out of range: {step} for user={uid}")
+        return jsonify({"ok": False, "error": "Step out of range"}), 400
+    
     print(f"📝 Updating onboarding step: user={uid}, step={step}")
     
     conn = db(); c = conn.cursor()
