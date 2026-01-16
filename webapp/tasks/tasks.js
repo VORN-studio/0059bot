@@ -252,50 +252,54 @@ async function nextOnboardingStep() {
     
     // Get current step from modal
     console.log('🔍 Modal HTML structure:', onboardingModal.innerHTML.substring(0, 200));
-    const stepElement = onboardingModal.querySelector('div > div:last-child');
-    console.log('🔍 Step element found:', stepElement);
+    
+    // Try multiple selectors to find step element
+    let stepElement = onboardingModal.querySelector('div > div:last-child');
+    console.log('🔍 Step element (selector 1):', stepElement);
+    
     if (!stepElement) {
-        console.error('❌ Step element not found');
-        // Try alternative selector
-        const altStepElement = onboardingModal.querySelector('div[style*="font-size: 12px"]');
-        console.log('🔍 Alternative step element:', altStepElement);
-        if (!altStepElement) {
-            console.error('❌ No step element found with any method');
-            return;
-        }
-        // Use alternative element
-        const stepText = altStepElement.textContent;
-        console.log('📝 Alternative step text:', stepText);
-        const parts = stepText.split(' / ');
-        const currentStep = parseInt(parts[0]) - 1;
-        const nextStep = currentStep + 1;
-        console.log('🔄 Alternative next step:', currentStep, '->', nextStep);
-        
-        // Continue with UI update
-        if (nextStep >= 3) {
-            completeOnboarding();
-        } else {
-            onboardingModal.remove();
-            onboardingModal = null;
-            showOnboardingModal(nextStep);
-        }
+        stepElement = onboardingModal.querySelector('div[style*="font-size: 12px"]');
+        console.log('🔍 Step element (selector 2):', stepElement);
+    }
+    
+    if (!stepElement) {
+        stepElement = onboardingModal.querySelector('div');
+        console.log('🔍 Step element (selector 3):', stepElement);
+    }
+    
+    if (!stepElement) {
+        console.error('❌ No step element found with any method');
         return;
     }
     
     const stepText = stepElement.textContent;
     console.log('📝 Step text:', stepText);
+    console.log('📝 Step HTML:', stepElement.innerHTML);
     
-    const parts = stepText.split(' / ');
-    console.log('📝 Step parts:', parts);
-    if (parts.length < 2) {
-        console.error('❌ Invalid step format:', stepText, '- RETURNING');
-        return;
+    // Try different parsing methods
+    let currentStep = -1;
+    
+    // Method 1: Look for "X / Y" format
+    const match = stepText.match(/(\d+)\s*\/\s*(\d+)/);
+    if (match) {
+        currentStep = parseInt(match[1]) - 1;
+        console.log('✅ Found step with regex:', currentStep, 'from', match[0]);
+    } else {
+        // Method 2: Just extract first number
+        const numMatch = stepText.match(/(\d+)/);
+        if (numMatch) {
+            currentStep = parseInt(numMatch[1]) - 1;
+            console.log('✅ Found step with simple regex:', currentStep, 'from', numMatch[0]);
+        } else {
+            console.error('❌ Could not parse step from text:', stepText);
+            // Default to step 0 if parsing fails
+            currentStep = 0;
+            console.log('⚠️ Defaulting to step 0');
+        }
     }
     
-    const currentStep = parseInt(parts[0]) - 1;
     const nextStep = currentStep + 1;
-    
-    console.log('🔄 Next step:', currentStep, '->', nextStep); // Debug log
+    console.log('🔄 Final result - currentStep:', currentStep, 'nextStep:', nextStep);
     
     // Validate nextStep
     if (isNaN(nextStep) || nextStep < 0) {
