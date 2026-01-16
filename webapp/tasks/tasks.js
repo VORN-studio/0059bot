@@ -194,7 +194,16 @@ function showOnboardingModal(currentStep = 0) {
                 
                 // Call the function with a small delay to show visual feedback
                 setTimeout(() => {
-                    nextOnboardingStep();
+                    console.log('🚀 About to call nextOnboardingStep()');
+                    try {
+                        nextOnboardingStep();
+                        console.log('✅ nextOnboardingStep() completed');
+                    } catch (error) {
+                        console.error('❌ Error in nextOnboardingStep():', error);
+                        // Reset button on error
+                        this.style.background = '#4ade80';
+                        this.textContent = 'Понятно →';
+                    }
                 }, 100);
             });
             
@@ -222,10 +231,12 @@ function showOnboardingModal(currentStep = 0) {
 }
 
 async function nextOnboardingStep() {
-    console.log('🚀 nextOnboardingStep called');
+    console.log('🚀 nextOnboardingStep called - START');
     
     const uid = new URLSearchParams(window.location.search).get("uid");
     console.log('👤 UID:', uid);
+    
+    console.log('🔍 Step 1: Checking UID');
     
     if (!uid) {
         console.error('❌ No UID found');
@@ -291,32 +302,47 @@ async function nextOnboardingStep() {
     
     // Update step in database
     try {
+        console.log('🔍 Step 2: Starting API request');
         console.log('🔄 Sending API request:', { uid, step: nextStep });
+        
         const res = await fetch('/api/onboarding/step', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid, step: nextStep })
         });
+        
         console.log('📡 API response status:', res.status);
+        console.log('🔍 Step 3: Parsing API response');
+        
         const data = await res.json();
         console.log('✅ Step update response:', data);
         
         if (!res.ok) {
             console.error('❌ API request failed:', res.status, data);
-            return;
+            console.log('⚠️ Continuing with UI update despite API failure');
+            // Don't return - continue with UI update
         }
     } catch (e) {
         console.error('❌ Error updating onboarding step:', e);
+        console.log('⚠️ Continuing with UI update despite API error');
         // Don't return here - continue with UI update even if API fails
     }
     
+    console.log('🔍 Step 4: Checking if last step');
+    console.log('🔍 nextStep:', nextStep, '>= 3?', nextStep >= 3);
+    
     // Check if this is the last step (we have 4 steps: 0,1,2,3)
     if (nextStep >= 3) {
+        console.log('🎉 This is the last step, calling completeOnboarding()');
         completeOnboarding();
     } else {
+        console.log('➡️ Moving to next step:', nextStep);
+        console.log('🔍 Step 5: Removing current modal');
         onboardingModal.remove();
         onboardingModal = null;
+        console.log('🔍 Step 6: Showing new modal for step:', nextStep);
         showOnboardingModal(nextStep);
+        console.log('✅ nextOnboardingStep completed successfully');
     }
 }
 
