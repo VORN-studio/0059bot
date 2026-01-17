@@ -8481,7 +8481,7 @@ async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
                 # Try to get chat member info
                 member = await pyrogram_client.get_chat_member(page_username, user_id)
                         
-                        # Convert status to string for comparison
+                # Convert status to string for comparison
                 status_str = str(member.status).upper()
                 logger.info(f"Status for {page_username}: {status_str}")
                 logger.info(f"Raw status type: {type(member.status)}")
@@ -8523,14 +8523,6 @@ async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
                     'name': page_name,
                     'username': page_username
                 })
-                
-        except Exception as e:
-            logger.error(f"Error with pyrogram client: {e}")
-            missing_pages.append({
-                'link': page_link,
-                'name': page_name,
-                'username': page_username
-            })
         
         return (len(missing_pages) == 0), missing_pages
         
