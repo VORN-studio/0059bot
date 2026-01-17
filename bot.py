@@ -8536,20 +8536,20 @@ async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
 
         async def send_access_denied_message(user_id: int):
     """Send access denied message to user"""
-    try:
-        conn = db()
-        c = conn.cursor()
-        c.execute("SELECT page_link, page_name FROM telegram_pages")
-        pages = c.fetchall()
-        release_db(conn)
+        try:
+            conn = db()
+            c = conn.cursor()
+            c.execute("SELECT page_link, page_name FROM telegram_pages")
+            pages = c.fetchall()
+            release_db(conn)
         
-        message = "🚫 **Доступ к приложению ограничен**\n\n"
-        message += "Для доступа к приложению необходимо подписаться на все каналы.\n\n"
+            message = "🚫 **Доступ к приложению ограничен**\n\n"
+            message += "Для доступа к приложению необходимо подписаться на все каналы.\n\n"
         
         for page_link, page_name in pages:
             message += f"📄 [{page_name}]({page_link})\n"
         
-        message += "\nВы не можете открыть приложение."
+            message += "\nВы не можете открыть приложение."
         
         await application.bot.send_message(
             chat_id=user_id,
