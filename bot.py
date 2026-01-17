@@ -5946,7 +5946,7 @@ def api_withdraw_request():
         return jsonify({
             "ok": False,
             "error": "not_enough_team_deposit",
-            "message": "Для вывода средств общая сумма депозита ваших приглашенных должна составлять не менее 50 DOMIT."
+            "message": "Для вывода средств общая сумма депозита ваших приглашенных должна составлять не менее 5 DOMIT."
         }), 200
 
     create_withdraw_request(user_id, amount)
