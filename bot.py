@@ -8478,46 +8478,59 @@ async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
             page_username = page_link.replace('https://t.me/', '')
             
             try:
-                # Try to get chat member info
-                member = await pyrogram_client.get_chat_member(page_username, user_id)
-                        
-                # Convert status to string for comparison
-                status_str = str(member.status).upper()
-                logger.info(f"Status for {page_username}: {status_str}")
-                logger.info(f"Raw status type: {type(member.status)}")
-                logger.info(f"Raw status value: {member.status}")
+                # Use pyrogram queue to avoid loop issues
+                import queue
+                import time
+                import random
                 
-                # Check if user has valid membership status (not left or banned)
-                invalid_statuses = ['LEFT', 'BANNED', 'KICKED', 'RESTRICTED']
-                is_invalid = status_str in invalid_statuses
+                request_id = f"check_{user_id}_{int(time.time())}_{random.randint(1000, 9999)}"
                 
-                logger.info(f"Is invalid check: {status_str} in {invalid_statuses} = {is_invalid}")
+                # Clear old results for this user
+                keys_to_remove = [key for key in pyrogram_results.keys() if key.startswith(f"check_{user_id}_")]
+                for key in keys_to_remove:
+                    pyrogram_results.pop(key, None)
                 
-                if is_invalid:
-                    logger.info(f"❌ User {user_id} is NOT member of {page_username} (status: {status_str})")
-                    missing_pages.append({
-                        'link': page_link,
-                        'name': page_name,
-                        'username': page_username
-                    })
+                # Send request to pyrogram thread
+                request_data = {
+                    'type': 'check_membership',
+                    'user_id': user_id,
+                    'page_username': page_username,
+                    'request_id': request_id
+                }
+                
+                pyrogram_queue.put(request_data)
+                logger.info(f"Sent membership check request for {page_username} (user: {user_id})")
+                
+                # Wait for result
+                timeout = 15
+                start_time = time.time()
+                
+                while request_id not in pyrogram_results:
+                    if time.time() - start_time > timeout:
+                        logger.error(f"Timeout checking membership for {page_username}")
+                        missing_pages.append({
+                            'link': page_link,
+                            'name': page_name,
+                            'username': page_username
+                        })
+                        break
+                    await asyncio.sleep(0.1)
                 else:
-                    logger.info(f"✅ User {user_id} IS member of {page_username} (status: {status_str})")
-            except ChannelPrivate:
-                logger.warning(f"Channel {page_username} is private or bot doesn't have access")
-                missing_pages.append({
-                    'link': page_link,
-                    'name': page_name,
-                    'username': page_username
-                })
-            except UserBannedInChannel:
-                logger.info(f"User {user_id} is banned in {page_username}")
-                missing_pages.append({
-                    'link': page_link,
-                    'name': page_name,
-                    'username': page_username
-                })
+                    result = pyrogram_results.pop(request_id)
+                    logger.info(f"Received membership result for {page_username}: {result}")
+                    
+                    if not result.get('is_member', False):
+                        logger.info(f"User {user_id} is not member of {page_username}")
+                        missing_pages.append({
+                            'link': page_link,
+                            'name': page_name,
+                            'username': page_username
+                        })
+                    else:
+                        logger.info(f"✅ User {user_id} IS member of {page_username}")
+                        
             except Exception as e:
-                logger.error(f"Error checking membership for {page_username}: {e}")
+                logger.error(f"Error with pyrogram queue: {e}")
                 missing_pages.append({
                     'link': page_link,
                     'name': page_name,
