@@ -7191,9 +7191,9 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if open_post_id:
         wa_url += f"&open_post={open_post_id}"
 
-    #keyboard = InlineKeyboardMarkup([
-       # [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]
-    #])
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]
+    ])
 
     await context.bot.send_message(
         chat_id=user.id,
