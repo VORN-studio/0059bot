@@ -7186,20 +7186,40 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await send_webapp_access_denied_with_pages(user.id, context, missing_pages)
             return
     
-    # Create webapp URL
-    wa_url = f"{BASE_URL}/app?uid={user.id}"
-    if open_post_id:
-        wa_url += f"&open_post={open_post_id}"
+    # Send welcome message with image instead of button
+    welcome_text = """🎲 Добро пожаловать в DOOMINO
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(text="🎲 OPEN DOMINO APP", web_app=WebAppInfo(url=wa_url))]
-    ])
+DOOMINO — это игровой бот, в котором ты можешь
+играть в домино и зарабатывать игровые очки.
 
-    await context.bot.send_message(
-        chat_id=user.id,
-        text="🎰 Добро пожаловать в Domino.\nНажмите кнопку, чтобы открыть WebApp. 👇",
-        reply_markup=keyboard
-    )
+🔹 Игра работает автоматически
+🔹 Очки накапливаются во время игры
+🔹 Основной заработок доступен в разделе Tasks
+🔹 Регулярно появляются обновления и бонусы
+🔹 Можно играть в удобное для тебя время, без спешки
+
+Если ты здесь впервые — не переживай.
+Все просто и понятно, ты быстро разберёшься.
+
+👉 Чтобы начать игру, нажми на кнопку
+«DOOMINO» рядом с чатом
+
+Удачной игры 🎯"""
+
+    try:
+        with open('logo.png', 'rb') as photo:
+            await context.bot.send_photo(
+                chat_id=user.id,
+                photo=photo,
+                caption=welcome_text
+            )
+    except Exception as e:
+        print(f"Error sending photo: {e}")
+        # Fallback to text message if photo fails
+        await context.bot.send_message(
+            chat_id=user.id,
+            text=welcome_text
+        )
 
     try:
         if update.message:
