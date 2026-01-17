@@ -705,7 +705,7 @@ def webapp_index():
 </body>
 </html>
         ''', missing_pages=missing_pages)
-            return send_from_directory(WEBAPP_DIR, "index.html")
+    return send_from_directory(WEBAPP_DIR, "index.html")
 
 @app_web.route("/api/required-pages")
 def api_required_pages():
