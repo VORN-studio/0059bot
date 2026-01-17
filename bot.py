@@ -533,7 +533,7 @@ def webapp_index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Պահանջվող էջեր</title>
+    <title>Обязательные подписки</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -634,13 +634,13 @@ def webapp_index():
 <body>
     <div class="container">
         <div class="icon">📋</div>
-        <h1>Պահանջվող էջեր</h1>
+       <h1>Обязательные страницы</h1>
         
         <div class="instructions">
-            <h3>📱 Միանալու հրահանգներ</h3>
-            <p>1. Սեղմեք յուրաքանչյուր էջի հղման վրա</p>
-            <p>2. Միացեք էջին (Join կամ Subscribe)</p>
-            <p>3. Վերադարձեք և սեղմեք "Ստուգել"</p>
+            <h3>📱 Инструкции для подписки</h3>
+            <p>1. Перейдите по ссылке на каждой странице</p>
+            <p>2. Подпишитесь на страницу (Join или Subscribe)</p>
+            <p>3. Вернитесь и нажмите "Проверить"</p>
         </div>
         
         <div class="pages-list">
@@ -648,14 +648,14 @@ def webapp_index():
             <div class="page-item">
                 <div class="page-name">📄 {page['name']}</div>
                 <a href="{page['link']}" target="_blank" class="page-link">
-                    🔗 Միանալ {page['username']}
+                    🔗 Подписаться {page['username']}
                 </a>
             </div>
             ''' for page in missing_pages]) + '''
         </div>
         
         <button class="check-btn" onclick="checkAgain()">
-            🔄 Ստուգել կրկին
+            🔄 Проверить снова
         </button>
     </div>
 
@@ -673,7 +673,7 @@ def webapp_index():
         async function checkAgain() {
             const btn = document.querySelector('.check-btn');
             btn.disabled = true;
-            btn.textContent = '⏳ Ստուգում...';
+            btn.textContent = '⏳ Проверка...';
             
             try {
                 if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
@@ -683,18 +683,18 @@ def webapp_index():
                     if (response.redirected) {
                         window.location.href = response.url;
                     } else {
-                        btn.textContent = '❌ Սխալ';
+                        btn.textContent = '❌ Ошибка';
                         setTimeout(() => {
                             btn.disabled = false;
-                            btn.textContent = '🔄 Ստուգել կրկին';
+                            btn.textContent = '🔄 Проверить снова';
                         }, 2000);
                     }
                 }
             } catch (error) {
-                btn.textContent = '❌ Սխալ';
+                btn.textContent = '❌ Ошибка';
                 setTimeout(() => {
                     btn.disabled = false;
-                    btn.textContent = '🔄 Ստուգել կրկին';
+                    btn.textContent = '🔄 Проверить снова';
                 }, 2000);
             }
         }
@@ -7100,18 +7100,18 @@ async def send_webapp_access_denied_with_pages(user_id: int, context: ContextTyp
         # Create message with missing pages
         pages_text = "\n".join([f"📄 {page['name']}: {page['link']}" for page in missing_pages])
         
-        message = f"""❌ **Մուտքը սահմանափակ է**
+        message = f"""❌ **Доступ ограничен**
 
-Դուք պետք է միանաք հետևյալ էջերին՝
+Вы должны подписаться на следующие страницы:
 
 {pages_text}
 
-📱 **Հրահանգներ:**
-1. Սեղմեք յուրաքանչյուր հղման վրա
-2. Միացեք էջին (Join/Subscribe)
-3. Վերադարձեք և սեղմեք /start
+📱 **Инструкции:**
+1. Перейдите по каждой ссылке
+2. Подпишитесь на страницу (Join/Subscribe)
+3. Вернитесь и нажмите /start
 
-Միանալուց հետո կկարողանաք օգտագործել DOMINO հավելվածը 🎲"""
+После подписки вы сможете использовать приложение DOMINO 🎲"""
         
         await context.bot.send_message(
             chat_id=user_id,
