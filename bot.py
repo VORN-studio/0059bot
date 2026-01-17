@@ -8486,18 +8486,24 @@ async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
                         # Convert status to string for comparison
                         status_str = str(member.status).upper()
                         logger.info(f"Status for {page_username}: {status_str}")
+                        logger.info(f"Raw status type: {type(member.status)}")
+                        logger.info(f"Raw status value: {member.status}")
                         
-                        # Check if user has any valid status
-                        valid_statuses = ['MEMBER', 'ADMINISTRATOR', 'CREATOR', 'OWNER', 'CHATMEMBERSTATUS.MEMBER', 'CHATMEMBERSTATUS.ADMINISTRATOR', 'CHATMEMBERSTATUS.CREATOR', 'CHATMEMBERSTATUS.OWNER']
-                        is_member = status_str in valid_statuses
+                        # Check if user has valid membership status (not left or banned)
+                        invalid_statuses = ['LEFT', 'BANNED', 'KICKED', 'RESTRICTED']
+                        is_invalid = status_str in invalid_statuses
                         
-                        if not is_member:
-                            logger.info(f"User {user_id} is not member of {page_username}")
+                        logger.info(f"Is invalid check: {status_str} in {invalid_statuses} = {is_invalid}")
+                        
+                        if is_invalid:
+                            logger.info(f"❌ User {user_id} is NOT member of {page_username} (status: {status_str})")
                             missing_pages.append({
                                 'link': page_link,
                                 'name': page_name,
                                 'username': page_username
                             })
+                        else:
+                            logger.info(f"✅ User {user_id} IS member of {page_username} (status: {status_str})")
                     except ChannelPrivate:
                         logger.warning(f"Channel {page_username} is private or bot doesn't have access")
                         missing_pages.append({
@@ -10449,12 +10455,17 @@ if __name__ == "__main__":
                                         # Convert status to string for comparison
                                         status_str = str(member.status).upper()
                                         logger.info(f"Status string: {status_str}")
+                                        logger.info(f"Raw status type: {type(member.status)}")
+                                        logger.info(f"Raw status value: {member.status}")
                                         
-                                        # Check if user has any valid status
-                                        valid_statuses = ['MEMBER', 'ADMINISTRATOR', 'CREATOR', 'OWNER', 'CHATMEMBERSTATUS.MEMBER', 'CHATMEMBERSTATUS.ADMINISTRATOR', 'CHATMEMBERSTATUS.CREATOR', 'CHATMEMBERSTATUS.OWNER']
-                                        is_member = status_str in valid_statuses
-                                        logger.info(f"Valid statuses: {valid_statuses}")
-                                        logger.info(f"Is {status_str} in valid_statuses? {is_member}")
+                                        # Check if user has valid membership status (not left or banned)
+                                        invalid_statuses = ['LEFT', 'BANNED', 'KICKED', 'RESTRICTED']
+                                        is_invalid = status_str in invalid_statuses
+                                        is_member = not is_invalid
+                                        
+                                        logger.info(f"Invalid statuses: {invalid_statuses}")
+                                        logger.info(f"Is {status_str} in invalid_statuses? {is_invalid}")
+                                        logger.info(f"Final is_member: {is_member}")
                                         
                                         pyrogram_results[request_id] = {
                                             'is_member': is_member,
