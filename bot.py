@@ -8258,7 +8258,17 @@ async def check_user_page_membership(user_id: int) -> bool:
                     try:
                         # Try to get chat member info
                         member = await pyrogram_client.get_chat_member(page_username, user_id)
-                        if member.status not in ['member', 'administrator', 'creator']:
+                        
+                        # Convert status to string for comparison (same as async version)
+                        status_str = str(member.status).upper()
+                        logger.info(f"Sync status string: {status_str}")
+                        
+                        # Check if user has any valid status (same logic as async version)
+                        valid_statuses = ['MEMBER', 'ADMINISTRATOR', 'CREATOR', 'OWNER', 'CHATMEMBERSTATUS.MEMBER', 'CHATMEMBERSTATUS.ADMINISTRATOR', 'CHATMEMBERSTATUS.CREATOR', 'CHATMEMBERSTATUS.OWNER']
+                        is_member = status_str in valid_statuses
+                        logger.info(f"Sync check for {page_username}: {status_str} (is_member: {is_member})")
+                        
+                        if not is_member:
                             logger.info(f"User {user_id} is not member of {page_username}")
                             return False
                     except ChannelPrivate:
