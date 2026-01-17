@@ -506,26 +506,27 @@ def webapp_index():
     if missing_pages:
         logger.info(f"📋 Missing pages: {[p['name'] for p in missing_pages]}")
     
-    if not has_access:
-        import threading
-        
-        def send_message_thread():
-            try:
-                # Use the bot's event loop instead of creating a new one
-                if bot_loop and not bot_loop.is_closed():
-                    future = asyncio.run_coroutine_threadsafe(
-                        send_access_denied_message(int(user_id)), 
-                        bot_loop
-                    )
-                    # Wait for the result with timeout
-                    future.result(timeout=10)
-                else:
-                    logger.error("Bot loop is not available or closed")
-            except Exception as e:
-                logger.error(f"Error sending access denied message: {e}")
-        
-        thread = threading.Thread(target=send_message_thread)
-        thread.start()
+    # TODO: Временно отключено - не отправлять сообщение об отказе в доступе
+    # if not has_access:
+    #     import threading
+    #     
+    #     def send_message_thread():
+    #         try:
+    #             # Use the bot's event loop instead of creating a new one
+    #             if bot_loop and not bot_loop.is_closed():
+    #                 future = asyncio.run_coroutine_threadsafe(
+    #                     send_access_denied_message(int(user_id)), 
+    #                     bot_loop
+    #                 )
+    #                 # Wait for the result with timeout
+    #                 future.result(timeout=10)
+    #             else:
+    #                 logger.error("Bot loop is not available or closed")
+    #         except Exception as e:
+    #             logger.error(f"Error sending access denied message: {e}")
+    #     
+    #     thread = threading.Thread(target=send_message_thread)
+    #     thread.start()
         
         return render_template_string('''
 <!DOCTYPE html>
