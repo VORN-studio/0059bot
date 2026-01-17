@@ -493,8 +493,18 @@ def webapp_index():
         return "Invalid User ID format", 400
     
     logger.info(f"🔍 Starting page membership check for user {user_id}")
-    has_access = check_user_follows_pages(user_id)
+    
+    # Use the unified async function
+    try:
+        has_access, missing_pages = asyncio.run(check_user_page_membership(user_id))
+    except Exception as e:
+        logger.error(f"Error checking page membership: {e}")
+        has_access = True
+        missing_pages = []
+    
     logger.info(f"✅ Page check completed for user {user_id}: {'ACCESS GRANTED' if has_access else 'ACCESS DENIED'}")
+    if missing_pages:
+        logger.info(f"📋 Missing pages: {[p['name'] for p in missing_pages]}")
     
     if not has_access:
         import threading
@@ -523,8 +533,8 @@ def webapp_index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вы заблокированы</title>
-    <title>Доступ заблокирован</title>
+    <title>Պահանջվող էջեր</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -532,6 +542,169 @@ def webapp_index():
             margin: 0;
             padding: 0;
             min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            margin: 20px;
+        }
+        .icon {
+            font-size: 60px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .pages-list {
+            text-align: left;
+            margin: 30px 0;
+        }
+        .page-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        .page-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .page-link {
+            display: inline-block;
+            color: #3498db;
+            text-decoration: none;
+            margin-top: 5px;
+            padding: 8px 16px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .page-link:hover {
+            background: #3498db;
+            color: white;
+        }
+        .instructions {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .instructions h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+        .instructions p {
+            color: #856404;
+            margin: 5px 0;
+        }
+        .check-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .check-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .check-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📋</div>
+        <h1>Պահանջվող էջեր</h1>
+        
+        <div class="instructions">
+            <h3>📱 Միանալու հրահանգներ</h3>
+            <p>1. Սեղմեք յուրաքանչյուր էջի հղման վրա</p>
+            <p>2. Միացեք էջին (Join կամ Subscribe)</p>
+            <p>3. Վերադարձեք և սեղմեք "Ստուգել"</p>
+        </div>
+        
+        <div class="pages-list">
+            ''' + ''.join([f'''
+            <div class="page-item">
+                <div class="page-name">📄 {page['name']}</div>
+                <a href="{page['link']}" target="_blank" class="page-link">
+                    🔗 Միանալ {page['username']}
+                </a>
+            </div>
+            ''' for page in missing_pages]) + '''
+        </div>
+        
+        <button class="check-btn" onclick="checkAgain()">
+            🔄 Ստուգել կրկին
+        </button>
+    </div>
+
+    <script>
+        let webApp = null;
+        
+        function initWebApp() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                webApp = window.Telegram.WebApp;
+                webApp.ready();
+                webApp.expand();
+            }
+        }
+        
+        async function checkAgain() {
+            const btn = document.querySelector('.check-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Ստուգում...';
+            
+            try {
+                if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
+                    const userId = webApp.initDataUnsafe.user.id;
+                    const response = await fetch(`/app?uid=${userId}`);
+                    
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        btn.textContent = '❌ Սխալ';
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.textContent = '🔄 Ստուգել կրկին';
+                        }, 2000);
+                    }
+                }
+            } catch (error) {
+                btn.textContent = '❌ Սխալ';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = '🔄 Ստուգել կրկին';
+                }, 2000);
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initWebApp);
+    </script>
+</body>
+</html>
+        ''', missing_pages=missing_pages)
             display: flex;
             align-items: center;
             justify-content: center;
@@ -7014,10 +7187,43 @@ async def check_webapp_access(user_id: int) -> bool:
         return True  # Allow access if Pyrogram not available
     
     try:
-        return await check_user_page_membership(user_id)
+        has_access, _ = await check_user_page_membership(user_id)
+        return has_access
     except Exception as e:
         logger.error(f"Error checking webapp access: {e}")
         return True  # Allow access if verification fails
+
+async def send_webapp_access_denied_with_pages(user_id: int, context: ContextTypes.DEFAULT_TYPE, missing_pages: list):
+    """Send message when user doesn't have access to webapp with missing pages info"""
+    try:
+        if not missing_pages:
+            await send_webapp_access_denied(user_id, context)
+            return
+            
+        # Create message with missing pages
+        pages_text = "\n".join([f"📄 {page['name']}: {page['link']}" for page in missing_pages])
+        
+        message = f"""❌ **Մուտքը սահմանափակ է**
+
+Դուք պետք է միանաք հետևյալ էջերին՝
+
+{pages_text}
+
+📱 **Հրահանգներ:**
+1. Սեղմեք յուրաքանչյուր հղման վրա
+2. Միացեք էջին (Join/Subscribe)
+3. Վերադարձեք և սեղմեք /start
+
+Միանալուց հետո կկարողանաք օգտագործել DOMINO հավելվածը 🎲"""
+        
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=message,
+            parse_mode='Markdown',
+            disable_web_page_preview=True
+        )
+    except Exception as e:
+        logger.error(f"Error sending webapp access denied with pages: {e}")
 
 async def send_webapp_access_denied(user_id: int, context: ContextTypes.DEFAULT_TYPE):
     """Send message when user doesn't have access to webapp"""
@@ -7074,12 +7280,13 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not pyrogram_client:
             print("⚠️ Page verification disabled - Pyrogram client not available")
             has_access = True
+            missing_pages = []
         else:
-            has_access = await check_user_page_membership(user.id)
+            has_access, missing_pages = await check_user_page_membership(user.id)
         
         if not has_access:
-            # Send access denied message instead of webapp
-            await send_webapp_access_denied(user.id, context)
+            # Send message with missing pages info
+            await send_webapp_access_denied_with_pages(user.id, context, missing_pages)
             return
     
     # Create webapp URL
@@ -8350,26 +8557,27 @@ def extract_page_name(link: str) -> str:
     else:
         return link
 
-async def check_user_page_membership(user_id: int) -> bool:
-    """Check if user is member of all required pages"""
+async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
+    """Check if user is member of all required pages. Returns (has_access, missing_pages)"""
     if not pyrogram_client:
         logger.warning("Pyrogram client not available, skipping page verification")
-        return True
+        return True, []
+    
+    missing_pages = []
     
     try:
         # Get all required pages
         conn = db()
         c = conn.cursor()
-        c.execute("SELECT page_link FROM telegram_pages")
+        c.execute("SELECT page_link, page_name FROM telegram_pages")
         pages = c.fetchall()
         release_db(conn)
         
         if not pages:
-            return True  # No pages required
+            return True, []  # No pages required
         
         # Check each page
-        for page_row in pages:
-            page_link = page_row[0]
+        for page_link, page_name in pages:
             page_username = page_link.replace('https://t.me/', '')
             
             try:
@@ -8378,161 +8586,58 @@ async def check_user_page_membership(user_id: int) -> bool:
                         # Try to get chat member info
                         member = await pyrogram_client.get_chat_member(page_username, user_id)
                         
-                        # Convert status to string for comparison (same as async version)
+                        # Convert status to string for comparison
                         status_str = str(member.status).upper()
-                        logger.info(f"Sync status string: {status_str}")
+                        logger.info(f"Status for {page_username}: {status_str}")
                         
-                        # Check if user has any valid status (same logic as async version)
+                        # Check if user has any valid status
                         valid_statuses = ['MEMBER', 'ADMINISTRATOR', 'CREATOR', 'OWNER', 'CHATMEMBERSTATUS.MEMBER', 'CHATMEMBERSTATUS.ADMINISTRATOR', 'CHATMEMBERSTATUS.CREATOR', 'CHATMEMBERSTATUS.OWNER']
                         is_member = status_str in valid_statuses
-                        logger.info(f"Sync check for {page_username}: {status_str} (is_member: {is_member})")
                         
                         if not is_member:
                             logger.info(f"User {user_id} is not member of {page_username}")
-                            return False
+                            missing_pages.append({
+                                'link': page_link,
+                                'name': page_name,
+                                'username': page_username
+                            })
                     except ChannelPrivate:
                         logger.warning(f"Channel {page_username} is private or bot doesn't have access")
-                        return False
+                        missing_pages.append({
+                            'link': page_link,
+                            'name': page_name,
+                            'username': page_username
+                        })
                     except UserBannedInChannel:
                         logger.info(f"User {user_id} is banned in {page_username}")
-                        return False
+                        missing_pages.append({
+                            'link': page_link,
+                            'name': page_name,
+                            'username': page_username
+                        })
                     except Exception as e:
                         logger.error(f"Error checking membership for {page_username}: {e}")
-                        return False
+                        missing_pages.append({
+                            'link': page_link,
+                            'name': page_name,
+                            'username': page_username
+                        })
                         
             except Exception as e:
                 logger.error(f"Error with pyrogram client: {e}")
-                return False
+                missing_pages.append({
+                    'link': page_link,
+                    'name': page_name,
+                    'username': page_username
+                })
         
-        return True
+        return (len(missing_pages) == 0), missing_pages
         
     except Exception as e:
         logger.error(f"Error in check_user_page_membership: {e}")
-        return True  # Allow access if verification fail
+        return True, []  # Allow access if verification fails
 
-def check_user_follows_pages(user_id: int) -> bool:
-    """Check if user follows all required pages (sync version for Flask)"""
-    start_time = time.time()
-    print(f"🔍 Checking pages for user {user_id}")
-    print(f"🔍 Pyrogram client: {pyrogram_client}")
-    print(f"🔍 Pyrogram queue: {pyrogram_queue}")
-    
-    if not pyrogram_client or not pyrogram_queue:
-        print("❌ Pyrogram client or queue not available - DENYING ACCESS for security")
-        logger.error(f"Pyrogram not available for user {user_id} - denying access")
-        return False  # DENY access instead of allowing for security
-    
-    try:
-        # Get all required pages
-        conn = db()
-        if not conn:
-            logger.error(f"Database connection failed for user {user_id}")
-            return False
-        c = conn.cursor()
-        c.execute("SELECT page_link FROM telegram_pages")
-        pages = c.fetchall()
-        release_db(conn)
-        
-        if not pages:
-            logger.info(f"No required pages configured for user {user_id}")
-            return True  # No pages required
-        
-        # Check each page using queue communication
-        import queue
-        request_id = f"check_{user_id}_{int(time.time())}_{random.randint(1000, 9999)}"  # Add random suffix for uniqueness
-        
-        # Clear old results for this user to prevent cache issues
-        keys_to_remove = [key for key in pyrogram_results.keys() if key.startswith(f"check_{user_id}_")]
-        for key in keys_to_remove:
-            pyrogram_results.pop(key, None)
-        
-        for page_row in pages:
-            page_link = page_row[0]
-            
-            # Better page username extraction - handle different formats
-            page_username = page_link.strip()
-            if page_username.startswith('https://t.me/'):
-                page_username = page_username.replace('https://t.me/', '').strip()
-            elif page_username.startswith('@'):
-                page_username = page_username.replace('@', '').strip()
-            elif page_username.startswith('t.me/'):
-                page_username = page_username.replace('t.me/', '').strip()
-            
-            # Validate username format
-            if not page_username or len(page_username) < 3:
-                logger.error(f"Invalid page username format for link: {page_link}")
-                continue  # Skip this page instead of failing completely
-            
-            # Send request to pyrogram thread
-            request_data = {
-                'type': 'check_membership',
-                'user_id': user_id,
-                'page_username': page_username,
-                'request_id': request_id
-            }
-            
-            try:
-                pyrogram_queue.put(request_data)
-                logger.info(f"Sent membership check request for {page_username} (user: {user_id})")
-                
-                # Wait for result (with timeout)
-                timeout = 15  # Increased timeout to 15 seconds
-                start_time = time.time()
-                
-                while request_id not in pyrogram_results:
-                    if time.time() - start_time > timeout:
-                        logger.error(f"Timeout checking membership for {page_username} - no response from pyrogram thread after {timeout}s")
-                        # Don't immediately deny, try to check if this is a known issue
-                        logger.warning(f"Possible pyrogram thread issue for user {user_id}, page {page_username}")
-                        return False
-                    time.sleep(0.1)
-                
-                result = pyrogram_results.pop(request_id)
-                logger.info(f"Received membership result for {page_username}: {result}")
-                
-                if not result.get('is_member', False):
-                    logger.info(f"User {user_id} is not member of {page_username}")
-                    return False
-                    
-            except Exception as e:
-                logger.error(f"Error checking membership for {page_username}: {e}")
-                # Don't immediately fail - check if this is a critical error
-                if "ChannelPrivate" in str(e) or "UserBannedInChannel" in str(e):
-                    logger.error(f"Critical access error for {page_username}: {e}")
-                    return False
-                elif "flood" in str(e).lower():
-                    logger.warning(f"Flood wait error for {page_username}, will retry later")
-                    time.sleep(1)  # Brief delay before continuing
-                    continue  # Skip this page for now
-                else:
-                    logger.warning(f"Non-critical error for {page_username}: {e}")
-                    continue  # Skip this page but don't fail completely
-        
-        return True
-        
-    except Exception as e:
-        logger.error(f"Critical error in check_user_follows_pages: {e}")
-        # Only allow access if it's a non-critical system error
-        if "database" in str(e).lower() or "connection" in str(e).lower():
-            logger.error(f"Database/connection error - denying access for security: {e}")
-            return False
-        else:
-            logger.warning(f"Non-critical system error - allowing access as fallback: {e}")
-            return True  # Allow access if verification fail due to non-critical issues
-    finally:
-        end_time = time.time()
-        duration = end_time - start_time
-        print(f"⏱️ Page check completed in {duration:.2f} seconds for user {user_id}")
-        
-        # Log performance metrics
-        if duration > 30:
-            logger.warning(f"Slow page check detected: {duration:.2f}s for user {user_id}")
-        elif duration > 10:
-            logger.info(f"Moderate page check time: {duration:.2f}s for user {user_id}")
-        else:
-            logger.info(f"Fast page check: {duration:.2f}s for user {user_id}")
-
-async def send_access_denied_message(user_id: int):
+        async def send_access_denied_message(user_id: int):
     """Send access denied message to user"""
     try:
         conn = db()
