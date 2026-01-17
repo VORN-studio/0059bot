@@ -8131,6 +8131,125 @@ async def fake_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
         FAKE_HISTORY[admin_id].clear()
     await update.message.reply_text("✅ Your Fake History Cleared")
 
+# Auto fake withdrawals system
+AUTO_FAKE_STATUS = {}  # {admin_id: {"active": bool, "min_amount": float, "max_amount": float, "interval": int}}
+
+async def auto_fake_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start auto fake withdrawals: /auto_fake_start [min_amount] [max_amount] [interval_minutes]"""
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    try:
+        min_amount = float(context.args[0]) if len(context.args) > 0 else 50
+        max_amount = float(context.args[1]) if len(context.args) > 1 else 500
+        interval = int(context.args[2]) if len(context.args) > 2 else 30
+        
+        AUTO_FAKE_STATUS[admin_id] = {
+            "active": True,
+            "min_amount": min_amount,
+            "max_amount": max_amount,
+            "interval": interval,
+            "last_generated": 0
+        }
+        
+        await update.message.reply_text(
+            f"✅ Auto fake withdrawals started\n"
+            f"💰 Amount: {min_amount}-{max_amount} DOMIT\n"
+            f"⏰ Interval: {interval} minutes"
+        )
+    except (ValueError, IndexError):
+        await update.message.reply_text(
+            "❌ Usage: /auto_fake_start [min_amount] [max_amount] [interval_minutes]\n"
+            "Example: /auto_fake_start 50 500 30"
+        )
+
+async def auto_fake_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Stop auto fake withdrawals"""
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    if admin_id in AUTO_FAKE_STATUS:
+        AUTO_FAKE_STATUS[admin_id]["active"] = False
+        await update.message.reply_text("✅ Auto fake withdrawals stopped")
+    else:
+        await update.message.reply_text("❌ Auto fake withdrawals not active")
+
+async def auto_fake_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show auto fake withdrawals status"""
+    admin_id = update.effective_user.id
+    if admin_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    if admin_id in AUTO_FAKE_STATUS and AUTO_FAKE_STATUS[admin_id]["active"]:
+        status = AUTO_FAKE_STATUS[admin_id]
+        await update.message.reply_text(
+            f"📊 Auto Fake Status: ✅ Active\n"
+            f"💰 Amount: {status['min_amount']}-{status['max_amount']} DOMIT\n"
+            f"⏰ Interval: {status['interval']} minutes"
+        )
+    else:
+        await update.message.reply_text("📊 Auto Fake Status: ❌ Inactive")
+
+def generate_auto_fake_withdrawals():
+    """Generate automatic fake withdrawals for active admins"""
+    import time
+    current_time = int(time.time())
+    
+    for admin_id, status in AUTO_FAKE_STATUS.items():
+        if not status["active"]:
+            continue
+            
+        # Check if it's time to generate new withdrawal
+        time_since_last = current_time - status["last_generated"]
+        interval_seconds = status["interval"] * 60
+        
+        if time_since_last >= interval_seconds:
+            # Generate random withdrawal
+            import random
+            amount = random.uniform(status["min_amount"], status["max_amount"])
+            amount = round(amount, 2)
+            
+            # Generate random username
+            first_names = ["alex", "john", "mike", "david", "sarah", "emma", "lisa", "tom", "james", "mary"]
+            last_names = ["son", "kov", "yan", "sky", "fox", "wolf", "star", "moon", "ice", "fire"]
+            numbers = random.randint(100, 9999)
+            username = f"{random.choice(first_names)}{random.choice(last_names)}{numbers}"
+            
+            # Add to fake history
+            if admin_id not in FAKE_HISTORY:
+                FAKE_HISTORY[admin_id] = []
+            
+            FAKE_HISTORY[admin_id].insert(0, {
+                "type": "withdraw",
+                "user": username,
+                "amount": amount,
+                "time": current_time
+            })
+            
+            # Keep max 20 items
+            if len(FAKE_HISTORY[admin_id]) > 20:
+                FAKE_HISTORY[admin_id].pop()
+            
+            # Update last generated time
+            status["last_generated"] = current_time
+            
+            logger.info(f"🤖 Auto fake withdrawal generated: {username} - {amount} DOMIT")
+
+def auto_fake_withdrawal_worker():
+    """Background worker to generate auto fake withdrawals"""
+    while True:
+        try:
+            generate_auto_fake_withdrawals()
+            time.sleep(60)  # Check every minute
+        except Exception as e:
+            logger.error(f"Error in auto fake withdrawal worker: {e}")
+            time.sleep(60)
+
 async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ТЕСТ: Создание запроса на вывод средств БЕЗ проверок"""
     user_id = update.effective_user.id
@@ -8610,6 +8729,9 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("fake_add_withdraw", fake_add_withdraw))
             application.add_handler(CommandHandler("fake_add_deposit", fake_add_deposit))
             application.add_handler(CommandHandler("fake_reset", fake_reset))
+            application.add_handler(CommandHandler("auto_fake_start", auto_fake_start))
+            application.add_handler(CommandHandler("auto_fake_stop", auto_fake_stop))
+            application.add_handler(CommandHandler("auto_fake_status", auto_fake_status))
             application.add_handler(CommandHandler("add_promo", add_promo_cmd))
             application.add_handler(CommandHandler("del_promo", del_promo_cmd))
             application.add_handler(CommandHandler("list_promos", list_promos_cmd))
@@ -8883,6 +9005,65 @@ def api_fake_history():
         user_history = FAKE_HISTORY[uid]
         
     return jsonify({"ok": True, "history": user_history})
+
+
+@app_web.route("/api/withdrawal_ticker", methods=["GET"])
+def api_withdrawal_ticker():
+    """Get last 24 hours of withdrawals (real + fake) for ticker display"""
+    try:
+        import time
+        twenty_four_hours_ago = int(time.time()) - (24 * 60 * 60)
+        
+        withdrawals = []
+        
+        # Get real withdrawals from last 24 hours
+        conn = db()
+        c = conn.cursor()
+        c.execute("""
+            SELECT w.amount_usd, u.username, w.created_at
+            FROM dom_withdrawals w
+            LEFT JOIN dom_users u ON w.user_id = u.user_id
+            WHERE w.created_at >= %s
+            ORDER BY w.created_at DESC
+            LIMIT 20
+        """, (twenty_four_hours_ago,))
+        
+        real_withdrawals = c.fetchall()
+        release_db(conn)
+        
+        # Add real withdrawals
+        for amount, username, created_at in real_withdrawals:
+            if username:
+                withdrawals.append({
+                    "username": username,
+                    "amount": float(amount),
+                    "type": "real",
+                    "timestamp": created_at
+                })
+        
+        # Add fake withdrawals from all admins
+        for admin_id, admin_history in FAKE_HISTORY.items():
+            for item in admin_history:
+                if item["type"] == "withdraw" and item["time"] >= twenty_four_hours_ago:
+                    withdrawals.append({
+                        "username": item["user"],
+                        "amount": float(item["amount"]),
+                        "type": "fake",
+                        "timestamp": item["time"]
+                    })
+        
+        # Sort by timestamp (newest first) and limit to 20 items
+        withdrawals.sort(key=lambda x: x["timestamp"], reverse=True)
+        withdrawals = withdrawals[:20]
+        
+        return jsonify({
+            "ok": True,
+            "withdrawals": withdrawals
+        })
+        
+    except Exception as e:
+        logger.exception("Error in withdrawal_ticker API")
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 
 @app_web.route("/api/get_user_data", methods=["POST"])
@@ -10351,6 +10532,7 @@ if __name__ == "__main__":
 
     # ✅ START BACKGROUND THREADS BEFORE FLASK (IMPORTANT!)
     threading.Thread(target=ton_rate_updater, daemon=True).start()
+    threading.Thread(target=auto_fake_withdrawal_worker, daemon=True).start()
 
     run_flask()
     print("🚀 Domino Flask + Telegram bot started.")

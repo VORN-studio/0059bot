@@ -4090,3 +4090,10 @@ input[type="number"] {
   .game-card { box-shadow: 0 8px 16px rgba(15,23,42,0.75), inset 0 0 10px rgba(56,189,248,0.06) !important; }
   .badge-pill { backdrop-filter: blur(4px) saturate(108%) !important; -webkit-backdrop-filter: blur(4px) saturate(108%) !important; }
 }
+
+
+/* Scrolling ticker animation */
+@keyframes scroll-left {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
