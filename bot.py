@@ -8478,61 +8478,59 @@ async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
             page_username = page_link.replace('https://t.me/', '')
             
             try:
-                async with pyrogram_client:
-                    try:
-                        # Try to get chat member info
-                        member = await pyrogram_client.get_chat_member(page_username, user_id)
+                # Try to get chat member info
+                member = await pyrogram_client.get_chat_member(page_username, user_id)
                         
                         # Convert status to string for comparison
-                        status_str = str(member.status).upper()
-                        logger.info(f"Status for {page_username}: {status_str}")
-                        logger.info(f"Raw status type: {type(member.status)}")
-                        logger.info(f"Raw status value: {member.status}")
-                        
-                        # Check if user has valid membership status (not left or banned)
-                        invalid_statuses = ['LEFT', 'BANNED', 'KICKED', 'RESTRICTED']
-                        is_invalid = status_str in invalid_statuses
-                        
-                        logger.info(f"Is invalid check: {status_str} in {invalid_statuses} = {is_invalid}")
-                        
-                        if is_invalid:
-                            logger.info(f"❌ User {user_id} is NOT member of {page_username} (status: {status_str})")
-                            missing_pages.append({
-                                'link': page_link,
-                                'name': page_name,
-                                'username': page_username
-                            })
-                        else:
-                            logger.info(f"✅ User {user_id} IS member of {page_username} (status: {status_str})")
-                    except ChannelPrivate:
-                        logger.warning(f"Channel {page_username} is private or bot doesn't have access")
-                        missing_pages.append({
-                            'link': page_link,
-                            'name': page_name,
-                            'username': page_username
-                        })
-                    except UserBannedInChannel:
-                        logger.info(f"User {user_id} is banned in {page_username}")
-                        missing_pages.append({
-                            'link': page_link,
-                            'name': page_name,
-                            'username': page_username
-                        })
-                    except Exception as e:
-                        logger.error(f"Error checking membership for {page_username}: {e}")
-                        missing_pages.append({
-                            'link': page_link,
-                            'name': page_name,
-                            'username': page_username
-                        })
-                        
-            except Exception as e:
-                logger.error(f"Error with pyrogram client: {e}")
+                status_str = str(member.status).upper()
+                logger.info(f"Status for {page_username}: {status_str}")
+                logger.info(f"Raw status type: {type(member.status)}")
+                logger.info(f"Raw status value: {member.status}")
+                
+                # Check if user has valid membership status (not left or banned)
+                invalid_statuses = ['LEFT', 'BANNED', 'KICKED', 'RESTRICTED']
+                is_invalid = status_str in invalid_statuses
+                
+                logger.info(f"Is invalid check: {status_str} in {invalid_statuses} = {is_invalid}")
+                
+                if is_invalid:
+                    logger.info(f"❌ User {user_id} is NOT member of {page_username} (status: {status_str})")
+                    missing_pages.append({
+                        'link': page_link,
+                        'name': page_name,
+                        'username': page_username
+                    })
+                else:
+                    logger.info(f"✅ User {user_id} IS member of {page_username} (status: {status_str})")
+            except ChannelPrivate:
+                logger.warning(f"Channel {page_username} is private or bot doesn't have access")
                 missing_pages.append({
                     'link': page_link,
                     'name': page_name,
                     'username': page_username
                 })
+            except UserBannedInChannel:
+                logger.info(f"User {user_id} is banned in {page_username}")
+                missing_pages.append({
+                    'link': page_link,
+                    'name': page_name,
+                    'username': page_username
+                })
+            except Exception as e:
+                logger.error(f"Error checking membership for {page_username}: {e}")
+                missing_pages.append({
+                    'link': page_link,
+                    'name': page_name,
+                    'username': page_username
+                })
+                
+        except Exception as e:
+            logger.error(f"Error with pyrogram client: {e}")
+            missing_pages.append({
+                'link': page_link,
+                'name': page_name,
+                'username': page_username
+            })
         
         return (len(missing_pages) == 0), missing_pages
         
