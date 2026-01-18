@@ -655,9 +655,9 @@ def webapp_index():
             ''' for page in missing_pages]) + '''
         </div>
         
-        <button class="check-btn" onclick="checkAgain()">
-            🔄 Проверить снова
-        </button>
+        <p style="text-align: center; color: #666; font-size: 14px; margin-top: 20px;">
+            🔄 Обновите страницу для повторной проверки
+        </p>
     </div>
 
     <script>
@@ -668,35 +668,6 @@ def webapp_index():
                 webApp = window.Telegram.WebApp;
                 webApp.ready();
                 webApp.expand();
-            }
-        }
-        
-        async function checkAgain() {
-            const btn = document.querySelector('.check-btn');
-            btn.disabled = true;
-            btn.textContent = '⏳ Проверка...';
-            
-            try {
-                if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
-                    const userId = webApp.initDataUnsafe.user.id;
-                    const response = await fetch(`/app?uid=${userId}`);
-                    
-                    if (response.redirected) {
-                        window.location.href = response.url;
-                    } else {
-                        btn.textContent = '❌ Ошибка';
-                        setTimeout(() => {
-                            btn.disabled = false;
-                            btn.textContent = '🔄 Проверить снова';
-                        }, 2000);
-                    }
-                }
-            } catch (error) {
-                btn.textContent = '❌ Ошибка';
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.textContent = '🔄 Проверить снова';
-                }, 2000);
             }
         }
         
