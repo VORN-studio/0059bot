@@ -8317,7 +8317,7 @@ def generate_auto_fake_withdrawals():
             
             formats = [
                 f"ID{telegram_id[-4:]}",
-                f"ID{telegram_id[-5:]}_{random.randint(1,99)}",
+                f"ID{telegram_id[-5:]}{random.randint(1,99)}",
                 f"ID_{telegram_id[-6:]}",
                 f"ID{telegram_id[-3:]}{random.randint(1,9)}"
             ]
