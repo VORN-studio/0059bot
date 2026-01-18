@@ -8310,11 +8310,18 @@ def generate_auto_fake_withdrawals():
             amount = random.uniform(status["min_amount"], status["max_amount"])
             amount = round(amount, 2)
             
-            # Generate random username
-            first_names = ["alex", "john", "mike", "david", "sarah", "emma", "lisa", "tom", "james", "mary"]
-            last_names = ["son", "kov", "yan", "sky", "fox", "wolf", "star", "moon", "ice", "fire"]
-            numbers = random.randint(100, 9999)
-            username = f"{random.choice(first_names)}{random.choice(last_names)}{numbers}"
+             # Generate realistic Telegram-like username with ID
+            first_digit = random.choice('123456789')
+            other_digits = ''.join([random.choice('0123456789') for _ in range(9)])
+            telegram_id = first_digit + other_digits
+            
+            formats = [
+                f"ID{telegram_id[-4:]}",
+                f"ID{telegram_id[-5:]}_{random.randint(1,99)}",
+                f"ID_{telegram_id[-6:]}",
+                f"ID{telegram_id[-3:]}{random.randint(1,9)}"
+            ]
+            username = random.choice(formats)
             
             # Add to fake history
             if admin_id not in FAKE_HISTORY:
