@@ -33,8 +33,8 @@ async function loadReferralStats() {
       
       if (refTotal) refTotal.textContent = data.total_refs;
       if (refActive) refActive.textContent = data.active_refs;
-      if (refEarnings) refEarnings.textContent = `${data.referral_earnings} DOMIT`;
-      if (refDeposits) refDeposits.textContent = `${data.team_deposits} DOMIT`;
+      if (refEarnings) refEarnings.textContent = `${data.referral_earnings} TON`;
+      if (refDeposits) refDeposits.textContent = `${data.team_deposits} TON`;
       
       // Update benefits
       const benefitsList = document.getElementById('benefits-list');

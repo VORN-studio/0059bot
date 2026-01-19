@@ -20,7 +20,7 @@ async function loadWithdrawalTicker() {
           const color = w.type === 'real' ? '#10b981' : '#f59e0b'; // Green for real, amber for fake
           const icon = w.type === 'real' ? '💰' : '🎯';
           return `<span style="margin: 0 20px; color: ${color}; font-weight: bold;">
-            ${icon} ${maskUsername(w.username)} - ${w.amount} DOMIT
+            ${icon} ${maskUsername(w.username)} - ${w.amount} TON
           </span>`;
         }).join('');
         
