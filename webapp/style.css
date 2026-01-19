@@ -1952,6 +1952,16 @@ input[type="number"]:focus::after {
     margin: 10px 0;
 }
 
+/* Scroll animation for ticker */
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
 .ticker-text {
     display: inline-block;
     padding-left: 100%;

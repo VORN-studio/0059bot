@@ -15,12 +15,14 @@ async function loadWithdrawalTicker() {
     if (data.ok && data.withdrawals && data.withdrawals.length > 0) {
       const tickerContent = document.getElementById('ticker-content');
       if (tickerContent) {
-        // Create ticker items
-        const tickerItems = data.withdrawals.map(w => 
-          `<span style="margin: 0 20px; color: #10b981; font-weight: bold;">
-            💰 ${maskUsername(w.username)} - ${w.amount} DOMIT
-          </span>`
-        ).join('');
+        // Create ticker items with different colors for real vs fake
+        const tickerItems = data.withdrawals.map(w => {
+          const color = w.type === 'real' ? '#10b981' : '#f59e0b'; // Green for real, amber for fake
+          const icon = w.type === 'real' ? '💰' : '🎯';
+          return `<span style="margin: 0 20px; color: ${color}; font-weight: bold;">
+            ${icon} ${maskUsername(w.username)} - ${w.amount} DOMIT
+          </span>`;
+        }).join('');
         
         // Duplicate for seamless scrolling
         tickerContent.innerHTML = tickerItems + tickerItems;
@@ -30,14 +32,25 @@ async function loadWithdrawalTicker() {
         const durationMultiplier = Math.max(1, data.withdrawals.length / 5);
         tickerContent.style.animationDuration = (baseDuration * durationMultiplier) + 's';
       }
+    } else {
+      // If no withdrawals, show empty message
+      const tickerContent = document.getElementById('ticker-content');
+      if (tickerContent) {
+        tickerContent.innerHTML = '<span style="margin: 0 20px; color: #64748b; font-weight: bold;">🎯 Կանխիկացումները շուտով կսկսեն...</span>';
+      }
     }
   } catch (error) {
     console.error('Error loading withdrawal ticker:', error);
+    // Show error message in ticker
+    const tickerContent = document.getElementById('ticker-content');
+    if (tickerContent) {
+      tickerContent.innerHTML = '<span style="margin: 0 20px; color: #ef4444; font-weight: bold;">❌ Կանխիկացումների տվյալները հասանելի չեն</span>';
+    }
   }
 }
 
 // Load ticker data on page load
 document.addEventListener('DOMContentLoaded', loadWithdrawalTicker);
 
-// Refresh ticker data every 5 minutes
-setInterval(loadWithdrawalTicker, 5 * 60 * 1000);
+// Refresh ticker data every 2 minutes (more frequent for fake withdrawals)
+setInterval(loadWithdrawalTicker, 2 * 60 * 1000);
