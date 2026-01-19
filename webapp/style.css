@@ -1983,3 +1983,29 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.7) !important;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05) !important;
 }
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    /* Կանաչի, դեղինի և սպիտակի նուրբ Mesh Gradient */
+    background-color: #ffffff; /* Հիմնական սպիտակը */
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(132, 204, 22, 0.25) 0px, transparent 50%),   /* Կանաչ (Lime) */
+        radial-gradient(at 100% 0%, rgba(250, 204, 21, 0.2) 0px, transparent 50%),  /* Դեղին (Amber) */
+        radial-gradient(at 50% 50%, rgba(255, 255, 255, 1) 0px, transparent 80%),   /* Կենտրոնական սպիտակ */
+        radial-gradient(at 100% 100%, rgba(163, 230, 53, 0.2) 0px, transparent 50%),/* Բաց կանաչ */
+        radial-gradient(at 0% 100%, rgba(253, 224, 71, 0.25) 0px, transparent 50%); /* Բաց դեղին */
+    
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+/* Որպեսզի ձեր #app-ը չկորչի այս ֆոնի վրա, դարձրեք այն մի փոքր ավելի հստակ */
+#app {
+    background: rgba(255, 255, 255, 0.45) !important;
+    backdrop-filter: blur(15px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(15px) saturate(120%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05) !important;
+}
