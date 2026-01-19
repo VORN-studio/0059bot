@@ -5890,8 +5890,8 @@ def api_withdraw_request():
     Указанные вами правила:
     - сумма > 0
     - сумма <= баланс в DOMIT
-    - не менее 10 приглашенных друзей
-    - общий депозит команды (друзей) >= 200 DOMIT
+    - не менее 7 приглашенных друзей
+    - баланс пользователя должен быть не менее 2000 DOMIT
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -5916,18 +5916,18 @@ def api_withdraw_request():
             "message": "У вас достаточно средств на счету для снятия наличных?"
         }), 200
 
-    if ref_count < 5:
+    if ref_count < 7:
         return jsonify({
             "ok": False,
             "error": "not_enough_refs",
-            "message": "Для вывода средств необходимо пригласить не менее 5 друзей."
+            "message": "Для вывода средств необходимо пригласить не менее 7 друзей."
         }), 200
 
-    if team_dep < 50.0:
+    if balance < 2000.0:
         return jsonify({
             "ok": False,
-            "error": "not_enough_team_deposit",
-            "message": "Для вывода средств общая сумма депозита ваших приглашенных должна составлять не менее 5 DOMIT."
+            "error": "not_enough_balance",
+            "message": "Для вывода средств необходимо иметь не менее 2000 DOMIT на балансе."
         }), 200
 
     create_withdraw_request(user_id, amount)
