@@ -67,7 +67,7 @@
 
         <div><strong>ID:</strong> <span id="user-id">-</span></div>
         <div><strong>Имя:</strong> <span id="user-name">-</span></div>
-        <div><strong>Баланс:</strong> <span id="user-balance"> DOMIT</span></div>
+        <div><strong>Баланс:</strong> <span id="user-balance"> TON</span></div>
         </div>
     </header>
 
@@ -96,7 +96,7 @@
 
         <div id="screen-wallet" class="screen">
           <h2>💼 Wallet</h2>
-          <p>Подключите свой кошелек и получите бонус X DOMIT.</p>
+          <p>Подключите свой кошелек и получите бонус X TON.</p>
           <div id="ton-connect"></div>
           <p id="wallet-status" class="status"></p>
         </div>
@@ -128,9 +128,9 @@
           <p>Снятие наличных доступно, если..</p>
           <ul>
             <li>У вас 7 и более активных рефералов.</li>
-            <li>Ваш баланс составляет ≥ 2000 DOMIT.</li>
+            <li>Ваш баланс составляет ≥ 200 TON.</li>
           </ul>
-          <input type="number" id="withdraw-amount" placeholder="1 DOMIT = 0,01 TON" />
+          <input type="number" id="withdraw-amount" placeholder="1 TON" />
           <button id="withdraw-btn" class="btn primary">Отправить запрос на вывод</button>
           <div style="margin-top:16px;"><strong>🎁 Промокод</strong></div>
           <input type="text" id="promo-code" placeholder="Введите промокод" />
@@ -156,7 +156,7 @@
           <div class="ref-stats">
             <p>Всего рефералов: <span id="ref-total">0</span></p>
             <p>Активные рефералы: <span id="ref-active">0</span></p>
-            <p>Общий доход: <span id="ref-earnings">0.00 DOMIT</span></p>
+            <p>Общий доход: <span id="ref-earnings">0.00 TON</span></p>
              <!-- <p>Сумма их депозитов: <span id="ref-deposits">0.00 DOMIT</span></p> -->
           </div>
           
@@ -164,13 +164,13 @@
           <div class="next-tier" id="next-tier" style="margin-top:20px; padding:15px; background:linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.05)); border:2px solid rgba(255,215,0,0.3); border-radius:10px; text-align:center;">
             <h4 style="color:#ffd700; margin:0 0 10px 0;">📈 Следующий уровень՝ Gold</h4>
             <p style="margin:0; color:#ffd700; font-size:14px;">Требуется еще 6 активных рефералов</p>
-            <p style="margin:5px 0 0 0; color:#ffd700; font-size:12px;">🎁 0.25 DOMIT</p>
+            <p style="margin:5px 0 0 0; color:#ffd700; font-size:12px;">🎁 0.25 TON</p>
           </div>
         </div>
 
           <div id="screen-tasks" class="screen">
             <h2>📝 Tasks</h2>
-              <p>Выполняй задания и получай DOMIT. 💰</p>
+              <p>Выполняй задания и получай TON. 💰</p>
 
             <div class="task-card">
               <p>🔥 Система задач скоро появится…</p>
@@ -183,8 +183,8 @@
           <div id="mining-active-box" class="mt-16" style="display:none;">
             <h3>Ваш активный план</h3>
             <p><strong>Tier:</strong> <span id="mining-active-tier">-</span></p>
-            <p><strong>DOMIT / час:</strong> <span id="mining-active-speed">-</span></p>
-            <p><strong>Добыто DOMIT:</strong> <span id="mining-active-earned">-</span></p>
+            <p><strong>TON / час:</strong> <span id="mining-active-speed">-</span></p>
+            <p><strong>Добыто TON:</strong> <span id="mining-active-earned">-</span></p>
             <button id="mining-claim-btn" class="btn primary mt-12">Перевести на баланс</button>
           </div>
 

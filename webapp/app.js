@@ -84,7 +84,7 @@ function updateDailyBonus() {
     bonusText.textContent = "Бонус уже получен сегодня. Приходите завтра!";
     bonusBtn.style.display = "none";
   } else {
-    bonusText.textContent = "Получите 0.50 DOMIT ежедневный бонус!";
+    bonusText.textContent = "Получите 0.50 TON ежедневный бонус!";
     bonusBtn.style.display = "inline-block";
   }
 }
@@ -123,14 +123,14 @@ async function claimDailyBonus() {
       localStorage.setItem(`daily_bonus_${CURRENT_USER_ID}`, 'true');
       localStorage.setItem(`last_visit_${CURRENT_USER_ID}`, today);
       
-      bonusText.textContent = "✅ Бонус получен! +0.50 DOMIT";
+      bonusText.textContent = "✅ Бонус получен! +0.50 TON";
       bonusBtn.style.display = "none";
       
       // Обновляем баланс
       balance += 0.50;
       updateBalanceDisplay();
       
-      alert("✅ Ежедневный бонус 0.50 DOMIT получен!");
+      alert("✅ Ежедневный бонус 0.50 TON получен!");
     } else {
       bonusBtn.textContent = "Получить бонус";
       bonusBtn.disabled = false;
@@ -255,7 +255,7 @@ function updateUserHeader() {
 
 function updateBalanceDisplay() {
   const el = $("user-balance");
-  if (el) el.textContent = balance.toFixed(3) + " DOMIT";
+  if (el) el.textContent = balance.toFixed(3) + " TON";
 }
 
 async function loadMiningPlans() {
@@ -277,8 +277,8 @@ async function loadMiningPlans() {
             el.className = "plan-card";
             el.innerHTML = `
                 <div class="plan-title">${plan.name}</div>
-                <div class="plan-price">${priceDomit.toFixed(2)} DOMIT</div>
-                <div class="plan-speed">${speedDomitHr.toFixed(2)} DOMIT/hr</div>
+                <div class="plan-price">${priceDomit.toFixed(2)} TON</div>
+                <div class="plan-speed">${speedDomitHr.toFixed(2)} TON/hr</div>
                 <button class="btn buy-btn" data-plan-id="${plan.id}">
                   Купить
                 </button>
@@ -358,7 +358,7 @@ async function loadFakeHistory() {
         
         row.innerHTML = `
           <span>${typeIcon} ${item.user}</span>
-          <span style="color:${color}; font-weight:bold;">${item.amount} DOMIT</span>
+          <span style="color:${color}; font-weight:bold;">${item.amount} TON</span>
         `;
         box.appendChild(row);
       });
@@ -387,7 +387,7 @@ async function buyMiningPlan(planId) {
             if (tg) {
                 let msg = "❌ " + (data.error || "Произошла ошибка.");
                 if (data.error === "low_balance") {
-                    msg = "❌ У вас недостаточно DOMIT для этого пакета.";
+                    msg = "❌ У вас недостаточно TON для этого пакета.";
                 }
                 tg.showPopup({ message: msg });
             }
@@ -437,7 +437,7 @@ document.getElementById("mining-claim-btn")
         const claimedDomit = data.claimed_usd || 0;
         if (tg) {
             tg.showPopup({
-                message: `✅ ${claimedDomit.toFixed(2)} DOMIT переведено на ваш баланс`
+                message: `✅ ${claimedDomit.toFixed(2)} TON переведено на ваш баланс`
             });
         }
 
@@ -636,7 +636,7 @@ async function loadUserFromBackend() {
 
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";
-    $("user-balance").textContent = U.balance_usd.toFixed(3) + " DOMIT";
+    $("user-balance").textContent = U.balance_usd.toFixed(3) + " TON";
     balance = U.balance_usd;
     if (document.getElementById("ton-current")) {
       document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
@@ -647,7 +647,7 @@ async function loadUserFromBackend() {
       console.log("✅ ref-total обновлено:", U.ref_count);
     }
     if ($("ref-active")) $("ref-active").textContent = U.active_refs;
-    if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " DOMIT";
+    if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " TON";
 
     const botUsername = "dominov1_bot";
     $("ref-link").value =
@@ -858,7 +858,7 @@ if (depositBtn) {
         const rd = document.getElementById("ref-deposits");
         if (rt) rt.textContent = d.user.ref_count;
         if (ra) ra.textContent = d.user.active_refs;
-        if (rd) rd.textContent = d.user.team_deposit_usd.toFixed(2) + " DOMIT";
+        if (rd) rd.textContent = d.user.team_deposit_usd.toFixed(2) + " TON";
       }
     }
 
@@ -904,7 +904,7 @@ if (withdrawBtn) {
       withdrawStatus.innerHTML =
         "❌ Не удалось снять наличные..<br><br>" +
         "• Требуется не менее 5 активных приглашенных пользователей.<br>" +
-        "• Для вывода средств сумма депозитов рефералов должна быть не менее 5 DOMIT. Это подтверждает их активность и защищает систему от фейков.<br>" +
+        "• Для вывода средств сумма депозитов рефералов должна быть не менее 5 TON. Это подтверждает их активность и защищает систему от фейков.<br>" +
         "• Сумма не может превышать остаток на счете.";
       return;
     }
@@ -931,7 +931,7 @@ if (withdrawBtn) {
           updateBalanceDisplay();
           $("ref-total").textContent = data.user.ref_count;
           $("ref-active").textContent = data.user.active_refs;
-          $("ref-deposits").textContent = data.user.team_deposit_usd.toFixed(2) + " DOMIT";
+          $("ref-deposits").textContent = data.user.team_deposit_usd.toFixed(2) + " TON";
         }
       }
     })
@@ -967,7 +967,7 @@ if (promoBtn) {
         withdrawStatus.textContent = "❌ " + (d.message || d.error || "Промокод недействителен.");
       } else {
         const gained = Number(d.amount || 0).toFixed(2);
-        withdrawStatus.textContent = `✅ Промокод активирован. +${gained} DOMIT`;
+        withdrawStatus.textContent = `✅ Промокод активирован. +${gained} TON`;
         if (d.user && typeof d.user.balance_usd === "number") {
           balance = d.user.balance_usd;
           updateBalanceDisplay();
@@ -976,7 +976,7 @@ if (promoBtn) {
           const rd = document.getElementById("ref-deposits");
           if (rt && typeof d.user.ref_count !== "undefined") rt.textContent = d.user.ref_count;
           if (ra && typeof d.user.active_refs !== "undefined") ra.textContent = d.user.active_refs;
-          if (rd && typeof d.user.team_deposit_usd !== "undefined") rd.textContent = d.user.team_deposit_usd.toFixed(2) + " DOMIT";
+          if (rd && typeof d.user.team_deposit_usd !== "undefined") rd.textContent = d.user.team_deposit_usd.toFixed(2) + " TON";
         }
       }
     } catch (err) {
@@ -1384,7 +1384,7 @@ function updateDailyBonus() {
     bonusText.textContent = "Бонус уже получен сегодня. Приходите завтра!";
     bonusBtn.style.display = "none";
   } else {
-    bonusText.textContent = "Получите 0.01 DOMIT ежедневный бонус!";
+    bonusText.textContent = "Получите 0.01 TON ежедневный бонус!";
     bonusBtn.style.display = "inline-block";
   }
 }
@@ -1423,14 +1423,14 @@ async function claimDailyBonus() {
       localStorage.setItem(`daily_bonus_${CURRENT_USER_ID}`, 'true');
       localStorage.setItem(`last_visit_${CURRENT_USER_ID}`, today);
       
-      bonusText.textContent = "✅ Бонус получен! +0.01 DOMIT";
+      bonusText.textContent = "✅ Бонус получен! +0.01 TON";
       bonusBtn.style.display = "none";
       
       // Обновляем баланс
       balance += 0.01;
       updateBalanceDisplay();
       
-      alert("✅ Ежедневный бонус 0.01 DOMIT получен!");
+      alert("✅ Ежедневный бонус 0.01 TON получен!");
     } else {
       bonusBtn.textContent = "Получить бонус";
       bonusBtn.disabled = false;
@@ -1555,7 +1555,7 @@ function updateUserHeader() {
 
 function updateBalanceDisplay() {
   const el = $("user-balance");
-  if (el) el.textContent = balance.toFixed(3) + " DOMIT";
+  if (el) el.textContent = balance.toFixed(3) + " TON";
 }
 
 async function loadMiningPlans() {
@@ -1577,8 +1577,8 @@ async function loadMiningPlans() {
             el.className = "plan-card";
             el.innerHTML = `
                 <div class="plan-title">${plan.name}</div>
-                <div class="plan-price">${priceDomit.toFixed(2)} DOMIT</div>
-                <div class="plan-speed">${speedDomitHr.toFixed(2)} DOMIT/hr</div>
+                <div class="plan-price">${priceDomit.toFixed(2)} TON</div>
+                <div class="plan-speed">${speedDomitHr.toFixed(2)} TON/hr</div>
                 <button class="btn buy-btn" data-plan-id="${plan.id}">
                   Купить
                 </button>
@@ -1658,7 +1658,7 @@ async function loadFakeHistory() {
         
         row.innerHTML = `
           <span>${typeIcon} ${item.user}</span>
-          <span style="color:${color}; font-weight:bold;">${item.amount} DOMIT</span>
+          <span style="color:${color}; font-weight:bold;">${item.amount} TON</span>
         `;
         box.appendChild(row);
       });
@@ -1687,7 +1687,7 @@ async function buyMiningPlan(planId) {
             if (tg) {
                 let msg = "❌ " + (data.error || "Произошла ошибка.");
                 if (data.error === "low_balance") {
-                    msg = "❌ У вас недостаточно DOMIT для этого пакета.";
+                    msg = "❌ У вас недостаточно TON для этого пакета.";
                 }
                 tg.showPopup({ message: msg });
             }
@@ -1737,7 +1737,7 @@ document.getElementById("mining-claim-btn")
         const claimedDomit = data.claimed_usd || 0;
         if (tg) {
             tg.showPopup({
-                message: `✅ ${claimedDomit.toFixed(2)} DOMIT переведено на ваш баланс`
+                message: `✅ ${claimedDomit.toFixed(2)} TON переведено на ваш баланс`
             });
         }
 
@@ -1856,7 +1856,7 @@ async function loadUserFromBackend() {
 
     $("user-id").textContent = CURRENT_USER_ID;
     $("user-name").textContent = U.username || "-";
-    $("user-balance").textContent = U.balance_usd.toFixed(3) + " DOMIT";
+    $("user-balance").textContent = U.balance_usd.toFixed(3) + " TON";
     balance = U.balance_usd;
     if (document.getElementById("ton-current")) {
       document.getElementById("ton-current").textContent = U.ton_balance.toFixed(4);
@@ -1867,7 +1867,7 @@ async function loadUserFromBackend() {
       console.log("✅ ref-total обновлено:", U.ref_count);
     }
     if ($("ref-active")) $("ref-active").textContent = U.active_refs;
-    if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " DOMIT";
+    if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " TON";
 
     const botUsername = "dominov1_bot";
     $("ref-link").value =
@@ -2078,7 +2078,7 @@ if (depositBtn) {
         const rd = document.getElementById("ref-deposits");
         if (rt) rt.textContent = d.user.ref_count;
         if (ra) ra.textContent = d.user.active_refs;
-        if (rd) rd.textContent = d.user.team_deposit_usd.toFixed(2) + " DOMIT";
+        if (rd) rd.textContent = d.user.team_deposit_usd.toFixed(2) + " TON";
       }
     }
 
@@ -2151,7 +2151,7 @@ if (withdrawBtn) {
           updateBalanceDisplay();
           $("ref-total").textContent = data.user.ref_count;
           $("ref-active").textContent = data.user.active_refs;
-          $("ref-deposits").textContent = data.user.team_deposit_usd.toFixed(2) + " DOMIT";
+          $("ref-deposits").textContent = data.user.team_deposit_usd.toFixed(2) + " TON";
         }
       }
     })
@@ -2187,7 +2187,7 @@ if (promoBtn) {
         withdrawStatus.textContent = "❌ " + (d.message || d.error || "Промокод недействителен.");
       } else {
         const gained = Number(d.amount || 0).toFixed(2);
-        withdrawStatus.textContent = `✅ Промокод активирован. +${gained} DOMIT`;
+        withdrawStatus.textContent = `✅ Промокод активирован. +${gained} TON`;
         if (d.user && typeof d.user.balance_usd === "number") {
           balance = d.user.balance_usd;
           updateBalanceDisplay();

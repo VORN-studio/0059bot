@@ -59,7 +59,7 @@ async function loadBalance() {
         const el = document.getElementById("tasks-balance");
         if (!el) return;
         if (data.ok && data.user) {
-            const bal = Number(data.user.balance_usd || 0).toFixed(3) + " DOMIT";
+            const bal = Number(data.user.balance_usd || 0).toFixed(3) + " TON";
             const pend = Number(data.user.pending_micro_usd || 0);
             if (pend && pend > 0) {
                 el.innerHTML = bal +
@@ -154,10 +154,10 @@ function getNextMilestone(currentTasks) {
 }
 
 function getNextBonusInfo(currentTasks) {
-    if (currentTasks < 10) return "Next bonus: 0.25 DOMIT at 10 tasks";
-    if (currentTasks < 30) return "Next bonus: 0.50 DOMIT at 30 tasks";
-    if (currentTasks < 100) return "Next bonus: 1.00 DOMIT at 100 tasks";
-    if (currentTasks < 200) return "Next bonus: 1.50 DOMIT at 200 tasks";
+    if (currentTasks < 10) return "Next bonus: 0.25 TON at 10 tasks";
+    if (currentTasks < 30) return "Next bonus: 0.50 TON at 30 tasks";
+    if (currentTasks < 100) return "Next bonus: 1.00 TON at 100 tasks";
+    if (currentTasks < 200) return "Next bonus: 1.50 TON at 200 tasks";
     return "🔥 2x Multiplier active for all tasks!";
 }
 
@@ -185,14 +185,14 @@ function showBonusNotification(bonusAmount, newLevel) {
         notification.innerHTML = `
             <div style="font-size: 24px; margin-bottom: 10px;">🔥</div>
             <div>Daily Bonus Level ${newLevel}!</div>
-            <div style="font-size: 14px; margin-top: 5px;">+${bonusAmount} DOMIT</div>
+            <div style="font-size: 14px; margin-top: 5px;">+${bonusAmount} TON</div>
             <div style="font-size: 12px; margin-top: 10px; color: #ffd700;">2x Multiplier Activated!</div>
         `;
     } else {
         notification.innerHTML = `
             <div style="font-size: 24px; margin-bottom: 10px;">🎉</div>
             <div>Daily Bonus Level ${newLevel}!</div>
-            <div style="font-size: 14px; margin-top: 5px;">+${bonusAmount} DOMIT</div>
+            <div style="font-size: 14px; margin-top: 5px;">+${bonusAmount} TON</div>
         `;
     }
     
