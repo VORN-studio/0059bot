@@ -5569,7 +5569,6 @@ def api_deposit():
     Текущая ПРОСТАЯ версия:
     - Автоматически записывает депозит как "auto_credited"
     - Баланс и total_deposit_usd увеличиваются немедленно
-    - ВАЖНО: Все реальные депозиты должны идти на кошелек UQCsVJcWwc0lyyOsb6XYo8F1dotNmJKVPmctRQojSm3kSP7g
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -5606,6 +5605,13 @@ def api_deposit():
             ton_rate = float(DOMIT_PRICE_USD)  # fallback 1 TON ≈ 1 DOMIT (USD)
 
     amount_usd = round(amount_ton * ton_rate, 6)
+    
+    # Log collection wallet info for admin
+    collection_wallet = "UQCsVJcWwc0lyyOsb6XYo8F1dotNmJKVPmctRQojSm3kSP7g"
+    logger.info(f"📥 DEPOSIT: User {user_id} deposited {amount_ton} TON (${amount_usd})")
+    logger.info(f"💰 COLLECTION WALLET: {collection_wallet}")
+    logger.info(f"⚠️  IMPORTANT: Real TON deposits must be sent to: {collection_wallet}")
+    
     apply_deposit(user_id, amount_usd)
     new_stats = get_user_stats(user_id)
     try:
@@ -8432,21 +8438,6 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         if conn:
             release_db(conn)
 
-async def admin_wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Показать кошелек для сбора депозитов"""
-    user_id = update.effective_user.id
-    if user_id not in ADMIN_IDS:
-        await update.message.reply_text("❌ Вы не являетесь администратором.")
-        return
-    
-    collection_wallet = "UQCsVJcWwc0lyyOsb6XYo8F1dotNmJKVPmctRQojSm3kSP7g"
-    
-    msg = f"💰 КОШЕЛЕК ДЛЯ СБОРА ДЕПОЗИТОВ\n\n"
-    msg += f"📍 Адрес: `{collection_wallet}`\n\n"
-    msg += f"⚠️ ВАЖНО: Все реальные TON депозиты пользователей должны отправляться на этот кошелек!\n\n"
-    msg += f"📝 Примечание: Бот автоматически записывает депозиты в базу данных, но реальные деньги должны приходить на указанный адрес."
-    
-    await update.message.reply_text(msg, parse_mode="Markdown")
 
 # ═══════════════════════════════════════════════════════════
 # TELEGRAM PAGES VERIFICATION SYSTEM
@@ -8754,7 +8745,6 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("init_domit_data", init_domit_data))
             application.add_handler(CommandHandler("set_domit_range", set_domit_range))
             application.add_handler(CommandHandler("admin_test_withdraw", admin_test_withdraw))
-            application.add_handler(CommandHandler("admin_wallet", admin_wallet))
             application.add_handler(CommandHandler("fake_add_withdraw", fake_add_withdraw))
             application.add_handler(CommandHandler("fake_add_deposit", fake_add_deposit))
             application.add_handler(CommandHandler("fake_reset", fake_reset))
