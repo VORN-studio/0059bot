@@ -2062,3 +2062,62 @@ body {
     pointer-events: none;
     z-index: 0;
 }
+
+body {
+    /* Փոխարինիր հին background-ը սրանով */
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    color: #334155;
+    min-height: 100vh;
+}
+
+/* Ավելացրու սա՝ էջին «շնչող» գույներ տալու համար */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(102, 126, 234, 0.1), transparent 70%);
+    z-index: -1;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255, 183, 178, 0.15), transparent 70%);
+    z-index: -1;
+}
+
+#app {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(15px) !important;
+    border: 1px solid rgba(255, 255, 255, 1) !important;
+    /* Ստվերը սարքում ենք ավելի ծավալուն */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05), 
+                0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+.screen {
+    /* Միագույն սպիտակի փոխարեն ավելացնում ենք շատ թեթև ներքին գրադիենտ */
+    background: linear-gradient(145deg, #ffffff, #f9fafb) !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02) !important;
+}
+
+input[type="text"], input[type="number"] {
+    background: #f1f5f9 !important; /* Մոխրագույն երանգ սպիտակի փոխարեն */
+    border: 1.5px solid transparent !important;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus {
+    background: #ffffff !important;
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1) !important;
+}
