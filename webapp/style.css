@@ -17,10 +17,10 @@ html, body {
 }
 
 body {
-    /* Ֆոնը դարձնում ենք տաք վանիլային/սերուցքային (Քաղցրության զգացողություն) */
-    background: radial-gradient(circle at 20% 10%, #fff9f1 0%, #f7f1e9 100%);
-    /* Տեքստը՝ հանգիստ մուգ կապույտ (Վստահություն) */
-    color: #2d3e50;
+    /* Ավելի վառ և գունեղ ֆոն՝ մանուշակագույնից նարնջագույն */
+    background: radial-gradient(circle at 25% 25%, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%);
+    /* Տեքստը՝ սպիտակ՝ լավ կոնտրաստի համար */
+    color: #ffffff;
     overflow-x: hidden;
     position: relative;
 }
@@ -300,12 +300,13 @@ body::-webkit-scrollbar-thumb:hover {
     font-size: 32px;
     font-weight: 800;
     letter-spacing: 0.02em;
-    color: #2d3e50; /* Վստահելի մուգ կապույտ */
+    color: #ffffff; /* Սպիտակ տեքստ՝ գունեղ ֆոնի վրա */
     margin-bottom: 6px;
 
-    /* Փափուկ տեքստային ստվեր */
+    /* Փայլուն տեքստային ստվեր */
     text-shadow:
-      0 4px 10px rgba(45, 62, 80, 0.1);
+      0 4px 10px rgba(0, 0, 0, 0.3),
+      0 0 20px rgba(255, 255, 255, 0.5);
     
     animation: titleRise 1s cubic-bezier(.21,1,.27,1) both;
 }
@@ -396,12 +397,15 @@ body::-webkit-scrollbar-thumb:hover {
 
 /* Տեքստի գույները */
 .user-info div {
-    color: #5c6d80; /* Հանգիստ կապույտ-մոխրագույն */
+    color: #ffffff; /* Սպիտակ տեքստ՝ գունեղ ֆոնի վրա */
     font-weight: 500;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .user-info div strong {
-    color: #2d3e50; /* Վստահելի մուգ գույն կարևոր տվյալների համար */
+    color: #ffffff; /* Սպիտակ տեքստ՝ կարևոր տվյալների համար */
+    font-weight: 700;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 /* Հաշվեկշռի (Balance) բաժինը */
@@ -449,7 +453,7 @@ body::-webkit-scrollbar-thumb:hover {
     border-radius: 24px; /* Ավելի կլորավուն */
     font-size: 15px;
     font-weight: 700;
-    color: #2d3e50; /* Մուգ տեքստ՝ վստահության համար */
+    color: #ffffff; /* Սպիտակ տեքստ՝ լավ կոնտրաստի համար */
     cursor: pointer;
     overflow: hidden;
 
@@ -458,55 +462,49 @@ body::-webkit-scrollbar-thumb:hover {
     justify-content: center;
     gap: 10px;
 
-    /* Կաթնային թափանցիկ ֆոն */
-    background: rgba(255, 255, 255, 0.7);
+    /* Գունեղ գրադիենտ ֆոն */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     backdrop-filter: blur(10px) saturate(150%);
-    border: 1.5px solid rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.3);
 
-    /* Փափուկ ստվերներ */
+    /* Փայլուն ստվերներ */
     box-shadow:
-      0 8px 20px rgba(45, 62, 80, 0.05),
-      inset 0 0 10px rgba(255, 255, 255, 0.5);
+      0 8px 25px rgba(102, 126, 234, 0.4),
+      0 15px 35px rgba(118, 75, 162, 0.3),
+      inset 0 0 20px rgba(255, 255, 255, 0.2);
 
     transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Անհատական գույներ կոճակների համար (Քաղցր գամմա) */
+/* Անհատական գույներ կոճակների համար (Գունեղ գամմա) */
 
-/* 1. Գործեր (Կանաչ/Անանուխ) */
+/* 1. Wallet (Կանաչ/Թուրմոզ) */
 .buttons .btn:nth-child(1) {
-    background: linear-gradient(135deg, #e2f9ed, #b7e4c7);
-    color: #1b4332;
-    box-shadow: 0 10px 20px rgba(183, 228, 199, 0.4);
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
 }
 
-/* 2. Խաղեր (Մանուշակագույն/Լավանդա) */
+/* 2. Withdraw (Նարնջագույն/Կարմիր) */
 .buttons .btn:nth-child(2) {
-    background: linear-gradient(135deg, #f3e8ff, #d8b4fe);
-    color: #581c87;
-    box-shadow: 0 10px 20px rgba(216, 180, 254, 0.4);
+    background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
 }
 
-/* 3. Ալմաստ (Երկնագույն) */
-.buttons .btn:nth-child(3) {
-    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
-    color: #0c4a6e;
-    box-shadow: 0 10px 20px rgba(186, 230, 253, 0.4);
-}
-
-/* 4. Գումար (Դեղձագույն/Նարնջագույն) */
+/* 3. Referral (Մանուշակագույն/Վարդագույն) */
 .buttons .btn:nth-child(4) {
-    background: linear-gradient(135deg, #ffedd5, #fed7aa);
-    color: #7c2d12;
-    box-shadow: 0 10px 20px rgba(254, 215, 170, 0.4);
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
 }
 
-/* 5. Ընկերներ (Վարդագույն) */
+/* 4. Tasks (Երկնագույն/Երկնագույն) */
 .buttons .btn:nth-child(5) {
     grid-column: span 2;
-    background: linear-gradient(135deg, #fce7f3, #fbcfe8);
-    color: #831843;
-    box-shadow: 0 10px 20px rgba(251, 207, 232, 0.4);
+    background: linear-gradient(135deg, #3b82f6 0%, #0ea5e9 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
 }
 
 /* Hover էֆեկտ՝ «ներծծվող» և փափուկ */

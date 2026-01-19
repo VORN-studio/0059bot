@@ -36,7 +36,7 @@ async function loadWithdrawalTicker() {
       // If no withdrawals, show empty message
       const tickerContent = document.getElementById('ticker-content');
       if (tickerContent) {
-        tickerContent.innerHTML = '<span style="margin: 0 20px; color: #64748b; font-weight: bold;">🎯 Կանխիկացումները շուտով կսկսեն...</span>';
+        tickerContent.innerHTML = '<span style="margin: 0 20px; color: #64748b; font-weight: bold;">🎯 Выводы скоро начнутся...</span>';
       }
     }
   } catch (error) {
@@ -44,7 +44,7 @@ async function loadWithdrawalTicker() {
     // Show error message in ticker
     const tickerContent = document.getElementById('ticker-content');
     if (tickerContent) {
-      tickerContent.innerHTML = '<span style="margin: 0 20px; color: #ef4444; font-weight: bold;">❌ Կանխիկացումների տվյալները հասանելի չեն</span>';
+      tickerContent.innerHTML = '<span style="margin: 0 20px; color: #ef4444; font-weight: bold;">❌ Данные о выводах недоступны.</span>';
     }
   }
 }
