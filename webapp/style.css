@@ -2286,3 +2286,33 @@ input[type="text"]:focus {
     border-color: #667eea !important;
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1) !important;
 }
+
+/* Անիմացիոն ֆոնի համար */
+.animated-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        45deg,
+        rgba(83, 52, 131, 0.1),
+        rgba(15, 52, 96, 0.1),
+        rgba(22, 33, 62, 0.1)
+    );
+    animation: bgShift 15s ease-in-out infinite;
+    z-index: -2;
+    pointer-events: none;
+}
+
+@keyframes bgShift {
+    0%, 100% {
+        transform: translateX(0) translateY(0);
+    }
+    33% {
+        transform: translateX(-20px) translateY(10px);
+    }
+    66% {
+        transform: translateX(10px) translateY(-15px);
+    }
+}
