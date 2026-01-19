@@ -3501,7 +3501,7 @@ def api_admin_give():
     conn.commit()
     release_db(conn)
 
-    return jsonify({"ok": True, "message": f"Added {amount} DOMIT to {target}"})
+    return jsonify({"ok": True, "message": f"Added {amount} TON to {target}"})
 
 @app_web.route("/api/follow_stats/<int:user_id>")
 def api_follow_stats(user_id):
@@ -4113,7 +4113,7 @@ def update_daily_tasks_and_bonuses(cursor, user_id):
             WHERE user_id=%s
         """, (bonus_given, new_level, user_id))
         
-        print(f"🎉 Daily bonus: uid={user_id} completed {daily_count} tasks, bonus={bonus_given} DOMIT, level={new_level}")
+        print(f"🎉 Daily bonus: uid={user_id} completed {daily_count} tasks, bonus={bonus_given} TON, level={new_level}")
     else:
         print(f"ℹ️ No bonus for user {user_id} at {daily_count} tasks")
     
@@ -4867,7 +4867,7 @@ def award_signup_bonus(inviter_id: int, referred_id: int):
         conn.commit()
         release_db(conn)
         
-        print(f"✅ Referral signup bonus: inviter={inviter_id} got {bonus} DOMIT for referring {referred_id}")
+        print(f"✅ Referral signup bonus: inviter={inviter_id} got {bonus} TON for referring {referred_id}")
         
     except Exception as e:
         logger.error(f"Error awarding signup bonus: {e}")
@@ -4934,7 +4934,7 @@ def award_deposit_bonus(referred_id: int, deposit_amount: float):
         conn.commit()
         release_db(conn)
         
-        print(f"✅ Referral deposit bonus: inviter={inviter_id} got {bonus} DOMIT from {referred_id} deposit")
+        print(f"✅ Referral deposit bonus: inviter={inviter_id} got {bonus} TON from {referred_id} deposit")
         
     except Exception as e:
         logger.error(f"Error awarding deposit bonus: {e}")
@@ -4979,7 +4979,7 @@ def award_mining_commission(referred_id: int, mining_amount: float):
         conn.commit()
         release_db(conn)
         
-        print(f"✅ Referral mining commission: inviter={inviter_id} got {bonus} DOMIT from {referred_id} mining")
+        print(f"✅ Referral mining commission: inviter={inviter_id} got {bonus} TON from {referred_id} mining")
         
     except Exception as e:
         logger.error(f"Error awarding mining commission: {e}")
@@ -5621,7 +5621,7 @@ def api_deposit():
 
     return jsonify({
         "ok": True,
-        "message": "Депозит зарегистрирован ✅ DOMIT добавлен на ваш счет",
+        "message": "Депозит зарегистрирован ✅ TON добавлен на ваш счет",
         "user": new_stats,
         "ton_rate": ton_rate,
         "credited_domit": amount_usd,
@@ -5721,7 +5721,7 @@ def api_crash_withdraw():
 @app_web.route("/api/daily_bonus", methods=["POST"])
 def api_daily_bonus():
     """
-    Выдача ежедневного бонуса 0.01 DOMIT
+    Выдача ежедневного бонуса 0.01 TON
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -5819,8 +5819,8 @@ def api_referral_stats():
         
         # Get benefits for current tier
         benefits = {
-            'bronze': ['⛏ 5% с майнинга', '💳 10% с депозита', '🎁 0.10 DOMIT за регистрацию'],
-            'gold': ['⛏ 8% с майнинга', '💳 15% с депозита', '🎁 0.25 DOMIT за регистрацию']
+            'bronze': ['⛏ 5% с майнинга', '💳 10% с депозита', '🎁 0.10 TON за регистрацию'],
+            'gold': ['⛏ 8% с майнинга', '💳 15% с депозита', '🎁 0.25 TON за регистрацию']
         }
         
         release_db(conn)
@@ -5889,9 +5889,9 @@ def api_withdraw_request():
 
     Указанные вами правила:
     - сумма > 0
-    - сумма <= баланс в DOMIT
+    - сумма <= баланс в TON
     - не менее 7 приглашенных друзей
-    - баланс пользователя должен быть не менее 2000 DOMIT
+    - баланс пользователя должен быть не менее 200 TON
     """
     data = request.get_json(force=True, silent=True) or {}
     user_id = int(data.get("user_id", 0))
@@ -5927,7 +5927,7 @@ def api_withdraw_request():
         return jsonify({
             "ok": False,
             "error": "not_enough_balance",
-            "message": "Для вывода средств необходимо иметь не менее 2000 DOMIT на балансе."
+            "message": "Для вывода средств необходимо иметь не менее 200 TON на балансе."
         }), 200
 
     create_withdraw_request(user_id, amount)
@@ -6498,11 +6498,11 @@ def api_ad_monetag_reward():
     tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
 
     if country in tier1:
-        reward = 0.09
+        reward = 0.009
     elif country in tier2:
-        reward = 0.07
+        reward = 0.007
     else:
-        reward = 0.05
+        reward = 0.005
 
     conn = db(); c = conn.cursor()
     try:
@@ -7639,7 +7639,7 @@ async def burn_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     release_db(conn)
 
     await update.message.reply_text(
-        f"🎁 {amount} DOMIT передано пользователю {target}-из фонда Burn"
+        f"🎁 {amount} TON передано пользователю {target}-из фонда Burn"
     )
 
 async def reset_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -7800,7 +7800,7 @@ async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         conn_obj.commit()
         release_db(conn_obj)
         
-        await update.message.reply_text("✅ Созданы данные графика DOMIT.!\n📊 288 candles (24 час)")
+        await update.message.reply_text("✅ Созданы данные графика TON.!\n📊 288 candles (24 час)")
     
     except Exception as e:
         logger.error(f"❌ Error in init_domit_data: {e}")
@@ -7861,7 +7861,7 @@ async def admin_add(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.commit()
     release_db(conn)
 
-    await update.message.reply_text(f"✔ {amount}DOMIT пользователь добавил {target} в счет։")
+    await update.message.reply_text(f"✔ {amount}TON пользователь добавил {target} в счет։")
 
 async def add_promo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin_id = update.effective_user.id
@@ -7871,7 +7871,7 @@ async def add_promo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     txt = (update.message.text or "").strip()
     m = re.findall(r'"([^"]+)"', txt)
     if len(m) < 3:
-        await update.message.reply_text("Использование: /add_promo \"КОД\" \"СУММА_DOMIT\" \"MAX_USES\"")
+        await update.message.reply_text("Использование: /add_promo \"КОД\" \"СУММА_TON\" \"MAX_USES\"")
         return
     code = m[0].strip()
     try:
@@ -7898,7 +7898,7 @@ async def add_promo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 VALUES (%s, %s, %s, %s, %s)
             """, (code, amount, max_uses, now, admin_id))
         conn.commit()
-        await update.message.reply_text(f"✅ Промокод добавлен: {code} → {amount} DOMIT, MAX={max_uses}")
+        await update.message.reply_text(f"✅ Промокод добавлен: {code} → {amount} TON, MAX={max_uses}")
     except Exception as e:
         logger.exception("add_promo_cmd failed")
         try:
@@ -7958,7 +7958,7 @@ async def list_promos_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             amount = float(amount_usd or 0.0)
             uc = int(used_count or 0)
             mu = "∞" if max_uses is None else str(int(max_uses))
-            lines.append(f"• {code} → {amount:.2f} DOMIT | {uc}/{mu}")
+            lines.append(f"• {code} → {amount:.2f} TON | {uc}/{mu}")
         await update.message.reply_text("\n".join(lines))
     except Exception:
         await update.message.reply_text("❌ Ошибка сервера")
@@ -8016,7 +8016,7 @@ async def admin_withdrawals(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         msg += f"🆔 ID: {withdraw_id}\n"
         msg += f"👤 User: {username_str} ({uid})\n"
-        msg += f"💰 Деньги: {amount_usd:.2f} DOMIT (~{ton_amount:.4f} TON)\n"
+        msg += f"💰 Деньги: {amount_usd:.2f} TON (~{ton_amount:.4f} TON)\n"
         msg += f"💳 Wallet: {wallet_str}\n"
         msg += f"📅 Время: {date_str}\n"
         msg += f"━━━━━━━━━━━━━━━━\n\n"
@@ -8078,7 +8078,7 @@ async def admin_approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"✅ Withdraw #{withdraw_id} одобренный։\n"
             f"👤 User: {target_user_id}\n"
-            f"💰 Деньги: {float(amount_usd):.2f} DOMIT"
+            f"💰 Деньги: {float(amount_usd):.2f} TON"
         )
         
         # Send notification to user
@@ -8156,7 +8156,7 @@ async def admin_reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"❌ Withdraw #{withdraw_id} отклоненный։\n"
             f"👤 User: {target_user_id}\n"
-            f"💰 Количество ({float(amount_usd):.2f} DOMIT) вернулось к balance։"
+            f"💰 Количество ({float(amount_usd):.2f} TON) вернулось к balance։"
         )
         
         # Send notification to user
@@ -8200,7 +8200,7 @@ async def fake_add_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Keep max 20
     if len(FAKE_HISTORY[admin_id]) > 20: FAKE_HISTORY[admin_id].pop()
     
-    await update.message.reply_text(f"✅ Fake Withdraw Added: {user} - {amount} DOMIT (Visible only to you)")
+    await update.message.reply_text(f"✅ Fake Withdraw Added: {user} - {amount} TON (Visible only to you)")
 
 async def fake_add_deposit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin: /fake_add_deposit [User] [Amount]"""
@@ -8227,7 +8227,7 @@ async def fake_add_deposit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     })
     if len(FAKE_HISTORY[admin_id]) > 20: FAKE_HISTORY[admin_id].pop()
     
-    await update.message.reply_text(f"✅ Fake Deposit Added: {user} - {amount} DOMIT (Visible only to you)")
+    await update.message.reply_text(f"✅ Fake Deposit Added: {user} - {amount} TON (Visible only to you)")
 
 async def fake_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     admin_id = update.effective_user.id
@@ -8261,7 +8261,7 @@ async def auto_fake_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         await update.message.reply_text(
             f"✅ Auto fake withdrawals started\n"
-            f"💰 Amount: {min_amount}-{max_amount} DOMIT\n"
+            f"💰 Amount: {min_amount}-{max_amount} TON\n"
             f"⏰ Interval: {interval} minutes"
         )
     except (ValueError, IndexError):
@@ -8294,7 +8294,7 @@ async def auto_fake_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         status = AUTO_FAKE_STATUS[admin_id]
         await update.message.reply_text(
             f"📊 Auto Fake Status: ✅ Active\n"
-            f"💰 Amount: {status['min_amount']}-{status['max_amount']} DOMIT\n"
+            f"💰 Amount: {status['min_amount']}-{status['max_amount']} TON\n"
             f"⏰ Interval: {status['interval']} minutes"
         )
     else:
@@ -8350,7 +8350,7 @@ def generate_auto_fake_withdrawals():
             # Update last generated time
             status["last_generated"] = current_time
             
-            logger.info(f"🤖 Auto fake withdrawal generated: {username} - {amount} DOMIT")
+            logger.info(f"🤖 Auto fake withdrawal generated: {username} - {amount} TON")
 
 def auto_fake_withdrawal_worker():
     """Background worker to generate auto fake withdrawals"""
@@ -8386,7 +8386,7 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         current_balance = float(row[0]) if row else 0.0
         
         if current_balance < amount:
-            await update.message.reply_text(f"❌ User {target_user_id}-имеет только {current_balance:.2f} DOMIT")
+            await update.message.reply_text(f"❌ User {target_user_id}-имеет только {current_balance:.2f} TON")
             release_db(conn)
             return
         
@@ -8428,7 +8428,7 @@ async def admin_test_withdraw(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.message.reply_text(
             f"✅ TEST withdraw созданный։\n"
             f"👤 User: {target_user_id}\n"
-            f"💰 Деньги: {amount:.2f} DOMIT\n\n"
+            f"💰 Деньги: {amount:.2f} TON\n\n"
             f"Использовать /admin_withdrawals чтобы увидеть"
         )
     
