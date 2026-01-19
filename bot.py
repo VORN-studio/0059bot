@@ -616,7 +616,9 @@ def webapp_index():
             margin: 5px 0;
         }
         .check-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-image: url('/glav.jpg');
+            background-size: cover;
+            background-position: center;
             color: white;
             border: none;
             padding: 15px 30px;
