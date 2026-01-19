@@ -2009,3 +2009,48 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.6) !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05) !important;
 }
+
+#app {
+    /* Հեռացնում ենք միապաղաղ սպիտակը և ավելացնում նուրբ ներքին գրադիենտ */
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.7) 0%, 
+        rgba(240, 253, 244, 0.5) 50%, /* Շատ թեթև կանաչավուն երանգ մեջտեղում */
+        rgba(254, 252, 232, 0.6) 100%  /* Շատ թեթև դեղնավուն երանգ ներքևում */
+    ) !important;
+
+    /* Ապակու էֆեկտի ուժեղացում */
+    backdrop-filter: blur(25px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(140%) !important;
+
+    /* Ավելի հաստ և սպիտակ եզրագիծ, որը կտա «առանձին» լինելու զգացողություն */
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+
+    /* Խորը և փափուկ ստվեր, որը բարձրացնում է կոնտեյները հետևի ֆոնից */
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.1),
+        inset 0 0 20px rgba(255, 255, 255, 0.3) !important;
+
+    /* Ավելի կլորացված անկյուններ՝ ժամանակակից տեսքի համար */
+    border-radius: 32px !important;
+    
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ավելացնում ենք նուրբ փայլ վերևի մասում */
+#app::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(
+        to bottom, 
+        rgba(255, 255, 255, 0.4) 0%, 
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 0;
+}
