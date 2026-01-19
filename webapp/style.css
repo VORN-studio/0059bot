@@ -1476,18 +1476,26 @@ body::-webkit-scrollbar-thumb {
 /* Գլխավոր վերնագիրը */
 .top h1 {
     position: relative;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.02em; /* Ավելի ժամանակակից, կոմպակտ տեսք */
-    color: #1e293b; /* Մուգ, վստահելի գույն */
-    margin-bottom: 4px;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     text-shadow: none !important;
-    animation: titleRise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation: titleRise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both, gradientShift 4s ease-in-out infinite alternate;
+    filter: drop-shadow(0 2px 8px rgba(102, 126, 234, 0.3));
 }
 
 @keyframes titleRise {
     0% { opacity: 0; transform: translateY(10px); }
     100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
 }
 
 /* Կլոր պատկերակը (Avatar/Orb) */
