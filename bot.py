@@ -616,7 +616,7 @@ def webapp_index():
             margin: 5px 0;
         }
         .check-btn {
-            background-image: url('/glav.jpg');
+            background-image: url('/static/glav.jpg');
             background-size: cover;
             background-position: center;
             color: white;
