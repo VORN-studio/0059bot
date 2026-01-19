@@ -649,7 +649,7 @@ async function loadUserFromBackend() {
     if ($("ref-active")) $("ref-active").textContent = U.active_refs;
     if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " DOMIT";
 
-    const botUsername = "doominobot";
+    const botUsername = "dominov1_bot";
     $("ref-link").value =
       `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
 
@@ -993,7 +993,7 @@ function initReferralLink() {
   if (!refLinkInput) return;
 
   if (CURRENT_USER_ID) {
-    const botUsername = "doominobot"; 
+    const botUsername = "dominov1_bot"; 
     const link = `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
     refLinkInput.value = link;
   } else {
@@ -1869,7 +1869,7 @@ async function loadUserFromBackend() {
     if ($("ref-active")) $("ref-active").textContent = U.active_refs;
     if ($("ref-deposits")) $("ref-deposits").textContent = U.team_deposit_usd.toFixed(2) + " DOMIT";
 
-    const botUsername = "doominobot";
+    const botUsername = "dominov1_bot";
     $("ref-link").value =
       `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
 
@@ -2213,7 +2213,7 @@ function initReferralLink() {
   if (!refLinkInput) return;
 
   if (CURRENT_USER_ID) {
-    const botUsername = "doominobot"; 
+    const botUsername = "dominov1_bot"; 
     const link = `https://t.me/${botUsername}?start=ref_${CURRENT_USER_ID}`;
     refLinkInput.value = link;
   } else {

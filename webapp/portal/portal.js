@@ -2227,7 +2227,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getShareLink() {
-        return `https://t.me/doominobot?startapp=post_${SHARE_POST_ID}`;
+        return `https://t.me/dominov1_bot?startapp=post_${SHARE_POST_ID}`;
     }
 
     if (copyBtn) {
