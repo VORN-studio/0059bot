@@ -6498,11 +6498,11 @@ def api_ad_monetag_reward():
     tier2 = ["FR", "IT", "ES", "NL", "BE", "AT", "FI", "IE", "SG", "JP", "KR", "AE", "RU"]
 
     if country in tier1:
-        reward = 0.009
+        reward = 0.09
     elif country in tier2:
-        reward = 0.007
+        reward = 0.07
     else:
-        reward = 0.005
+        reward = 0.05
 
     conn = db(); c = conn.cursor()
     try:
