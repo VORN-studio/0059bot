@@ -524,15 +524,33 @@ def api_leaderboard():
         if not status_row or not status_row[0]:
             return jsonify({"ok": True, "enabled": False, "leaderboard": []})
         
-        # Get top 10 users by referral count
+        # Get top 10 users by referral count (combine manual entries and real referrals)
         c.execute("""
+            WITH all_referrals AS (
+                -- Manual entries from leaderboard
+                SELECT 
+                    telegram_id,
+                    referral_count
+                FROM leaderboard_entries
+                
+                UNION ALL
+                
+                -- Real referrals from referral earnings table
+                SELECT 
+                    inviter_id as telegram_id,
+                    COUNT(DISTINCT referred_id) as referral_count
+                FROM dom_referral_earnings
+                GROUP BY inviter_id
+            )
             SELECT 
-                COALESCE(du.username, 'User' || le.telegram_id) as username,
-                le.telegram_id,
-                le.referral_count
-            FROM leaderboard_entries le
-            LEFT JOIN dom_users du ON du.user_id = le.telegram_id
-            ORDER BY le.referral_count DESC
+                COALESCE(du.username, 'User' || ar.telegram_id) as username,
+                ar.telegram_id,
+                SUM(ar.referral_count) as referral_count
+            FROM all_referrals ar
+            LEFT JOIN dom_users du ON du.user_id = ar.telegram_id
+            GROUP BY ar.telegram_id, du.username
+            HAVING SUM(ar.referral_count) > 0
+            ORDER BY referral_count DESC
             LIMIT 10
         """)
         
@@ -8498,9 +8516,21 @@ async def add_lead_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_row = c.fetchone()
         
         if not user_row:
-            await update.message.reply_text(f"❌ Пользователь с ID {target_id} не найден в системе")
-            release_db(conn)
-            return
+            # Auto-create user if not exists
+            c.execute("""
+                INSERT INTO dom_users (user_id, username, created_at)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (user_id) DO NOTHING
+            """, (target_id, f"User{target_id}"))
+            
+            # Get username again
+            c.execute("SELECT username FROM dom_users WHERE user_id = %s", (target_id,))
+            user_row = c.fetchone()
+            
+            if not user_row:
+                await update.message.reply_text(f"❌ Ошибка при создании пользователя с ID {target_id}")
+                release_db(conn)
+                return
         
         # Insert or update leaderboard entry
         c.execute("""
