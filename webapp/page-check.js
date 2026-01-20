@@ -146,15 +146,15 @@ window.openLinks = function() {
     }
 };
 
-// Автоматическая проверка при загрузке страницы
-document.addEventListener('DOMContentLoaded', async () => {
-    // Ждем немного, чтобы CURRENT_USER_ID установился
-    setTimeout(async () => {
-        if (window.CURRENT_USER_ID) {
-            await window.pageChecker.enforceAccessCheck(window.CURRENT_USER_ID);
-        }
-    }, 1000);
-});
+// Автоматическая проверка при загрузке страницы - ОТКЛЮЧЕНО
+// document.addEventListener('DOMContentLoaded', async () => {
+//     // Ждем немного, чтобы CURRENT_USER_ID установился
+//     setTimeout(async () => {
+//         if (window.CURRENT_USER_ID) {
+//             await window.pageChecker.enforceAccessCheck(window.CURRENT_USER_ID);
+//         }
+//     }, 1000);
+// });
 
 // Экспортируем для использования в других файлах
 if (typeof module !== 'undefined' && module.exports) {
