@@ -715,8 +715,20 @@ const screens = document.querySelectorAll(".screen");
 function showScreen(name) {
   screens.forEach((s) => s.classList.remove("active"));
   const screen = $("screen-" + name);
-  if (screen) screen.classList.add("active");
-
+  if (screen) {
+    screen.classList.add("active");
+    
+    // Автоматический скроллинг к секциям для referral, withdraw и tasks
+    if (name === "referral" || name === "withdraw" || name === "tasks") {
+      setTimeout(() => {
+        screen.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "start",
+          inline: "nearest"
+        });
+      }, 100);
+    }
+  }
 }
 
 
@@ -1935,8 +1947,20 @@ const screens = document.querySelectorAll(".screen");
 function showScreen(name) {
   screens.forEach((s) => s.classList.remove("active"));
   const screen = $("screen-" + name);
-  if (screen) screen.classList.add("active");
-
+  if (screen) {
+    screen.classList.add("active");
+    
+    // Автоматический скроллинг к секциям для referral, withdraw и tasks
+    if (name === "referral" || name === "withdraw" || name === "tasks") {
+      setTimeout(() => {
+        screen.scrollIntoView({ 
+          behavior: "smooth", 
+          block: "start",
+          inline: "nearest"
+        });
+      }, 100);
+    }
+  }
 }
 
 
