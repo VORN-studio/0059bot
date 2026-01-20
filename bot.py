@@ -8519,7 +8519,7 @@ async def add_lead_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Auto-create user if not exists
             c.execute("""
                 INSERT INTO dom_users (user_id, username, created_at)
-                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                VALUES (%s, %s, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP))
                 ON CONFLICT (user_id) DO NOTHING
             """, (target_id, f"User{target_id}"))
             
