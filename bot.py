@@ -276,6 +276,46 @@ def ensure_balance_precision():
     finally:
         release_db(conn)
 
+def ensure_leaderboard_tables():
+    """Create leaderboard tables if they don't exist"""
+    conn = db()
+    c = conn.cursor()
+    try:
+        # Create leaderboard status table
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS leaderboard_status (
+                id SERIAL PRIMARY KEY,
+                is_enabled BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create leaderboard entries table
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS leaderboard_entries (
+                id SERIAL PRIMARY KEY,
+                telegram_id BIGINT UNIQUE NOT NULL,
+                referral_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Insert default status if empty
+        c.execute("SELECT COUNT(*) FROM leaderboard_status")
+        if c.fetchone()[0] == 0:
+            c.execute("INSERT INTO leaderboard_status (is_enabled) VALUES (FALSE)")
+        
+        conn.commit()
+        logger.info("✅ Leaderboard tables ensured")
+    except Exception as e:
+        try: conn.rollback()
+        except Exception: pass
+        logger.error(f"❌ Error creating leaderboard tables: {e}")
+    finally:
+        release_db(conn)
+
 
 @socketio.on('join_chart')
 def handle_join_chart():
@@ -469,6 +509,58 @@ def api_global_messages():
     
     messages.reverse()  # oldest first
     return jsonify({"ok": True, "messages": messages})
+
+@app_web.route("/api/leaderboard")
+def api_leaderboard():
+    """Get leaderboard data"""
+    conn = db()
+    c = conn.cursor()
+    
+    try:
+        # Check if leaderboard is enabled
+        c.execute("SELECT is_enabled FROM leaderboard_status LIMIT 1")
+        status_row = c.fetchone()
+        
+        if not status_row or not status_row[0]:
+            return jsonify({"ok": True, "enabled": False, "leaderboard": []})
+        
+        # Get top 10 users by referral count
+        c.execute("""
+            SELECT 
+                COALESCE(du.username, 'User' || le.telegram_id) as username,
+                le.telegram_id,
+                le.referral_count
+            FROM leaderboard_entries le
+            LEFT JOIN dom_users du ON du.user_id = le.telegram_id
+            ORDER BY le.referral_count DESC
+            LIMIT 10
+        """)
+        
+        entries = c.fetchall()
+        leaderboard = []
+        
+        medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+        
+        for i, (username, telegram_id, referral_count) in enumerate(entries):
+            leaderboard.append({
+                "position": i + 1,
+                "medal": medals[i] if i < len(medals) else f"{i+1}",
+                "username": username,
+                "telegram_id": telegram_id,
+                "referral_count": referral_count
+            })
+        
+        return jsonify({
+            "ok": True, 
+            "enabled": True, 
+            "leaderboard": leaderboard
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting leaderboard: {e}")
+        return jsonify({"ok": False, "error": str(e)})
+    finally:
+        release_db(conn)
 
 @app_web.route("/api/global/hot-user")
 def api_global_hot_user():
@@ -8337,6 +8429,182 @@ async def delpage_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Ошибка: {e}")
 
 
+async def leaderboard_on_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Enable leaderboard"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    try:
+        conn = db()
+        c = conn.cursor()
+        c.execute("UPDATE leaderboard_status SET is_enabled = TRUE, updated_at = CURRENT_TIMESTAMP")
+        conn.commit()
+        release_db(conn)
+        
+        await update.message.reply_text("✅ Лидерборд включен и теперь отображается в приложении")
+        logger.info(f"🏆 Leaderboard enabled by admin {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Error enabling leaderboard: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
+async def leaderboard_off_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Disable leaderboard"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    try:
+        conn = db()
+        c = conn.cursor()
+        c.execute("UPDATE leaderboard_status SET is_enabled = FALSE, updated_at = CURRENT_TIMESTAMP")
+        conn.commit()
+        release_db(conn)
+        
+        await update.message.reply_text("✅ Лидерборд выключен и скрыт из приложения")
+        logger.info(f"🏆 Leaderboard disabled by admin {user_id}")
+        
+    except Exception as e:
+        logger.error(f"Error disabling leaderboard: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
+async def add_lead_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Add user to leaderboard with referral count"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text("Использование: /addlead <telegram_id> <referral_count>")
+        return
+    
+    try:
+        target_id = int(context.args[0])
+        referral_count = int(context.args[1])
+        
+        if referral_count < 0:
+            await update.message.reply_text("❌ Количество рефералов не может быть отрицательным")
+            return
+        
+        conn = db()
+        c = conn.cursor()
+        
+        # Check if user exists in dom_users
+        c.execute("SELECT username FROM dom_users WHERE user_id = %s", (target_id,))
+        user_row = c.fetchone()
+        
+        if not user_row:
+            await update.message.reply_text(f"❌ Пользователь с ID {target_id} не найден в системе")
+            release_db(conn)
+            return
+        
+        # Insert or update leaderboard entry
+        c.execute("""
+            INSERT INTO leaderboard_entries (telegram_id, referral_count)
+            VALUES (%s, %s)
+            ON CONFLICT (telegram_id) 
+            DO UPDATE SET 
+                referral_count = %s,
+                updated_at = CURRENT_TIMESTAMP
+        """, (target_id, referral_count, referral_count))
+        
+        conn.commit()
+        release_db(conn)
+        
+        username = user_row[0] or f"User {target_id}"
+        await update.message.reply_text(f"✅ Пользователь {username} (ID: {target_id}) добавлен в лидерборд с {referral_count} рефералами")
+        logger.info(f"🏆 Admin {user_id} added user {target_id} with {referral_count} referrals to leaderboard")
+        
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат. Используйте: /addlead <telegram_id> <referral_count>")
+    except Exception as e:
+        logger.error(f"Error adding to leaderboard: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
+async def del_lead_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Delete user from leaderboard"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    if len(context.args) < 1:
+        await update.message.reply_text("Использование: /dellead <telegram_id>")
+        return
+    
+    try:
+        target_id = int(context.args[0])
+        
+        conn = db()
+        c = conn.cursor()
+        
+        # Delete from leaderboard
+        c.execute("DELETE FROM leaderboard_entries WHERE telegram_id = %s", (target_id,))
+        deleted = c.rowcount
+        
+        conn.commit()
+        release_db(conn)
+        
+        if deleted > 0:
+            await update.message.reply_text(f"✅ Пользователь с ID {target_id} удален из лидерборда")
+            logger.info(f"🏆 Admin {user_id} deleted user {target_id} from leaderboard")
+        else:
+            await update.message.reply_text(f"❌ Пользователь с ID {target_id} не найден в лидерборде")
+        
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат ID. Используйте: /dellead <telegram_id>")
+    except Exception as e:
+        logger.error(f"Error deleting from leaderboard: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
+async def list_lead_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """List all manually added leaderboard entries"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Только для администраторов")
+        return
+    
+    try:
+        conn = db()
+        c = conn.cursor()
+        
+        c.execute("""
+            SELECT le.telegram_id, le.referral_count, du.username, le.created_at, le.updated_at
+            FROM leaderboard_entries le
+            LEFT JOIN dom_users du ON du.user_id = le.telegram_id
+            ORDER BY le.referral_count DESC
+        """)
+        
+        entries = c.fetchall()
+        release_db(conn)
+        
+        if not entries:
+            await update.message.reply_text("📋 В лидерборде нет добавленных пользователей")
+            return
+        
+        message = "📋 **Добавленные пользователи в лидерборде:**\n\n"
+        
+        for i, (telegram_id, referral_count, username, created_at, updated_at) in enumerate(entries, 1):
+            display_name = username or f"User {telegram_id}"
+            created_date = datetime.fromtimestamp(created_at).strftime('%Y-%m-%d %H:%M')
+            updated_date = datetime.fromtimestamp(updated_at).strftime('%Y-%m-%d %H:%M')
+            
+            message += f"👤 **{i}.** {display_name}\n"
+            message += f"🆔 **ID:** {telegram_id}\n"
+            message += f"👥 **Рефералы:** {referral_count}\n"
+            message += f"📅 **Добавлен:** {created_date}\n"
+            message += f"🔄 **Обновлен:** {updated_date}\n\n"
+        
+        await update.message.reply_text(message, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error listing leaderboard: {e}")
+        await update.message.reply_text(f"❌ Ошибка: {e}")
+
 async def start_bot_webhook():
     global application
     print("🤖 Initializing Domino Telegram bot (Webhook Mode)...")
@@ -8382,6 +8650,11 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("addpage", addpage_cmd))
             application.add_handler(CommandHandler("listpage", listpage_cmd))
             application.add_handler(CommandHandler("delpage", delpage_cmd))
+            application.add_handler(CommandHandler("leadbordon", leaderboard_on_cmd))
+            application.add_handler(CommandHandler("leadbordoff", leaderboard_off_cmd))
+            application.add_handler(CommandHandler("addlead", add_lead_cmd))
+            application.add_handler(CommandHandler("dellead", del_lead_cmd))
+            application.add_handler(CommandHandler("listlead", list_lead_cmd))
 
             await application.initialize()
             await application.start()
@@ -9977,6 +10250,7 @@ if __name__ == "__main__":
     print("✅ Domino bot script loaded.")
     try:
         init_db()
+        ensure_leaderboard_tables()
     except Exception as e:
         print("⚠️ init_db failed:", e)
 

@@ -2542,3 +2542,74 @@ socket.on('new_candle', (data) => {
   }
 });
 }
+
+// Leaderboard functions
+async function loadLeaderboard() {
+  try {
+    const response = await fetch('/api/leaderboard');
+    const data = await response.json();
+    
+    if (data.ok && data.enabled) {
+      displayLeaderboard(data.leaderboard);
+      document.getElementById('leaderboard-section').style.display = 'block';
+    } else {
+      document.getElementById('leaderboard-section').style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error loading leaderboard:', error);
+    document.getElementById('leaderboard-section').style.display = 'none';
+  }
+}
+
+function displayLeaderboard(leaderboard) {
+  const content = document.getElementById('leaderboard-content');
+  
+  if (!leaderboard || leaderboard.length === 0) {
+    content.innerHTML = '<p style="text-align: center; color: #94a3b8;">Դատարկ է</p>';
+    return;
+  }
+  
+  let html = '';
+  leaderboard.forEach(entry => {
+    html += `
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        margin: 8px 0;
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+      ">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="font-size: 20px;">${entry.medal}</div>
+          <div>
+            <div style="color: #f1f5f9; font-weight: 600;">${entry.position}-ին տեղ</div>
+            <div style="color: #94a3b8; font-size: 14px;">${entry.telegram_id}</div>
+          </div>
+        </div>
+        <div style="
+          background: linear-gradient(135deg, #fbbf24, #f59e0b);
+          color: #1e293b;
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-weight: bold;
+          font-size: 14px;
+        ">
+          ${entry.referral_count} ռեֆերալ
+        </div>
+      </div>
+    `;
+  });
+  
+  content.innerHTML = html;
+}
+
+// Load leaderboard on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadLeaderboard();
+  
+  // Refresh leaderboard every 30 seconds
+  setInterval(loadLeaderboard, 30000);
+});
