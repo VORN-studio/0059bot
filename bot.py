@@ -7539,6 +7539,65 @@ async def init_domit_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Неправильный: {e}")
 
 
+async def all_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Admin command: Send message to all users"""
+    user_id = update.effective_user.id
+    if user_id not in ADMIN_IDS:
+        await update.message.reply_text("❌ Вы не являетесь администратором.")
+        return
+    
+    # Проверяем, есть ли текст после команды
+    if not context.args:
+        await update.message.reply_text("❌ Укажите сообщение для отправки.\nИспользование: /all Ваше сообщение")
+        return
+    
+    message_text = " ".join(context.args)
+    
+    try:
+        conn_obj = db()
+        c = conn_obj.cursor()
+        
+        # Получаем всех пользователей
+        c.execute("SELECT user_id FROM dom_users")
+        users = c.fetchall()
+        
+        if not users:
+            await update.message.reply_text("❌ В базе нет пользователей.")
+            return
+        
+        success_count = 0
+        error_count = 0
+        
+        await update.message.reply_text(f"📤 Начинаю рассылку {len(users)} пользователям...")
+        
+        for user in users:
+            try:
+                await context.bot.send_message(
+                    chat_id=user[0],
+                    text=message_text
+                )
+                success_count += 1
+                await asyncio.sleep(0.1)  # Небольшая задержка между сообщениями
+            except Exception as e:
+                error_count += 1
+                logger.warning(f"Failed to send to user {user[0]}: {e}")
+        
+        c.close()
+        release_db(conn_obj)
+        
+        result_msg = (
+            f"✅ Рассылка завершена!\n"
+            f"📊 Успешно отправлено: {success_count}\n"
+            f"❌ Ошибок: {error_count}\n"
+            f"📝 Сообщение: {message_text}"
+        )
+        await update.message.reply_text(result_msg)
+        
+    except Exception as e:
+        logger.error(f"Error in all_cmd: {e}")
+        await update.message.reply_text("❌ Ошибка при выполнении команды")
+
+
 async def set_domit_range(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Admin: /set_domit_range 0.50 1.50"""
     user_id = update.effective_user.id
@@ -8666,6 +8725,7 @@ async def start_bot_webhook():
             application.add_handler(CommandHandler("reset", reset_cmd))
             application.add_handler(CommandHandler("migrate_posts", migrate_posts_cmd))
             application.add_handler(CommandHandler("init_domit_data", init_domit_data))
+            application.add_handler(CommandHandler("all", all_cmd))
             application.add_handler(CommandHandler("set_domit_range", set_domit_range))
             application.add_handler(CommandHandler("admin_test_withdraw", admin_test_withdraw))
             application.add_handler(CommandHandler("fake_add_withdraw", fake_add_withdraw))
