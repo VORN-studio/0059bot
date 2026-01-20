@@ -8465,6 +8465,10 @@ def extract_page_name(link: str) -> str:
 
 async def check_user_page_membership(user_id: int) -> tuple[bool, list]:
     """Check if user is member of all required pages. Returns (has_access, missing_pages)"""
+    # TEMPORARILY DISABLED FOR TESTING
+    logger.info(f"Page verification temporarily disabled for user {user_id}")
+    return True, []
+    
     if not pyrogram_client:
         logger.warning("Pyrogram client not available, skipping page verification")
         return True, []
