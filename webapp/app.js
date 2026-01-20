@@ -2565,7 +2565,7 @@ function displayLeaderboard(leaderboard) {
   const content = document.getElementById('leaderboard-content');
   
   if (!leaderboard || leaderboard.length === 0) {
-    content.innerHTML = '<p style="text-align: center; color: #94a3b8;">Դատարկ է</p>';
+    content.innerHTML = '<p style="text-align: center; color: #94a3b8;">Пусто</p>';
     return;
   }
   
@@ -2585,7 +2585,7 @@ function displayLeaderboard(leaderboard) {
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="font-size: 20px;">${entry.medal}</div>
           <div>
-            <div style="color: #f1f5f9; font-weight: 600;">${entry.position}-ին տեղ</div>
+            <div style="color: #f1f5f9; font-weight: 600;">${entry.position}-е место</div>
             <div style="color: #94a3b8; font-size: 14px;">${entry.telegram_id}</div>
           </div>
         </div>
@@ -2597,7 +2597,7 @@ function displayLeaderboard(leaderboard) {
           font-weight: bold;
           font-size: 14px;
         ">
-          ${entry.referral_count} ռեֆերալ
+          ${entry.referral_count} Реферал
         </div>
       </div>
     `;
