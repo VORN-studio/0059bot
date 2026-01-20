@@ -7154,7 +7154,10 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     ensure_user(user.id, user.username, inviter_id)
 
-    # Check if user wants to open webapp with verification
+    # TEMPORARILY DISABLED: Check if user wants to open webapp with verification
+    # This allows instant bot access without page verification
+    # To re-enable: uncomment the block below
+    """
     if "&verify=1" in text:
         # Check page membership before sending webapp button
         if not pyrogram_client:
@@ -7168,6 +7171,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Send message with missing pages info
             await send_webapp_access_denied_with_pages(user.id, context, missing_pages)
             return
+    """
     
     # Send welcome message with image instead of button
     welcome_text = """🎲 Добро пожаловать в DOOMINO
