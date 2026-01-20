@@ -1,4 +1,5 @@
-// Required Pages Check System
+// Required Pages Check System - ОТКЛЮЧЕНО
+/*
 class PageChecker {
     constructor() {
         this.isChecked = false;
@@ -145,6 +146,7 @@ window.openLinks = function() {
         window.pageChecker.openLinks();
     }
 };
+*/
 
 // Автоматическая проверка при загрузке страницы - ОТКЛЮЧЕНО
 // document.addEventListener('DOMContentLoaded', async () => {
