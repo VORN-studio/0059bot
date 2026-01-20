@@ -6807,7 +6807,7 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         with open('logo.png', 'rb') as photo:
             # Create inline keyboard with DOOMINO button
-            keyboard = [[InlineKeyboardButton("DOOMINO", web_app=WebAppInfo(url="https://domino-game.pages.dev"))]]
+            keyboard = [[InlineKeyboardButton("DOOMINO", web_app=WebAppInfo(url="https://domino-play.online/app"))]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             await context.bot.send_photo(
