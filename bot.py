@@ -6790,7 +6790,9 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     
     # Send welcome message with image instead of button
-    welcome_text = """🎲 Добро пожаловать в DOOMINO
+    welcome_text = """
+       «DOOMINO» рядом с чатом
+    🎲 Добро пожаловать в DOOMINO
 
 DOOMINO — это игровой бот, в котором ты можешь
 играть в домино и зарабатывать игровые очки.
@@ -6806,8 +6808,8 @@ DOOMINO — это игровой бот, в котором ты можешь
 
 👉 Чтобы начать игру, нажми на кнопку
 «DOOMINO» рядом с чатом
-
-Удачной игры 🎯"""
+      «DOOMINO»
+"""
 
     try:
         with open('logo.png', 'rb') as photo:
