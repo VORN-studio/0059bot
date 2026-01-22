@@ -6906,13 +6906,13 @@ async def start_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Активности ваших рефералов.
     📅 Итоги конкурса: 20.02.2026 в 20:00.
     Чем больше играете вы и ваша команда, тем выше шанс забрать главный приз! Не упусти свой момент!
-    👉 Чтобы начать, нажми на кнопку «DOOMINO» рядом с чатом.
+    👉 Чтобы начать, нажми на кнопку «Начать» рядом с чатом.
         """
 
     try:
         with open('logo.png', 'rb') as photo:
             # Create inline keyboard with DOOMINO button
-            keyboard = [[InlineKeyboardButton("DOOMINO", web_app=WebAppInfo(url="https://domino-play.online/app"))]]
+            keyboard = [[InlineKeyboardButton("Начать", web_app=WebAppInfo(url="https://domino-play.online/app"))]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             await context.bot.send_photo(
